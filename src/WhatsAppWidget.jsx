@@ -11,7 +11,7 @@ const WhatsAppIcon = ({ className }) => (
 export default function WhatsAppWidget() {
   const [isOpen, setIsOpen] = useState(false);
   
-  const phoneNumber = "9182969670075"; // WhatsApp format
+  const phoneNumber = "918296970075"; // WhatsApp format
 
   const openWhatsApp = () => {
     window.open(`https://wa.me/${phoneNumber}`, '_blank');
