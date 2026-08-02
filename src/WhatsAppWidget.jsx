@@ -14,7 +14,8 @@ export default function WhatsAppWidget() {
   const phoneNumber = "918296970075"; // WhatsApp format
 
   const openWhatsApp = () => {
-    window.open(`https://wa.me/${phoneNumber}`, '_blank');
+    const message = encodeURIComponent("Hi, Help me out with advanced penetration testing!");
+    window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
   };
 
   const openEmail = () => {
