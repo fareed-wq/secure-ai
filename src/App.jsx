@@ -3,6 +3,7 @@ import { Search, Shield, ShieldAlert, ShieldCheck, ArrowRight, Loader2, Globe, S
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import WhatsAppWidget from './WhatsAppWidget';
 
 function App() {
   const [url, setUrl] = useState('');
@@ -308,6 +309,7 @@ function App() {
           )}
         </AnimatePresence>
       </main>
+      <WhatsAppWidget />
     </div>
   );
 }
