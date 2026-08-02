@@ -3,6 +3,7 @@ import { Search, Shield, ShieldAlert, ShieldCheck, ArrowRight, Loader2, Lock, Gl
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { Analytics } from '@vercel/analytics/react';
 
 function App() {
   const [url, setUrl] = useState('');
@@ -261,6 +262,7 @@ function App() {
         </AnimatePresence>
 
       </main>
+      <Analytics />
     </div>
   );
 }
