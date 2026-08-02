@@ -25,7 +25,8 @@ function App() {
     
     try {
       const minWait = new Promise(resolve => setTimeout(resolve, 10000));
-      const fetchPromise = fetch('http://localhost:8000/api/scan', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const fetchPromise = fetch(`${apiUrl}/api/scan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
