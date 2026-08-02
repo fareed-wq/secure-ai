@@ -13,18 +13,27 @@ function App() {
   const handleScan = async (e) => {
     e.preventDefault();
     if (!url) return;
+    
+    let parsedUrl = url.trim();
+    if (!/^https?:\/\//i.test(parsedUrl)) {
+      parsedUrl = 'https://' + parsedUrl;
+      setUrl(parsedUrl);
+    }
+    
     setScanState('scanning');
     setErrorMessage('');
     
     try {
-      const response = await fetch('http://localhost:8000/api/scan', {
+      const minWait = new Promise(resolve => setTimeout(resolve, 10000));
+      const fetchPromise = fetch('http://localhost:8000/api/scan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: parsedUrl }),
       });
       
+      const [response] = await Promise.all([fetchPromise, minWait]);
       const data = await response.json();
       
       if (data.error) {
@@ -148,9 +157,9 @@ function App() {
                 <div className="relative flex items-center bg-slate-900 border border-slate-700 rounded-2xl p-2 shadow-2xl focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
                   <Search className="w-6 h-6 text-slate-400 ml-4 hidden sm:block" />
                   <input
-                    type="url"
+                    type="text"
                     required
-                    placeholder="https://example.com"
+                    placeholder="example.com"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     className="w-full bg-transparent border-none text-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-0"
@@ -178,17 +187,31 @@ function App() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
-              className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-slate-900/50 border border-slate-800 backdrop-blur-xl shadow-2xl"
+              className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-slate-900/50 border border-slate-800 backdrop-blur-xl shadow-2xl overflow-hidden relative"
             >
-              <div className="flex flex-col items-center justify-center space-y-8 py-12">
+              <div className="absolute inset-0 bg-slate-800/[0.2] bg-[size:20px_20px]" style={{backgroundImage: 'radial-gradient(circle, #334155 1px, transparent 1px)'}}></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent"></div>
+              
+              <div className="flex flex-col items-center justify-center space-y-8 py-12 relative z-10">
                 <div className="relative">
-                  <div className="absolute inset-0 border-4 border-indigo-500/20 rounded-full blur-md animate-pulse"></div>
-                  <Loader2 className="w-20 h-20 text-indigo-400 animate-spin relative z-10" />
+                  <div className="absolute inset-0 border-4 border-indigo-500/30 rounded-full blur-xl animate-pulse"></div>
+                  <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-full animate-[spin_3s_linear_infinite] scale-125"></div>
+                  <div className="absolute inset-0 border-2 border-purple-500/20 rounded-full animate-[spin_4s_linear_infinite_reverse] scale-150"></div>
+                  <Loader2 className="w-20 h-20 text-indigo-400 animate-spin relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
                 </div>
                 
-                <div className="space-y-2 text-center w-full">
-                  <h2 className="text-2xl font-bold tracking-wide">Analyzing {url}...</h2>
-                  <p className="text-slate-400">Performing live passive security posture check.</p>
+                <div className="space-y-4 text-center w-full">
+                  <h2 className="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-emerald-300">
+                    Establishing Secure Uplink to {url}...
+                  </h2>
+                  
+                  <div className="flex flex-col gap-3 max-w-sm mx-auto font-mono text-xs text-left">
+                     <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:0.5}} className="text-emerald-400 flex gap-2"><span>[+]</span> Resolved DNS and initiating connection...</motion.div>
+                     <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:2.5}} className="text-emerald-400 flex gap-2"><span>[+]</span> Evaluating SSL/TLS public certificate chain...</motion.div>
+                     <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:5.5}} className="text-indigo-400 flex gap-2"><span>[*]</span> Analyzing HTTP response security headers...</motion.div>
+                     <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:7.5}} className="text-purple-400 flex gap-2"><span>[*]</span> Aggregating passive heuristic data...</motion.div>
+                     <motion.div initial={{opacity:0}} animate={{opacity:1}} transition={{delay:9.0}} className="text-emerald-400 flex gap-2"><span>[+]</span> Finalizing posture report...</motion.div>
+                  </div>
                 </div>
               </div>
             </motion.div>
