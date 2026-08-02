@@ -292,9 +292,6 @@ function App() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-slate-900/40 border border-slate-800/50 rounded-xl text-xs text-slate-500 text-center italic">
-                  {reportData.disclaimer}
-                </div>
               </div>
 
               <div className="pt-4 flex flex-wrap justify-center gap-4">
