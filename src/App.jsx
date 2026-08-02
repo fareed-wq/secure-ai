@@ -25,8 +25,8 @@ function App() {
     
     try {
       const minWait = new Promise(resolve => setTimeout(resolve, 10000));
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const fetchPromise = fetch(`${apiUrl}/api/scan`, {
+      // By using a relative URL, Vercel will automatically route /api/scan to our Python serverless function.
+      const fetchPromise = fetch('/api/scan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
