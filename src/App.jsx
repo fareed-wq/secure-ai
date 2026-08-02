@@ -1,63 +1,52 @@
-import { useState, useEffect } from 'react';
-import { Search, Shield, ShieldAlert, ShieldCheck, ArrowRight, Loader2, Lock, Globe, Server, Activity, Download } from 'lucide-react';
+import { useState } from 'react';
+import { Search, Shield, ShieldAlert, ShieldCheck, ArrowRight, Loader2, Globe, Server, Download, Activity, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
 function App() {
   const [url, setUrl] = useState('');
-  const [scanState, setScanState] = useState('idle'); // idle, scanning, complete
-  const [scanProgress, setScanProgress] = useState(0);
-
-  useEffect(() => {
-    let interval;
-    if (scanState === 'scanning') {
-      interval = setInterval(() => {
-        setScanProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setScanState('complete');
-            return 100;
-          }
-          return prev + (100 / 30); // 30 seconds to reach 100% (called every second)
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [scanState]);
+  const [scanState, setScanState] = useState('idle'); // idle, scanning, complete, error
+  const [reportData, setReportData] = useState(null);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleScan = async (e) => {
     e.preventDefault();
     if (!url) return;
     setScanState('scanning');
-    setScanProgress(0);
-
+    setErrorMessage('');
+    
     try {
-      // Call our local mock backend
-      const response = await fetch('http://localhost:3001/api/scans', {
+      const response = await fetch('http://localhost:8000/api/scan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ target: url }),
+        body: JSON.stringify({ url }),
       });
       
       const data = await response.json();
-      console.log('Backend response:', data);
       
-      // In a real application, we would poll the backend for status updates
-      // using the returned data.jobId instead of simulating the timer.
-      // For now, the simulation continues in the useEffect.
+      if (data.error) {
+        setErrorMessage(data.error);
+        setScanState('error');
+        return;
+      }
+      
+      setReportData(data);
+      setScanState('complete');
     } catch (error) {
       console.error('Failed to connect to backend:', error);
-      // Fallback to simulation if backend is not running
+      setErrorMessage('Failed to connect to the backend scanner. Ensure it is running on port 8000.');
+      setScanState('error');
     }
   };
 
   const resetScan = () => {
     setScanState('idle');
     setUrl('');
-    setScanProgress(0);
+    setReportData(null);
+    setErrorMessage('');
   };
 
   const handleDownloadPdf = async () => {
@@ -78,6 +67,46 @@ function App() {
     }
   };
 
+  // Helper to categorize findings
+  const getCategorizedFindings = () => {
+    if (!reportData) return { passed: [], warnings: [] };
+    
+    const passed = [];
+    const warnings = [];
+
+    // Process SSL
+    if (reportData.ssl_tls && reportData.ssl_tls.status === "OK") {
+      passed.push(`Valid SSL/TLS Certificate (${reportData.ssl_tls.version})`);
+      passed.push(`Issuer: ${reportData.ssl_tls.issuer?.organizationName || 'Unknown'}`);
+    } else if (reportData.ssl_tls) {
+      warnings.push(`SSL Error: ${reportData.ssl_tls.message}`);
+    }
+
+    // Process Headers
+    reportData.header_findings?.forEach(finding => {
+      if (finding.startsWith('Missing') || finding.includes('missing') || finding.startsWith('No ') || finding.startsWith('Error')) {
+        warnings.push(finding);
+      } else {
+        passed.push(finding);
+      }
+    });
+
+    return { passed, warnings };
+  };
+
+  const { passed, warnings } = getCategorizedFindings();
+
+  // Calculate a basic letter score based on warnings
+  const calculateScore = () => {
+    if (!reportData) return 'N/A';
+    const issues = reportData.potential_issues_count || 0;
+    if (issues === 0) return 'A+';
+    if (issues <= 2) return 'A';
+    if (issues <= 4) return 'B';
+    if (issues <= 6) return 'C';
+    return 'D';
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30">
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
@@ -90,10 +119,6 @@ function App() {
               <Shield className="w-6 h-6 text-white" />
             </div>
             <span className="text-xl font-bold tracking-tight">Secure-AI</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <button className="text-sm text-slate-300 hover:text-white transition-colors">Documentation</button>
-            <button className="text-sm bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full transition-all border border-white/5">Sign In</button>
           </div>
         </div>
       </nav>
@@ -114,7 +139,7 @@ function App() {
                   Analyze Any Endpoint.
                 </h1>
                 <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-                  Instant vulnerability scanning powered by AI. Enter your domain below to receive a comprehensive security posture report in seconds.
+                  Passive security posture checker. We analyze public TLS certificates and standard HTTP security metadata.
                 </p>
               </div>
 
@@ -138,11 +163,11 @@ function App() {
                   </button>
                 </div>
               </form>
-
+              
               <div className="flex justify-center gap-8 text-sm text-slate-500 pt-8">
-                <div className="flex items-center gap-2"><Lock className="w-4 h-4"/> SSL Verification</div>
-                <div className="flex items-center gap-2"><Globe className="w-4 h-4"/> DNS Analysis</div>
-                <div className="flex items-center gap-2"><Server className="w-4 h-4"/> Port Discovery</div>
+                <div className="flex items-center gap-2"><Lock className="w-4 h-4"/> SSL Analysis</div>
+                <div className="flex items-center gap-2"><Globe className="w-4 h-4"/> Security Headers</div>
+                <div className="flex items-center gap-2"><Server className="w-4 h-4"/> Passive Check</div>
               </div>
             </motion.div>
           )}
@@ -162,92 +187,92 @@ function App() {
                 </div>
                 
                 <div className="space-y-2 text-center w-full">
-                  <h2 className="text-2xl font-bold tracking-wide">Analyzing {new URL(url || 'https://example.com').hostname}...</h2>
-                  <p className="text-slate-400">Running basic vulnerability heuristics and surface scans.</p>
-                </div>
-
-                <div className="w-full max-w-md bg-slate-800 rounded-full h-3 mb-4 overflow-hidden shadow-inner">
-                  <motion.div 
-                    className="bg-gradient-to-r from-indigo-500 to-purple-500 h-3 rounded-full" 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${scanProgress}%` }}
-                    transition={{ ease: "linear", duration: 1 }}
-                  ></motion.div>
-                </div>
-                <div className="flex w-full max-w-md justify-between text-xs text-slate-500 font-mono uppercase">
-                  <span>Phase 1/3: Reconnaissance</span>
-                  <span>{Math.round(scanProgress)}%</span>
+                  <h2 className="text-2xl font-bold tracking-wide">Analyzing {url}...</h2>
+                  <p className="text-slate-400">Performing live passive security posture check.</p>
                 </div>
               </div>
             </motion.div>
           )}
 
-          {scanState === 'complete' && (
+          {scanState === 'error' && (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-red-900/20 border border-red-800 backdrop-blur-xl shadow-2xl text-center"
+            >
+              <ShieldAlert className="w-20 h-20 text-red-500 mx-auto mb-6" />
+              <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Failed</h2>
+              <p className="text-red-200 mb-8">{errorMessage}</p>
+              <button onClick={resetScan} className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl transition-all">
+                Try Again
+              </button>
+            </motion.div>
+          )}
+
+          {scanState === 'complete' && reportData && (
             <motion.div
               key="complete"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="max-w-3xl mx-auto space-y-8"
+              className="max-w-4xl mx-auto space-y-8"
             >
-              <div id="report-container" className="space-y-8 p-4 -m-4 rounded-3xl bg-slate-950">
-                <div className="flex items-start justify-between bg-slate-900/80 border border-slate-700/50 p-6 rounded-2xl backdrop-blur-sm">
-                <div>
-                  <h2 className="text-2xl font-bold mb-1">Basic Security Report</h2>
-                  <p className="text-slate-400 flex items-center gap-2">
-                    <Globe className="w-4 h-4"/> {url}
-                  </p>
-                </div>
-                <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg flex items-center gap-2 font-medium">
-                  <ShieldCheck className="w-5 h-5" /> Score: B+
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-xl space-y-4">
-                   <div className="flex items-center gap-3 text-emerald-400 mb-2">
-                     <ShieldCheck className="w-6 h-6" />
-                     <h3 className="font-semibold text-lg text-slate-200">Passed Checks</h3>
-                   </div>
-                   <ul className="space-y-3 text-sm text-slate-300">
-                     <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div> Valid SSL/TLS Certificate (RSA 2048)</li>
-                     <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div> Strict-Transport-Security Header</li>
-                     <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div> No Open Directory Listings</li>
-                   </ul>
-                </div>
-                
-                <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-xl space-y-4">
-                   <div className="flex items-center gap-3 text-amber-400 mb-2">
-                     <ShieldAlert className="w-6 h-6" />
-                     <h3 className="font-semibold text-lg text-slate-200">Warnings</h3>
-                   </div>
-                   <ul className="space-y-3 text-sm text-slate-300">
-                     <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div> Missing Content-Security-Policy</li>
-                     <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div> Server Version Exposed in Headers</li>
-                     <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div> Subdomain Takeover Risk (Low)</li>
-                   </ul>
-                </div>
-              </div>
-
-              <div className="mt-12 bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 p-8 rounded-3xl relative overflow-hidden">
-                <div className="absolute -right-20 -top-20 w-64 h-64 bg-indigo-500/20 blur-3xl rounded-full"></div>
-                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div className="space-y-2">
-                    <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                      <Activity className="w-6 h-6 text-indigo-400" />
-                      Advanced Architecture Testing
-                    </h3>
-                    <p className="text-indigo-200/80 max-w-lg">
-                      Ready for a deep dive? Initiate comprehensive penetration testing using our advanced distributed architecture. This covers OWASP Top 10, business logic flaws, and zero-day heuristic analysis.
+              <div id="report-container" className="space-y-8 p-6 -m-6 rounded-3xl bg-slate-950">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-slate-900/80 border border-slate-700/50 p-6 rounded-2xl backdrop-blur-sm gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-1">Live Security Posture Report</h2>
+                    <p className="text-slate-400 flex items-center gap-2">
+                      <Globe className="w-4 h-4"/> {reportData.url}
                     </p>
                   </div>
-                  <button className="whitespace-nowrap bg-white text-indigo-950 hover:bg-indigo-50 px-8 py-4 rounded-xl font-bold shadow-lg shadow-white/10 transition-all transform hover:scale-105">
-                    Start Advanced Test
-                  </button>
+                  <div className={`px-4 py-2 border rounded-lg flex items-center gap-2 font-medium ${calculateScore() === 'A+' || calculateScore() === 'A' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}>
+                    <ShieldCheck className="w-5 h-5" /> Score: {calculateScore()}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-xl space-y-4">
+                     <div className="flex items-center gap-3 text-emerald-400 mb-2">
+                       <ShieldCheck className="w-6 h-6" />
+                       <h3 className="font-semibold text-lg text-slate-200">Passed Checks</h3>
+                     </div>
+                     <ul className="space-y-3 text-sm text-slate-300 break-words">
+                       {passed.length > 0 ? passed.map((item, i) => (
+                         <li key={i} className="flex items-start gap-2">
+                           <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-1.5 flex-shrink-0"></div> 
+                           <span>{item}</span>
+                         </li>
+                       )) : (
+                         <li className="text-slate-500 italic">No passed checks detected.</li>
+                       )}
+                     </ul>
+                  </div>
+                  
+                  <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-xl space-y-4">
+                     <div className="flex items-center gap-3 text-amber-400 mb-2">
+                       <ShieldAlert className="w-6 h-6" />
+                       <h3 className="font-semibold text-lg text-slate-200">Warnings</h3>
+                     </div>
+                     <ul className="space-y-3 text-sm text-slate-300 break-words">
+                        {warnings.length > 0 ? warnings.map((item, i) => (
+                         <li key={i} className="flex items-start gap-2">
+                           <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1.5 flex-shrink-0"></div> 
+                           <span>{item}</span>
+                         </li>
+                       )) : (
+                         <li className="text-emerald-500 italic">No warnings! Excellent posture.</li>
+                       )}
+                     </ul>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-900/40 border border-slate-800/50 rounded-xl text-xs text-slate-500 text-center italic">
+                  {reportData.disclaimer}
                 </div>
               </div>
-              </div>
 
-              <div className="pt-4 flex justify-center gap-6">
+              <div className="pt-4 flex flex-wrap justify-center gap-4">
                  <button onClick={handleDownloadPdf} className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl transition-all">
                    <Download className="w-4 h-4" /> Download PDF
                  </button>
@@ -255,11 +280,9 @@ function App() {
                    Scan another URL
                  </button>
               </div>
-
             </motion.div>
           )}
         </AnimatePresence>
-
       </main>
     </div>
   );
