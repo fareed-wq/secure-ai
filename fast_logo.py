@@ -6,19 +6,22 @@ def fix_logo():
     new_data = []
     
     for r, g, b, a in data:
-        # The background is white (255, 255, 255). 
-        # The darker the pixel or the more saturated it is, the lower the minimum RGB channel.
-        # This perfectly maps anti-aliased edges to alpha!
-        alpha = 255 - min(r, g, b)
+        # Distance from white
+        dist = 255 - min(r, g, b)
         
-        if alpha < 5:
+        # The background seems to be slightly gray, around rgb 240
+        # which means dist is around 15.
+        # So we subtract 25 to completely kill the background and scale the rest to 255
+        alpha = max(0, int((dist - 25) * (255.0 / 230.0)))
+        
+        if alpha == 0:
             new_data.append((255, 255, 255, 0))
             continue
             
-        # Distinguish green text from dark text
-        if g > r + 20 and g > b + 10:
+        # Is it green?
+        if g > r + 15 and g > b + 10:
             # Green text: enhance it to emerald
-            new_data.append((16, 185, 129, alpha)) # Tailwind emerald-500
+            new_data.append((16, 185, 129, alpha))
         else:
             # Dark text: convert to white
             new_data.append((255, 255, 255, alpha))
