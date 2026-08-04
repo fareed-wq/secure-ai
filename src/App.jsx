@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import SaaSLayout from './components/layout/SaaSLayout';
+import RootLayout from './components/layout/RootLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -23,19 +24,10 @@ const App = () => {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Scanner />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/scan" element={<Scanner />} />
-          
-          {/* Protected SaaS Routes */}
-          <Route element={<SaaSLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/history" element={<ScanHistory />} />
-            <Route path="/reports" element={<SavedReports />} />
-            <Route path="/compare" element={<Compare />} />
-            <Route path="/settings" element={<Settings />} />
+          {/* Public Routes with Sidebar */}
+          <Route element={<RootLayout />}>
+            <Route path="/" element={<Scanner />} />
+            <Route path="/scan" element={<Scanner />} />
             
             {/* New ChatGPT-Sidebar Routes */}
             <Route path="/services" element={<PlaceholderPage title="Services" />} />
@@ -45,6 +37,19 @@ const App = () => {
             <Route path="/about" element={<PlaceholderPage title="About Us" />} />
             <Route path="/trust" element={<PlaceholderPage title="Trust Policy" />} />
             <Route path="/contact" element={<PlaceholderPage title="Contact Support" />} />
+          </Route>
+
+          {/* Auth Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* Protected SaaS Routes */}
+          <Route element={<SaaSLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/history" element={<ScanHistory />} />
+            <Route path="/reports" element={<SavedReports />} />
+            <Route path="/compare" element={<Compare />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
 
           {/* Redirect root to dashboard */}
