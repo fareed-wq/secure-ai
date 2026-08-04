@@ -202,10 +202,8 @@ function App() {
                 </div>
               </form>
               
-              <div className="flex justify-center gap-8 text-sm text-slate-500 pt-8">
-                <div className="flex items-center gap-2"><Lock className="w-4 h-4"/> SSL Analysis</div>
-                <div className="flex items-center gap-2"><Globe className="w-4 h-4"/> Security Headers</div>
-                <div className="flex items-center gap-2"><Server className="w-4 h-4"/> Passive Check</div>
+              <div className="flex justify-center text-sm text-slate-400 pt-8 font-medium">
+                <div className="flex items-center gap-2">For more advance testing, contact by WhatsApp</div>
               </div>
             </motion.div>
           )}
