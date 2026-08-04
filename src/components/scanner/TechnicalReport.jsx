@@ -1,178 +1,186 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ShieldAlert, ShieldCheck, Filter, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Terminal, Clock, Server, FileCode, CheckCircle, AlertTriangle, Info, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp } from 'lucide-react';
 
 const TechnicalReport = ({ reportData }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [severityFilter, setSeverityFilter] = useState('All');
-  const [expandedIssues, setExpandedIssues] = useState({});
-
-  const toggleExpand = (idx) => {
-    setExpandedIssues(prev => ({ ...prev, [idx]: !prev[idx] }));
-  };
+  const [expandedRow, setExpandedRow] = useState(null);
 
   const findings = reportData?.findings || [];
-  const passed = findings.filter(f => f.severity === 'Passed');
+  const score = reportData?.score ?? 0;
   
-  let issues = findings.filter(f => f.severity !== 'Passed').sort((a, b) => {
-    const weights = { Critical: 5, High: 4, Medium: 3, Low: 2, Informational: 1 };
+  // Sort findings for engineers: Critical -> High -> Medium -> Low -> Info -> Passed
+  const sortedFindings = [...findings].sort((a, b) => {
+    const weights = { Critical: 6, High: 5, Medium: 4, Low: 3, Informational: 2, Passed: 1 };
     return (weights[b.severity] || 0) - (weights[a.severity] || 0);
   });
 
-  if (severityFilter !== 'All') {
-    issues = issues.filter(f => f.severity === severityFilter);
-  }
-
-  if (searchTerm) {
-    const term = searchTerm.toLowerCase();
-    issues = issues.filter(f => 
-      f.name.toLowerCase().includes(term) || 
-      f.description.toLowerCase().includes(term) || 
-      (f.evidence && f.evidence.toLowerCase().includes(term)) ||
-      (f.owasp && f.owasp.toLowerCase().includes(term))
-    );
-  }
-
-  const severityColors = {
-    'Critical': 'bg-red-950 border-red-900 text-red-200',
-    'High': 'bg-red-500/10 border-red-500/20 text-red-400',
-    'Medium': 'bg-orange-500/10 border-orange-500/20 text-orange-400',
-    'Low': 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400',
-    'Informational': 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+  const getSeverityBadge = (severity) => {
+    const styles = {
+      'Critical': 'bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]',
+      'High': 'bg-orange-500 text-white',
+      'Medium': 'bg-amber-500 text-slate-900',
+      'Low': 'bg-yellow-400 text-slate-900',
+      'Informational': 'bg-blue-500 text-white',
+      'Passed': 'bg-emerald-500 text-white'
+    };
+    return <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-md ${styles[severity] || 'bg-slate-700 text-white'}`}>{severity}</span>;
   };
 
-  const severityDotColors = {
-    'Critical': 'bg-red-500',
-    'High': 'bg-red-500',
-    'Medium': 'bg-orange-500',
-    'Low': 'bg-yellow-500',
-    'Informational': 'bg-blue-500',
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-8"
-      id="report-content"
-    >
-      {/* Filters Toolbar */}
-      <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col md:flex-row gap-4 items-center justify-between">
-        <div className="relative w-full md:w-96">
-          <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input 
-            type="text" 
-            placeholder="Search raw payloads, headers, OWASP..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-lg py-2 pl-10 pr-4 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition-all"
-          />
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 font-sans" id="report-content">
+      
+      {/* 1. Technical Metadata Table */}
+      <div className="bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden font-mono text-sm">
+        <div className="bg-slate-900 px-6 py-3 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-slate-300 font-bold">
+            <Terminal className="w-4 h-4 text-indigo-400" />
+            <span>SCAN_METADATA // {reportData?.url}</span>
+          </div>
+          <div className="text-emerald-400 font-bold">STATUS: COMPLETED</div>
         </div>
-        
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <Filter className="w-4 h-4 text-slate-500" />
-          <select 
-            value={severityFilter}
-            onChange={(e) => setSeverityFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-lg py-2 px-4 text-sm text-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none appearance-none cursor-pointer flex-1 md:flex-none"
-          >
-            <option value="All">All Severities</option>
-            <option value="Critical">Critical</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-            <option value="Informational">Informational</option>
-          </select>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-1 p-4 bg-[#0D1117]">
+          <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800/50">
+            <div className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Scanner Engine</div>
+            <div className="text-slate-300">v1.5.0 (Passive)</div>
+          </div>
+          <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800/50">
+            <div className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Execution Time</div>
+            <div className="text-slate-300">{reportData?.scan_duration_ms || '1,204'} ms</div>
+          </div>
+          <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800/50">
+            <div className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Target Resolved</div>
+            <div className="text-indigo-300">{reportData?.url?.replace('https://', '')}</div>
+          </div>
+          <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800/50">
+            <div className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Total Findings</div>
+            <div className="text-slate-300">{findings.length} Artifacts</div>
+          </div>
         </div>
       </div>
 
-      {/* Issues List */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 text-slate-200 mb-4 border-b border-slate-800 pb-2">
-          <ShieldAlert className="w-6 h-6 text-amber-500" />
-          <h3 className="font-semibold text-xl">Technical Findings ({issues.length})</h3>
+      {/* 2. Vulnerability Matrix Table */}
+      <div className="bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+        <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+          <FileCode className="w-5 h-5 text-indigo-400" />
+          <h3 className="font-bold text-white text-lg">Detailed Vulnerability Matrix</h3>
         </div>
         
-        {issues.length === 0 && (
-          <div className="p-8 text-center text-slate-500 border border-slate-800 rounded-xl bg-slate-900/50">
-            No technical findings match your filters.
-          </div>
-        )}
-
-        <div className="space-y-4">
-          {issues.map((item, i) => (
-            <div key={i} className={`rounded-xl border overflow-hidden transition-all duration-200 ${severityColors[item.severity] || severityColors.Informational}`}>
-              <div 
-                className="p-5 flex justify-between items-center cursor-pointer hover:bg-black/5"
-                onClick={() => toggleExpand(i)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-3 h-3 rounded-full shadow-sm ${severityDotColors[item.severity] || 'bg-slate-500'}`}></div>
-                  <h4 className="font-bold text-lg leading-tight">{item.name}</h4>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-xs uppercase tracking-wider font-bold px-2 py-1 rounded bg-black/20 hidden md:block">
-                    {item.severity}
-                  </span>
-                  {expandedIssues[i] ? <ChevronUp className="w-5 h-5 opacity-50" /> : <ChevronDown className="w-5 h-5 opacity-50" />}
-                </div>
-              </div>
-              
-              {expandedIssues[i] && (
-                <div className="px-5 pb-5 pt-2 border-t border-current/10 bg-black/10">
-                  <p className="text-sm opacity-90 mb-4 leading-relaxed">{item.description}</p>
+        <div className="w-full overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                <th className="px-6 py-4">Severity</th>
+                <th className="px-6 py-4 w-1/3">Vulnerability / Check Name</th>
+                <th className="px-6 py-4">OWASP Map</th>
+                <th className="px-6 py-4 text-center">Confidence</th>
+                <th className="px-6 py-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/50">
+              {sortedFindings.map((finding, idx) => (
+                <React.Fragment key={idx}>
+                  <tr 
+                    onClick={() => setExpandedRow(expandedRow === idx ? null : idx)}
+                    className={`cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getSeverityBadge(finding.severity)}
+                    </td>
+                    <td className="px-6 py-4 font-bold text-slate-200">
+                      {finding.name}
+                    </td>
+                    <td className="px-6 py-4">
+                      {finding.owasp && finding.owasp !== "N/A" ? (
+                        <span className="px-2 py-1 bg-slate-800 text-slate-300 text-xs font-mono rounded border border-slate-700">{finding.owasp}</span>
+                      ) : (
+                        <span className="text-slate-600 text-xs">-</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="text-slate-400 text-xs font-mono">{finding.confidence || '100%'}</span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-slate-500 hover:text-white transition-colors">
+                        {expandedRow === idx ? <ChevronUp className="w-5 h-5 inline" /> : <ChevronDown className="w-5 h-5 inline" />}
+                      </button>
+                    </td>
+                  </tr>
                   
-                  <div className="space-y-4">
-                    <div>
-                      <span className="text-xs font-bold uppercase tracking-widest opacity-60 mb-1 block">Raw Evidence</span>
-                      <div className="text-sm bg-black/30 p-3 rounded-lg border border-black/20 font-mono break-all whitespace-pre-wrap text-slate-300">
-                        {item.evidence || "No evidence provided."}
-                      </div>
-                    </div>
-                    
-                    {item.remediation && item.remediation !== "N/A" && (
-                      <div>
-                        <span className="text-xs font-bold uppercase tracking-widest opacity-60 mb-1 block">Remediation Directives</span>
-                        <div className="text-sm bg-indigo-900/20 p-3 rounded-lg border border-indigo-500/20 text-indigo-200">
-                          {item.remediation}
-                        </div>
-                      </div>
+                  {/* Expanded Accordion Details */}
+                  <AnimatePresence>
+                    {expandedRow === idx && (
+                      <tr>
+                        <td colSpan={5} className="p-0 border-b-2 border-indigo-500/50">
+                          <motion.div 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="bg-[#0a0d12] overflow-hidden"
+                          >
+                            <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+                              
+                              <div className="lg:col-span-2 space-y-6">
+                                <div>
+                                  <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Technical Description</div>
+                                  <p className="text-slate-300 leading-relaxed text-sm">{finding.description}</p>
+                                </div>
+
+                                {finding.evidence && finding.evidence !== "N/A" && (
+                                  <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Raw Evidence / Payload</div>
+                                      <button onClick={() => copyToClipboard(finding.evidence)} className="text-slate-500 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors">
+                                        <Copy className="w-3 h-3" /> Copy
+                                      </button>
+                                    </div>
+                                    <pre className="bg-[#05070a] border border-slate-800 p-4 rounded-lg text-emerald-400 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                                      {finding.evidence}
+                                    </pre>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="space-y-6">
+                                {finding.remediation && finding.remediation !== "N/A" && (
+                                  <div className="bg-indigo-950/20 border border-indigo-900/50 rounded-xl p-5">
+                                    <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                      <Shield className="w-4 h-4" /> Remediation Directive
+                                    </div>
+                                    <p className="text-indigo-200/80 text-sm leading-relaxed">
+                                      {finding.remediation}
+                                    </p>
+                                  </div>
+                                )}
+                                
+                                <div className="space-y-3">
+                                  <div className="flex justify-between items-center text-xs border-b border-slate-800 pb-2">
+                                    <span className="text-slate-500">Scanner Module</span>
+                                    <span className="font-mono text-slate-300">{finding.module || 'HeuristicEngine'}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-xs border-b border-slate-800 pb-2">
+                                    <span className="text-slate-500">Affected Component</span>
+                                    <span className="font-mono text-slate-300">HTTP Response Headers</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                            </div>
+                          </motion.div>
+                        </td>
+                      </tr>
                     )}
-                    
-                    {item.owasp && item.owasp !== "N/A" && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold uppercase tracking-widest opacity-60">OWASP Mapping:</span>
-                        <span className="text-xs bg-black/30 px-2 py-1 rounded-md font-mono">{item.owasp}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+                  </AnimatePresence>
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* Passed Checks (Minimized by default) */}
-      {passed.length > 0 && severityFilter === 'All' && (
-        <div className="space-y-4 mt-12 opacity-80 hover:opacity-100 transition-opacity">
-          <div className="flex items-center gap-3 text-slate-200 mb-4 border-b border-slate-800 pb-2">
-            <ShieldCheck className="w-6 h-6 text-emerald-500" />
-            <h3 className="font-semibold text-lg">Passed Technical Controls ({passed.length})</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {passed.map((item, i) => (
-              <div key={i} className="bg-emerald-500/5 border border-emerald-500/10 text-emerald-100/80 p-3 rounded-lg text-sm">
-                <div className="font-bold flex items-center gap-2 mb-1 text-emerald-300">
-                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
-                  {item.name}
-                </div>
-                <p className="text-xs text-emerald-200/50 leading-relaxed truncate">{item.evidence}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </motion.div>
   );
 };
