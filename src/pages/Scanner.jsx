@@ -13,6 +13,7 @@ import SimpleReport from '../components/scanner/SimpleReport';
 import TechnicalReport from '../components/scanner/TechnicalReport';
 import AuthModal from '../components/scanner/AuthModal';
 import QuotesTicker from '../components/scanner/QuotesTicker';
+import BottomTicker from '../components/scanner/BottomTicker';
 
 function Scanner() {
   const { user } = useAuth();
@@ -189,6 +190,8 @@ function Scanner() {
                   </button>
                 </div>
               </form>
+
+              <BottomTicker />
             </motion.div>
           )}
 
