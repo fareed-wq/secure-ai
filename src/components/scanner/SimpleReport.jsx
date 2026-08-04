@@ -23,6 +23,12 @@ const TRANSLATIONS = {
     why: "Hackers can trick your users into clicking invisible buttons on your site while they think they are interacting with a different site.",
     category: "Browser Protection"
   },
+  "Missing Content-Security-Policy (CSP)": {
+    name: "Missing Data Theft Protection",
+    problem: "Your website is missing an important browser protection against unauthorized scripts.",
+    why: "If a hacker manages to inject a malicious script, there is no defense layer stopping it from stealing user data or passwords.",
+    category: "Browser Protection"
+  },
   "Missing Content-Security-Policy Header": {
     name: "Missing Data Theft Protection",
     problem: "Your website is missing an important browser protection against unauthorized scripts.",
@@ -122,19 +128,19 @@ const SimpleReport = ({ reportData }) => {
       {/* 1. Executive Summary & Score */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        <div className="lg:col-span-2 bg-white text-slate-900 p-8 rounded-3xl shadow-xl flex flex-col justify-center">
+        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 text-white p-8 rounded-3xl shadow-xl flex flex-col justify-center">
           <h2 className="text-2xl font-black mb-4">Executive Summary</h2>
-          <p className="text-xl text-slate-600 leading-relaxed">
+          <p className="text-xl text-slate-300 leading-relaxed">
             {healthSummary}
           </p>
           <div className="mt-8 flex gap-4">
-            <div className="bg-slate-100 px-6 py-4 rounded-2xl">
-              <div className="text-sm font-bold text-slate-500 uppercase">Issues Found</div>
-              <div className="text-3xl font-black text-slate-800">{issues.length}</div>
+            <div className="bg-slate-800/50 border border-slate-700/50 px-6 py-4 rounded-2xl">
+              <div className="text-sm font-bold text-slate-400 uppercase">Issues Found</div>
+              <div className="text-3xl font-black text-white">{issues.length}</div>
             </div>
-            <div className="bg-emerald-50 px-6 py-4 rounded-2xl">
-              <div className="text-sm font-bold text-emerald-600 uppercase">Passed Checks</div>
-              <div className="text-3xl font-black text-emerald-700">{passed.length}</div>
+            <div className="bg-emerald-950/30 border border-emerald-900/30 px-6 py-4 rounded-2xl">
+              <div className="text-sm font-bold text-emerald-500 uppercase">Passed Checks</div>
+              <div className="text-3xl font-black text-emerald-400">{passed.length}</div>
             </div>
           </div>
         </div>
@@ -200,29 +206,29 @@ const SimpleReport = ({ reportData }) => {
               const risk = getBusinessRisk(issue.severity);
               
               return (
-                <div key={idx} className="bg-white rounded-3xl p-8 flex flex-col md:flex-row gap-8 items-start shadow-xl">
+                <div key={idx} className="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col md:flex-row gap-8 items-start shadow-xl">
                   
                   <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold">{idx + 1}</div>
-                      <h4 className="font-black text-2xl text-slate-900">{trans.name}</h4>
+                      <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold border border-slate-700">{idx + 1}</div>
+                      <h4 className="font-black text-2xl text-white">{trans.name}</h4>
                     </div>
                     
-                    <div className="space-y-4 text-slate-600 text-lg">
-                      <p><strong className="text-slate-900">The Problem:</strong> {trans.problem}</p>
-                      <p><strong className="text-slate-900">Why it matters:</strong> {trans.why}</p>
+                    <div className="space-y-4 text-slate-300 text-lg">
+                      <p><strong className="text-white">The Problem:</strong> {trans.problem}</p>
+                      <p><strong className="text-white">Why it matters:</strong> {trans.why}</p>
                     </div>
                   </div>
 
                   <div className="w-full md:w-80 space-y-4">
                     <div className={`p-5 rounded-2xl border ${risk.bg} ${risk.border}`}>
                       <div className={`font-black text-lg ${risk.color}`}>{risk.label}</div>
-                      <div className="text-sm text-slate-700 mt-2 font-medium">{risk.desc}</div>
+                      <div className="text-sm text-slate-400 mt-2 font-medium">{risk.desc}</div>
                     </div>
                     
-                    <div className="bg-slate-100 p-5 rounded-2xl border border-slate-200">
+                    <div className="bg-slate-800/30 p-5 rounded-2xl border border-slate-700/50">
                       <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1">Estimated Effort</div>
-                      <div className="font-black text-slate-800">{getEffort(issue.severity)}</div>
+                      <div className="font-black text-slate-200">{getEffort(issue.severity)}</div>
                     </div>
                   </div>
                 </div>
