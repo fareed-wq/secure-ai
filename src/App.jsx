@@ -202,7 +202,7 @@ function App() {
                 </div>
               </form>
               
-              <div className="flex justify-center text-sm text-slate-400 pt-4 font-medium">
+              <div className="flex justify-center text-sm text-slate-400 pt-2 font-medium">
                 <div className="flex items-center gap-2">For more advance testing, contact by WhatsApp</div>
               </div>
             </motion.div>
