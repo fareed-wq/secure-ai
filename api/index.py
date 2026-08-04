@@ -1,19 +1,23 @@
 import ipaddress
 import socket
 import ssl
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse
-
+import logging
 import requests
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, field_validator
+from abc import ABC, abstractmethod
 
-app = FastAPI(title="Website Security Posture Checker")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+app = FastAPI(title="Website Security Posture Checker (Modular)")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # tighten this to your actual front-end origin before shipping
+    allow_origins=["*"],
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
@@ -59,66 +63,191 @@ def is_public_hostname(hostname: str) -> bool:
     return True
 
 
-def check_ssl_tls(hostname: str) -> dict:
-    context = ssl.create_default_context()
-    try:
-        with socket.create_connection((hostname, 443), timeout=5) as sock:
-            with context.wrap_socket(sock, server_hostname=hostname) as ssock:
-                cert = ssock.getpeercert()
-                return {
-                    "status": "OK",
-                    "issuer": dict(x[0] for x in cert.get("issuer", [])),
-                    "subject": dict(x[0] for x in cert.get("subject", [])),
-                    "notBefore": cert.get("notBefore"),
-                    "notAfter": cert.get("notAfter", "N/A"),
-                    "version": ssock.version(),
-                }
-    except Exception as e:
-        return {"status": "Error", "message": str(e)}
+# --- PLUGIN ARCHITECTURE ---
+
+class ScannerModule(ABC):
+    @abstractmethod
+    def run(self, url: str, hostname: str) -> list[dict]:
+        """
+        Executes the module check. Must return a list of finding dictionaries:
+        {
+            "name": str,
+            "severity": "Critical"|"High"|"Medium"|"Low"|"Informational"|"Passed",
+            "description": str,
+            "evidence": str,
+            "confidence": str,
+            "remediation": str,
+            "owasp": str
+        }
+        """
+        pass
 
 
-SECURITY_HEADERS = {
-    "Strict-Transport-Security": "Missing HSTS can allow SSL-stripping attacks.",
-    "Content-Security-Policy": "A CSP helps mitigate XSS and data-injection attacks.",
-    "X-Frame-Options": "Missing this can allow clickjacking.",
-    "X-Content-Type-Options": "Missing this can allow MIME-sniffing attacks.",
-    "Referrer-Policy": "Controls what leaks via the Referer header.",
-    "X-Permitted-Cross-Domain-Policies": "Controls Flash/PDF cross-domain data loading.",
-}
+class SSLTLSModule(ScannerModule):
+    def run(self, url: str, hostname: str) -> list[dict]:
+        findings = []
+        context = ssl.create_default_context()
+        try:
+            with socket.create_connection((hostname, 443), timeout=3) as sock:
+                with context.wrap_socket(sock, server_hostname=hostname) as ssock:
+                    cert = ssock.getpeercert()
+                    version = ssock.version()
+                    
+                    findings.append({
+                        "name": "Valid SSL/TLS Certificate",
+                        "severity": "Passed",
+                        "description": "The server presents a valid TLS certificate.",
+                        "evidence": f"Version: {version}, Issuer: {cert.get('issuer')}",
+                        "confidence": "High",
+                        "remediation": "N/A",
+                        "owasp": "A02: Cryptographic Failures"
+                    })
+        except Exception as e:
+            findings.append({
+                "name": "SSL/TLS Connection Failure",
+                "severity": "High",
+                "description": "Failed to establish a secure TLS connection with the host.",
+                "evidence": str(e),
+                "confidence": "High",
+                "remediation": "Ensure the server supports standard TLS protocols and has a valid certificate.",
+                "owasp": "A02: Cryptographic Failures"
+            })
+        return findings
 
 
-def check_security_headers(url: str) -> list:
-    try:
-        response = requests.get(url, timeout=10, allow_redirects=True)
-    except requests.exceptions.RequestException as e:
-        return [f"Error fetching URL: {e}"]
+class SecurityHeadersModule(ScannerModule):
+    def run(self, url: str, hostname: str) -> list[dict]:
+        findings = []
+        try:
+            response = requests.get(url, timeout=5, allow_redirects=True)
+            headers = response.headers
+        except requests.exceptions.RequestException as e:
+            findings.append({
+                "name": "HTTP Request Failed",
+                "severity": "High",
+                "description": "Failed to fetch HTTP headers from the target.",
+                "evidence": str(e),
+                "confidence": "High",
+                "remediation": "Ensure the target is reachable over HTTP/HTTPS.",
+                "owasp": "A05: Security Misconfiguration"
+            })
+            return findings
 
-    headers = response.headers
-    findings = []
+        # HSTS
+        if "Strict-Transport-Security" not in headers:
+            findings.append({
+                "name": "Missing Strict-Transport-Security (HSTS)",
+                "severity": "High",
+                "description": "Missing HSTS allows SSL-stripping attacks.",
+                "evidence": "Strict-Transport-Security header is absent.",
+                "confidence": "High",
+                "remediation": "Add the Strict-Transport-Security header.",
+                "owasp": "A05: Security Misconfiguration"
+            })
+        else:
+            findings.append({
+                "name": "Strict-Transport-Security (HSTS) Configured",
+                "severity": "Passed",
+                "description": "HSTS is present.",
+                "evidence": headers["Strict-Transport-Security"],
+                "confidence": "High",
+                "remediation": "N/A",
+                "owasp": "A05: Security Misconfiguration"
+            })
 
-    for name, note in SECURITY_HEADERS.items():
-        findings.append(f"{name}: {headers[name]}" if name in headers else f"Missing {name}. {note}")
+        # CSP
+        if "Content-Security-Policy" not in headers:
+            findings.append({
+                "name": "Missing Content-Security-Policy (CSP)",
+                "severity": "High",
+                "description": "Missing CSP allows XSS and data injection attacks.",
+                "evidence": "Content-Security-Policy header is absent.",
+                "confidence": "High",
+                "remediation": "Implement a Content-Security-Policy.",
+                "owasp": "A05: Security Misconfiguration"
+            })
 
-    if "Permissions-Policy" in headers:
-        findings.append(f"Permissions-Policy: {headers['Permissions-Policy']}")
-    elif "Feature-Policy" in headers:
-        findings.append(f"Feature-Policy: {headers['Feature-Policy']}")
-    else:
-        findings.append("Missing Permissions-Policy/Feature-Policy header.")
+        # X-Frame-Options
+        if "X-Frame-Options" not in headers:
+            findings.append({
+                "name": "Missing X-Frame-Options",
+                "severity": "Medium",
+                "description": "Missing XFO allows clickjacking attacks.",
+                "evidence": "X-Frame-Options header is absent.",
+                "confidence": "High",
+                "remediation": "Add X-Frame-Options: DENY or SAMEORIGIN.",
+                "owasp": "A05: Security Misconfiguration"
+            })
 
-    set_cookie = headers.get("Set-Cookie")
-    if not set_cookie:
-        findings.append("No 'Set-Cookie' header found in response.")
-    else:
-        for cookie in set_cookie.split(","):
-            name = cookie.split("=")[0].strip()
-            if "httponly" not in cookie.lower():
-                findings.append(f"Cookie `{name}` missing HttpOnly flag.")
-            if url.startswith("https") and "secure" not in cookie.lower():
-                findings.append(f"Cookie `{name}` missing Secure flag.")
+        # X-Content-Type-Options
+        if "X-Content-Type-Options" not in headers:
+            findings.append({
+                "name": "Missing X-Content-Type-Options",
+                "severity": "Low",
+                "description": "Missing this can allow MIME-sniffing attacks.",
+                "evidence": "X-Content-Type-Options header is absent.",
+                "confidence": "High",
+                "remediation": "Add X-Content-Type-Options: nosniff.",
+                "owasp": "A05: Security Misconfiguration"
+            })
 
-    return findings
+        # Referrer-Policy
+        if "Referrer-Policy" not in headers:
+            findings.append({
+                "name": "Missing Referrer-Policy",
+                "severity": "Low",
+                "description": "Controls what leaks via the Referer header.",
+                "evidence": "Referrer-Policy header is absent.",
+                "confidence": "High",
+                "remediation": "Add Referrer-Policy.",
+                "owasp": "A05: Security Misconfiguration"
+            })
 
+        # Permissions-Policy
+        if "Permissions-Policy" not in headers and "Feature-Policy" not in headers:
+            findings.append({
+                "name": "Missing Permissions-Policy",
+                "severity": "Informational",
+                "description": "Missing Permissions-Policy header.",
+                "evidence": "Permissions-Policy header is absent.",
+                "confidence": "High",
+                "remediation": "Add Permissions-Policy.",
+                "owasp": "A05: Security Misconfiguration"
+            })
+
+        # Cookies
+        set_cookie = headers.get("Set-Cookie")
+        if set_cookie:
+            for cookie in set_cookie.split(","):
+                name = cookie.split("=")[0].strip()
+                if "httponly" not in cookie.lower():
+                    findings.append({
+                        "name": f"Missing HttpOnly Flag on Cookie: {name}",
+                        "severity": "Medium",
+                        "description": "Cookie can be accessed via client-side scripts.",
+                        "evidence": f"Cookie {name} lacks HttpOnly.",
+                        "confidence": "High",
+                        "remediation": "Add HttpOnly flag to cookies.",
+                        "owasp": "A05: Security Misconfiguration"
+                    })
+                if url.startswith("https") and "secure" not in cookie.lower():
+                    findings.append({
+                        "name": f"Missing Secure Flag on Cookie: {name}",
+                        "severity": "Medium",
+                        "description": "Cookie transmitted in cleartext if sent over HTTP.",
+                        "evidence": f"Cookie {name} lacks Secure.",
+                        "confidence": "High",
+                        "remediation": "Add Secure flag to cookies.",
+                        "owasp": "A02: Cryptographic Failures"
+                    })
+        
+        return findings
+
+# Engine Registry
+REGISTERED_MODULES = [
+    SSLTLSModule(),
+    SecurityHeadersModule()
+]
 
 def scan_url(url: str) -> dict:
     hostname = urlparse(url).hostname
@@ -127,20 +256,37 @@ def scan_url(url: str) -> dict:
     if not is_public_hostname(hostname):
         return {"url": url, "error": "That host resolves to a private/internal address and can't be scanned."}
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        ssl_future = pool.submit(check_ssl_tls, hostname)
-        headers_future = pool.submit(check_security_headers, url)
-        ssl_info = ssl_future.result()
-        header_findings = headers_future.result()
+    all_findings = []
+    
+    # Run modules concurrently with a short timeout to respect Vercel Hobby limits
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        futures = {pool.submit(mod.run, url, hostname): mod for mod in REGISTERED_MODULES}
+        for future in as_completed(futures):
+            mod = futures[future]
+            try:
+                mod_findings = future.result(timeout=6)
+                all_findings.extend(mod_findings)
+            except Exception as e:
+                logger.error(f"Module {mod.__class__.__name__} failed: {e}")
+                all_findings.append({
+                    "name": f"Module Crash: {mod.__class__.__name__}",
+                    "severity": "Informational",
+                    "description": "The scanner module crashed or timed out during execution.",
+                    "evidence": str(e),
+                    "confidence": "High",
+                    "remediation": "Check scanner logs.",
+                    "owasp": "N/A"
+                })
+
+    # Calculate issues
+    issue_count = sum(1 for f in all_findings if f["severity"] in ["Critical", "High", "Medium", "Low"])
 
     return {
         "url": url,
-        "ssl_tls": ssl_info,
-        "header_findings": header_findings,
-        "potential_issues_count": sum(1 for f in header_findings if f.startswith("Missing")),
+        "findings": all_findings,
+        "potential_issues_count": issue_count,
         "disclaimer": (
-            "Passive scan only: public TLS certificate info and HTTP security "
-            "headers. Not active penetration testing, and not a guarantee of security."
+            "Passive scan only. Modular engine execution."
         ),
     }
 

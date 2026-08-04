@@ -78,44 +78,43 @@ function App() {
     }
   };
 
-  // Helper to categorize findings
-  const getCategorizedFindings = () => {
-    if (!reportData) return { passed: [], warnings: [] };
-    
-    const passed = [];
-    const warnings = [];
+  const findings = reportData?.findings || [];
+  const passed = findings.filter(f => f.severity === 'Passed');
+  const issues = findings.filter(f => f.severity !== 'Passed');
 
-    // Process SSL
-    if (reportData.ssl_tls && reportData.ssl_tls.status === "OK") {
-      passed.push(`Valid SSL/TLS Certificate (${reportData.ssl_tls.version})`);
-      passed.push(`Issuer: ${reportData.ssl_tls.issuer?.organizationName || 'Unknown'}`);
-    } else if (reportData.ssl_tls) {
-      warnings.push(`SSL Error: ${reportData.ssl_tls.message}`);
-    }
-
-    // Process Headers
-    reportData.header_findings?.forEach(finding => {
-      if (finding.startsWith('Missing') || finding.includes('missing') || finding.startsWith('No ') || finding.startsWith('Error')) {
-        warnings.push(finding);
-      } else {
-        passed.push(finding);
-      }
-    });
-
-    return { passed, warnings };
-  };
-
-  const { passed, warnings } = getCategorizedFindings();
-
-  // Calculate a basic letter score based on warnings
+  // Calculate a basic letter score based on high/critical issues
   const calculateScore = () => {
     if (!reportData) return 'N/A';
-    const issues = reportData.potential_issues_count || 0;
-    if (issues === 0) return 'A+';
-    if (issues <= 2) return 'A';
-    if (issues <= 4) return 'B';
-    if (issues <= 6) return 'C';
+    let penalty = 0;
+    issues.forEach(f => {
+      if (f.severity === 'Critical') penalty += 10;
+      if (f.severity === 'High') penalty += 5;
+      if (f.severity === 'Medium') penalty += 2;
+      if (f.severity === 'Low') penalty += 1;
+    });
+    if (penalty === 0) return 'A+';
+    if (penalty <= 3) return 'A';
+    if (penalty <= 7) return 'B';
+    if (penalty <= 15) return 'C';
     return 'D';
+  };
+
+  const severityColors = {
+    'Critical': 'bg-red-950 border-red-900 text-red-200',
+    'High': 'bg-red-500/10 border-red-500/20 text-red-400',
+    'Medium': 'bg-orange-500/10 border-orange-500/20 text-orange-400',
+    'Low': 'bg-yellow-500/10 border-yellow-500/20 text-yellow-400',
+    'Informational': 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+    'Passed': 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+  };
+
+  const severityDotColors = {
+    'Critical': 'bg-red-500',
+    'High': 'bg-red-500',
+    'Medium': 'bg-orange-500',
+    'Low': 'bg-yellow-500',
+    'Informational': 'bg-blue-500',
+    'Passed': 'bg-emerald-500'
   };
 
   return (
@@ -281,40 +280,62 @@ function App() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-xl space-y-4">
-                     <div className="flex items-center gap-3 text-emerald-400 mb-2">
-                       <ShieldCheck className="w-6 h-6" />
-                       <h3 className="font-semibold text-lg text-slate-200">Passed Checks</h3>
-                     </div>
-                     <ul className="space-y-3 text-sm text-slate-300 break-words">
-                       {passed.length > 0 ? passed.map((item, i) => (
-                         <li key={i} className="flex items-start gap-2">
-                           <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-1.5 flex-shrink-0"></div> 
-                           <span>{item}</span>
-                         </li>
-                       )) : (
-                         <li className="text-slate-500 italic">No passed checks detected.</li>
-                       )}
-                     </ul>
-                  </div>
-                  
-                  <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-xl space-y-4">
-                     <div className="flex items-center gap-3 text-amber-400 mb-2">
-                       <ShieldAlert className="w-6 h-6" />
-                       <h3 className="font-semibold text-lg text-slate-200">Warnings</h3>
-                     </div>
-                     <ul className="space-y-3 text-sm text-slate-300 break-words">
-                        {warnings.length > 0 ? warnings.map((item, i) => (
-                         <li key={i} className="flex items-start gap-2">
-                           <div className="w-1.5 h-1.5 bg-amber-500 rounded-full mt-1.5 flex-shrink-0"></div> 
-                           <span>{item}</span>
-                         </li>
-                       )) : (
-                         <li className="text-emerald-500 italic">No warnings! Excellent posture.</li>
-                       )}
-                     </ul>
-                  </div>
+                <div className="space-y-6">
+                  {issues.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3 text-slate-200 mb-4 border-b border-slate-800 pb-2">
+                        <ShieldAlert className="w-6 h-6 text-amber-500" />
+                        <h3 className="font-semibold text-xl">Detected Issues</h3>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {issues.map((item, i) => (
+                          <div key={i} className={`p-5 rounded-xl border flex flex-col gap-3 ${severityColors[item.severity] || severityColors.Informational}`}>
+                            <div className="flex justify-between items-start">
+                              <h4 className="font-bold text-lg leading-tight flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${severityDotColors[item.severity] || 'bg-slate-500'}`}></div>
+                                {item.name}
+                              </h4>
+                              <span className="text-xs uppercase tracking-wider font-bold px-2 py-1 rounded bg-black/20">{item.severity}</span>
+                            </div>
+                            <p className="text-sm opacity-90">{item.description}</p>
+                            <div className="text-xs bg-black/20 p-2 rounded break-all border border-black/10 font-mono">
+                              Evidence: {item.evidence}
+                            </div>
+                            {item.remediation && item.remediation !== "N/A" && (
+                              <div className="text-xs mt-auto pt-2 border-t border-current/20">
+                                <span className="font-bold">Fix: </span> {item.remediation}
+                              </div>
+                            )}
+                            {item.owasp && item.owasp !== "N/A" && (
+                              <div className="text-xs">
+                                <span className="font-bold">OWASP: </span> {item.owasp}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {passed.length > 0 && (
+                    <div className="space-y-4 mt-8">
+                      <div className="flex items-center gap-3 text-slate-200 mb-4 border-b border-slate-800 pb-2">
+                        <ShieldCheck className="w-6 h-6 text-emerald-500" />
+                        <h3 className="font-semibold text-xl">Passed Checks</h3>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {passed.map((item, i) => (
+                          <div key={i} className="bg-emerald-500/5 border border-emerald-500/10 text-emerald-100 p-4 rounded-xl">
+                            <h4 className="font-bold mb-1 flex items-center gap-2">
+                              <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                              {item.name}
+                            </h4>
+                            <p className="text-sm text-emerald-200/70">{item.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
               </div>
