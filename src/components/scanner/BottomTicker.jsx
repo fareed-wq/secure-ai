@@ -26,7 +26,7 @@ const BottomTicker = () => {
       >
         {QUOTES.map((quote, idx) => (
           <span key={idx} className="flex-shrink-0">
-            "{quote}"
+            {quote}
           </span>
         ))}
       </motion.div>
