@@ -80,24 +80,16 @@ function App() {
 
   const findings = reportData?.findings || [];
   const passed = findings.filter(f => f.severity === 'Passed');
-  const issues = findings.filter(f => f.severity !== 'Passed');
-
-  // Calculate a basic letter score based on high/critical issues
-  const calculateScore = () => {
-    if (!reportData) return 'N/A';
-    let penalty = 0;
-    issues.forEach(f => {
-      if (f.severity === 'Critical') penalty += 10;
-      if (f.severity === 'High') penalty += 5;
-      if (f.severity === 'Medium') penalty += 2;
-      if (f.severity === 'Low') penalty += 1;
-    });
-    if (penalty === 0) return 'A+';
-    if (penalty <= 3) return 'A';
-    if (penalty <= 7) return 'B';
-    if (penalty <= 15) return 'C';
-    return 'D';
-  };
+  const issues = findings.filter(f => f.severity !== 'Passed').sort((a, b) => {
+    const weights = { Critical: 5, High: 4, Medium: 3, Low: 2, Informational: 1 };
+    return (weights[b.severity] || 0) - (weights[a.severity] || 0);
+  });
+  
+  const score = reportData?.score ?? 'N/A';
+  const grade = reportData?.grade ?? 'N/A';
+  const execSummary = reportData?.executive_summary;
+  const owaspCoverage = reportData?.owasp_coverage || [];
+  const severityCounts = reportData?.severity_counts || {};
 
   const severityColors = {
     'Critical': 'bg-red-950 border-red-900 text-red-200',
@@ -274,11 +266,35 @@ function App() {
                     <p className="text-slate-400 flex items-center gap-2">
                       <Globe className="w-4 h-4"/> {reportData.url}
                     </p>
+                    {execSummary && <p className="text-slate-300 mt-2 text-sm italic">{execSummary}</p>}
                   </div>
-                  <div className={`px-4 py-2 border rounded-lg flex items-center gap-2 font-medium ${calculateScore() === 'A+' || calculateScore() === 'A' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}>
-                    <ShieldCheck className="w-5 h-5" /> Score: {calculateScore()}
+                  <div className={`px-6 py-4 border rounded-xl flex flex-col items-center gap-1 font-bold ${grade === 'A+' || grade === 'A' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}>
+                    <div className="text-4xl">{grade}</div>
+                    <div className="text-xs uppercase tracking-widest opacity-80">Score: {score}/100</div>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.entries(severityCounts).filter(([k]) => k !== 'Passed').map(([sev, count]) => (
+                    <div key={sev} className="bg-slate-900/50 border border-slate-800 p-4 rounded-xl flex flex-col items-center justify-center">
+                      <div className="text-2xl font-bold text-slate-200">{count}</div>
+                      <div className="text-xs text-slate-400 uppercase tracking-widest">{sev}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {owaspCoverage.length > 0 && (
+                  <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-xl">
+                    <h3 className="font-semibold text-sm text-slate-400 mb-2 uppercase tracking-widest">OWASP Top 10 Coverage Mapping</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {owaspCoverage.map((cat, i) => (
+                        <span key={i} className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs px-2 py-1 rounded">
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-6">
                   {issues.length > 0 && (
