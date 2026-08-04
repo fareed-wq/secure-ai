@@ -1,7 +1,7 @@
 import React from 'react';
 import { Globe, Download, Bookmark, Share2 } from 'lucide-react';
 
-const ReportHeader = ({ url, score, grade, timestamp, activeMode, onToggleMode, onExportPdf }) => {
+const ReportHeader = ({ url, score, grade, timestamp, activeMode, onToggleMode, onExportPdf, onRequireAuth }) => {
   return (
     <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 sticky top-20 z-40 mb-8">
       {/* Left: Info */}
@@ -49,12 +49,14 @@ const ReportHeader = ({ url, score, grade, timestamp, activeMode, onToggleMode, 
             <Download className="w-4 h-4" />
           </button>
           <button 
+            onClick={() => onRequireAuth('save reports to your dashboard')}
             title="Save to Dashboard"
             className="p-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-700"
           >
             <Bookmark className="w-4 h-4" />
           </button>
           <button 
+            onClick={() => onRequireAuth('share public links')}
             title="Share Public Link"
             className="p-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-700"
           >

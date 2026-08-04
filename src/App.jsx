@@ -17,13 +17,13 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
+          <Route path="/" element={<Scanner />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           
           {/* Protected SaaS Routes */}
           <Route element={<SaaSLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/scan" element={<Scanner />} />
             <Route path="/history" element={<ScanHistory />} />
             <Route path="/reports" element={<SavedReports />} />
             <Route path="/compare" element={<Compare />} />
