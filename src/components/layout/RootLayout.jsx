@@ -19,7 +19,7 @@ const RootLayout = () => {
           >
             <Menu size={24} />
           </button>
-          <img src="/logo-new.png" alt="URLScan Online Logo" className="ml-2 h-7 w-auto mix-blend-screen" />
+          <img src="/logo-transparent.png" alt="URLScan Online Logo" className="ml-2 h-7 w-auto" />
         </div>
 
         <div className="flex-1 overflow-y-auto">

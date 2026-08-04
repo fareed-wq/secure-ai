@@ -115,7 +115,7 @@ function Scanner() {
       <nav className="border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center cursor-pointer" onClick={resetScan}>
-            <img src="/logo-new.png" alt="URLScan Online Logo" className="h-12 w-auto object-contain mix-blend-screen" />
+            <img src="/logo-transparent.png" alt="URLScan Online Logo" className="h-12 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-4">
             {user && (
