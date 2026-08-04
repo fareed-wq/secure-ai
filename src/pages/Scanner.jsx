@@ -12,7 +12,6 @@ import ReportHeader from '../components/scanner/ReportHeader';
 import SimpleReport from '../components/scanner/SimpleReport';
 import TechnicalReport from '../components/scanner/TechnicalReport';
 import AuthModal from '../components/scanner/AuthModal';
-import QuotesTicker from '../components/scanner/QuotesTicker';
 import BottomTicker from '../components/scanner/BottomTicker';
 
 function Scanner() {
@@ -168,7 +167,7 @@ function Scanner() {
                 </div>
               </div>
 
-              <QuotesTicker />
+              <BottomTicker />
 
               <form onSubmit={handleScan} className="max-w-2xl mx-auto relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
@@ -190,8 +189,6 @@ function Scanner() {
                   </button>
                 </div>
               </form>
-
-              <BottomTicker />
             </motion.div>
           )}
 
