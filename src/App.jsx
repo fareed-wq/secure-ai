@@ -142,13 +142,43 @@ function App() {
               exit={{ opacity: 0, y: -20 }}
               className="text-center space-y-8 mt-20"
             >
-              <div className="space-y-4">
-                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400">
-                  Analyze Any Endpoint.
-                </h1>
-                <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-                  Passive security posture checker. We analyze public TLS certificates and standard HTTP security metadata.
-                </p>
+              <div className="space-y-6 overflow-hidden">
+                <div className="space-y-4">
+                  <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400">
+                    IS YOUR WEBSITE SAFE?
+                  </h1>
+                  <p className="text-2xl font-semibold text-slate-300 max-w-2xl mx-auto tracking-wide">
+                    FIND OUT IN ONE CLICK.
+                  </p>
+                </div>
+
+                {/* Marquee Quotes */}
+                <div className="relative flex overflow-x-hidden pt-4 pb-2" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)' }}>
+                  <motion.div
+                    className="flex whitespace-nowrap gap-12 items-center text-slate-400 italic text-sm md:text-base pr-12"
+                    animate={{ x: ["0%", "-50%"] }}
+                    transition={{
+                      repeat: Infinity,
+                      ease: "linear",
+                      duration: 25,
+                    }}
+                  >
+                    {[
+                      "Paste your link below to catch hidden security flaws before they break your site.",
+                      "Catch hidden website risks before they cause problems.",
+                      "Enter your domain to uncover hidden security risks automatically.",
+                      "Get a simple, easy-to-read safety report for your website instantly.",
+                      "Paste your link below to catch hidden security flaws before they break your site.",
+                      "Catch hidden website risks before they cause problems.",
+                      "Enter your domain to uncover hidden security risks automatically.",
+                      "Get a simple, easy-to-read safety report for your website instantly."
+                    ].map((quote, idx) => (
+                      <span key={idx} className="flex-shrink-0">
+                        "{quote}"
+                      </span>
+                    ))}
+                  </motion.div>
+                </div>
               </div>
 
               <form onSubmit={handleScan} className="max-w-2xl mx-auto relative group">
