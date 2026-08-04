@@ -13,9 +13,9 @@ const SaaSLayout = () => {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-200 font-sans">
+    <div className="flex h-screen bg-slate-950 text-slate-200 font-sans overflow-hidden">
       <Sidebar />
-      <div className="flex-1 ml-64 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto">
         <main className="p-8 max-w-7xl mx-auto">
           <Outlet />
         </main>

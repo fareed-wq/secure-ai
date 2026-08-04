@@ -11,6 +11,13 @@ import SavedReports from './pages/SavedReports';
 import Compare from './pages/Compare';
 import Settings from './pages/Settings';
 
+const PlaceholderPage = ({ title }) => (
+  <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
+    <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
+    <p>This page is under construction.</p>
+  </div>
+);
+
 const App = () => {
   return (
     <AuthProvider>
@@ -20,6 +27,7 @@ const App = () => {
           <Route path="/" element={<Scanner />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/scan" element={<Scanner />} />
           
           {/* Protected SaaS Routes */}
           <Route element={<SaaSLayout />}>
@@ -28,6 +36,15 @@ const App = () => {
             <Route path="/reports" element={<SavedReports />} />
             <Route path="/compare" element={<Compare />} />
             <Route path="/settings" element={<Settings />} />
+            
+            {/* New ChatGPT-Sidebar Routes */}
+            <Route path="/services" element={<PlaceholderPage title="Services" />} />
+            <Route path="/docs" element={<PlaceholderPage title="API Docs" />} />
+            <Route path="/blog" element={<PlaceholderPage title="Security Blog" />} />
+            <Route path="/pricing" element={<PlaceholderPage title="Pricing" />} />
+            <Route path="/about" element={<PlaceholderPage title="About Us" />} />
+            <Route path="/trust" element={<PlaceholderPage title="Trust Policy" />} />
+            <Route path="/contact" element={<PlaceholderPage title="Contact Support" />} />
           </Route>
 
           {/* Redirect root to dashboard */}
