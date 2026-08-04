@@ -13,7 +13,6 @@ import SimpleReport from '../components/scanner/SimpleReport';
 import TechnicalReport from '../components/scanner/TechnicalReport';
 import AuthModal from '../components/scanner/AuthModal';
 import QuotesTicker from '../components/scanner/QuotesTicker';
-import WhatsAppCTA from '../components/scanner/WhatsAppCTA';
 
 function Scanner() {
   const { user } = useAuth();
@@ -190,8 +189,6 @@ function Scanner() {
                   </button>
                 </div>
               </form>
-
-              <WhatsAppCTA />
             </motion.div>
           )}
 
