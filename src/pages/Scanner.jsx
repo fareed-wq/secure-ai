@@ -189,6 +189,10 @@ function Scanner() {
                   </button>
                 </div>
               </form>
+              
+              <div className="flex justify-center text-sm text-slate-400 pt-2 font-medium">
+                <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
+              </div>
             </motion.div>
           )}
 
