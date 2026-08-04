@@ -24,10 +24,10 @@ class Config:
     THREAD_POOL_SIZE = 10
     COMMON_SUBDOMAINS = ["trcadmin", "console", "s3", "s3b", "beta", "api", "dev"]
     SEVERITY_WEIGHTS = {
-        "Critical": -15,
+        "Critical": -20,
         "High": -10,
-        "Medium": -5,
-        "Low": -2,
+        "Medium": -3,
+        "Low": -1,
         "Informational": 0,
         "Passed": 0
     }
@@ -244,15 +244,23 @@ class AdvancedCookieModule(ScannerModule):
                     cookie_name = parts[0].split("=")[0].strip()
                     directives = [p.lower() for p in parts[1:]]
                     
+                    NON_SENSITIVE_COOKIES = {"SEARCH_SAMESITE", "1P_JAR", "NID", "AEC", "OGPC"}
+                    if cookie_name.upper() in NON_SENSITIVE_COOKIES:
+                        severity = "Informational"
+                        low_severity = "Informational"
+                    else:
+                        severity = "Medium"
+                        low_severity = "Low"
+                    
                     if "httponly" not in directives:
-                        findings.append(self.make_finding(f"Missing HttpOnly Flag on Cookie: {cookie_name}", "Medium", "Cookie can be accessed via client-side scripts.", f"Cookie: {cookie_name}", remediation="Add HttpOnly flag to cookies.", owasp="A05: Security Misconfiguration"))
+                        findings.append(self.make_finding(f"Missing HttpOnly Flag on Cookie: {cookie_name}", severity, "Cookie can be accessed via client-side scripts.", f"Cookie: {cookie_name}", remediation="Add HttpOnly flag to cookies.", owasp="A05: Security Misconfiguration"))
                     
                     if url.startswith("https") and "secure" not in directives:
-                        findings.append(self.make_finding(f"Missing Secure Flag on Cookie: {cookie_name}", "Medium", "Cookie transmitted in cleartext if sent over HTTP.", f"Cookie: {cookie_name}", remediation="Add Secure flag to cookies.", owasp="A02: Cryptographic Failures"))
+                        findings.append(self.make_finding(f"Missing Secure Flag on Cookie: {cookie_name}", severity, "Cookie transmitted in cleartext if sent over HTTP.", f"Cookie: {cookie_name}", remediation="Add Secure flag to cookies.", owasp="A02: Cryptographic Failures"))
                     
                     samesite_found = any(p.startswith("samesite") for p in directives)
                     if not samesite_found:
-                        findings.append(self.make_finding(f"Missing SameSite Attribute on Cookie: {cookie_name}", "Low", "Cookie lacks SameSite attribute, increasing CSRF risk.", f"Cookie: {cookie_name}", remediation="Add SameSite=Lax or SameSite=Strict.", owasp="A01: Broken Access Control"))
+                        findings.append(self.make_finding(f"Missing SameSite Attribute on Cookie: {cookie_name}", low_severity, "Cookie lacks SameSite attribute, increasing CSRF risk.", f"Cookie: {cookie_name}", remediation="Add SameSite=Lax or SameSite=Strict.", owasp="A01: Broken Access Control"))
         except Exception:
             pass
         return findings
