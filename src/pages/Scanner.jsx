@@ -118,19 +118,10 @@ function Scanner() {
             <img src="/logo-v6.png?v=7" alt="Secure-AI Logo" className="h-12 w-auto object-contain" />
           </div>
           <div className="flex items-center gap-4">
-            {user ? (
+            {user && (
               <Link to="/dashboard" className="text-sm font-bold text-slate-300 hover:text-white bg-slate-800/50 hover:bg-slate-800 px-4 py-2 rounded-lg transition-colors">
                 Go to Dashboard
               </Link>
-            ) : (
-              <>
-                <Link to="/login" className="text-sm font-bold text-slate-300 hover:text-white transition-colors hidden sm:block">
-                  Log in
-                </Link>
-                <Link to="/register" className="text-sm font-bold bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg transition-colors">
-                  Sign up free
-                </Link>
-              </>
             )}
           </div>
         </div>
