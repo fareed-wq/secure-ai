@@ -396,6 +396,8 @@ def scan_url(url: str) -> dict:
     # --- SCORING ENGINE ---
     score = 100
     severity_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0, "Passed": 0}
+    penalties = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0}
+    max_penalties = {"Critical": 100, "High": 100, "Medium": 30, "Low": 15, "Informational": 5}
     owasp_categories = set()
     
     for f in all_findings:
@@ -403,15 +405,17 @@ def scan_url(url: str) -> dict:
         if sev in severity_counts:
             severity_counts[sev] += 1
             
-        weight = Config.SEVERITY_WEIGHTS.get(sev, 0)
-        score += weight
+        # Accumulate absolute penalties per category, capped at a maximum allowed penalty
+        weight = abs(Config.SEVERITY_WEIGHTS.get(sev, 0))
+        if sev in penalties:
+            penalties[sev] = min(penalties[sev] + weight, max_penalties[sev])
         
         owasp = f.get("owasp")
         if owasp and owasp != "N/A":
             owasp_categories.add(owasp)
             
-    # Clamp score
-    score = max(0, min(100, score))
+    # Calculate final score by subtracting the capped penalties
+    score = max(0, 100 - sum(penalties.values()))
     
     # Calculate Letter Grade
     grade = "F"
