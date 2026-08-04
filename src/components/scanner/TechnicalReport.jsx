@@ -173,6 +173,14 @@ const TechnicalReport = ({ reportData }) => {
         </div>
       </div>
 
+      {/* 3. Final Recommendation */}
+      <div className="text-center mt-12 py-12 border-t border-slate-800">
+        <h3 className="text-2xl font-black text-white mb-4">Ready to improve your score?</h3>
+        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+          Interested in advanced testing? Let's chat on WhatsApp!
+        </p>
+      </div>
+
     </motion.div>
   );
 };
