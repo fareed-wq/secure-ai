@@ -266,7 +266,7 @@ const SimpleReport = ({ reportData }) => {
       <div className="text-center mt-12 py-12 border-t border-slate-800">
         <h3 className="text-2xl font-black text-white mb-4">Ready to improve your score?</h3>
         <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-          Share this report with your technical team or web developer. The Top Priorities listed above outline exactly what they need to focus on first to secure your business.
+          Interested in advanced testing? Let's chat on WhatsApp!
         </p>
       </div>
 
