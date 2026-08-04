@@ -20,6 +20,7 @@ class Config:
     MAX_REDIRECTS = 3
     USER_AGENT = "Secure-AI/1.0 (Security Posture Scanner)"
     THREAD_POOL_SIZE = 15
+    COMMON_SUBDOMAINS = ["trcadmin", "console", "s3", "s3b", "beta", "api", "dev"]
     SEVERITY_WEIGHTS = {
         "Critical": -15,
         "High": -10,
@@ -57,6 +58,7 @@ def normalize_url(value: str) -> str:
 
 class ScanRequest(BaseModel):
     url: str
+    probe_subdomains: bool = False
     @field_validator("url")
     @classmethod
     def _normalize(cls, v: str) -> str:
@@ -299,6 +301,12 @@ class SecurityHeadersModule(ScannerModule):
         try:
             resp = session.get(url, timeout=Config.REQUEST_TIMEOUT, allow_redirects=True)
             headers = resp.headers
+        except requests.exceptions.Timeout as e:
+            findings.append(self.make_finding("HTTP Request Failed (Timeout)", "High", "Connection timed out while fetching HTTP headers.", str(e)))
+            return findings
+        except requests.exceptions.ConnectionError as e:
+            findings.append(self.make_finding("HTTP Request Failed (Connection Error)", "High", "Connection refused or DNS failure while fetching HTTP headers.", str(e)))
+            return findings
         except Exception as e:
             findings.append(self.make_finding("HTTP Request Failed", "High", "Failed to fetch HTTP headers.", str(e)))
             return findings
@@ -312,6 +320,12 @@ class SecurityHeadersModule(ScannerModule):
         # CSP
         if "Content-Security-Policy" not in headers:
             findings.append(self.make_finding("Missing Content-Security-Policy (CSP)", "High", "Missing CSP allows XSS.", "Header absent.", remediation="Implement CSP.", owasp="A05: Security Misconfiguration"))
+        else:
+            csp = headers.get("Content-Security-Policy", "")
+            if "unsafe-inline" in csp or "unsafe-eval" in csp:
+                findings.append(self.make_finding("Weak Content-Security-Policy (CSP)", "Medium", "CSP contains 'unsafe-inline' or 'unsafe-eval' - Potential XSS risk.", csp[:100], remediation="Remove unsafe-inline and unsafe-eval from CSP.", owasp="A05: Security Misconfiguration"))
+            else:
+                findings.append(self.make_finding("Content-Security-Policy Configured", "Passed", "CSP is present and strict.", csp[:100]))
 
         # X-Frame-Options
         if "X-Frame-Options" not in headers:
@@ -320,6 +334,12 @@ class SecurityHeadersModule(ScannerModule):
         # X-Content-Type-Options
         if "X-Content-Type-Options" not in headers:
             findings.append(self.make_finding("Missing X-Content-Type-Options", "Low", "Missing this allows MIME-sniffing.", "Header absent.", remediation="Add X-Content-Type-Options: nosniff.", owasp="A05: Security Misconfiguration"))
+            
+        # Referrer-Policy
+        if "Referrer-Policy" not in headers:
+            findings.append(self.make_finding("Missing Referrer-Policy", "Low", "Missing Referrer-Policy allows leaking the referring URL.", "Header absent.", remediation="Add Referrer-Policy: strict-origin-when-cross-origin.", owasp="A05: Security Misconfiguration"))
+        else:
+            findings.append(self.make_finding("Referrer-Policy Configured", "Passed", "Referrer-Policy is present.", headers["Referrer-Policy"]))
             
         return findings
 
@@ -344,6 +364,30 @@ class AdvancedSecurityHeadersModule(ScannerModule):
             pass
         return findings
 
+class SubdomainProbingModule(ScannerModule):
+    module_name = "SubdomainProbing"
+    description = "Probes common subdomains for the target."
+    
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
+        findings = []
+        domain = hostname
+        if domain.startswith("www."):
+            domain = domain[4:]
+            
+        for sub in Config.COMMON_SUBDOMAINS:
+            sub_url = f"https://{sub}.{domain}"
+            try:
+                resp = requests.head(sub_url, timeout=3, allow_redirects=True, headers={"User-Agent": Config.USER_AGENT})
+                findings.append(self.make_finding(
+                    f"Active Subdomain Found: {sub}.{domain}",
+                    "Informational",
+                    f"Probed subdomain responded with status {resp.status_code}.",
+                    sub_url
+                ))
+            except requests.exceptions.RequestException:
+                pass
+        return findings
+
 # Engine Registry
 REGISTERED_MODULES = [
     TechFingerprintModule(),
@@ -359,7 +403,7 @@ REGISTERED_MODULES = [
     AdvancedSecurityHeadersModule()
 ]
 
-def scan_url(url: str) -> dict:
+def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     hostname = urlparse(url).hostname
     if not hostname:
         return {"url": url, "error": "Could not parse a hostname from that URL."}
@@ -372,8 +416,12 @@ def scan_url(url: str) -> dict:
     session.headers.update({"User-Agent": Config.USER_AGENT})
     
     # Run modules concurrently
+    active_modules = [mod for mod in REGISTERED_MODULES if mod.enabled]
+    if probe_subdomains:
+        active_modules.append(SubdomainProbingModule())
+        
     with ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE) as pool:
-        futures = {pool.submit(mod.run, url, hostname, session): mod for mod in REGISTERED_MODULES if mod.enabled}
+        futures = {pool.submit(mod.run, url, hostname, session): mod for mod in active_modules}
         for future in as_completed(futures):
             mod = futures[future]
             try:
@@ -438,7 +486,7 @@ def scan_url(url: str) -> dict:
 
 @app.post("/api/scan")
 def scan_single(req: ScanRequest):
-    return scan_url(req.url)
+    return scan_url(req.url, req.probe_subdomains)
 
 @app.post("/api/scan/batch")
 def scan_batch(req: BatchScanRequest):
