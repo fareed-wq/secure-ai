@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-const Sidebar = () => {
+const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
   const location = useLocation();
   const { signOut, user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -48,11 +48,21 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside 
-      className={`flex flex-col bg-slate-950 border-r border-slate-800 h-screen transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-64'
-      }`}
-    >
+    <>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      <aside 
+        className={`fixed md:relative z-50 flex flex-col bg-slate-950 border-r border-slate-800 h-screen transition-transform md:transition-all duration-300
+          ${isMobileOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'}
+          ${isCollapsed ? 'md:w-16' : 'md:w-64'}
+        `}
+      >
       {/* 1. HEADER */}
       <div className="flex items-center justify-between p-4 border-b border-slate-800">
         {!isCollapsed && (
@@ -195,6 +205,7 @@ const Sidebar = () => {
         )}
       </div>
     </aside>
+    </>
   );
 };
 
