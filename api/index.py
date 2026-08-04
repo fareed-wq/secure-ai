@@ -21,11 +21,11 @@ class Config:
     USER_AGENT = "Secure-AI/1.0 (Security Posture Scanner)"
     THREAD_POOL_SIZE = 15
     SEVERITY_WEIGHTS = {
-        "Critical": -25,
-        "High": -15,
-        "Medium": -8,
-        "Low": -3,
-        "Informational": -1,
+        "Critical": -15,
+        "High": -10,
+        "Medium": -5,
+        "Low": -2,
+        "Informational": 0,
         "Passed": 0
     }
     SCORE_THRESHOLDS = {
@@ -397,7 +397,7 @@ def scan_url(url: str) -> dict:
     score = 100
     severity_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0, "Passed": 0}
     penalties = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0}
-    max_penalties = {"Critical": 100, "High": 100, "Medium": 30, "Low": 15, "Informational": 5}
+    max_penalties = {"Critical": 100, "High": 30, "Medium": 20, "Low": 10, "Informational": 0}
     owasp_categories = set()
     
     for f in all_findings:
