@@ -42,15 +42,7 @@ const TechnicalReport = ({ reportData }) => {
           </div>
           <div className="text-emerald-400 font-bold">STATUS: COMPLETED</div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-1 p-4 bg-[#0D1117]">
-          <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800/50">
-            <div className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Scanner Engine</div>
-            <div className="text-slate-300">v1.5.0 (Passive)</div>
-          </div>
-          <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800/50">
-            <div className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Execution Time</div>
-            <div className="text-slate-300">{reportData?.scan_duration_ms || '1,204'} ms</div>
-          </div>
+        <div className="grid grid-cols-2 gap-1 p-4 bg-[#0D1117]">
           <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800/50">
             <div className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Target Resolved</div>
             <div className="text-indigo-300">{reportData?.url?.replace('https://', '')}</div>
