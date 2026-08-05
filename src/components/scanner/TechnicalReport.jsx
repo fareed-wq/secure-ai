@@ -97,57 +97,80 @@ const TechnicalReport = ({ reportData }) => {
               </ResponsiveContainer>
             </div>
             
-            {/* Right Column: Category Health Breakdown */}
-            <div className="lg:col-span-7 space-y-4">
-              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Category Health Breakdown</h4>
-              {[
-                { key: 'encryption_tls', title: 'Encryption & TLS', icon: <Shield className="w-4 h-4" /> },
-                { key: 'http_headers', title: 'HTTP Security Headers', icon: <Server className="w-4 h-4" /> },
-                { key: 'domain_email', title: 'Domain & Email Security', icon: <Terminal className="w-4 h-4" /> },
-                { key: 'session_cookies', title: 'Session & Cookie Hardening', icon: <Clock className="w-4 h-4" /> },
-                { key: 'information_exposure', title: 'Information Exposure Defenses', icon: <AlertTriangle className="w-4 h-4" /> }
-              ].map(cat => {
-                const score = reportData.category_scores[cat.key] || 0;
-                let bgClass = 'bg-red-500';
-                let textClass = 'text-red-500';
-                let pillText = 'Needs Attention';
-                let pillClass = 'bg-red-500/20 text-red-400 border-red-500/30';
+            {/* Right Column: Executive Risk & Remediation Overview */}
+            <div className="lg:col-span-7 space-y-6">
+              <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 shadow-inner">
+                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Executive Risk & Remediation Overview</h4>
                 
-                if (score >= 85) {
-                  bgClass = 'bg-emerald-500';
-                  textClass = 'text-emerald-500';
-                  pillText = 'Optimal';
-                  pillClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-                } else if (score >= 70) {
-                  bgClass = 'bg-amber-500';
-                  textClass = 'text-amber-500';
-                  pillText = 'Good';
-                  pillClass = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-                }
-
-                return (
-                  <div key={cat.key} className="flex flex-col sm:flex-row sm:items-center gap-4 bg-slate-900/50 p-4 rounded-lg border border-slate-800/50">
-                    <div className="flex items-center gap-3 min-w-[240px]">
-                      <div className={`p-2 rounded-lg bg-slate-800 ${textClass}`}>
-                        {cat.icon}
-                      </div>
-                      <span className="font-bold text-slate-200 text-sm">{cat.title}</span>
-                    </div>
-                    
-                    <div className="flex-1">
-                      <div className="flex justify-between items-end mb-1.5">
-                        <span className="text-xs font-bold text-slate-400">{score}/100</span>
-                        <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${pillClass}`}>
-                          {pillText}
-                        </span>
-                      </div>
-                      <div className="w-full bg-slate-800 rounded-full h-2">
-                        <div className={`h-2 rounded-full ${bgClass}`} style={{ width: `${score}%` }}></div>
-                      </div>
-                    </div>
+                {/* Active Issue Counts */}
+                <div className="grid grid-cols-4 gap-3 mb-6">
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-black text-red-500">{reportData?.severity_counts?.Critical || 0}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-red-400 font-bold mt-1">Critical</div>
                   </div>
-                );
-              })}
+                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-black text-orange-500">{reportData?.severity_counts?.High || 0}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-orange-400 font-bold mt-1">High</div>
+                  </div>
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-black text-amber-500">{reportData?.severity_counts?.Medium || 0}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-amber-400 font-bold mt-1">Medium</div>
+                  </div>
+                  <div className="bg-yellow-400/10 border border-yellow-400/20 rounded-lg p-3 text-center">
+                    <div className="text-2xl font-black text-yellow-400">{reportData?.severity_counts?.Low || 0}</div>
+                    <div className="text-[10px] uppercase tracking-wider text-yellow-500 font-bold mt-1">Low</div>
+                  </div>
+                </div>
+
+                {/* Compliance Snapshot */}
+                <div className="mb-6">
+                  <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Compliance Readiness Snapshot</h5>
+                  <div className="space-y-2">
+                    {[
+                      { label: 'PCI-DSS 4.0', key: 'pci_dss_4_0' },
+                      { label: 'NIST SP 800-53', key: 'nist_sp_800_53' },
+                      { label: 'ISO 27001', key: 'iso_27001' }
+                    ].map(framework => {
+                      const data = reportData?.technical_compliance?.[framework.key];
+                      const isCompliant = data?.status === 'Compliant';
+                      return (
+                        <div key={framework.key} className="flex justify-between items-center text-sm border-b border-slate-800/50 pb-2">
+                          <span className="text-slate-300 font-medium">{framework.label}</span>
+                          {isCompliant ? (
+                            <span className="text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Compliant</span>
+                          ) : (
+                            <span className="text-red-400 text-xs font-bold bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">Action Required ({data?.failed_controls?.length || 0} Failed)</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* OWASP Coverage Badges */}
+                <div className="mb-6">
+                  <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">OWASP Threat Coverage</h5>
+                  <div className="flex flex-wrap gap-2">
+                    {reportData?.owasp_coverage?.length > 0 ? reportData.owasp_coverage.map((cat, idx) => (
+                      <span key={idx} className="bg-slate-800 text-slate-300 text-[10px] font-mono px-2 py-1 rounded border border-slate-700">
+                        {cat}
+                      </span>
+                    )) : (
+                      <span className="text-slate-500 text-xs italic">No OWASP mappings active for findings.</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Remediation Speed Highlight */}
+                <div className="bg-indigo-900/30 border border-indigo-500/30 rounded-lg p-3 flex items-center gap-3">
+                  <div className="text-xl">⚡</div>
+                  <div className="text-xs text-indigo-200 font-medium leading-relaxed">
+                    <strong className="text-indigo-400 font-bold block mb-0.5">Instant Remediation Ready</strong>
+                    Copy-paste server config fixes (Nginx, Apache, Vercel, Cloudflare) are available in the Vulnerability Matrix below.
+                  </div>
+                </div>
+                
+              </div>
             </div>
           </div>
         </div>
