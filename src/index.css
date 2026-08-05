@@ -28,13 +28,23 @@
    ========================================== */
 @page {
   size: A4 portrait;
-  margin: 12mm 10mm 12mm 10mm; /* Removes default browser headers, dates, and page URLs */
+  margin: 10mm; /* Removes default browser headers, dates, and page URLs */
 }
 
 @media print {
   /* 1. Hide site navigation, buttons, and interactive web noise */
-  nav, header, footer, .no-print, button, [role="tablist"], .whatsapp-btn {
+  .scan-metadata-bar, .whatsapp-cta, .no-print, nav, header, footer, button, [role="tablist"], .whatsapp-btn {
     display: none !important;
+  }
+  
+  table {
+    width: 100% !important;
+    table-layout: fixed !important;
+  }
+  
+  td, th {
+    word-wrap: break-word !important;
+    white-space: normal !important;
   }
 
   /* 2. OVERRIDE ALL HEIGHT & OVERFLOW RESTRICTIONS (Prevents Page 1 Cutoff) */
@@ -68,4 +78,11 @@
     background-color: #0b0f19 !important;
     color: #f3f4f6 !important;
   }
+
+  /* 6. Tighten padding and margins to compress output */
+  .p-6 { padding: 1rem !important; }
+  .p-8 { padding: 1.25rem !important; }
+  .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.5rem !important; }
+  .mb-8 { margin-bottom: 1.5rem !important; }
+  th, td { padding: 0.5rem 0.75rem !important; }
 }

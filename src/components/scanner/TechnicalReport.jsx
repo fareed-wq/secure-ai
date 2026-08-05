@@ -243,12 +243,6 @@ const TechnicalReport = ({ reportData }) => {
                             </td>
                             <td className="px-6 py-4 font-bold text-slate-200 align-top">
                               <div>{finding.name}</div>
-                              {finding.remediation_snippets?.nginx && (
-                                <div className="hidden print:block mt-3 bg-slate-50 p-3 rounded border border-slate-200">
-                                  <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">Remediation Snippet (Nginx/Server)</div>
-                                  <pre className="text-slate-800 font-mono text-[10px] whitespace-pre-wrap">{finding.remediation_snippets.nginx}</pre>
-                                </div>
-                              )}
                             </td>
                             <td className="px-6 py-4">
                               {finding.owasp && finding.owasp !== "N/A" ? (
@@ -266,6 +260,18 @@ const TechnicalReport = ({ reportData }) => {
                               </button>
                             </td>
                           </tr>
+                          
+                          {/* Print-only row for full-width code snippet */}
+                          {finding.remediation_snippets?.nginx && (
+                            <tr className="hidden print:table-row">
+                              <td colSpan={5} className="px-6 pb-6 pt-0 w-full block">
+                                <div className="bg-slate-50 p-4 rounded border border-slate-200 w-full block">
+                                  <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">Remediation Snippet (Nginx/Server)</div>
+                                  <pre className="text-slate-800 font-mono text-[10px] whitespace-pre-wrap">{finding.remediation_snippets.nginx}</pre>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
                           
                           <AnimatePresence>
                             {expandedRow === idx && (
