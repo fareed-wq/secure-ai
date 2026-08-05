@@ -22,7 +22,7 @@ class Config:
     REQUEST_TIMEOUT = 6.0
     MAX_REDIRECTS = 5
     USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    THREAD_POOL_SIZE = 12
+    THREAD_POOL_SIZE = 15
     COMMON_SUBDOMAINS = ["trcadmin", "console", "s3", "s3b", "beta", "api", "dev"]
     SEVERITY_WEIGHTS = {
         "Critical": -15,
@@ -43,6 +43,16 @@ class Config:
 
 # --- GLOBAL COMPLIANCE FRAMEWORK MAPPING DATABASE ---
 COMPLIANCE_MAP = {
+    "Exposed .env Configuration File": {
+        "pci_dss": "3.2 (Protect Stored Account Data)",
+        "nist": "IA-5 (Authenticator Management)",
+        "iso27001": "A.8.12 (Data Leakage Prevention)"
+    },
+    "Exposed .git Repository": {
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "nist": "SA-11 (Developer Security Testing)",
+        "iso27001": "A.8.28 (Secure Coding)"
+    },
     "Missing Strict-Transport-Security (HSTS)": {
         "pci_dss": "4.1.2 (Encrypt Management Sessions)",
         "nist": "SC-8 (Transmission Confidentiality)",
@@ -68,6 +78,11 @@ COMPLIANCE_MAP = {
         "nist": "SI-10 (Information Input Validation)",
         "iso27001": "A.8.28 (Secure Coding)"
     },
+    "Missing Permissions-Policy": {
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "nist": "AC-3 (Access Enforcement)",
+        "iso27001": "A.8.20 (Network Security)"
+    },
     "Missing Referrer-Policy": {
         "pci_dss": "6.5.10 (Broken Access Control)",
         "nist": "SC-13 (Cryptographic Protection)",
@@ -92,6 +107,11 @@ COMPLIANCE_MAP = {
         "pci_dss": "5.4.1 (Anti-Phishing & Spoofing)",
         "nist": "SI-8 (Spam & Phishing Protection)",
         "iso27001": "A.8.19 (Information Security in Systems)"
+    },
+    "Missing CAA Record": {
+        "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+        "nist": "SC-13 (Cryptographic Protection)",
+        "iso27001": "A.8.24 (Use of Cryptography)"
     },
     "Wildcard CORS Policy": {
         "pci_dss": "6.4.1 (Public Web Application Protection)",
@@ -160,8 +180,6 @@ class BlockAllCookies(DefaultCookiePolicy):
 def get_http_session() -> requests.Session:
     session = requests.Session()
     session.headers.update({"User-Agent": Config.USER_AGENT})
-    
-    # Disable cookie persistence safely
     session.cookies.set_policy(BlockAllCookies())
     
     adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25)
@@ -171,10 +189,6 @@ def get_http_session() -> requests.Session:
 
 # --- SSRF-SAFE REQUEST WRAPPER ---
 def safe_request(method: str, url: str, session: requests.Session = None, max_redirects: int = Config.MAX_REDIRECTS, timeout: float = Config.REQUEST_TIMEOUT, **kwargs) -> requests.Response:
-    """
-    Executes HTTP requests while explicitly validating the IP address 
-    of every hostname in a redirect chain to prevent SSRF attacks.
-    """
     current_url = url
     own_session = False
     
@@ -182,7 +196,6 @@ def safe_request(method: str, url: str, session: requests.Session = None, max_re
         session = get_http_session()
         own_session = True
 
-    # Disable automatic redirects to inspect each hop manually
     kwargs["allow_redirects"] = False
 
     try:
@@ -197,7 +210,6 @@ def safe_request(method: str, url: str, session: requests.Session = None, max_re
 
             resp = session.request(method, current_url, timeout=timeout, **kwargs)
 
-            # Check for redirect status codes
             if resp.is_redirect or resp.status_code in (301, 302, 303, 307, 308):
                 location = resp.headers.get("Location")
                 if not location:
@@ -245,6 +257,83 @@ class ScannerModule(ABC):
 
 # --- MODULES ---
 
+class ExposedFilesModule(ScannerModule):
+    module_name = "ExposedFiles"
+    description = "Checks for publicly exposed sensitive files (.env, .git)."
+
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
+        findings = []
+        scheme = "https" if url.startswith("https") else "http"
+        
+        # 1. Check for exposed .env
+        try:
+            env_url = f"{scheme}://{hostname}/.env"
+            resp = safe_request("GET", env_url, session=session, timeout=4.0)
+            if resp.status_code == 200 and any(k in resp.text.upper() for k in ["DB_", "SECRET", "PASSWORD", "APP_KEY", "API_KEY"]):
+                findings.append(self.make_finding(
+                    "Exposed .env Configuration File",
+                    "Critical",
+                    "A .env file containing sensitive credentials or API keys is publicly accessible.",
+                    env_url,
+                    remediation="Restrict web server access to dotfiles or move .env outside the web root immediately.",
+                    owasp="A05: Security Misconfiguration"
+                ))
+        except Exception:
+            pass
+
+        # 2. Check for exposed .git/HEAD
+        try:
+            git_url = f"{scheme}://{hostname}/.git/HEAD"
+            resp = safe_request("GET", git_url, session=session, timeout=4.0)
+            if resp.status_code == 200 and "ref: refs/" in resp.text:
+                findings.append(self.make_finding(
+                    "Exposed .git Repository",
+                    "High",
+                    "The Git source code repository is publicly exposed, allowing source code downloading.",
+                    git_url,
+                    remediation="Configure the web server to block access to the /.git directory.",
+                    owasp="A05: Security Misconfiguration"
+                ))
+        except Exception:
+            pass
+
+        return findings
+
+class DNSCAAModule(ScannerModule):
+    module_name = "DNSCAA"
+    description = "Probes CAA records via Google DNS-over-HTTPS."
+
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
+        findings = []
+        domain = hostname[4:] if hostname.startswith("www.") else hostname
+
+        try:
+            caa_url = f"https://dns.google/resolve?name={domain}&type=CAA"
+            resp = safe_request("GET", caa_url, session=session, timeout=4.0)
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                if "Answer" in data and len(data["Answer"]) > 0:
+                    caa_issuers = [rec.get("data", "") for rec in data["Answer"]]
+                    findings.append(self.make_finding(
+                        "CAA Records Configured",
+                        "Passed",
+                        "Certificate Authority Authorization (CAA) DNS records restrict which CAs can issue certificates.",
+                        ", ".join(caa_issuers)
+                    ))
+                else:
+                    findings.append(self.make_finding(
+                        "Missing CAA Record",
+                        "Low",
+                        "No CAA DNS records found. Any valid Certificate Authority can issue SSL certificates for this domain.",
+                        "CAA DNS record absent.",
+                        remediation="Add CAA records in DNS specifying authorized CAs (e.g., 'issue letsencrypt.org').",
+                        owasp="A02: Cryptographic Failures"
+                    ))
+        except Exception as e:
+            logger.error(f"DNSCAAModule failed: {e}")
+        return findings
+
 class DNSEmailSecurityModule(ScannerModule):
     module_name = "DNSEmailSecurity"
     description = "Probes SPF, DMARC, and MX records via DNS-over-HTTPS."
@@ -254,7 +343,7 @@ class DNSEmailSecurityModule(ScannerModule):
         domain = hostname[4:] if hostname.startswith("www.") else hostname
 
         try:
-            # 1. Probe SPF via Google DNS-over-HTTPS
+            # 1. Probe SPF
             spf_url = f"https://dns.google/resolve?name={domain}&type=TXT"
             resp = safe_request("GET", spf_url, session=session, timeout=4.0)
             spf_found = False
@@ -293,7 +382,7 @@ class DNSEmailSecurityModule(ScannerModule):
                     owasp="A05: Security Misconfiguration"
                 ))
 
-            # 2. Probe DMARC via Google DNS-over-HTTPS
+            # 2. Probe DMARC
             dmarc_url = f"https://dns.google/resolve?name=_dmarc.{domain}&type=TXT"
             d_resp = safe_request("GET", dmarc_url, session=session, timeout=4.0)
             dmarc_found = False
@@ -456,13 +545,11 @@ class AdvancedCookieModule(ScannerModule):
                 
                 cookie_name = parts[0].split("=")[0].strip()
                 
-                # Skip duplicate cookie names in the same response
                 if cookie_name in seen_cookies:
                     continue
                 seen_cookies.add(cookie_name)
 
                 directives = [p.lower() for p in parts[1:]]
-                
                 cookie_sev = "Informational" if cookie_name.upper() in self.NON_SENSITIVE_COOKIES else "Medium"
                 
                 if "httponly" not in directives:
@@ -549,6 +636,35 @@ class EnhancedTLSModule(ScannerModule):
             findings.append(self.make_finding("SSL/TLS Connection Failure", "High", "Failed to establish a secure TLS connection.", str(e), remediation="Ensure the server supports standard TLS protocols.", owasp="A02: Cryptographic Failures"))
         return findings
 
+class PermissionsPolicyModule(ScannerModule):
+    module_name = "PermissionsPolicy"
+    description = "Checks Permissions-Policy header."
+
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
+        findings = []
+        try:
+            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            headers = resp.headers
+            if "Permissions-Policy" not in headers:
+                findings.append(self.make_finding(
+                    "Missing Permissions-Policy",
+                    "Low",
+                    "Missing Permissions-Policy header allows web pages to access browser feature APIs unconditionally.",
+                    "Header absent.",
+                    remediation="Add Permissions-Policy: camera=(), microphone=(), geolocation=().",
+                    owasp="A05: Security Misconfiguration"
+                ))
+            else:
+                findings.append(self.make_finding(
+                    "Permissions-Policy Configured",
+                    "Passed",
+                    "Permissions-Policy header is active.",
+                    headers["Permissions-Policy"][:100]
+                ))
+        except Exception:
+            pass
+        return findings
+
 class SecurityHeadersModule(ScannerModule):
     module_name = "SecurityHeaders"
     description = "Checks HSTS, CSP, XFO, etc."
@@ -626,9 +742,7 @@ class SubdomainProbingModule(ScannerModule):
     
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
-        domain = hostname
-        if domain.startswith("www."):
-            domain = domain[4:]
+        domain = hostname[4:] if hostname.startswith("www.") else hostname
             
         for sub in Config.COMMON_SUBDOMAINS:
             sub_url = f"https://{sub}.{domain}"
@@ -646,7 +760,10 @@ class SubdomainProbingModule(ScannerModule):
 
 # Engine Registry
 REGISTERED_MODULES = [
+    ExposedFilesModule(),
+    DNSCAAModule(),
     DNSEmailSecurityModule(),
+    PermissionsPolicyModule(),
     TechFingerprintModule(),
     InformationDisclosureModule(),
     RobotsTxtModule(),
@@ -673,7 +790,6 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     if probe_subdomains:
         active_modules.append(SubdomainProbingModule())
         
-    # Reuse a single pooled HTTP session across all worker threads
     with get_http_session() as session:
         with ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE) as pool:
             futures = {pool.submit(mod.run, url, hostname, session): mod for mod in active_modules}
