@@ -80,7 +80,7 @@ const TechnicalReport = ({ reportData }) => {
             {/* Left Column: Radar Chart */}
             <div className="lg:col-span-5 h-[350px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
+                <RadarChart cx="50%" cy="50%" outerRadius="65%" margin={{ top: 20, right: 40, bottom: 20, left: 40 }} data={radarData} style={{ overflow: 'visible' }}>
                   <PolarGrid stroke="#1e293b" />
                   <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
