@@ -10,9 +10,11 @@ import requests
 from requests.adapters import HTTPAdapter
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response, HTMLResponse
 from pydantic import BaseModel, field_validator
 from abc import ABC, abstractmethod
 import datetime
+from io import BytesIO
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,6 +42,76 @@ class Config:
         "D": 50,
         "F": 0
     }
+
+# --- REMEDIATION SNIPPETS DATABASE ---
+REMEDIATION_SNIPPETS = {
+    "Missing Strict-Transport-Security (HSTS)": {
+        "nginx": 'add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;',
+        "apache": 'Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"',
+        "vercel": '{\n  "headers": [{\n    "source": "/(.*)",\n    "headers": [{ "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" }]\n  }]\n}',
+        "cloudflare": 'Rules -> Transform Rules -> Modify Response Header -> Set "Strict-Transport-Security" to "max-age=31536000; includeSubDomains; preload"'
+    },
+    "Missing Content-Security-Policy (CSP)": {
+        "nginx": 'add_header Content-Security-Policy "default-src \'self\'; script-src \'self\'; object-src \'none\';" always;',
+        "apache": 'Header always set Content-Security-Policy "default-src \'self\'; script-src \'self\'; object-src \'none\';"',
+        "vercel": '{\n  "headers": [{\n    "source": "/(.*)",\n    "headers": [{ "key": "Content-Security-Policy", "value": "default-src \'self\';" }]\n  }]\n}',
+        "cloudflare": 'Rules -> Modify Response Header -> Set "Content-Security-Policy" to "default-src \'self\';"'
+    },
+    "Weak Content-Security-Policy (CSP)": {
+        "nginx": 'add_header Content-Security-Policy "default-src \'self\'; script-src \'self\'; object-src \'none\';" always;',
+        "apache": 'Header always set Content-Security-Policy "default-src \'self\'; script-src \'self\'; object-src \'none\';"',
+        "vercel": 'Remove \'unsafe-inline\' and \'unsafe-eval\' from script-src in your vercel.json header config.',
+        "cloudflare": 'Update Content-Security-Policy header rule to remove unsafe directives.'
+    },
+    "Missing X-Frame-Options": {
+        "nginx": 'add_header X-Frame-Options "DENY" always;',
+        "apache": 'Header always set X-Frame-Options "DENY"',
+        "vercel": '{\n  "headers": [{ "source": "/(.*)", "headers": [{ "key": "X-Frame-Options", "value": "DENY" }] }]\n}',
+        "cloudflare": 'Rules -> Modify Response Header -> Set "X-Frame-Options" to "DENY"'
+    },
+    "Missing X-Content-Type-Options": {
+        "nginx": 'add_header X-Content-Type-Options "nosniff" always;',
+        "apache": 'Header always set X-Content-Type-Options "nosniff"',
+        "vercel": '{\n  "headers": [{ "source": "/(.*)", "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }] }]\n}',
+        "cloudflare": 'Rules -> Modify Response Header -> Set "X-Content-Type-Options" to "nosniff"'
+    },
+    "Missing Referrer-Policy": {
+        "nginx": 'add_header Referrer-Policy "strict-origin-when-cross-origin" always;',
+        "apache": 'Header always set Referrer-Policy "strict-origin-when-cross-origin"',
+        "vercel": '{\n  "headers": [{ "source": "/(.*)", "headers": [{ "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }] }]\n}',
+        "cloudflare": 'Rules -> Modify Response Header -> Set "Referrer-Policy" to "strict-origin-when-cross-origin"'
+    },
+    "Missing Permissions-Policy": {
+        "nginx": 'add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;',
+        "apache": 'Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"',
+        "vercel": '{\n  "headers": [{ "source": "/(.*)", "headers": [{ "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }] }]\n}',
+        "cloudflare": 'Rules -> Modify Response Header -> Set "Permissions-Policy" to "camera=(), microphone=(), geolocation=()"'
+    },
+    "Exposed .env Configuration File": {
+        "nginx": 'location ~ /\\.env {\n    deny all;\n    return 404;\n}',
+        "apache": '<Files ".env">\n    Require all denied\n</Files>',
+        "vercel": 'Ensure .env is listed in .gitignore and not exported in public directory builds.',
+        "cloudflare": 'Security -> WAF -> Custom Rules -> Block URI Path equals "/.env"'
+    },
+    "Exposed .git Repository": {
+        "nginx": 'location ~ /\\.git {\n    deny all;\n    return 404;\n}',
+        "apache": '<DirectoryMatch "/\\.git">\n    Require all denied\n</DirectoryMatch>',
+        "vercel": 'Ensure .git folder is excluded from deployed output.',
+        "cloudflare": 'Security -> WAF -> Custom Rules -> Block URI Path starts_with "/.git"'
+    },
+    "Missing SPF Record": {
+        "dns_record": 'Type: TXT | Name: @ | Value: v=spf1 include:_spf.google.com ~all',
+        "note": 'Publish an SPF TXT record at your domain root authorizing valid mail servers.'
+    },
+    "Missing DMARC Policy": {
+        "dns_record": 'Type: TXT | Name: _dmarc | Value: v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@yourdomain.com',
+        "note": 'Publish a DMARC TXT record at _dmarc.yourdomain.com with enforcement policy.'
+    },
+    "Missing CAA Record": {
+        "dns_record": 'Type: CAA | Name: @ | Value: 0 issue "letsencrypt.org"',
+        "note": 'Publish CAA DNS records restricting SSL issuance to specific Certificate Authorities.'
+    }
+}
 
 # --- GLOBAL COMPLIANCE FRAMEWORK MAPPING DATABASE ---
 COMPLIANCE_MAP = {
@@ -168,14 +240,10 @@ def is_public_hostname(hostname: str) -> bool:
 
 # Inherit from DefaultCookiePolicy to prevent AttributeError crashes
 class BlockAllCookies(DefaultCookiePolicy):
-    def set_ok(self, cookie, request): 
-        return False
-    def return_ok(self, cookie, request): 
-        return False
-    def domain_return_ok(self, cookie, request): 
-        return False
-    def path_return_ok(self, cookie, request): 
-        return False
+    def set_ok(self, cookie, request): return False
+    def return_ok(self, cookie, request): return False
+    def domain_return_ok(self, cookie, request): return False
+    def path_return_ok(self, cookie, request): return False
 
 def get_http_session() -> requests.Session:
     session = requests.Session()
@@ -236,7 +304,7 @@ class ScannerModule(ABC):
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         pass
 
-    def make_finding(self, name, severity, description, evidence, confidence="High", remediation="N/A", owasp="N/A", compliance=None):
+    def make_finding(self, name, severity, description, evidence, confidence="High", remediation="N/A", owasp="N/A", compliance=None, category="information_exposure"):
         if compliance is None:
             compliance = COMPLIANCE_MAP.get(name, {
                 "pci_dss": "6.4.1 (Web App Security)",
@@ -244,13 +312,17 @@ class ScannerModule(ABC):
                 "iso27001": "A.8.20 (Network Security)"
             })
             
+        snippets = REMEDIATION_SNIPPETS.get(name, {})
+        
         return {
             "name": name,
             "severity": severity,
+            "category": category,
             "description": description,
             "evidence": evidence,
             "confidence": confidence,
             "remediation": remediation,
+            "remediation_snippets": snippets,
             "owasp": owasp,
             "compliance": compliance
         }
@@ -265,7 +337,6 @@ class ExposedFilesModule(ScannerModule):
         findings = []
         scheme = "https" if url.startswith("https") else "http"
         
-        # 1. Check for exposed .env
         try:
             env_url = f"{scheme}://{hostname}/.env"
             resp = safe_request("GET", env_url, session=session, timeout=4.0)
@@ -276,12 +347,12 @@ class ExposedFilesModule(ScannerModule):
                     "A .env file containing sensitive credentials or API keys is publicly accessible.",
                     env_url,
                     remediation="Restrict web server access to dotfiles or move .env outside the web root immediately.",
-                    owasp="A05: Security Misconfiguration"
+                    owasp="A05: Security Misconfiguration",
+                    category="information_exposure"
                 ))
         except Exception:
             pass
 
-        # 2. Check for exposed .git/HEAD
         try:
             git_url = f"{scheme}://{hostname}/.git/HEAD"
             resp = safe_request("GET", git_url, session=session, timeout=4.0)
@@ -292,7 +363,8 @@ class ExposedFilesModule(ScannerModule):
                     "The Git source code repository is publicly exposed, allowing source code downloading.",
                     git_url,
                     remediation="Configure the web server to block access to the /.git directory.",
-                    owasp="A05: Security Misconfiguration"
+                    owasp="A05: Security Misconfiguration",
+                    category="information_exposure"
                 ))
         except Exception:
             pass
@@ -319,7 +391,8 @@ class DNSCAAModule(ScannerModule):
                         "CAA Records Configured",
                         "Passed",
                         "Certificate Authority Authorization (CAA) DNS records restrict which CAs can issue certificates.",
-                        ", ".join(caa_issuers)
+                        ", ".join(caa_issuers),
+                        category="domain_email"
                     ))
                 else:
                     findings.append(self.make_finding(
@@ -328,7 +401,8 @@ class DNSCAAModule(ScannerModule):
                         "No CAA DNS records found. Any valid Certificate Authority can issue SSL certificates for this domain.",
                         "CAA DNS record absent.",
                         remediation="Add CAA records in DNS specifying authorized CAs (e.g., 'issue letsencrypt.org').",
-                        owasp="A02: Cryptographic Failures"
+                        owasp="A02: Cryptographic Failures",
+                        category="domain_email"
                     ))
         except Exception as e:
             logger.error(f"DNSCAAModule failed: {e}")
@@ -343,7 +417,6 @@ class DNSEmailSecurityModule(ScannerModule):
         domain = hostname[4:] if hostname.startswith("www.") else hostname
 
         try:
-            # 1. Probe SPF
             spf_url = f"https://dns.google/resolve?name={domain}&type=TXT"
             resp = safe_request("GET", spf_url, session=session, timeout=4.0)
             spf_found = False
@@ -361,14 +434,16 @@ class DNSEmailSecurityModule(ScannerModule):
                                 "SPF record explicitly allows any IP address to spoof emails for this domain.",
                                 data_str,
                                 remediation="Change '+all' to '~all' or '-all' in your SPF TXT record.",
-                                owasp="A05: Security Misconfiguration"
+                                owasp="A05: Security Misconfiguration",
+                                category="domain_email"
                             ))
                         else:
                             findings.append(self.make_finding(
                                 "SPF Record Configured",
                                 "Passed",
                                 "Sender Policy Framework (SPF) record is validly configured.",
-                                data_str
+                                data_str,
+                                category="domain_email"
                             ))
                         break
 
@@ -379,10 +454,10 @@ class DNSEmailSecurityModule(ScannerModule):
                     "No SPF TXT record found. The domain is exposed to email spoofing and phishing attacks.",
                     "TXT record absent.",
                     remediation="Publish a valid SPF TXT record (e.g., 'v=spf1 include:_spf.google.com ~all').",
-                    owasp="A05: Security Misconfiguration"
+                    owasp="A05: Security Misconfiguration",
+                    category="domain_email"
                 ))
 
-            # 2. Probe DMARC
             dmarc_url = f"https://dns.google/resolve?name=_dmarc.{domain}&type=TXT"
             d_resp = safe_request("GET", dmarc_url, session=session, timeout=4.0)
             dmarc_found = False
@@ -400,14 +475,16 @@ class DNSEmailSecurityModule(ScannerModule):
                                 "DMARC policy is set to 'none', which monitors but does not block spoofed emails.",
                                 d_str,
                                 remediation="Upgrade DMARC policy from 'p=none' to 'p=quarantine' or 'p=reject'.",
-                                owasp="A05: Security Misconfiguration"
+                                owasp="A05: Security Misconfiguration",
+                                category="domain_email"
                             ))
                         else:
                             findings.append(self.make_finding(
                                 "Strong DMARC Policy Configured",
                                 "Passed",
                                 "DMARC record is enforced with quarantine or reject policy.",
-                                d_str
+                                d_str,
+                                category="domain_email"
                             ))
                         break
 
@@ -418,7 +495,8 @@ class DNSEmailSecurityModule(ScannerModule):
                     f"No DMARC record found at _dmarc.{domain}. Increases domain impersonation risk.",
                     "_dmarc TXT record absent.",
                     remediation=f"Publish a DMARC TXT record at _dmarc.{domain} with a valid enforcement policy.",
-                    owasp="A05: Security Misconfiguration"
+                    owasp="A05: Security Misconfiguration",
+                    category="domain_email"
                 ))
         except Exception as e:
             logger.error(f"DNSEmailSecurityModule failed: {e}")
@@ -434,10 +512,10 @@ class TechFingerprintModule(ScannerModule):
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
             server = resp.headers.get("Server")
             if server:
-                findings.append(self.make_finding("Server Header Exposed", "Informational", "The server software and version might be exposed.", server))
+                findings.append(self.make_finding("Server Header Exposed", "Informational", "The server software and version might be exposed.", server, category="information_exposure"))
             x_powered = resp.headers.get("X-Powered-By")
             if x_powered:
-                findings.append(self.make_finding("X-Powered-By Header Exposed", "Low", "Backend technology is explicitly declared.", x_powered, remediation="Remove X-Powered-By header.", owasp="A05: Security Misconfiguration"))
+                findings.append(self.make_finding("X-Powered-By Header Exposed", "Low", "Backend technology is explicitly declared.", x_powered, remediation="Remove X-Powered-By header.", owasp="A05: Security Misconfiguration", category="information_exposure"))
         except Exception:
             pass
         return findings
@@ -452,7 +530,7 @@ class InformationDisclosureModule(ScannerModule):
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
             server = resp.headers.get("Server", "")
             if any(char.isdigit() for char in server) and ("/" in server or "-" in server):
-                findings.append(self.make_finding("Verbose Server Banner", "Low", "Server header leaks exact version numbers.", server, remediation="Configure server to only return generic names (e.g., 'nginx').", owasp="A05: Security Misconfiguration"))
+                findings.append(self.make_finding("Verbose Server Banner", "Low", "Server header leaks exact version numbers.", server, remediation="Configure server to only return generic names (e.g., 'nginx').", owasp="A05: Security Misconfiguration", category="information_exposure"))
         except Exception:
             pass
         return findings
@@ -468,7 +546,7 @@ class RobotsTxtModule(ScannerModule):
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.status_code == 200 and "user-agent" in resp.text.lower():
                 lines = len(resp.text.splitlines())
-                findings.append(self.make_finding("robots.txt Found", "Informational", f"Found robots.txt with {lines} lines.", target))
+                findings.append(self.make_finding("robots.txt Found", "Informational", f"Found robots.txt with {lines} lines.", target, category="information_exposure"))
         except Exception:
             pass
         return findings
@@ -483,7 +561,7 @@ class SitemapModule(ScannerModule):
             target = f"https://{hostname}/sitemap.xml" if url.startswith("https") else f"http://{hostname}/sitemap.xml"
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.status_code == 200 and ("<urlset" in resp.text or "<sitemapindex" in resp.text):
-                findings.append(self.make_finding("sitemap.xml Found", "Informational", "Found XML sitemap.", target))
+                findings.append(self.make_finding("sitemap.xml Found", "Informational", "Found XML sitemap.", target, category="information_exposure"))
         except Exception:
             pass
         return findings
@@ -498,9 +576,9 @@ class SecurityTxtModule(ScannerModule):
             target = f"https://{hostname}/.well-known/security.txt" if url.startswith("https") else f"http://{hostname}/.well-known/security.txt"
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.status_code == 200 and "contact" in resp.text.lower():
-                findings.append(self.make_finding("security.txt Found", "Passed", "Organization has published security.txt.", target))
+                findings.append(self.make_finding("security.txt Found", "Passed", "Organization has published security.txt.", target, category="information_exposure"))
             else:
-                findings.append(self.make_finding("security.txt Missing", "Informational", "No standard security.txt found.", target, remediation="Publish a security.txt file at /.well-known/security.txt."))
+                findings.append(self.make_finding("security.txt Missing", "Informational", "No standard security.txt found.", target, remediation="Publish a security.txt file at /.well-known/security.txt.", category="information_exposure"))
         except Exception:
             pass
         return findings
@@ -515,9 +593,9 @@ class CORSModule(ScannerModule):
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
             acao = resp.headers.get("Access-Control-Allow-Origin")
             if acao == "*":
-                findings.append(self.make_finding("Wildcard CORS Policy", "Medium", "The API allows cross-origin requests from any domain.", "Access-Control-Allow-Origin: *", remediation="Restrict CORS to specific trusted origins.", owasp="A05: Security Misconfiguration"))
+                findings.append(self.make_finding("Wildcard CORS Policy", "Medium", "The API allows cross-origin requests from any domain.", "Access-Control-Allow-Origin: *", remediation="Restrict CORS to specific trusted origins.", owasp="A05: Security Misconfiguration", category="http_headers"))
             elif acao:
-                findings.append(self.make_finding("CORS Enabled", "Informational", "Cross-Origin Resource Sharing is enabled.", f"Access-Control-Allow-Origin: {acao}"))
+                findings.append(self.make_finding("CORS Enabled", "Informational", "Cross-Origin Resource Sharing is enabled.", f"Access-Control-Allow-Origin: {acao}", category="http_headers"))
         except Exception:
             pass
         return findings
@@ -544,7 +622,6 @@ class AdvancedCookieModule(ScannerModule):
                     continue
                 
                 cookie_name = parts[0].split("=")[0].strip()
-                
                 if cookie_name in seen_cookies:
                     continue
                 seen_cookies.add(cookie_name)
@@ -559,7 +636,8 @@ class AdvancedCookieModule(ScannerModule):
                         "Cookie can be accessed via client-side scripts.", 
                         f"Cookie: {cookie_name}", 
                         remediation="Add HttpOnly flag to cookies.", 
-                        owasp="A05: Security Misconfiguration"
+                        owasp="A05: Security Misconfiguration",
+                        category="session_cookies"
                     ))
                 
                 if url.startswith("https") and "secure" not in directives:
@@ -569,7 +647,8 @@ class AdvancedCookieModule(ScannerModule):
                         "Cookie transmitted in cleartext if sent over HTTP.", 
                         f"Cookie: {cookie_name}", 
                         remediation="Add Secure flag to cookies.", 
-                        owasp="A02: Cryptographic Failures"
+                        owasp="A02: Cryptographic Failures",
+                        category="session_cookies"
                     ))
                 
                 samesite_found = any(p.startswith("samesite") for p in directives)
@@ -580,7 +659,8 @@ class AdvancedCookieModule(ScannerModule):
                         "Cookie lacks SameSite attribute, increasing CSRF risk.", 
                         f"Cookie: {cookie_name}", 
                         remediation="Add SameSite=Lax or SameSite=Strict.", 
-                        owasp="A01: Broken Access Control"
+                        owasp="A01: Broken Access Control",
+                        category="session_cookies"
                     ))
         except Exception:
             pass
@@ -596,9 +676,9 @@ class HTTPSRedirectModule(ScannerModule):
         try:
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.url.startswith("https://"):
-                findings.append(self.make_finding("HTTPS Redirection Configured", "Passed", "HTTP traffic is correctly redirected to HTTPS.", f"Final Target: {resp.url}"))
+                findings.append(self.make_finding("HTTPS Redirection Configured", "Passed", "HTTP traffic is correctly redirected to HTTPS.", f"Final Target: {resp.url}", category="encryption_tls"))
             else:
-                findings.append(self.make_finding("Missing HTTPS Redirection", "High", "The server accepts cleartext HTTP connections without redirecting to HTTPS.", f"Final URL: {resp.url}", remediation="Configure the server to redirect all port 80 traffic to 443 (HTTPS).", owasp="A02: Cryptographic Failures"))
+                findings.append(self.make_finding("Missing HTTPS Redirection", "High", "The server accepts cleartext HTTP connections without redirecting to HTTPS.", f"Final URL: {resp.url}", remediation="Configure the server to redirect all port 80 traffic to 443 (HTTPS).", owasp="A02: Cryptographic Failures", category="encryption_tls"))
         except requests.exceptions.RequestException:
             pass
         return findings
@@ -616,12 +696,12 @@ class EnhancedTLSModule(ScannerModule):
                     cert = ssock.getpeercert()
                     version = ssock.version()
                     
-                    findings.append(self.make_finding("Valid SSL/TLS Certificate", "Passed", "The server presents a valid TLS certificate.", f"Version: {version}", owasp="A02: Cryptographic Failures"))
+                    findings.append(self.make_finding("Valid SSL/TLS Certificate", "Passed", "The server presents a valid TLS certificate.", f"Version: {version}", owasp="A02: Cryptographic Failures", category="encryption_tls"))
                     
                     subject = dict(x[0] for x in cert.get("subject", []))
                     cn = subject.get("commonName", "")
                     if cn.startswith("*"):
-                        findings.append(self.make_finding("Wildcard Certificate in Use", "Informational", "Wildcard certificates carry broader risk if compromised.", f"CN: {cn}", remediation="Consider using specific SANs instead of wildcards.", owasp="A02: Cryptographic Failures"))
+                        findings.append(self.make_finding("Wildcard Certificate in Use", "Informational", "Wildcard certificates carry broader risk if compromised.", f"CN: {cn}", remediation="Consider using specific SANs instead of wildcards.", owasp="A02: Cryptographic Failures", category="encryption_tls"))
                     
                     not_after = cert.get("notAfter")
                     if not_after:
@@ -631,9 +711,9 @@ class EnhancedTLSModule(ScannerModule):
                         days_left = (expire_date - now).days
                         
                         if days_left < 30:
-                            findings.append(self.make_finding("Certificate Expiring Soon", "Medium", f"Certificate expires in {days_left} days.", not_after, remediation="Renew the TLS certificate immediately.", owasp="A02: Cryptographic Failures"))
+                            findings.append(self.make_finding("Certificate Expiring Soon", "Medium", f"Certificate expires in {days_left} days.", not_after, remediation="Renew the TLS certificate immediately.", owasp="A02: Cryptographic Failures", category="encryption_tls"))
         except Exception as e:
-            findings.append(self.make_finding("SSL/TLS Connection Failure", "High", "Failed to establish a secure TLS connection.", str(e), remediation="Ensure the server supports standard TLS protocols.", owasp="A02: Cryptographic Failures"))
+            findings.append(self.make_finding("SSL/TLS Connection Failure", "High", "Failed to establish a secure TLS connection.", str(e), remediation="Ensure the server supports standard TLS protocols.", owasp="A02: Cryptographic Failures", category="encryption_tls"))
         return findings
 
 class PermissionsPolicyModule(ScannerModule):
@@ -652,14 +732,16 @@ class PermissionsPolicyModule(ScannerModule):
                     "Missing Permissions-Policy header allows web pages to access browser feature APIs unconditionally.",
                     "Header absent.",
                     remediation="Add Permissions-Policy: camera=(), microphone=(), geolocation=().",
-                    owasp="A05: Security Misconfiguration"
+                    owasp="A05: Security Misconfiguration",
+                    category="http_headers"
                 ))
             else:
                 findings.append(self.make_finding(
                     "Permissions-Policy Configured",
                     "Passed",
                     "Permissions-Policy header is active.",
-                    headers["Permissions-Policy"][:100]
+                    headers["Permissions-Policy"][:100],
+                    category="http_headers"
                 ))
         except Exception:
             pass
@@ -675,44 +757,39 @@ class SecurityHeadersModule(ScannerModule):
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
             headers = resp.headers
         except requests.exceptions.Timeout as e:
-            findings.append(self.make_finding("HTTP Request Failed (Timeout)", "High", "Connection timed out while fetching HTTP headers.", str(e)))
+            findings.append(self.make_finding("HTTP Request Failed (Timeout)", "High", "Connection timed out while fetching HTTP headers.", str(e), category="http_headers"))
             return findings
         except requests.exceptions.ConnectionError as e:
-            findings.append(self.make_finding("HTTP Request Failed (Connection Error)", "High", "Connection refused or DNS failure while fetching HTTP headers.", str(e)))
+            findings.append(self.make_finding("HTTP Request Failed (Connection Error)", "High", "Connection refused or DNS failure while fetching HTTP headers.", str(e), category="http_headers"))
             return findings
         except Exception as e:
-            findings.append(self.make_finding("HTTP Request Failed", "High", "Failed to fetch HTTP headers.", str(e)))
+            findings.append(self.make_finding("HTTP Request Failed", "High", "Failed to fetch HTTP headers.", str(e), category="http_headers"))
             return findings
 
-        # HSTS
         if "Strict-Transport-Security" not in headers:
-            findings.append(self.make_finding("Missing Strict-Transport-Security (HSTS)", "High", "Missing HSTS allows SSL-stripping.", "Header absent.", remediation="Add Strict-Transport-Security header.", owasp="A05: Security Misconfiguration"))
+            findings.append(self.make_finding("Missing Strict-Transport-Security (HSTS)", "High", "Missing HSTS allows SSL-stripping.", "Header absent.", remediation="Add Strict-Transport-Security header.", owasp="A05: Security Misconfiguration", category="encryption_tls"))
         else:
-            findings.append(self.make_finding("Strict-Transport-Security Configured", "Passed", "HSTS is present.", headers["Strict-Transport-Security"]))
+            findings.append(self.make_finding("Strict-Transport-Security Configured", "Passed", "HSTS is present.", headers["Strict-Transport-Security"], category="encryption_tls"))
 
-        # CSP
         if "Content-Security-Policy" not in headers:
-            findings.append(self.make_finding("Missing Content-Security-Policy (CSP)", "High", "Missing CSP allows XSS.", "Header absent.", remediation="Implement CSP.", owasp="A05: Security Misconfiguration"))
+            findings.append(self.make_finding("Missing Content-Security-Policy (CSP)", "High", "Missing CSP allows XSS.", "Header absent.", remediation="Implement CSP.", owasp="A05: Security Misconfiguration", category="http_headers"))
         else:
             csp = headers.get("Content-Security-Policy", "")
             if "unsafe-inline" in csp or "unsafe-eval" in csp:
-                findings.append(self.make_finding("Weak Content-Security-Policy (CSP)", "Medium", "CSP contains 'unsafe-inline' or 'unsafe-eval'.", csp[:100], remediation="Remove unsafe-inline and unsafe-eval from CSP.", owasp="A05: Security Misconfiguration"))
+                findings.append(self.make_finding("Weak Content-Security-Policy (CSP)", "Medium", "CSP contains 'unsafe-inline' or 'unsafe-eval'.", csp[:100], remediation="Remove unsafe-inline and unsafe-eval from CSP.", owasp="A05: Security Misconfiguration", category="http_headers"))
             else:
-                findings.append(self.make_finding("Content-Security-Policy Configured", "Passed", "CSP is present and strict.", csp[:100]))
+                findings.append(self.make_finding("Content-Security-Policy Configured", "Passed", "CSP is present and strict.", csp[:100], category="http_headers"))
 
-        # X-Frame-Options
         if "X-Frame-Options" not in headers:
-            findings.append(self.make_finding("Missing X-Frame-Options", "Medium", "Missing XFO allows clickjacking.", "Header absent.", remediation="Add X-Frame-Options: DENY.", owasp="A05: Security Misconfiguration"))
+            findings.append(self.make_finding("Missing X-Frame-Options", "Medium", "Missing XFO allows clickjacking.", "Header absent.", remediation="Add X-Frame-Options: DENY.", owasp="A05: Security Misconfiguration", category="http_headers"))
 
-        # X-Content-Type-Options
         if "X-Content-Type-Options" not in headers:
-            findings.append(self.make_finding("Missing X-Content-Type-Options", "Low", "Missing this allows MIME-sniffing.", "Header absent.", remediation="Add X-Content-Type-Options: nosniff.", owasp="A05: Security Misconfiguration"))
+            findings.append(self.make_finding("Missing X-Content-Type-Options", "Low", "Missing this allows MIME-sniffing.", "Header absent.", remediation="Add X-Content-Type-Options: nosniff.", owasp="A05: Security Misconfiguration", category="http_headers"))
             
-        # Referrer-Policy
         if "Referrer-Policy" not in headers:
-            findings.append(self.make_finding("Missing Referrer-Policy", "Low", "Missing Referrer-Policy allows leaking the referring URL.", "Header absent.", remediation="Add Referrer-Policy: strict-origin-when-cross-origin.", owasp="A05: Security Misconfiguration"))
+            findings.append(self.make_finding("Missing Referrer-Policy", "Low", "Missing Referrer-Policy allows leaking the referring URL.", "Header absent.", remediation="Add Referrer-Policy: strict-origin-when-cross-origin.", owasp="A05: Security Misconfiguration", category="http_headers"))
         else:
-            findings.append(self.make_finding("Referrer-Policy Configured", "Passed", "Referrer-Policy is present.", headers["Referrer-Policy"]))
+            findings.append(self.make_finding("Referrer-Policy Configured", "Passed", "Referrer-Policy is present.", headers["Referrer-Policy"], category="http_headers"))
             
         return findings
 
@@ -727,11 +804,11 @@ class AdvancedSecurityHeadersModule(ScannerModule):
             headers = resp.headers
             
             if "Cross-Origin-Opener-Policy" not in headers:
-                findings.append(self.make_finding("Missing COOP Header", "Informational", "COOP is missing.", "Header absent.", remediation="Add Cross-Origin-Opener-Policy.", owasp="A05: Security Misconfiguration"))
+                findings.append(self.make_finding("Missing COOP Header", "Informational", "COOP is missing.", "Header absent.", remediation="Add Cross-Origin-Opener-Policy.", owasp="A05: Security Misconfiguration", category="http_headers"))
             if "Cross-Origin-Embedder-Policy" not in headers:
-                findings.append(self.make_finding("Missing COEP Header", "Informational", "COEP is missing.", "Header absent.", remediation="Add Cross-Origin-Embedder-Policy.", owasp="A05: Security Misconfiguration"))
+                findings.append(self.make_finding("Missing COEP Header", "Informational", "COEP is missing.", "Header absent.", remediation="Add Cross-Origin-Embedder-Policy.", owasp="A05: Security Misconfiguration", category="http_headers"))
             if "Cross-Origin-Resource-Policy" not in headers:
-                findings.append(self.make_finding("Missing CORP Header", "Informational", "CORP is missing.", "Header absent.", remediation="Add Cross-Origin-Resource-Policy.", owasp="A05: Security Misconfiguration"))
+                findings.append(self.make_finding("Missing CORP Header", "Informational", "CORP is missing.", "Header absent.", remediation="Add Cross-Origin-Resource-Policy.", owasp="A05: Security Misconfiguration", category="http_headers"))
         except Exception:
             pass
         return findings
@@ -752,7 +829,8 @@ class SubdomainProbingModule(ScannerModule):
                     f"Active Subdomain Found: {sub}.{domain}",
                     "Informational",
                     f"Probed subdomain responded with status {resp.status_code}.",
-                    sub_url
+                    sub_url,
+                    category="information_exposure"
                 ))
             except Exception:
                 pass
@@ -803,26 +881,40 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                     all_findings.append({
                         "name": f"Module Crash: {mod.module_name}",
                         "severity": "Informational",
+                        "category": "information_exposure",
                         "description": "The scanner module crashed or timed out.",
                         "evidence": str(e),
                         "confidence": "High",
                         "remediation": "N/A",
+                        "remediation_snippets": {},
                         "owasp": "N/A",
                         "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
                     })
 
-    # --- SCORING ENGINE ---
+    # --- SCORING & CATEGORY ENGINE ---
     severity_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0, "Passed": 0}
     penalties = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0}
     max_penalties = {"Critical": 100, "High": 30, "Medium": 20, "Low": 10, "Informational": 0}
     
-    owasp_categories = set()
-    pci_dss_controls = set()
-    nist_controls = set()
-    iso27001_controls = set()
+    category_penalties = {
+        "encryption_tls": 0,
+        "http_headers": 0,
+        "domain_email": 0,
+        "session_cookies": 0,
+        "information_exposure": 0
+    }
     
+    owasp_categories = set()
+    failed_pci, passed_pci = set(), set()
+    failed_nist, passed_nist = set(), set()
+    failed_iso, passed_iso = set(), set()
+    
+    cat_weights = {"Critical": 25, "High": 15, "Medium": 10, "Low": 5, "Informational": 0, "Passed": 0}
+
     for f in all_findings:
         sev = f.get("severity", "Informational")
+        cat = f.get("category", "information_exposure")
+        
         if sev in severity_counts:
             severity_counts[sev] += 1
             
@@ -830,20 +922,35 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         if sev in penalties:
             penalties[sev] = min(penalties[sev] + weight, max_penalties[sev])
         
+        # Category sub-scores deduction
+        if cat in category_penalties:
+            category_penalties[cat] += cat_weights.get(sev, 0)
+        
         owasp = f.get("owasp")
         if owasp and owasp != "N/A":
             owasp_categories.add(owasp)
             
         comp = f.get("compliance", {})
-        if comp.get("pci_dss") and comp.get("pci_dss") != "N/A": 
-            pci_dss_controls.add(comp["pci_dss"])
-        if comp.get("nist") and comp.get("nist") != "N/A": 
-            nist_controls.add(comp["nist"])
-        if comp.get("iso27001") and comp.get("iso27001") != "N/A": 
-            iso27001_controls.add(comp["iso27001"])
-            
+        p_c = comp.get("pci_dss")
+        n_c = comp.get("nist")
+        i_c = comp.get("iso27001")
+        
+        if sev in ["Critical", "High", "Medium", "Low"]:
+            if p_c and p_c != "N/A": failed_pci.add(p_c)
+            if n_c and n_c != "N/A": failed_nist.add(n_c)
+            if i_c and i_c != "N/A": failed_iso.add(i_c)
+        elif sev == "Passed":
+            if p_c and p_c != "N/A": passed_pci.add(p_c)
+            if n_c and n_c != "N/A": passed_nist.add(n_c)
+            if i_c and i_c != "N/A": passed_iso.add(i_c)
+
     score = max(0, 100 - sum(penalties.values()))
     
+    # Calculate Radar Sub-scores out of 100
+    category_scores = {
+        cat: max(0, 100 - pen) for cat, pen in category_penalties.items()
+    }
+
     grade = "F"
     for letter, threshold in sorted(Config.SCORE_THRESHOLDS.items(), key=lambda x: x[1], reverse=True):
         if score >= threshold:
@@ -855,11 +962,24 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         "score": score,
         "grade": grade,
         "severity_counts": severity_counts,
+        "category_scores": category_scores,
         "owasp_coverage": list(owasp_categories),
-        "compliance_frameworks": {
-            "pci_dss": list(pci_dss_controls),
-            "nist_sp_800_53": list(nist_controls),
-            "iso_27001": list(iso27001_controls)
+        "technical_compliance": {
+            "pci_dss_4_0": {
+                "status": "Compliant" if len(failed_pci) == 0 else "Action Required",
+                "failed_controls": sorted(list(failed_pci)),
+                "passed_controls": sorted(list(passed_pci))
+            },
+            "nist_sp_800_53": {
+                "status": "Compliant" if len(failed_nist) == 0 else "Action Required",
+                "failed_controls": sorted(list(failed_nist)),
+                "passed_controls": sorted(list(passed_nist))
+            },
+            "iso_27001": {
+                "status": "Compliant" if len(failed_iso) == 0 else "Action Required",
+                "failed_controls": sorted(list(failed_iso)),
+                "passed_controls": sorted(list(passed_iso))
+            }
         },
         "findings": all_findings,
         "potential_issues_count": sum(c for k, c in severity_counts.items() if k in ["Critical", "High", "Medium", "Low"]),
@@ -877,3 +997,74 @@ def scan_batch(req: BatchScanRequest):
     with ThreadPoolExecutor(max_workers=workers) as pool:
         results = list(pool.map(scan_url, req.urls))
     return {"results": results}
+
+# --- PDF EXPORT ENGINE ---
+@app.post("/api/export/pdf")
+def export_pdf(req: ScanRequest):
+    """
+    Generates a print-ready executive PDF / HTML report for white-label client presentation.
+    """
+    data = scan_url(req.url, req.probe_subdomains)
+    hostname = urlparse(data["url"]).hostname or "report"
+    
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Security Posture Report - {hostname}</title>
+        <style>
+            body {{ font-family: 'Helvetica Neue', Arial, sans-serif; background: #0b0f19; color: #f3f4f6; margin: 0; padding: 40px; }}
+            .header {{ display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1f293d; padding-bottom: 20px; }}
+            .logo {{ font-size: 24px; font-weight: bold; color: #3b82f6; letter-spacing: 1px; }}
+            .score-badge {{ font-size: 36px; font-weight: bold; color: #10b981; background: #064e3b; padding: 10px 25px; border-radius: 12px; border: 1px solid #059669; }}
+            .card {{ background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 24px; margin-top: 24px; }}
+            h2 {{ color: #93c5fd; border-bottom: 1px solid #1e3a8a; padding-bottom: 8px; font-size: 18px; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 12px; }}
+            th, td {{ padding: 12px; text-align: left; border-bottom: 1px solid #1f2937; font-size: 14px; }}
+            th {{ background: #1e293b; color: #94a3b8; }}
+            .sev-High {{ color: #ef4444; font-weight: bold; }}
+            .sev-Medium {{ color: #f59e0b; font-weight: bold; }}
+            .sev-Low {{ color: #eab308; }}
+            .sev-Passed {{ color: #10b981; font-weight: bold; }}
+            .snippet {{ background: #030712; padding: 8px; font-family: monospace; font-size: 12px; border-radius: 4px; color: #a7f3d0; border: 1px solid #1f2937; white-space: pre-wrap; }}
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <div>
+                <div class="logo">URLScanOnline Security Report</div>
+                <div style="color: #94a3b8; margin-top: 5px;">Target: {data['url']} | Date: {datetime.datetime.now().strftime("%B %d, %Y")}</div>
+            </div>
+            <div class="score-badge">{data['score']}/100 ({data['grade']})</div>
+        </div>
+
+        <div class="card">
+            <h2>Executive Summary</h2>
+            <p>{data['executive_summary']}</p>
+            <p><strong>Total Potential Issues Found:</strong> {data['potential_issues_count']}</p>
+        </div>
+
+        <div class="card">
+            <h2>Category Posture Scores</h2>
+            <table>
+                <tr><th>Security Domain</th><th>Score</th></tr>
+                <tr><td>Encryption & TLS</td><td>{data['category_scores']['encryption_tls']}/100</td></tr>
+                <tr><td>HTTP Security Headers</td><td>{data['category_scores']['http_headers']}/100</td></tr>
+                <tr><td>Domain & Email Protection (SPF/DMARC)</td><td>{data['category_scores']['domain_email']}/100</td></tr>
+                <tr><td>Session & Cookie Hardening</td><td>{data['category_scores']['session_cookies']}/100</td></tr>
+                <tr><td>Information Exposure Defenses</td><td>{data['category_scores']['information_exposure']}/100</td></tr>
+            </table>
+        </div>
+
+        <div class="card">
+            <h2>Vulnerability & Finding Matrix</h2>
+            <table>
+                <tr><th>Severity</th><th>Check Name</th><th>OWASP Category</th><th>Evidence</th></tr>
+                {''.join([f"<tr><td class='sev-{f['severity']}'>{f['severity']}</td><td>{f['name']}</td><td>{f['owasp']}</td><td><div class='snippet'>{f['evidence']}</div></td></tr>" for f in data['findings']])}
+            </table>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
