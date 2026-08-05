@@ -3,7 +3,7 @@ import socket
 import ssl
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 import logging
 import requests
 from fastapi import FastAPI
@@ -19,15 +19,14 @@ logger = logging.getLogger(__name__)
 class Config:
     REQUEST_TIMEOUT = 6.0
     MAX_REDIRECTS = 5
-    # Use a realistic browser User-Agent so edge networks serve production headers
     USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     THREAD_POOL_SIZE = 10
     COMMON_SUBDOMAINS = ["trcadmin", "console", "s3", "s3b", "beta", "api", "dev"]
     SEVERITY_WEIGHTS = {
-        "Critical": -20,
+        "Critical": -15,
         "High": -10,
-        "Medium": -3,
-        "Low": -1,
+        "Medium": -5,
+        "Low": -2,
         "Informational": 0,
         "Passed": 0
     }
@@ -73,6 +72,8 @@ class BatchScanRequest(BaseModel):
         return [normalize_url(u) for u in v]
 
 def is_public_hostname(hostname: str) -> bool:
+    if not hostname:
+        return False
     try:
         infos = socket.getaddrinfo(hostname, None)
     except socket.gaierror:
@@ -84,12 +85,53 @@ def is_public_hostname(hostname: str) -> bool:
             return False
     return True
 
-# Helper function to create isolated HTTP sessions per thread
 def get_http_session() -> requests.Session:
     session = requests.Session()
     session.headers.update({"User-Agent": Config.USER_AGENT})
-    session.max_redirects = Config.MAX_REDIRECTS
     return session
+
+# --- SSRF-SAFE REQUEST WRAPPER ---
+def safe_request(method: str, url: str, session: requests.Session = None, max_redirects: int = Config.MAX_REDIRECTS, timeout: float = Config.REQUEST_TIMEOUT, **kwargs) -> requests.Response:
+    """
+    Executes HTTP requests while explicitly validating the IP address 
+    of every hostname in a redirect chain to prevent SSRF attacks.
+    """
+    current_url = url
+    own_session = False
+    
+    if session is None:
+        session = get_http_session()
+        own_session = True
+
+    # Disable automatic redirects so we can manually inspect each hop
+    kwargs["allow_redirects"] = False
+
+    try:
+        for hop in range(max_redirects + 1):
+            parsed = urlparse(current_url)
+            hostname = parsed.hostname
+
+            if not is_public_hostname(hostname):
+                raise requests.exceptions.RequestException(
+                    f"SSRF Protection blocked request to non-public host: {hostname}"
+                )
+
+            resp = session.request(method, current_url, timeout=timeout, **kwargs)
+
+            # Check if response is a redirect
+            if resp.is_redirect or resp.status_code in (301, 302, 303, 307, 308):
+                location = resp.headers.get("Location")
+                if not location:
+                    break
+                # Resolve relative redirect URLs
+                current_url = urljoin(current_url, location)
+            else:
+                return resp
+
+        raise requests.exceptions.TooManyRedirects(f"Exceeded maximum redirects ({max_redirects})")
+    finally:
+        if own_session:
+            session.close()
 
 # --- PLUGIN ARCHITECTURE ---
 class ScannerModule(ABC):
@@ -124,14 +166,13 @@ class TechFingerprintModule(ScannerModule):
     def run(self, url: str, hostname: str) -> list[dict]:
         findings = []
         try:
-            with get_http_session() as session:
-                resp = session.get(url, timeout=Config.REQUEST_TIMEOUT, allow_redirects=True)
-                server = resp.headers.get("Server")
-                if server:
-                    findings.append(self.make_finding("Server Header Exposed", "Informational", "The server software and version might be exposed.", server))
-                x_powered = resp.headers.get("X-Powered-By")
-                if x_powered:
-                    findings.append(self.make_finding("X-Powered-By Header Exposed", "Low", "Backend technology is explicitly declared.", x_powered, remediation="Remove X-Powered-By header.", owasp="A05: Security Misconfiguration"))
+            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            server = resp.headers.get("Server")
+            if server:
+                findings.append(self.make_finding("Server Header Exposed", "Informational", "The server software and version might be exposed.", server))
+            x_powered = resp.headers.get("X-Powered-By")
+            if x_powered:
+                findings.append(self.make_finding("X-Powered-By Header Exposed", "Low", "Backend technology is explicitly declared.", x_powered, remediation="Remove X-Powered-By header.", owasp="A05: Security Misconfiguration"))
         except Exception:
             pass
         return findings
@@ -143,11 +184,10 @@ class InformationDisclosureModule(ScannerModule):
     def run(self, url: str, hostname: str) -> list[dict]:
         findings = []
         try:
-            with get_http_session() as session:
-                resp = session.get(url, timeout=Config.REQUEST_TIMEOUT, allow_redirects=True)
-                server = resp.headers.get("Server", "")
-                if any(char.isdigit() for char in server) and ("/" in server or "-" in server):
-                    findings.append(self.make_finding("Verbose Server Banner", "Low", "Server header leaks exact version numbers.", server, remediation="Configure server to only return generic names (e.g., 'nginx').", owasp="A05: Security Misconfiguration"))
+            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            server = resp.headers.get("Server", "")
+            if any(char.isdigit() for char in server) and ("/" in server or "-" in server):
+                findings.append(self.make_finding("Verbose Server Banner", "Low", "Server header leaks exact version numbers.", server, remediation="Configure server to only return generic names (e.g., 'nginx').", owasp="A05: Security Misconfiguration"))
         except Exception:
             pass
         return findings
@@ -160,11 +200,10 @@ class RobotsTxtModule(ScannerModule):
         findings = []
         try:
             target = f"https://{hostname}/robots.txt" if url.startswith("https") else f"http://{hostname}/robots.txt"
-            with get_http_session() as session:
-                resp = session.get(target, timeout=Config.REQUEST_TIMEOUT)
-                if resp.status_code == 200 and "user-agent" in resp.text.lower():
-                    lines = len(resp.text.splitlines())
-                    findings.append(self.make_finding("robots.txt Found", "Informational", f"Found robots.txt with {lines} lines.", target))
+            resp = safe_request("GET", target, timeout=Config.REQUEST_TIMEOUT)
+            if resp.status_code == 200 and "user-agent" in resp.text.lower():
+                lines = len(resp.text.splitlines())
+                findings.append(self.make_finding("robots.txt Found", "Informational", f"Found robots.txt with {lines} lines.", target))
         except Exception:
             pass
         return findings
@@ -177,10 +216,9 @@ class SitemapModule(ScannerModule):
         findings = []
         try:
             target = f"https://{hostname}/sitemap.xml" if url.startswith("https") else f"http://{hostname}/sitemap.xml"
-            with get_http_session() as session:
-                resp = session.get(target, timeout=Config.REQUEST_TIMEOUT)
-                if resp.status_code == 200 and ("<urlset" in resp.text or "<sitemapindex" in resp.text):
-                    findings.append(self.make_finding("sitemap.xml Found", "Informational", "Found XML sitemap.", target))
+            resp = safe_request("GET", target, timeout=Config.REQUEST_TIMEOUT)
+            if resp.status_code == 200 and ("<urlset" in resp.text or "<sitemapindex" in resp.text):
+                findings.append(self.make_finding("sitemap.xml Found", "Informational", "Found XML sitemap.", target))
         except Exception:
             pass
         return findings
@@ -193,12 +231,11 @@ class SecurityTxtModule(ScannerModule):
         findings = []
         try:
             target = f"https://{hostname}/.well-known/security.txt" if url.startswith("https") else f"http://{hostname}/.well-known/security.txt"
-            with get_http_session() as session:
-                resp = session.get(target, timeout=Config.REQUEST_TIMEOUT)
-                if resp.status_code == 200 and "contact" in resp.text.lower():
-                    findings.append(self.make_finding("security.txt Found", "Passed", "Organization has published security.txt.", target))
-                else:
-                    findings.append(self.make_finding("security.txt Missing", "Informational", "No standard security.txt found.", target, remediation="Publish a security.txt file at /.well-known/security.txt."))
+            resp = safe_request("GET", target, timeout=Config.REQUEST_TIMEOUT)
+            if resp.status_code == 200 and "contact" in resp.text.lower():
+                findings.append(self.make_finding("security.txt Found", "Passed", "Organization has published security.txt.", target))
+            else:
+                findings.append(self.make_finding("security.txt Missing", "Informational", "No standard security.txt found.", target, remediation="Publish a security.txt file at /.well-known/security.txt."))
         except Exception:
             pass
         return findings
@@ -210,13 +247,12 @@ class CORSModule(ScannerModule):
     def run(self, url: str, hostname: str) -> list[dict]:
         findings = []
         try:
-            with get_http_session() as session:
-                resp = session.get(url, timeout=Config.REQUEST_TIMEOUT, allow_redirects=True)
-                acao = resp.headers.get("Access-Control-Allow-Origin")
-                if acao == "*":
-                    findings.append(self.make_finding("Wildcard CORS Policy", "Medium", "The API allows cross-origin requests from any domain.", "Access-Control-Allow-Origin: *", remediation="Restrict CORS to specific trusted origins.", owasp="A05: Security Misconfiguration"))
-                elif acao:
-                    findings.append(self.make_finding("CORS Enabled", "Informational", "Cross-Origin Resource Sharing is enabled.", f"Access-Control-Allow-Origin: {acao}"))
+            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            acao = resp.headers.get("Access-Control-Allow-Origin")
+            if acao == "*":
+                findings.append(self.make_finding("Wildcard CORS Policy", "Medium", "The API allows cross-origin requests from any domain.", "Access-Control-Allow-Origin: *", remediation="Restrict CORS to specific trusted origins.", owasp="A05: Security Misconfiguration"))
+            elif acao:
+                findings.append(self.make_finding("CORS Enabled", "Informational", "Cross-Origin Resource Sharing is enabled.", f"Access-Control-Allow-Origin: {acao}"))
         except Exception:
             pass
         return findings
@@ -228,60 +264,46 @@ class AdvancedCookieModule(ScannerModule):
     def run(self, url: str, hostname: str) -> list[dict]:
         findings = []
         try:
-            with get_http_session() as session:
-                resp = session.get(url, timeout=Config.REQUEST_TIMEOUT, allow_redirects=True)
-                
-                # Retrieve raw header list to prevent comma-based date splitting bugs
-                raw_cookies = resp.raw.headers.getlist("Set-Cookie") if hasattr(resp, "raw") and hasattr(resp.raw, "headers") else []
-                if not raw_cookies and "Set-Cookie" in resp.headers:
-                    raw_cookies = [resp.headers["Set-Cookie"]]
+            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            
+            raw_cookies = resp.raw.headers.getlist("Set-Cookie") if hasattr(resp, "raw") and hasattr(resp.raw, "headers") else []
+            if not raw_cookies and "Set-Cookie" in resp.headers:
+                raw_cookies = [resp.headers["Set-Cookie"]]
 
-                for cookie_str in raw_cookies:
-                    parts = [p.strip() for p in cookie_str.split(";") if p.strip()]
-                    if not parts:
-                        continue
-                    
-                    cookie_name = parts[0].split("=")[0].strip()
-                    directives = [p.lower() for p in parts[1:]]
-                    
-                    NON_SENSITIVE_COOKIES = {"SEARCH_SAMESITE", "1P_JAR", "NID", "AEC", "OGPC"}
-                    if cookie_name.upper() in NON_SENSITIVE_COOKIES:
-                        severity = "Informational"
-                        low_severity = "Informational"
-                    else:
-                        severity = "Medium"
-                        low_severity = "Low"
-                    
-                    if "httponly" not in directives:
-                        findings.append(self.make_finding(f"Missing HttpOnly Flag on Cookie: {cookie_name}", severity, "Cookie can be accessed via client-side scripts.", f"Cookie: {cookie_name}", remediation="Add HttpOnly flag to cookies.", owasp="A05: Security Misconfiguration"))
-                    
-                    if url.startswith("https") and "secure" not in directives:
-                        findings.append(self.make_finding(f"Missing Secure Flag on Cookie: {cookie_name}", severity, "Cookie transmitted in cleartext if sent over HTTP.", f"Cookie: {cookie_name}", remediation="Add Secure flag to cookies.", owasp="A02: Cryptographic Failures"))
-                    
-                    samesite_found = any(p.startswith("samesite") for p in directives)
-                    if not samesite_found:
-                        findings.append(self.make_finding(f"Missing SameSite Attribute on Cookie: {cookie_name}", low_severity, "Cookie lacks SameSite attribute, increasing CSRF risk.", f"Cookie: {cookie_name}", remediation="Add SameSite=Lax or SameSite=Strict.", owasp="A01: Broken Access Control"))
+            for cookie_str in raw_cookies:
+                parts = [p.strip() for p in cookie_str.split(";") if p.strip()]
+                if not parts:
+                    continue
+                
+                cookie_name = parts[0].split("=")[0].strip()
+                directives = [p.lower() for p in parts[1:]]
+                
+                if "httponly" not in directives:
+                    findings.append(self.make_finding(f"Missing HttpOnly Flag on Cookie: {cookie_name}", "Medium", "Cookie can be accessed via client-side scripts.", f"Cookie: {cookie_name}", remediation="Add HttpOnly flag to cookies.", owasp="A05: Security Misconfiguration"))
+                
+                if url.startswith("https") and "secure" not in directives:
+                    findings.append(self.make_finding(f"Missing Secure Flag on Cookie: {cookie_name}", "Medium", "Cookie transmitted in cleartext if sent over HTTP.", f"Cookie: {cookie_name}", remediation="Add Secure flag to cookies.", owasp="A02: Cryptographic Failures"))
+                
+                samesite_found = any(p.startswith("samesite") for p in directives)
+                if not samesite_found:
+                    findings.append(self.make_finding(f"Missing SameSite Attribute on Cookie: {cookie_name}", "Low", "Cookie lacks SameSite attribute, increasing CSRF risk.", f"Cookie: {cookie_name}", remediation="Add SameSite=Lax or SameSite=Strict.", owasp="A01: Broken Access Control"))
         except Exception:
             pass
         return findings
 
 class HTTPSRedirectModule(ScannerModule):
     module_name = "HTTPSRedirect"
-    description = "Validates HTTP to HTTPS redirection across multi-hop chains."
+    description = "Validates HTTP to HTTPS redirection across multi-hop chains safely."
     
     def run(self, url: str, hostname: str) -> list[dict]:
         findings = []
         target = f"http://{hostname}"
         try:
-            with get_http_session() as session:
-                resp = session.get(target, timeout=Config.REQUEST_TIMEOUT, allow_redirects=True)
-                # Check if final URL or any intermediate redirect landed on HTTPS
-                redirected_to_https = resp.url.startswith("https://") or any(r.headers.get("Location", "").startswith("https://") for r in resp.history)
-                
-                if redirected_to_https:
-                    findings.append(self.make_finding("HTTPS Redirection Configured", "Passed", "HTTP traffic is correctly redirected to HTTPS.", f"Final Target: {resp.url}"))
-                else:
-                    findings.append(self.make_finding("Missing HTTPS Redirection", "High", "The server accepts cleartext HTTP connections without redirecting to HTTPS.", f"Final URL: {resp.url}", remediation="Configure the server to redirect all port 80 traffic to 443 (HTTPS).", owasp="A02: Cryptographic Failures"))
+            resp = safe_request("GET", target, timeout=Config.REQUEST_TIMEOUT)
+            if resp.url.startswith("https://"):
+                findings.append(self.make_finding("HTTPS Redirection Configured", "Passed", "HTTP traffic is correctly redirected to HTTPS.", f"Final Target: {resp.url}"))
+            else:
+                findings.append(self.make_finding("Missing HTTPS Redirection", "High", "The server accepts cleartext HTTP connections without redirecting to HTTPS.", f"Final URL: {resp.url}", remediation="Configure the server to redirect all port 80 traffic to 443 (HTTPS).", owasp="A02: Cryptographic Failures"))
         except requests.exceptions.RequestException:
             pass
         return findings
@@ -308,7 +330,6 @@ class EnhancedTLSModule(ScannerModule):
                     
                     not_after = cert.get("notAfter")
                     if not_after:
-                        # Normalize multiple whitespace characters in SSL date output
                         clean_date = re.sub(r'\s+', ' ', not_after)
                         expire_date = datetime.datetime.strptime(clean_date, "%b %d %H:%M:%S %Y %Z").replace(tzinfo=datetime.timezone.utc)
                         now = datetime.datetime.now(datetime.timezone.utc)
@@ -327,9 +348,8 @@ class SecurityHeadersModule(ScannerModule):
     def run(self, url: str, hostname: str) -> list[dict]:
         findings = []
         try:
-            with get_http_session() as session:
-                resp = session.get(url, timeout=Config.REQUEST_TIMEOUT, allow_redirects=True)
-                headers = resp.headers
+            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            headers = resp.headers
         except requests.exceptions.Timeout as e:
             findings.append(self.make_finding("HTTP Request Failed (Timeout)", "High", "Connection timed out while fetching HTTP headers.", str(e)))
             return findings
@@ -379,16 +399,15 @@ class AdvancedSecurityHeadersModule(ScannerModule):
     def run(self, url: str, hostname: str) -> list[dict]:
         findings = []
         try:
-            with get_http_session() as session:
-                resp = session.get(url, timeout=Config.REQUEST_TIMEOUT, allow_redirects=True)
-                headers = resp.headers
-                
-                if "Cross-Origin-Opener-Policy" not in headers:
-                    findings.append(self.make_finding("Missing COOP Header", "Informational", "COOP is missing.", "Header absent.", remediation="Add Cross-Origin-Opener-Policy.", owasp="A05: Security Misconfiguration"))
-                if "Cross-Origin-Embedder-Policy" not in headers:
-                    findings.append(self.make_finding("Missing COEP Header", "Informational", "COEP is missing.", "Header absent.", remediation="Add Cross-Origin-Embedder-Policy.", owasp="A05: Security Misconfiguration"))
-                if "Cross-Origin-Resource-Policy" not in headers:
-                    findings.append(self.make_finding("Missing CORP Header", "Informational", "CORP is missing.", "Header absent.", remediation="Add Cross-Origin-Resource-Policy.", owasp="A05: Security Misconfiguration"))
+            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            headers = resp.headers
+            
+            if "Cross-Origin-Opener-Policy" not in headers:
+                findings.append(self.make_finding("Missing COOP Header", "Informational", "COOP is missing.", "Header absent.", remediation="Add Cross-Origin-Opener-Policy.", owasp="A05: Security Misconfiguration"))
+            if "Cross-Origin-Embedder-Policy" not in headers:
+                findings.append(self.make_finding("Missing COEP Header", "Informational", "COEP is missing.", "Header absent.", remediation="Add Cross-Origin-Embedder-Policy.", owasp="A05: Security Misconfiguration"))
+            if "Cross-Origin-Resource-Policy" not in headers:
+                findings.append(self.make_finding("Missing CORP Header", "Informational", "CORP is missing.", "Header absent.", remediation="Add Cross-Origin-Resource-Policy.", owasp="A05: Security Misconfiguration"))
         except Exception:
             pass
         return findings
@@ -406,15 +425,14 @@ class SubdomainProbingModule(ScannerModule):
         for sub in Config.COMMON_SUBDOMAINS:
             sub_url = f"https://{sub}.{domain}"
             try:
-                with get_http_session() as session:
-                    resp = session.head(sub_url, timeout=3, allow_redirects=True)
-                    findings.append(self.make_finding(
-                        f"Active Subdomain Found: {sub}.{domain}",
-                        "Informational",
-                        f"Probed subdomain responded with status {resp.status_code}.",
-                        sub_url
-                    ))
-            except requests.exceptions.RequestException:
+                resp = safe_request("HEAD", sub_url, timeout=3.0)
+                findings.append(self.make_finding(
+                    f"Active Subdomain Found: {sub}.{domain}",
+                    "Informational",
+                    f"Probed subdomain responded with status {resp.status_code}.",
+                    sub_url
+                ))
+            except Exception:
                 pass
         return findings
 
