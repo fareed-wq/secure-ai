@@ -198,7 +198,16 @@ const TechnicalReport = ({ reportData }) => {
 
                                         {/* Tabbed Code Snippets */}
                                         {finding.remediation_snippets && Object.keys(finding.remediation_snippets).length > 0 && (
-                                          <div className="mt-6 border border-slate-800 rounded-xl overflow-hidden bg-[#0D1117]">
+                                          <div className="mt-6">
+                                            <div className="mb-4">
+                                              <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2 mb-1">
+                                                <span>🛠️</span> QUICK FIX / REMEDIATION SNIPPET
+                                              </h4>
+                                              <p className="text-xs text-slate-400">
+                                                Select your web server or hosting platform below to copy the required configuration code:
+                                              </p>
+                                            </div>
+                                            <div className="border border-slate-800 rounded-xl overflow-hidden bg-[#0D1117]">
                                             <div className="flex items-center bg-slate-900 border-b border-slate-800 overflow-x-auto">
                                               {Object.keys(finding.remediation_snippets).map(platform => (
                                                 <button
@@ -219,6 +228,7 @@ const TechnicalReport = ({ reportData }) => {
                                               <pre className="text-indigo-200 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap leading-relaxed">
                                                 {finding.remediation_snippets[activeTab]}
                                               </pre>
+                                            </div>
                                             </div>
                                           </div>
                                         )}
