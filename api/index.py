@@ -5,7 +5,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse, urljoin
 import logging
-import http.cookiejar
+from http.cookiejar import DefaultCookiePolicy
 import requests
 from requests.adapters import HTTPAdapter
 from fastapi import FastAPI
@@ -87,21 +87,24 @@ def is_public_hostname(hostname: str) -> bool:
             return False
     return True
 
-# Custom cookie policy to prevent thread session cookie accumulation
-class BlockAllCookies(http.cookiejar.CookiePolicy):
-    def set_ok(self, cookie, request): return False
-    def return_ok(self, cookie, request): return False
-    def domain_return_ok(self, cookie, request): return False
-    def path_return_ok(self, cookie, request): return False
+# ✅ Inherit from DefaultCookiePolicy to prevent AttributeError crashes
+class BlockAllCookies(DefaultCookiePolicy):
+    def set_ok(self, cookie, request): 
+        return False
+    def return_ok(self, cookie, request): 
+        return False
+    def domain_return_ok(self, cookie, request): 
+        return False
+    def path_return_ok(self, cookie, request): 
+        return False
 
-# Helper to generate connection-pooled HTTP sessions
 def get_http_session() -> requests.Session:
     session = requests.Session()
     session.headers.update({"User-Agent": Config.USER_AGENT})
-    # Disable cookie persistence so requests stay stateless across modules
+    
+    # Disable cookie persistence safely
     session.cookies.set_policy(BlockAllCookies())
     
-    # Configure thread-safe connection pool adapter
     adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
