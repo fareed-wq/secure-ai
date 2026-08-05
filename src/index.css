@@ -24,73 +24,19 @@
 }
 
 /* ==========================================
-   BULLETPROOF MULTI-PAGE PRINT & PDF FIX
+   DEDICATED PRINT LAYOUT
    ========================================== */
 @page {
   size: A4 portrait;
-  margin: 15mm; /* Removes default browser headers, dates, and page URLs */
+  margin: 12mm;
 }
 
 @media print {
-  /* 1. Hide site navigation, buttons, and interactive web noise */
-  nav, header, footer, button, .whatsapp-cta, .no-print, .radar-chart, .risk-meter, .spider-chart, .health-bars {
+  body {
+    background-color: white !important;
+  }
+  
+  .no-print, .whatsapp-btn {
     display: none !important;
-  }
-
-  /* FORCE CLEAN WHITE DOCUMENT BACKGROUND */
-  body, #root, main, .card, table, tr, td, th {
-    background: #ffffff !important;
-    color: #1e293b !important;
-    border-color: #e2e8f0 !important;
-    box-shadow: none !important;
-  }
-
-  /* UN-SQUEEZE CODE SNIPPETS & FIX TABLE COLUMNS (CRITICAL) */
-  table {
-    width: 100% !important;
-    table-layout: fixed !important;
-  }
-  
-  /* Give Vulnerability Name / Code Snippet column 60% of the table width */
-  th:nth-child(2), td:nth-child(2) {
-    width: 60% !important;
-  }
-  
-  /* Ensure remediation code boxes take full width and wrap properly */
-  pre, code, .remediation-snippet, .snippet-box {
-    width: 100% !important;
-    display: block !important;
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
-    padding: 12px !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 6px !important;
-    font-family: monospace !important;
-    white-space: pre-wrap !important;
-    word-break: break-all !important;
-  }
-
-  /* 2. OVERRIDE ALL HEIGHT & OVERFLOW RESTRICTIONS (Prevents Page 1 Cutoff) */
-  html, body, #root, main, div, section, article, .report-container {
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-    overflow-x: visible !important;
-    overflow-y: visible !important;
-    position: static !important;
-    float: none !important;
-    display: block !important;
-  }
-
-  /* 3. Keep Grid/Flex for internal cards while allowing page flow */
-  .grid {
-    display: grid !important;
-  }
-
-  /* 4. Prevent individual vulnerability rows and cards from splitting awkwardly across page edges */
-  .card, tr, table, .vulnerability-row {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
   }
 }
