@@ -5,6 +5,7 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse, urljoin
 import logging
+import http.cookiejar
 import requests
 from requests.adapters import HTTPAdapter
 from fastapi import FastAPI
@@ -86,10 +87,19 @@ def is_public_hostname(hostname: str) -> bool:
             return False
     return True
 
+# Custom cookie policy to prevent thread session cookie accumulation
+class BlockAllCookies(http.cookiejar.CookiePolicy):
+    def set_ok(self, cookie, request): return False
+    def return_ok(self, cookie, request): return False
+    def domain_return_ok(self, cookie, request): return False
+    def path_return_ok(self, cookie, request): return False
+
 # Helper to generate connection-pooled HTTP sessions
 def get_http_session() -> requests.Session:
     session = requests.Session()
     session.headers.update({"User-Agent": Config.USER_AGENT})
+    # Disable cookie persistence so requests stay stateless across modules
+    session.cookies.set_policy(BlockAllCookies())
     
     # Configure thread-safe connection pool adapter
     adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25)
@@ -277,12 +287,20 @@ class AdvancedCookieModule(ScannerModule):
             if not raw_cookies and "Set-Cookie" in resp.headers:
                 raw_cookies = [resp.headers["Set-Cookie"]]
 
+            seen_cookies = set()
+
             for cookie_str in raw_cookies:
                 parts = [p.strip() for p in cookie_str.split(";") if p.strip()]
                 if not parts:
                     continue
                 
                 cookie_name = parts[0].split("=")[0].strip()
+                
+                # Skip duplicate cookie names in the same response
+                if cookie_name in seen_cookies:
+                    continue
+                seen_cookies.add(cookie_name)
+
                 directives = [p.lower() for p in parts[1:]]
                 
                 cookie_sev = "Informational" if cookie_name.upper() in self.NON_SENSITIVE_COOKIES else "Medium"
