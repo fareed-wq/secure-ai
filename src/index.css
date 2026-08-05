@@ -23,32 +23,49 @@
   }
 }
 
+/* ==========================================
+   BULLETPROOF MULTI-PAGE PRINT & PDF FIX
+   ========================================== */
+@page {
+  size: A4 portrait;
+  margin: 12mm 10mm 12mm 10mm; /* Removes default browser headers, dates, and page URLs */
+}
+
 @media print {
-  /* Hide Navbar and Header */
-  nav, header, .no-print {
+  /* 1. Hide site navigation, buttons, and interactive web noise */
+  nav, header, footer, .no-print, button, [role="tablist"], .whatsapp-btn {
     display: none !important;
   }
 
-  /* Allow page to break and grow naturally */
-  html, body, #root, main, .report-container, #report-content, .min-h-screen {
+  /* 2. OVERRIDE ALL HEIGHT & OVERFLOW RESTRICTIONS (Prevents Page 1 Cutoff) */
+  html, body, #root, main, div, section, article, .report-container {
     height: auto !important;
     min-height: 0 !important;
     max-height: none !important;
     overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
     position: static !important;
+    float: none !important;
+    display: block !important;
   }
 
-  /* Prevent cards and table rows from breaking awkwardly across page edges */
-  .card, tr, .vulnerability-row, td, th {
+  /* 3. Keep Grid/Flex for internal cards while allowing page flow */
+  .grid {
+    display: grid !important;
+  }
+
+  /* 4. Prevent individual vulnerability rows and cards from splitting awkwardly across page edges */
+  .card, tr, table, .vulnerability-row {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
 
-  /* Ensure background colors and text render cleanly on white PDF paper */
+  /* 5. Force exact dark theme background colors to print smoothly */
   body {
-    background: #ffffff !important;
-    color: #0f172a !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    background-color: #0b0f19 !important;
+    color: #f3f4f6 !important;
   }
 }
