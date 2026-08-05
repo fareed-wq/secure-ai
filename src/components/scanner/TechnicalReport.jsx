@@ -45,7 +45,22 @@ const TechnicalReport = ({ reportData }) => {
   };
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 font-sans" id="report-content">
+    <div className="space-y-8" id="report-content">
+      <style>{`
+        @media print {
+          body, html, #report-content { background: white !important; color: #0f172a !important; }
+          * { border-color: #e2e8f0 !important; }
+          .bg-\\[\\#0D1117\\], .bg-slate-900, .bg-slate-900\\/50, .bg-slate-800 { background: white !important; box-shadow: none !important; }
+          .text-white, .text-slate-200, .text-slate-300 { color: #0f172a !important; }
+          .text-slate-400, .text-slate-500 { color: #475569 !important; }
+          .shadow-2xl, .shadow-xl, .shadow-inner { box-shadow: none !important; }
+          .text-indigo-400 { color: #4338ca !important; }
+          .text-emerald-400 { color: #059669 !important; }
+          .text-red-500, .text-red-400 { color: #dc2626 !important; }
+          .text-orange-500, .text-orange-400 { color: #ea580c !important; }
+          .text-amber-500, .text-amber-400 { color: #d97706 !important; }
+        }
+      `}</style>
       
       {/* 1. Technical Metadata Table */}
       <div className="bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden font-mono text-sm shadow-2xl">
@@ -177,7 +192,7 @@ const TechnicalReport = ({ reportData }) => {
       )}
 
       {/* 3. Tab Switcher: Vulnerabilities vs Compliance */}
-      <div className="flex bg-[#0D1117] border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-xl">
+      <div className="flex bg-[#0D1117] border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-xl print:hidden">
         <button
           onClick={() => setActiveView('vulnerabilities')}
           className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'vulnerabilities' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
@@ -206,11 +221,11 @@ const TechnicalReport = ({ reportData }) => {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                      <th className="px-6 py-4">Severity</th>
-                      <th className="px-6 py-4 w-1/3">Vulnerability / Check Name</th>
-                      <th className="px-6 py-4">OWASP Map</th>
-                      <th className="px-6 py-4 text-center">Confidence</th>
-                      <th className="px-6 py-4 text-right">Action</th>
+                      <th className="px-6 py-4" style={{ width: '12%' }}>Severity</th>
+                      <th className="px-6 py-4" style={{ width: '35%' }}>Vulnerability / Check Name</th>
+                      <th className="px-6 py-4" style={{ width: '25%' }}>OWASP Map</th>
+                      <th className="px-6 py-4 text-center" style={{ width: '15%' }}>Confidence</th>
+                      <th className="px-6 py-4 text-right print:hidden" style={{ width: '13%' }}>Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/50">
@@ -226,8 +241,14 @@ const TechnicalReport = ({ reportData }) => {
                             <td className="px-6 py-4 whitespace-nowrap">
                               {getSeverityBadge(finding.severity)}
                             </td>
-                            <td className="px-6 py-4 font-bold text-slate-200">
-                              {finding.name}
+                            <td className="px-6 py-4 font-bold text-slate-200 align-top">
+                              <div>{finding.name}</div>
+                              {finding.remediation_snippets?.nginx && (
+                                <div className="hidden print:block mt-3 bg-slate-50 p-3 rounded border border-slate-200">
+                                  <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">Remediation Snippet (Nginx/Server)</div>
+                                  <pre className="text-slate-800 font-mono text-[10px] whitespace-pre-wrap">{finding.remediation_snippets.nginx}</pre>
+                                </div>
+                              )}
                             </td>
                             <td className="px-6 py-4">
                               {finding.owasp && finding.owasp !== "N/A" ? (
@@ -239,7 +260,7 @@ const TechnicalReport = ({ reportData }) => {
                             <td className="px-6 py-4 text-center">
                               <span className="text-slate-400 text-xs font-mono">{finding.confidence || '100%'}</span>
                             </td>
-                            <td className="px-6 py-4 text-right">
+                            <td className="px-6 py-4 text-right print:hidden align-top">
                               <button className="text-slate-500 hover:text-white transition-colors">
                                 {expandedRow === idx ? <ChevronUp className="w-5 h-5 inline" /> : <ChevronDown className="w-5 h-5 inline" />}
                               </button>
@@ -248,7 +269,7 @@ const TechnicalReport = ({ reportData }) => {
                           
                           <AnimatePresence>
                             {expandedRow === idx && (
-                              <tr>
+                              <tr className="print:hidden">
                                 <td colSpan={5} className="p-0 border-b-2 border-indigo-500/50">
                                   <motion.div 
                                     initial={{ height: 0, opacity: 0 }}
@@ -460,7 +481,7 @@ const TechnicalReport = ({ reportData }) => {
         </p>
       </div>
 
-    </motion.div>
+    </div>
   );
 };
 

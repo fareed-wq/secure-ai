@@ -87,24 +87,9 @@ function Scanner() {
     setScanState('view-report');
   };
 
-  const handlePdfExport = async () => {
-    // We target the report-content div which wraps either Simple or Technical report
-    const element = document.getElementById('report-content');
-    if (!element) return;
-    
-    try {
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true, logging: false, backgroundColor: '#020617' });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`secure-ai-${reportMode}-report-${url}.pdf`);
-    } catch (err) {
-      console.error('Failed to generate PDF', err);
-      alert("Failed to generate PDF. Please try again.");
-    }
+  const handlePdfExport = () => {
+    // Rely on native browser printing and CSS @media print / Tailwind print:* classes
+    window.print();
   };
 
   return (
@@ -112,7 +97,7 @@ function Scanner() {
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
       
       {/* Top Navbar */}
-      <nav className="border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0 z-50">
+      <nav className="border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0 z-50 print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center cursor-pointer" onClick={resetScan}>
             <img src="/logo-transparent.png" alt="URLScan Online Logo" className="h-12 w-auto object-contain" />

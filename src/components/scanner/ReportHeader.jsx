@@ -15,7 +15,7 @@ const ReportHeader = ({ url, score, grade, timestamp, activeMode, onToggleMode, 
       </div>
 
       {/* Middle: Mode Toggle */}
-      <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+      <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 print:hidden">
         <button
           onClick={() => onToggleMode('simple')}
           className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
@@ -40,7 +40,7 @@ const ReportHeader = ({ url, score, grade, timestamp, activeMode, onToggleMode, 
 
       {/* Right: Actions & Score */}
       <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
-        <div className="flex gap-2">
+        <div className="flex gap-2 print:hidden">
           <button 
             onClick={onExportPdf}
             title="Export PDF"
