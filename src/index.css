@@ -32,8 +32,8 @@
 }
 
 @media print {
-  /* 1. Hide site navigation, buttons, and interactive web noise */
-  .scan-metadata-bar, .whatsapp-cta, .no-print, nav, header, footer, button, [role="tablist"], .whatsapp-btn {
+  /* 1. Hide site navigation, buttons, and interactive/visual web noise */
+  .scan-metadata-bar, .whatsapp-cta, .no-print, nav, header, footer, button, [role="tablist"], .whatsapp-btn, .recharts-wrapper, .radar-chart, .spider-chart, .risk-meter, .health-bars {
     display: none !important;
   }
   
@@ -45,6 +45,11 @@
   td, th {
     word-wrap: break-word !important;
     white-space: normal !important;
+  }
+  
+  pre, code {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
   }
 
   /* 2. OVERRIDE ALL HEIGHT & OVERFLOW RESTRICTIONS (Prevents Page 1 Cutoff) */
