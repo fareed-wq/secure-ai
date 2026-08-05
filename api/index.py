@@ -22,7 +22,7 @@ class Config:
     REQUEST_TIMEOUT = 6.0
     MAX_REDIRECTS = 5
     USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    THREAD_POOL_SIZE = 10
+    THREAD_POOL_SIZE = 12
     COMMON_SUBDOMAINS = ["trcadmin", "console", "s3", "s3b", "beta", "api", "dev"]
     SEVERITY_WEIGHTS = {
         "Critical": -15,
@@ -40,6 +40,65 @@ class Config:
         "D": 50,
         "F": 0
     }
+
+# --- GLOBAL COMPLIANCE FRAMEWORK MAPPING DATABASE ---
+COMPLIANCE_MAP = {
+    "Missing Strict-Transport-Security (HSTS)": {
+        "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+        "nist": "SC-8 (Transmission Confidentiality)",
+        "iso27001": "A.8.24 (Use of Cryptography)"
+    },
+    "Missing Content-Security-Policy (CSP)": {
+        "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
+        "nist": "SC-28 (Protection of Information at Rest/Transit)",
+        "iso27001": "A.8.20 (Network Security)"
+    },
+    "Weak Content-Security-Policy (CSP)": {
+        "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
+        "nist": "SI-10 (Information Input Validation)",
+        "iso27001": "A.8.28 (Secure Coding)"
+    },
+    "Missing X-Frame-Options": {
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "nist": "SA-11 (Developer Security Testing)",
+        "iso27001": "A.8.20 (Network Security)"
+    },
+    "Missing X-Content-Type-Options": {
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "nist": "SI-10 (Information Input Validation)",
+        "iso27001": "A.8.28 (Secure Coding)"
+    },
+    "Missing Referrer-Policy": {
+        "pci_dss": "6.5.10 (Broken Access Control)",
+        "nist": "SC-13 (Cryptographic Protection)",
+        "iso27001": "A.8.12 (Data Leakage Prevention)"
+    },
+    "Missing SPF Record": {
+        "pci_dss": "5.4.1 (Anti-Phishing & Email Structure)",
+        "nist": "SI-8 (Spam & Phishing Protection)",
+        "iso27001": "A.8.19 (Information Security in Systems)"
+    },
+    "Weak SPF Record (+all)": {
+        "pci_dss": "5.4.1 (Anti-Phishing & Email Structure)",
+        "nist": "SI-8 (Spam & Phishing Protection)",
+        "iso27001": "A.8.19 (Information Security in Systems)"
+    },
+    "Missing DMARC Policy": {
+        "pci_dss": "5.4.1 (Anti-Phishing & Spoofing)",
+        "nist": "SI-8 (Spam & Phishing Protection)",
+        "iso27001": "A.8.19 (Information Security in Systems)"
+    },
+    "Weak DMARC Policy (p=none)": {
+        "pci_dss": "5.4.1 (Anti-Phishing & Spoofing)",
+        "nist": "SI-8 (Spam & Phishing Protection)",
+        "iso27001": "A.8.19 (Information Security in Systems)"
+    },
+    "Wildcard CORS Policy": {
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "nist": "AC-3 (Access Enforcement)",
+        "iso27001": "A.8.3 (Access Control)"
+    }
+}
 
 app = FastAPI(title="Website Security Posture Checker (Advanced Modular)")
 
@@ -87,7 +146,7 @@ def is_public_hostname(hostname: str) -> bool:
             return False
     return True
 
-# ✅ Inherit from DefaultCookiePolicy to prevent AttributeError crashes
+# Inherit from DefaultCookiePolicy to prevent AttributeError crashes
 class BlockAllCookies(DefaultCookiePolicy):
     def set_ok(self, cookie, request): 
         return False
@@ -165,7 +224,14 @@ class ScannerModule(ABC):
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         pass
 
-    def make_finding(self, name, severity, description, evidence, confidence="High", remediation="N/A", owasp="N/A"):
+    def make_finding(self, name, severity, description, evidence, confidence="High", remediation="N/A", owasp="N/A", compliance=None):
+        if compliance is None:
+            compliance = COMPLIANCE_MAP.get(name, {
+                "pci_dss": "6.4.1 (Web App Security)",
+                "nist": "SA-11 (Developer Testing)",
+                "iso27001": "A.8.20 (Network Security)"
+            })
+            
         return {
             "name": name,
             "severity": severity,
@@ -173,10 +239,101 @@ class ScannerModule(ABC):
             "evidence": evidence,
             "confidence": confidence,
             "remediation": remediation,
-            "owasp": owasp
+            "owasp": owasp,
+            "compliance": compliance
         }
 
 # --- MODULES ---
+
+class DNSEmailSecurityModule(ScannerModule):
+    module_name = "DNSEmailSecurity"
+    description = "Probes SPF, DMARC, and MX records via DNS-over-HTTPS."
+
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
+        findings = []
+        domain = hostname[4:] if hostname.startswith("www.") else hostname
+
+        try:
+            # 1. Probe SPF via Google DNS-over-HTTPS
+            spf_url = f"https://dns.google/resolve?name={domain}&type=TXT"
+            resp = safe_request("GET", spf_url, session=session, timeout=4.0)
+            spf_found = False
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                for rec in data.get("Answer", []):
+                    data_str = rec.get("data", "")
+                    if "v=spf1" in data_str:
+                        spf_found = True
+                        if "+all" in data_str:
+                            findings.append(self.make_finding(
+                                "Weak SPF Record (+all)",
+                                "High",
+                                "SPF record explicitly allows any IP address to spoof emails for this domain.",
+                                data_str,
+                                remediation="Change '+all' to '~all' or '-all' in your SPF TXT record.",
+                                owasp="A05: Security Misconfiguration"
+                            ))
+                        else:
+                            findings.append(self.make_finding(
+                                "SPF Record Configured",
+                                "Passed",
+                                "Sender Policy Framework (SPF) record is validly configured.",
+                                data_str
+                            ))
+                        break
+
+            if not spf_found:
+                findings.append(self.make_finding(
+                    "Missing SPF Record",
+                    "Medium",
+                    "No SPF TXT record found. The domain is exposed to email spoofing and phishing attacks.",
+                    "TXT record absent.",
+                    remediation="Publish a valid SPF TXT record (e.g., 'v=spf1 include:_spf.google.com ~all').",
+                    owasp="A05: Security Misconfiguration"
+                ))
+
+            # 2. Probe DMARC via Google DNS-over-HTTPS
+            dmarc_url = f"https://dns.google/resolve?name=_dmarc.{domain}&type=TXT"
+            d_resp = safe_request("GET", dmarc_url, session=session, timeout=4.0)
+            dmarc_found = False
+            
+            if d_resp.status_code == 200:
+                d_data = d_resp.json()
+                for rec in d_data.get("Answer", []):
+                    d_str = rec.get("data", "")
+                    if "v=DMARC1" in d_str:
+                        dmarc_found = True
+                        if "p=none" in d_str.lower():
+                            findings.append(self.make_finding(
+                                "Weak DMARC Policy (p=none)",
+                                "Low",
+                                "DMARC policy is set to 'none', which monitors but does not block spoofed emails.",
+                                d_str,
+                                remediation="Upgrade DMARC policy from 'p=none' to 'p=quarantine' or 'p=reject'.",
+                                owasp="A05: Security Misconfiguration"
+                            ))
+                        else:
+                            findings.append(self.make_finding(
+                                "Strong DMARC Policy Configured",
+                                "Passed",
+                                "DMARC record is enforced with quarantine or reject policy.",
+                                d_str
+                            ))
+                        break
+
+            if not dmarc_found:
+                findings.append(self.make_finding(
+                    "Missing DMARC Policy",
+                    "Medium",
+                    f"No DMARC record found at _dmarc.{domain}. Increases domain impersonation risk.",
+                    "_dmarc TXT record absent.",
+                    remediation=f"Publish a DMARC TXT record at _dmarc.{domain} with a valid enforcement policy.",
+                    owasp="A05: Security Misconfiguration"
+                ))
+        except Exception as e:
+            logger.error(f"DNSEmailSecurityModule failed: {e}")
+        return findings
 
 class TechFingerprintModule(ScannerModule):
     module_name = "TechFingerprint"
@@ -489,6 +646,7 @@ class SubdomainProbingModule(ScannerModule):
 
 # Engine Registry
 REGISTERED_MODULES = [
+    DNSEmailSecurityModule(),
     TechFingerprintModule(),
     InformationDisclosureModule(),
     RobotsTxtModule(),
@@ -533,14 +691,19 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                         "evidence": str(e),
                         "confidence": "High",
                         "remediation": "N/A",
-                        "owasp": "N/A"
+                        "owasp": "N/A",
+                        "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
                     })
 
     # --- SCORING ENGINE ---
     severity_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0, "Passed": 0}
     penalties = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0}
     max_penalties = {"Critical": 100, "High": 30, "Medium": 20, "Low": 10, "Informational": 0}
+    
     owasp_categories = set()
+    pci_dss_controls = set()
+    nist_controls = set()
+    iso27001_controls = set()
     
     for f in all_findings:
         sev = f.get("severity", "Informational")
@@ -554,6 +717,14 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         owasp = f.get("owasp")
         if owasp and owasp != "N/A":
             owasp_categories.add(owasp)
+            
+        comp = f.get("compliance", {})
+        if comp.get("pci_dss") and comp.get("pci_dss") != "N/A": 
+            pci_dss_controls.add(comp["pci_dss"])
+        if comp.get("nist") and comp.get("nist") != "N/A": 
+            nist_controls.add(comp["nist"])
+        if comp.get("iso27001") and comp.get("iso27001") != "N/A": 
+            iso27001_controls.add(comp["iso27001"])
             
     score = max(0, 100 - sum(penalties.values()))
     
@@ -569,6 +740,11 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         "grade": grade,
         "severity_counts": severity_counts,
         "owasp_coverage": list(owasp_categories),
+        "compliance_frameworks": {
+            "pci_dss": list(pci_dss_controls),
+            "nist_sp_800_53": list(nist_controls),
+            "iso_27001": list(iso27001_controls)
+        },
         "findings": all_findings,
         "potential_issues_count": sum(c for k, c in severity_counts.items() if k in ["Critical", "High", "Medium", "Low"]),
         "executive_summary": f"Scan completed. Detected {severity_counts['High'] + severity_counts['Critical']} high-priority issues resulting in a score of {score}/100.",
