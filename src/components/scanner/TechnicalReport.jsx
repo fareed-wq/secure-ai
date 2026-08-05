@@ -75,23 +75,80 @@ const TechnicalReport = ({ reportData }) => {
             <Layers className="w-5 h-5 text-indigo-400" />
             <h3 className="font-bold text-white text-lg">🛡️ Security Posture Breakdown</h3>
           </div>
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
-                <PolarGrid stroke="#1e293b" />
-                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                <Radar
-                  name="Score"
-                  dataKey="score"
-                  stroke="#06b6d4"
-                  strokeWidth={2}
-                  fill="#06b6d4"
-                  fillOpacity={0.25}
-                  dot={{ r: 4, fill: '#06b6d4' }}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left Column: Radar Chart */}
+            <div className="lg:col-span-5 h-[350px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
+                  <PolarGrid stroke="#1e293b" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                  <Radar
+                    name="Score"
+                    dataKey="score"
+                    stroke="#06b6d4"
+                    strokeWidth={2}
+                    fill="#06b6d4"
+                    fillOpacity={0.25}
+                    dot={{ r: 4, fill: '#06b6d4' }}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+            
+            {/* Right Column: Category Health Breakdown */}
+            <div className="lg:col-span-7 space-y-4">
+              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Category Health Breakdown</h4>
+              {[
+                { key: 'encryption_tls', title: 'Encryption & TLS', icon: <Shield className="w-4 h-4" /> },
+                { key: 'http_headers', title: 'HTTP Security Headers', icon: <Server className="w-4 h-4" /> },
+                { key: 'domain_email', title: 'Domain & Email Security', icon: <Terminal className="w-4 h-4" /> },
+                { key: 'session_cookies', title: 'Session & Cookie Hardening', icon: <Clock className="w-4 h-4" /> },
+                { key: 'information_exposure', title: 'Information Exposure Defenses', icon: <AlertTriangle className="w-4 h-4" /> }
+              ].map(cat => {
+                const score = reportData.category_scores[cat.key] || 0;
+                let bgClass = 'bg-red-500';
+                let textClass = 'text-red-500';
+                let pillText = 'Needs Attention';
+                let pillClass = 'bg-red-500/20 text-red-400 border-red-500/30';
+                
+                if (score >= 85) {
+                  bgClass = 'bg-emerald-500';
+                  textClass = 'text-emerald-500';
+                  pillText = 'Optimal';
+                  pillClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
+                } else if (score >= 70) {
+                  bgClass = 'bg-amber-500';
+                  textClass = 'text-amber-500';
+                  pillText = 'Good';
+                  pillClass = 'bg-amber-500/20 text-amber-400 border-amber-500/30';
+                }
+
+                return (
+                  <div key={cat.key} className="flex flex-col sm:flex-row sm:items-center gap-4 bg-slate-900/50 p-4 rounded-lg border border-slate-800/50">
+                    <div className="flex items-center gap-3 min-w-[240px]">
+                      <div className={`p-2 rounded-lg bg-slate-800 ${textClass}`}>
+                        {cat.icon}
+                      </div>
+                      <span className="font-bold text-slate-200 text-sm">{cat.title}</span>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <div className="flex justify-between items-end mb-1.5">
+                        <span className="text-xs font-bold text-slate-400">{score}/100</span>
+                        <span className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded border ${pillClass}`}>
+                          {pillText}
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-800 rounded-full h-2">
+                        <div className={`h-2 rounded-full ${bgClass}`} style={{ width: `${score}%` }}></div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
