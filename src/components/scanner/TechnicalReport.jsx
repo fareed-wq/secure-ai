@@ -33,11 +33,11 @@ const TechnicalReport = ({ reportData }) => {
   };
 
   const radarData = reportData?.category_scores ? [
-    { subject: 'Encryption & TLS', score: reportData.category_scores.encryption_tls || 0 },
-    { subject: 'HTTP Headers', score: reportData.category_scores.http_headers || 0 },
-    { subject: 'Domain & Email', score: reportData.category_scores.domain_email || 0 },
-    { subject: 'Session & Cookies', score: reportData.category_scores.session_cookies || 0 },
-    { subject: 'Information Exposure', score: reportData.category_scores.information_exposure || 0 },
+    { subject: `Encryption & TLS (${reportData.category_scores.encryption_tls || 0}%)`, score: reportData.category_scores.encryption_tls || 0 },
+    { subject: `HTTP Headers (${reportData.category_scores.http_headers || 0}%)`, score: reportData.category_scores.http_headers || 0 },
+    { subject: `Domain & Email (${reportData.category_scores.domain_email || 0}%)`, score: reportData.category_scores.domain_email || 0 },
+    { subject: `Session & Cookies (${reportData.category_scores.session_cookies || 0}%)`, score: reportData.category_scores.session_cookies || 0 },
+    { subject: `Information Exposure (${reportData.category_scores.information_exposure || 0}%)`, score: reportData.category_scores.information_exposure || 0 },
   ] : [];
 
   const handleSnippetTabChange = (findingIdx, tab) => {
@@ -73,20 +73,22 @@ const TechnicalReport = ({ reportData }) => {
         <div className="bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden shadow-2xl p-6">
           <div className="flex items-center gap-3 mb-6">
             <Layers className="w-5 h-5 text-indigo-400" />
-            <h3 className="font-bold text-white text-lg">Security Posture Breakdown</h3>
+            <h3 className="font-bold text-white text-lg">🛡️ Security Posture Breakdown</h3>
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={radarData}>
+              <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
                 <PolarGrid stroke="#1e293b" />
                 <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#64748b' }} axisLine={false} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
                 <Radar
                   name="Score"
                   dataKey="score"
-                  stroke="#4f46e5"
-                  fill="#6366f1"
-                  fillOpacity={0.3}
+                  stroke="#06b6d4"
+                  strokeWidth={2}
+                  fill="#06b6d4"
+                  fillOpacity={0.25}
+                  dot={{ r: 4, fill: '#06b6d4' }}
                 />
               </RadarChart>
             </ResponsiveContainer>
