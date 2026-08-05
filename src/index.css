@@ -32,24 +32,40 @@
 }
 
 @media print {
-  /* 1. Hide site navigation, buttons, and interactive/visual web noise */
-  .scan-metadata-bar, .whatsapp-cta, .no-print, nav, header, footer, button, [role="tablist"], .whatsapp-btn, .recharts-wrapper, .radar-chart, .spider-chart, .risk-meter, .health-bars {
+  /* 1. Hide site navigation, buttons, and interactive web noise */
+  nav, header, footer, button, .whatsapp-cta, .no-print, .radar-chart, .risk-meter, .spider-chart {
     display: none !important;
   }
-  
+
+  /* FORCE CLEAN WHITE DOCUMENT BACKGROUND */
+  body, #root, main, .card, table, tr, td, th {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+  }
+
+  /* UN-SQUEEZE CODE SNIPPETS & FIX TABLE COLUMNS (CRITICAL) */
   table {
     width: 100% !important;
     table-layout: fixed !important;
   }
   
-  td, th {
-    word-wrap: break-word !important;
-    white-space: normal !important;
+  /* Give Vulnerability Name / Code Snippet column 60% of the table width */
+  th:nth-child(2), td:nth-child(2) {
+    width: 60% !important;
   }
   
-  pre, code {
+  /* Ensure remediation code boxes take full width and wrap properly */
+  pre, code, .remediation-snippet, .snippet-box {
+    width: 100% !important;
+    display: block !important;
     white-space: pre-wrap !important;
     word-break: break-all !important;
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    padding: 8px !important;
+    border: 1px solid #cbd5e1 !important;
   }
 
   /* 2. OVERRIDE ALL HEIGHT & OVERFLOW RESTRICTIONS (Prevents Page 1 Cutoff) */
@@ -75,19 +91,4 @@
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
-
-  /* 5. Force exact dark theme background colors to print smoothly */
-  body {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-    background-color: #0b0f19 !important;
-    color: #f3f4f6 !important;
-  }
-
-  /* 6. Tighten padding and margins to compress output */
-  .p-6 { padding: 1rem !important; }
-  .p-8 { padding: 1.25rem !important; }
-  .space-y-8 > :not([hidden]) ~ :not([hidden]) { margin-top: 1.5rem !important; }
-  .mb-8 { margin-bottom: 1.5rem !important; }
-  th, td { padding: 0.5rem 0.75rem !important; }
 }
