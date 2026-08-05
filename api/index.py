@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse, urljoin
 import logging
 import requests
+from requests.adapters import HTTPAdapter
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, field_validator
@@ -85,9 +86,15 @@ def is_public_hostname(hostname: str) -> bool:
             return False
     return True
 
+# Helper to generate connection-pooled HTTP sessions
 def get_http_session() -> requests.Session:
     session = requests.Session()
     session.headers.update({"User-Agent": Config.USER_AGENT})
+    
+    # Configure thread-safe connection pool adapter
+    adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
     return session
 
 # --- SSRF-SAFE REQUEST WRAPPER ---
@@ -103,7 +110,7 @@ def safe_request(method: str, url: str, session: requests.Session = None, max_re
         session = get_http_session()
         own_session = True
 
-    # Disable automatic redirects so we can manually inspect each hop
+    # Disable automatic redirects to inspect each hop manually
     kwargs["allow_redirects"] = False
 
     try:
@@ -118,12 +125,11 @@ def safe_request(method: str, url: str, session: requests.Session = None, max_re
 
             resp = session.request(method, current_url, timeout=timeout, **kwargs)
 
-            # Check if response is a redirect
+            # Check for redirect status codes
             if resp.is_redirect or resp.status_code in (301, 302, 303, 307, 308):
                 location = resp.headers.get("Location")
                 if not location:
                     break
-                # Resolve relative redirect URLs
                 current_url = urljoin(current_url, location)
             else:
                 return resp
@@ -143,7 +149,7 @@ class ScannerModule(ABC):
     timeout = 8.0
 
     @abstractmethod
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         pass
 
     def make_finding(self, name, severity, description, evidence, confidence="High", remediation="N/A", owasp="N/A"):
@@ -163,10 +169,10 @@ class TechFingerprintModule(ScannerModule):
     module_name = "TechFingerprint"
     description = "Identifies technologies via headers."
     
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
             server = resp.headers.get("Server")
             if server:
                 findings.append(self.make_finding("Server Header Exposed", "Informational", "The server software and version might be exposed.", server))
@@ -181,10 +187,10 @@ class InformationDisclosureModule(ScannerModule):
     module_name = "InformationDisclosure"
     description = "Checks for verbose server banners."
     
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
             server = resp.headers.get("Server", "")
             if any(char.isdigit() for char in server) and ("/" in server or "-" in server):
                 findings.append(self.make_finding("Verbose Server Banner", "Low", "Server header leaks exact version numbers.", server, remediation="Configure server to only return generic names (e.g., 'nginx').", owasp="A05: Security Misconfiguration"))
@@ -196,11 +202,11 @@ class RobotsTxtModule(ScannerModule):
     module_name = "RobotsTxt"
     description = "Fetches and analyzes robots.txt."
     
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         try:
             target = f"https://{hostname}/robots.txt" if url.startswith("https") else f"http://{hostname}/robots.txt"
-            resp = safe_request("GET", target, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.status_code == 200 and "user-agent" in resp.text.lower():
                 lines = len(resp.text.splitlines())
                 findings.append(self.make_finding("robots.txt Found", "Informational", f"Found robots.txt with {lines} lines.", target))
@@ -212,11 +218,11 @@ class SitemapModule(ScannerModule):
     module_name = "SitemapXml"
     description = "Checks for sitemap.xml."
     
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         try:
             target = f"https://{hostname}/sitemap.xml" if url.startswith("https") else f"http://{hostname}/sitemap.xml"
-            resp = safe_request("GET", target, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.status_code == 200 and ("<urlset" in resp.text or "<sitemapindex" in resp.text):
                 findings.append(self.make_finding("sitemap.xml Found", "Informational", "Found XML sitemap.", target))
         except Exception:
@@ -227,11 +233,11 @@ class SecurityTxtModule(ScannerModule):
     module_name = "SecurityTxt"
     description = "Checks for security.txt."
     
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         try:
             target = f"https://{hostname}/.well-known/security.txt" if url.startswith("https") else f"http://{hostname}/.well-known/security.txt"
-            resp = safe_request("GET", target, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.status_code == 200 and "contact" in resp.text.lower():
                 findings.append(self.make_finding("security.txt Found", "Passed", "Organization has published security.txt.", target))
             else:
@@ -244,10 +250,10 @@ class CORSModule(ScannerModule):
     module_name = "CORS"
     description = "Analyzes CORS headers."
     
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
             acao = resp.headers.get("Access-Control-Allow-Origin")
             if acao == "*":
                 findings.append(self.make_finding("Wildcard CORS Policy", "Medium", "The API allows cross-origin requests from any domain.", "Access-Control-Allow-Origin: *", remediation="Restrict CORS to specific trusted origins.", owasp="A05: Security Misconfiguration"))
@@ -260,14 +266,12 @@ class CORSModule(ScannerModule):
 class AdvancedCookieModule(ScannerModule):
     module_name = "AdvancedCookie"
     description = "Evaluates HttpOnly, Secure, SameSite, and Max-Age."
-    
-    # List of non-sensitive tracking/preference cookies to ignore for harsh penalty
     NON_SENSITIVE_COOKIES = {"SEARCH_SAMESITE", "1P_JAR", "NID", "AEC", "OGPC"}
-
-    def run(self, url: str, hostname: str) -> list[dict]:
+    
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
             
             raw_cookies = resp.raw.headers.getlist("Set-Cookie") if hasattr(resp, "raw") and hasattr(resp.raw, "headers") else []
             if not raw_cookies and "Set-Cookie" in resp.headers:
@@ -281,7 +285,6 @@ class AdvancedCookieModule(ScannerModule):
                 cookie_name = parts[0].split("=")[0].strip()
                 directives = [p.lower() for p in parts[1:]]
                 
-                # Determine severity based on cookie sensitivity
                 cookie_sev = "Informational" if cookie_name.upper() in self.NON_SENSITIVE_COOKIES else "Medium"
                 
                 if "httponly" not in directives:
@@ -322,11 +325,11 @@ class HTTPSRedirectModule(ScannerModule):
     module_name = "HTTPSRedirect"
     description = "Validates HTTP to HTTPS redirection across multi-hop chains safely."
     
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         target = f"http://{hostname}"
         try:
-            resp = safe_request("GET", target, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.url.startswith("https://"):
                 findings.append(self.make_finding("HTTPS Redirection Configured", "Passed", "HTTP traffic is correctly redirected to HTTPS.", f"Final Target: {resp.url}"))
             else:
@@ -339,7 +342,7 @@ class EnhancedTLSModule(ScannerModule):
     module_name = "EnhancedTLS"
     description = "Parses SANs, signature algorithms, and expiration."
     
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         context = ssl.create_default_context()
         try:
@@ -372,10 +375,10 @@ class SecurityHeadersModule(ScannerModule):
     module_name = "SecurityHeaders"
     description = "Checks HSTS, CSP, XFO, etc."
     
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
             headers = resp.headers
         except requests.exceptions.Timeout as e:
             findings.append(self.make_finding("HTTP Request Failed (Timeout)", "High", "Connection timed out while fetching HTTP headers.", str(e)))
@@ -423,10 +426,10 @@ class AdvancedSecurityHeadersModule(ScannerModule):
     module_name = "AdvancedSecurityHeaders"
     description = "Checks COOP, COEP, CORP."
     
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
             headers = resp.headers
             
             if "Cross-Origin-Opener-Policy" not in headers:
@@ -443,7 +446,7 @@ class SubdomainProbingModule(ScannerModule):
     module_name = "SubdomainProbing"
     description = "Probes common subdomains for the target."
     
-    def run(self, url: str, hostname: str) -> list[dict]:
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         domain = hostname
         if domain.startswith("www."):
@@ -452,7 +455,7 @@ class SubdomainProbingModule(ScannerModule):
         for sub in Config.COMMON_SUBDOMAINS:
             sub_url = f"https://{sub}.{domain}"
             try:
-                resp = safe_request("HEAD", sub_url, timeout=3.0)
+                resp = safe_request("HEAD", sub_url, session=session, timeout=3.0)
                 findings.append(self.make_finding(
                     f"Active Subdomain Found: {sub}.{domain}",
                     "Informational",
@@ -491,24 +494,26 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     if probe_subdomains:
         active_modules.append(SubdomainProbingModule())
         
-    with ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE) as pool:
-        futures = {pool.submit(mod.run, url, hostname): mod for mod in active_modules}
-        for future in as_completed(futures):
-            mod = futures[future]
-            try:
-                mod_findings = future.result(timeout=mod.timeout)
-                all_findings.extend(mod_findings)
-            except Exception as e:
-                logger.error(f"Module {mod.module_name} failed: {e}")
-                all_findings.append({
-                    "name": f"Module Crash: {mod.module_name}",
-                    "severity": "Informational",
-                    "description": "The scanner module crashed or timed out.",
-                    "evidence": str(e),
-                    "confidence": "High",
-                    "remediation": "N/A",
-                    "owasp": "N/A"
-                })
+    # Reuse a single pooled HTTP session across all worker threads
+    with get_http_session() as session:
+        with ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE) as pool:
+            futures = {pool.submit(mod.run, url, hostname, session): mod for mod in active_modules}
+            for future in as_completed(futures):
+                mod = futures[future]
+                try:
+                    mod_findings = future.result(timeout=mod.timeout)
+                    all_findings.extend(mod_findings)
+                except Exception as e:
+                    logger.error(f"Module {mod.module_name} failed: {e}")
+                    all_findings.append({
+                        "name": f"Module Crash: {mod.module_name}",
+                        "severity": "Informational",
+                        "description": "The scanner module crashed or timed out.",
+                        "evidence": str(e),
+                        "confidence": "High",
+                        "remediation": "N/A",
+                        "owasp": "N/A"
+                    })
 
     # --- SCORING ENGINE ---
     severity_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0, "Passed": 0}
