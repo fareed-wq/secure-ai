@@ -37,7 +37,7 @@ const TechnicalReport = ({ reportData }) => {
     { subject: `HTTP Headers (${reportData.category_scores.http_headers || 0}%)`, score: reportData.category_scores.http_headers || 0 },
     { subject: `Domain & Email (${reportData.category_scores.domain_email || 0}%)`, score: reportData.category_scores.domain_email || 0 },
     { subject: `Session & Cookies (${reportData.category_scores.session_cookies || 0}%)`, score: reportData.category_scores.session_cookies || 0 },
-    { subject: `Information Exposure (${reportData.category_scores.information_exposure || 0}%)`, score: reportData.category_scores.information_exposure || 0 },
+    { subject: `Info Exposure (${reportData.category_scores.information_exposure || 0}%)`, score: reportData.category_scores.information_exposure || 0 },
   ] : [];
 
   const handleSnippetTabChange = (findingIdx, tab) => {
@@ -70,17 +70,17 @@ const TechnicalReport = ({ reportData }) => {
 
       {/* 2. Security Posture Breakdown (Radar Chart) */}
       {radarData.length > 0 && (
-        <div className="bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden shadow-2xl p-6">
+        <div className="bg-[#0D1117] border border-slate-800 rounded-xl shadow-2xl p-6">
           <div className="flex items-center gap-3 mb-6">
             <Layers className="w-5 h-5 text-indigo-400" />
             <h3 className="font-bold text-white text-lg">🛡️ Security Posture Breakdown</h3>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
             {/* Left Column: Radar Chart */}
-            <div className="lg:col-span-5 h-[350px] w-full">
+            <div className="col-span-1 h-[350px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="65%" margin={{ top: 20, right: 40, bottom: 20, left: 40 }} data={radarData} style={{ overflow: 'visible' }}>
+                <RadarChart cx="50%" cy="50%" outerRadius="55%" margin={{ top: 20, right: 35, bottom: 20, left: 35 }} data={radarData} style={{ overflow: 'visible' }}>
                   <PolarGrid stroke="#1e293b" />
                   <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
@@ -98,7 +98,7 @@ const TechnicalReport = ({ reportData }) => {
             </div>
             
             {/* Right Column: Executive Risk & Remediation Overview */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="col-span-1 w-full space-y-6">
               <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 shadow-inner">
                 <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Executive Risk & Remediation Overview</h4>
                 
