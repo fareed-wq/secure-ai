@@ -150,8 +150,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       </div>
 
       {/* 4. FOOTER */}
-      <div className="p-4 border-t border-slate-800 flex flex-col gap-2">
-        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800/50 transition-colors text-left">
+      <div className="p-3 border-t border-slate-800 flex flex-col gap-2">
+        <div className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-left transition-colors">
           <div className="bg-indigo-900/50 text-indigo-400 p-1 rounded-full shrink-0">
             <User size={16} />
           </div>
@@ -167,7 +167,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         {!isCollapsed && (
           <button
             onClick={signOut}
-            className="flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors text-left w-full"
+            className="w-full flex items-center gap-3 px-2.5 py-2 text-slate-400 hover:bg-red-500/10 hover:text-red-400 rounded-lg transition-colors text-left text-sm font-medium"
           >
             <LogOut size={16} className="shrink-0" />
             <span className="truncate">Sign Out</span>
@@ -176,7 +176,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         {isCollapsed && (
           <button
             onClick={signOut}
-            className="flex justify-center p-2 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors"
+            className="flex justify-center px-2.5 py-2 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors w-full"
             title="Sign Out"
           >
             <LogOut size={16} />
