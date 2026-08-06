@@ -125,9 +125,9 @@ COMPLIANCE_MAP = {
         "iso27001": "A.8.28 (Secure Coding)"
     },
     "Missing Strict-Transport-Security (HSTS)": {
-        "pci_dss": "4.1.2 (Encrypt Management Sessions)",
-        "nist": "SC-8 (Transmission Confidentiality)",
-        "iso27001": "A.8.24 (Use of Cryptography)"
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "nist": "SC-28 (Protection of Information at Rest/Transit)",
+        "iso27001": "A.8.20 (Network Security)"
     },
     "Missing Content-Security-Policy (CSP)": {
         "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
@@ -219,9 +219,9 @@ COMPLIANCE_MAP = {
         "iso27001": "A.8.20 (Network Security)"
     },
     "Strict-Transport-Security Configured": {
-        "pci_dss": "4.1.2 (Encrypt Management Sessions)",
-        "nist": "SC-8 (Transmission Confidentiality)",
-        "iso27001": "A.8.24 (Use of Cryptography)"
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "nist": "SC-28 (Protection of Information at Rest/Transit)",
+        "iso27001": "A.8.20 (Network Security)"
     },
     "Content-Security-Policy Configured": {
         "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
@@ -1072,6 +1072,10 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     failed_nist, passed_nist = set(), set()
     failed_iso, passed_iso = set(), set()
     
+    high_critical_failed_pci = set()
+    high_critical_failed_nist = set()
+    high_critical_failed_iso = set()
+    
     cat_weights = {"Critical": 25, "High": 15, "Medium": 10, "Low": 5, "Informational": 0, "Passed": 0}
 
     for f in all_findings:
@@ -1099,9 +1103,15 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         i_c = comp.get("iso27001")
         
         if sev in ["Critical", "High", "Medium", "Low"]:
-            if p_c and p_c != "N/A": failed_pci.add(p_c)
-            if n_c and n_c != "N/A": failed_nist.add(n_c)
-            if i_c and i_c != "N/A": failed_iso.add(i_c)
+            if p_c and p_c != "N/A": 
+                failed_pci.add(p_c)
+                if sev in ["Critical", "High"]: high_critical_failed_pci.add(p_c)
+            if n_c and n_c != "N/A": 
+                failed_nist.add(n_c)
+                if sev in ["Critical", "High"]: high_critical_failed_nist.add(n_c)
+            if i_c and i_c != "N/A": 
+                failed_iso.add(i_c)
+                if sev in ["Critical", "High"]: high_critical_failed_iso.add(i_c)
         elif sev == "Passed":
             if p_c and p_c != "N/A": passed_pci.add(p_c)
             if n_c and n_c != "N/A": passed_nist.add(n_c)
@@ -1128,6 +1138,11 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     failed_nist_list, passed_nist_list = process_compliance(failed_nist, passed_nist)
     failed_iso_list, passed_iso_list = process_compliance(failed_iso, passed_iso)
 
+    def get_status(failed_high_crit, passed_list):
+        if len(failed_high_crit) == 0 and len(passed_list) >= 2:
+            return "Compliant"
+        return "Action Required"
+
     score = max(0, 100 - sum(penalties.values()))
     
     # Calculate Radar Sub-scores out of 100
@@ -1150,17 +1165,17 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         "owasp_coverage": list(owasp_categories),
         "technical_compliance": {
             "pci_dss_4_0": {
-                "status": "Compliant" if len(failed_pci_list) == 0 else "Action Required",
+                "status": get_status(high_critical_failed_pci, passed_pci_list),
                 "failed_controls": failed_pci_list,
                 "passed_controls": passed_pci_list
             },
             "nist_sp_800_53": {
-                "status": "Compliant" if len(failed_nist_list) == 0 else "Action Required",
+                "status": get_status(high_critical_failed_nist, passed_nist_list),
                 "failed_controls": failed_nist_list,
                 "passed_controls": passed_nist_list
             },
             "iso_27001": {
-                "status": "Compliant" if len(failed_iso_list) == 0 else "Action Required",
+                "status": get_status(high_critical_failed_iso, passed_iso_list),
                 "failed_controls": failed_iso_list,
                 "passed_controls": passed_iso_list
             }
