@@ -70,14 +70,20 @@ const TechnicalReport = ({ reportData }) => {
           <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
             <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">IP ADDRESS & LOCATION</div>
             <div className="text-slate-100 font-bold text-sm">{reportData?.metadata?.ip_address || reportData?.ip_address || 'N/A'}</div>
-            <div className="text-slate-400 text-xs mt-1">{reportData?.location_or_cdn || 'CDN / Cloud'}</div>
+            <div className="text-slate-400 text-xs mt-1">{reportData?.metadata?.location_or_cdn || reportData?.location_or_cdn || 'CDN / Cloud'}</div>
           </div>
           
           {/* Card 2: HTTP Status & Server Banner */}
           <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
             <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">HTTP STATUS & SERVER</div>
             <div className="text-slate-100 font-bold text-sm">{reportData?.metadata?.http_status || '200 OK'}</div>
-            <div className="text-slate-400 text-xs mt-1">Server: {reportData?.metadata?.server_header || reportData?.server_header || 'Hidden'}</div>
+            <div className="text-slate-400 text-xs mt-1">{
+              (reportData?.metadata?.server_header || reportData?.server_header) 
+                ? (String(reportData?.metadata?.server_header || reportData?.server_header).startsWith("Server:") 
+                   ? (reportData?.metadata?.server_header || reportData?.server_header) 
+                   : `Server: ${reportData?.metadata?.server_header || reportData?.server_header}`)
+                : 'Server: Hidden'
+            }</div>
           </div>
           
           {/* Card 3: SSL/TLS Certificate Quick-Check */}

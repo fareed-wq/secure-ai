@@ -866,6 +866,18 @@ REGISTERED_MODULES = [
     AdvancedSecurityHeadersModule()
 ]
 
+def get_ip_location(ip):
+    try:
+        # Free instant GeoIP lookup (no API key needed)
+        res = requests.get(f"http://ip-api.com/json/{ip}", timeout=2).json()
+        if res.get("status") == "success":
+            country = res.get("country", "Global")
+            org = res.get("org") or res.get("isp") or "Cloud"
+            return f"{country} ({org})"
+    except Exception:
+        pass
+    return "Global / Cloud"
+
 def get_metadata(domain: str, response: requests.Response):
     # 1. Real IP Address Resolution
     try:
@@ -873,8 +885,14 @@ def get_metadata(domain: str, response: requests.Response):
     except Exception:
         ip = "Unknown IP"
 
+    location_or_cdn = get_ip_location(ip)
+
     # 2. Server Banner
-    server = response.headers.get("Server", getattr(response, 'all_headers', {}).get("server", "Hidden/Generic")) if response else "Unknown"
+    if response:
+        server_header = response.headers.get("Server") or getattr(response, 'all_headers', {}).get("server")
+        server = server_header if server_header else "Undisclosed (Hardened)"
+    else:
+        server = "Undisclosed (Hardened)"
 
     # 3. HTTP Status
     status = f"{response.status_code} {response.reason}" if response else "200 OK"
@@ -906,6 +924,7 @@ def get_metadata(domain: str, response: requests.Response):
 
     return {
         "ip_address": ip,
+        "location_or_cdn": location_or_cdn,
         "server_header": server,
         "http_status": status,
         "ssl_issuer": ssl_issuer,
