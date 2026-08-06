@@ -1219,11 +1219,9 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
     
     if is_timeout:
         if ssl_cert_error:
-            status = "SSL Certificate Expired / Invalid"
-            waf_cdn_detection = "Invalid SSL"
+            status = "TLS Handshake Aborted"
         else:
             status = "Connection Timeout"
-            waf_cdn_detection = "PROTECTED BY WAF" if ssl_success else "Timeout"
     elif is_403:
         status = f"403 Forbidden ({int(rtt_val.total_seconds() * 1000)}ms)"
         waf_cdn_detection = "PROTECTED BY WAF" if ssl_success else waf_cdn_detection
@@ -1237,7 +1235,7 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
             performance_rating = "Optimal Latency" if rtt_ms_val < 150 else "Average Latency" if rtt_ms_val < 500 else "High Latency"
     else:
         if ssl_cert_error:
-            performance_rating = "SSL ERROR"
+            performance_rating = "NO HTTP RESPONSE"
         else:
             performance_rating = "REQUEST TIMEOUT"
 

@@ -110,7 +110,12 @@ const TechnicalReport = ({ reportData }) => {
               }</div>
             </div>
             <div>
-              <span className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider inline-block border ${reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}`}>
+              <span className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider inline-block border ${
+                reportData?.metadata?.performance_rating === 'NO HTTP RESPONSE' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
+                reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 
+                reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 
+                'bg-rose-500/10 text-rose-400 border-rose-500/30'
+              }`}>
                 {reportData?.metadata?.performance_rating || 'OPTIMAL LATENCY'}
               </span>
             </div>
