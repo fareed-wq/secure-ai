@@ -67,14 +67,14 @@ const TechnicalReport = ({ reportData }) => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3 p-4 bg-[#0D1117]">
           {/* Card 1: IP Address & Location */}
-          <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
+          <div className="p-3 bg-slate-900/80 rounded-lg border border-slate-800">
             <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">IP ADDRESS & LOCATION</div>
             <div className="text-slate-100 font-bold text-sm">{reportData?.metadata?.ip_address || reportData?.ip_address || 'N/A'}</div>
             <div className="text-slate-400 text-xs mt-1">{reportData?.metadata?.location_or_cdn || reportData?.location_or_cdn || 'CDN / Cloud'}</div>
           </div>
           
           {/* Card 2: HTTP Status & Server Banner */}
-          <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
+          <div className="p-3 bg-slate-900/80 rounded-lg border border-slate-800">
             <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">HTTP STATUS & SERVER</div>
             <div className="text-slate-100 font-bold text-sm">{reportData?.metadata?.http_status || '200 OK'}</div>
             <div className="text-slate-400 text-xs mt-1">{
@@ -87,10 +87,19 @@ const TechnicalReport = ({ reportData }) => {
           </div>
           
           {/* Card 3: SSL/TLS Certificate Quick-Check */}
-          <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
+          <div className="p-3 bg-slate-900/80 rounded-lg border border-slate-800">
             <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">SSL/TLS CERTIFICATE</div>
             <div className="text-slate-100 font-bold text-sm">{reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}</div>
-            <div className="text-slate-400 text-xs mt-1">{reportData?.metadata?.ssl_days_left || reportData?.ssl_days_left || 'Active'}</div>
+            <div className="text-slate-400 text-xs mt-1">
+              {reportData?.metadata?.tls_version || 'TLS'} ·{' '}
+              <span className={
+                reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
+                reportData?.metadata?.ssl_days_left_int <= 30 ? "text-amber-400 font-semibold" :
+                "text-slate-400"
+              }>
+                {reportData?.metadata?.ssl_days_left || reportData?.ssl_days_left || 'Active'}
+              </span>
+            </div>
           </div>
         </div>
       </div>

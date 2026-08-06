@@ -974,21 +974,31 @@ def get_metadata(domain: str, response: requests.Response):
         server = "Undisclosed (Hardened)"
 
     # 3. HTTP Status
-    status = f"{response.status_code} {response.reason}" if response else "200 OK"
+    if response:
+        rtt_ms = int(response.elapsed.total_seconds() * 1000) if hasattr(response, 'elapsed') else 0
+        status = f"{response.status_code} {response.reason} ({rtt_ms}ms)"
+    else:
+        status = "200 OK"
 
     # 4. SSL Cert Info
     ssl_issuer = "Valid SSL"
     ssl_days_left = "N/A"
+    ssl_days_left_int = None
+    tls_version = "TLS"
     try:
         ctx = ssl.create_default_context()
         with socket.create_connection((domain, 443), timeout=3) as sock:
             with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
                 cert = ssock.getpeercert()
+                ver = ssock.version()
+                if ver:
+                    tls_version = ver
                 # Expiry calculation
                 not_after_str = cert.get('notAfter')
                 if not_after_str:
                     expiry_date = datetime.datetime.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')
                     days_left = (expiry_date - datetime.datetime.utcnow()).days
+                    ssl_days_left_int = days_left
                     ssl_days_left = f"{days_left} Days Left"
                 
                 # Issuer calculation
@@ -1007,7 +1017,9 @@ def get_metadata(domain: str, response: requests.Response):
         "server_header": server,
         "http_status": status,
         "ssl_issuer": ssl_issuer,
-        "ssl_days_left": ssl_days_left
+        "ssl_days_left": ssl_days_left,
+        "ssl_days_left_int": ssl_days_left_int,
+        "tls_version": tls_version
     }
 
 
