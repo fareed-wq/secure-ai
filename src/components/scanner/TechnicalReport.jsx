@@ -95,7 +95,12 @@ const TechnicalReport = ({ reportData }) => {
                 <Activity className="w-3.5 h-3.5 text-slate-400" />
                 <div className="text-slate-400 text-xs font-mono uppercase tracking-wider font-semibold">HTTP STATUS & SERVER</div>
               </div>
-              <div className="font-mono text-lg font-bold text-white tracking-tight truncate">{reportData?.metadata?.http_status || '200 OK'}</div>
+              <div 
+                className="font-mono text-sm font-bold text-white tracking-tight leading-tight break-words line-clamp-2 cursor-help"
+                title={reportData?.metadata?.http_status || '200 OK'}
+              >
+                {reportData?.metadata?.http_status || '200 OK'}
+              </div>
               <div className="text-xs text-slate-400 mt-1 truncate mb-3">{
                 (reportData?.metadata?.server_header || reportData?.server_header) 
                   ? (String(reportData?.metadata?.server_header || reportData?.server_header).startsWith("Server:") 

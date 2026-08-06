@@ -1175,7 +1175,7 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
     rtt_val = getattr(response, 'elapsed', None)
     
     if is_timeout:
-        status = "Timeout / Failed to Connect"
+        status = "Connection Timeout"
         waf_cdn_detection = "PROTECTED BY WAF" if ssl_success else "Timeout"
     elif is_403:
         status = f"403 Forbidden ({int(rtt_val.total_seconds() * 1000)}ms)"
