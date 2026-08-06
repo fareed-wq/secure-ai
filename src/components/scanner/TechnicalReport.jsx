@@ -18,14 +18,14 @@ const TechnicalReport = ({ reportData }) => {
 
   const getSeverityBadge = (severity) => {
     const styles = {
-      'Critical': 'bg-red-950 text-red-400 border border-red-800',
-      'High': 'bg-rose-900/60 text-rose-300 border border-rose-700',
-      'Medium': 'bg-amber-950/80 text-amber-400 border border-amber-700',
-      'Low': 'bg-sky-950 text-sky-400 border border-sky-800',
-      'Informational': 'bg-blue-500 text-white border border-blue-600',
-      'Passed': 'bg-emerald-500 text-white border border-emerald-600'
+      'Critical': 'bg-red-950 text-red-400 border border-red-800 font-bold px-2 py-0.5 rounded text-xs',
+      'High': 'bg-rose-600 text-white font-bold px-2 py-0.5 rounded text-xs',
+      'Medium': 'bg-amber-600 text-white font-bold px-2 py-0.5 rounded text-xs',
+      'Low': 'bg-cyan-950/80 text-cyan-300 border border-cyan-800/80 font-medium px-2 py-0.5 rounded text-xs',
+      'Informational': 'bg-slate-800/90 text-slate-300 border border-slate-700 font-medium px-2 py-0.5 rounded text-xs',
+      'Passed': 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/80 font-medium px-2 py-0.5 rounded text-xs'
     };
-    return <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-md ${styles[severity] || 'bg-slate-700 text-white border border-slate-600'}`}>{severity}</span>;
+    return <span className={`uppercase tracking-widest ${styles[severity] || 'bg-slate-700 text-white border border-slate-600 font-medium px-2 py-0.5 rounded text-xs'}`}>{severity}</span>;
   };
 
   const copyToClipboard = (text) => {
