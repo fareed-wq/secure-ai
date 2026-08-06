@@ -69,22 +69,22 @@ const TechnicalReport = ({ reportData }) => {
           {/* Card 1: IP Address & Location */}
           <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
             <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">IP ADDRESS & LOCATION</div>
-            <div className="text-slate-100 font-bold text-sm">{reportData?.ip_address || '142.250.190.46'}</div>
-            <div className="text-slate-400 text-xs mt-1">{reportData?.location_or_cdn || 'Google LLC / USA'}</div>
+            <div className="text-slate-100 font-bold text-sm">{reportData?.metadata?.ip_address || reportData?.ip_address || 'N/A'}</div>
+            <div className="text-slate-400 text-xs mt-1">{reportData?.location_or_cdn || 'CDN / Cloud'}</div>
           </div>
           
           {/* Card 2: HTTP Status & Server Banner */}
           <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
             <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">HTTP STATUS & SERVER</div>
-            <div className="text-slate-100 font-bold text-sm">{reportData?.http_status || '200 OK'}</div>
-            <div className="text-slate-400 text-xs mt-1">{reportData?.server_header ? `Server: ${reportData.server_header}` : 'Server: gws'}</div>
+            <div className="text-slate-100 font-bold text-sm">{reportData?.metadata?.http_status || '200 OK'}</div>
+            <div className="text-slate-400 text-xs mt-1">Server: {reportData?.metadata?.server_header || reportData?.server_header || 'Hidden'}</div>
           </div>
           
           {/* Card 3: SSL/TLS Certificate Quick-Check */}
           <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
             <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">SSL/TLS CERTIFICATE</div>
-            <div className="text-slate-100 font-bold text-sm">{reportData?.ssl_issuer || 'GTS CA 1C3'}</div>
-            <div className="text-slate-400 text-xs mt-1">{reportData?.ssl_days_left ? `Valid • ${reportData.ssl_days_left} Days Left` : 'Valid • 58 Days Left'}</div>
+            <div className="text-slate-100 font-bold text-sm">{reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}</div>
+            <div className="text-slate-400 text-xs mt-1">{reportData?.metadata?.ssl_days_left || reportData?.ssl_days_left || 'Active'}</div>
           </div>
         </div>
       </div>

@@ -866,13 +866,61 @@ REGISTERED_MODULES = [
     AdvancedSecurityHeadersModule()
 ]
 
+def get_metadata(domain: str, response: requests.Response):
+    # 1. Real IP Address Resolution
+    try:
+        ip = socket.gethostbyname(domain)
+    except Exception:
+        ip = "Unknown IP"
+
+    # 2. Server Banner
+    server = response.headers.get("Server", getattr(response, 'all_headers', {}).get("server", "Hidden/Generic")) if response else "Unknown"
+
+    # 3. HTTP Status
+    status = f"{response.status_code} {response.reason}" if response else "200 OK"
+
+    # 4. SSL Cert Info
+    ssl_issuer = "Valid SSL"
+    ssl_days_left = "N/A"
+    try:
+        ctx = ssl.create_default_context()
+        with socket.create_connection((domain, 443), timeout=3) as sock:
+            with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
+                cert = ssock.getpeercert()
+                # Expiry calculation
+                not_after_str = cert.get('notAfter')
+                if not_after_str:
+                    expiry_date = datetime.datetime.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')
+                    days_left = (expiry_date - datetime.datetime.utcnow()).days
+                    ssl_days_left = f"{days_left} Days Left"
+                
+                # Issuer calculation
+                issuer_tuple = cert.get('issuer', ())
+                for item in issuer_tuple:
+                    for key, val in item:
+                        if key == 'commonName' or key == 'organizationName':
+                            ssl_issuer = val
+                            break
+    except Exception:
+        pass
+
+    return {
+        "ip_address": ip,
+        "server_header": server,
+        "http_status": status,
+        "ssl_issuer": ssl_issuer,
+        "ssl_days_left": ssl_days_left
+    }
+
+
 def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     hostname = urlparse(url).hostname
     if not hostname:
         return {"url": url, "error": "Could not parse a hostname from that URL."}
     if not is_public_hostname(hostname):
         return {"url": url, "error": "That host resolves to a private/internal address and can't be scanned."}
-
+    
+    metadata = {}
     all_findings = []
     
     active_modules = [mod for mod in REGISTERED_MODULES if mod.enabled]
@@ -880,6 +928,12 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         active_modules.append(SubdomainProbingModule())
         
     with get_http_session() as session:
+        try:
+            initial_resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            metadata = get_metadata(hostname, initial_resp)
+        except Exception:
+            metadata = get_metadata(hostname, None)
+
         with ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE) as pool:
             futures = {pool.submit(mod.run, url, hostname, session): mod for mod in active_modules}
             for future in as_completed(futures):
@@ -993,6 +1047,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
             }
         },
         "findings": all_findings,
+        "metadata": metadata,
         "potential_issues_count": sum(c for k, c in severity_counts.items() if k in ["Critical", "High", "Medium", "Low"]),
         "executive_summary": f"Scan completed. Detected {severity_counts['High'] + severity_counts['Critical']} high-priority issues resulting in a score of {score}/100.",
         "disclaimer": "Passive scan only. Modular engine execution."
