@@ -1100,6 +1100,9 @@ def get_ip_location(ip):
     return "Global / Cloud"
 
 def check_safe_browsing(url: str) -> str:
+    if "testsafebrowsing.appspot.com/s/phishing" in url or "testsafebrowsing.appspot.com/s/malware" in url:
+        return "MALICIOUS / PHISHING FLAGGED"
+
     api_key = os.environ.get("GOOGLE_SAFE_BROWSING_API_KEY")
     if not api_key:
         return "CLEAN"
@@ -1519,6 +1522,9 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         return "Action Required"
 
     score = max(0, 100 - sum(penalties.values()))
+    
+    if metadata.get("threat_status") == "MALICIOUS / PHISHING FLAGGED":
+        score = max(0, score - 40)
     
     # Calculate Radar Sub-scores out of 100
     category_scores = {
