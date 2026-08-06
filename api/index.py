@@ -35,11 +35,11 @@ class Config:
         "Passed": 0
     }
     SCORE_THRESHOLDS = {
-        "A+": 100,
-        "A": 95,
-        "B": 85,
+        "A+": 95,
+        "A": 90,
+        "B": 80,
         "C": 70,
-        "D": 50,
+        "D": 60,
         "F": 0
     }
 
