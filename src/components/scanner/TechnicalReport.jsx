@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Clock, Server, FileCode, CheckCircle, AlertTriangle, Info, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, Layers, Check, XCircle } from 'lucide-react';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Cell, LabelList, ResponsiveContainer } from 'recharts';
 
 const TechnicalReport = ({ reportData }) => {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -32,12 +32,12 @@ const TechnicalReport = ({ reportData }) => {
     navigator.clipboard.writeText(text);
   };
 
-  const radarData = reportData?.category_scores ? [
-    { subject: `Encryption & TLS (${reportData.category_scores.encryption_tls || 0}%)`, score: reportData.category_scores.encryption_tls || 0 },
-    { subject: `HTTP Headers (${reportData.category_scores.http_headers || 0}%)`, score: reportData.category_scores.http_headers || 0 },
-    { subject: `Domain & Email (${reportData.category_scores.domain_email || 0}%)`, score: reportData.category_scores.domain_email || 0 },
-    { subject: `Session & Cookies (${reportData.category_scores.session_cookies || 0}%)`, score: reportData.category_scores.session_cookies || 0 },
-    { subject: `Info Exposure (${reportData.category_scores.information_exposure || 0}%)`, score: reportData.category_scores.information_exposure || 0 },
+  const barData = reportData?.category_scores ? [
+    { name: 'Encryption & TLS', score: reportData.category_scores.encryption_tls || 0 },
+    { name: 'HTTP Headers', score: reportData.category_scores.http_headers || 0 },
+    { name: 'Domain & Email', score: reportData.category_scores.domain_email || 0 },
+    { name: 'Session & Cookies', score: reportData.category_scores.session_cookies || 0 },
+    { name: 'Info Exposure', score: reportData.category_scores.information_exposure || 0 }
   ] : [];
 
   const handleSnippetTabChange = (findingIdx, tab) => {
@@ -84,7 +84,7 @@ const TechnicalReport = ({ reportData }) => {
       </div>
 
       {/* 2. Security Posture Breakdown (Radar Chart) */}
-      {radarData.length > 0 && (
+      {barData.length > 0 && (
         <div className="bg-[#0D1117] border border-slate-800 rounded-xl shadow-2xl p-6">
           <div className="flex items-center gap-3 mb-6">
             <Layers className="w-5 h-5 text-indigo-400" />
@@ -92,23 +92,35 @@ const TechnicalReport = ({ reportData }) => {
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            {/* Left Column: Radar Chart */}
-            <div className="col-span-1 h-[350px] w-full">
+            {/* Left Column: Horizontal Bar Chart */}
+            <div className="col-span-1 h-[260px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="55%" margin={{ top: 20, right: 35, bottom: 20, left: 35 }} data={radarData} style={{ overflow: 'visible' }}>
-                  <PolarGrid stroke="#1e293b" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                  <Radar
-                    name="Score"
-                    dataKey="score"
-                    stroke="#06b6d4"
-                    strokeWidth={2}
-                    fill="#06b6d4"
-                    fillOpacity={0.25}
-                    dot={{ r: 4, fill: '#06b6d4' }}
+                <BarChart layout="vertical" data={barData} margin={{ top: 10, right: 40, left: 20, bottom: 10 }}>
+                  <XAxis type="number" domain={[0, 100]} hide />
+                  <YAxis 
+                    type="category" 
+                    dataKey="name" 
+                    stroke="#94a3b8" 
+                    fontSize={12} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    width={120} 
                   />
-                </RadarChart>
+                  <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={16}>
+                    {barData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.score >= 85 ? '#10b981' : entry.score >= 70 ? '#f59e0b' : '#ef4444'} 
+                      />
+                    ))}
+                    <LabelList 
+                      dataKey="score" 
+                      position="right" 
+                      formatter={(val) => `${val}%`} 
+                      style={{ fill: '#f8fafc', fontSize: '12px', fontWeight: 'bold' }} 
+                    />
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </div>
             
