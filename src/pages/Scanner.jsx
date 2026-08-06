@@ -14,18 +14,9 @@ import AuthModal from '../components/scanner/AuthModal';
 import PdfComingSoonModal from '../components/scanner/PdfComingSoonModal';
 import BottomTicker from '../components/scanner/BottomTicker';
 
-const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-  
-  // Prevent localhost fallback on live production domain
-  if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return 'https://api.urlscanonline.com';
-  }
-  
-  return 'http://localhost:5000';
-};
-
-const API_BASE_URL = getApiBaseUrl();
+export const API_BASE_URL = 
+  import.meta.env.VITE_API_URL || 
+  (window.location.hostname === 'localhost' ? 'http://localhost:5000' : '');
 
 function Scanner() {
   const { user } = useAuth();
