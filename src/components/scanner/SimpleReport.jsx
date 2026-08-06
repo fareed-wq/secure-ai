@@ -72,11 +72,11 @@ const getTranslation = (technicalName) => {
 
 const getBusinessRisk = (severity) => {
   const risks = {
-    'Critical': { label: 'Critical Business Risk', color: 'text-red-500', bg: 'bg-red-500/10', border: 'border-red-500/20', desc: 'Immediate risk of data breach, financial loss, or severe disruption.' },
-    'High': { label: 'High Business Risk', color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20', desc: 'Significant risk of unauthorized access or reputational damage.' },
-    'Medium': { label: 'Moderate Business Risk', color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20', desc: 'Operational risk that could be exploited if combined with other flaws.' },
-    'Low': { label: 'Minimal Business Risk', color: 'text-yellow-500', bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', desc: 'Minor risk, mostly missing recommended security best practices.' },
-    'Informational': { label: 'Observation', color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20', desc: 'Technical details that are not directly exploitable.' },
+    'Critical': { label: 'Critical Business Risk', badge: 'bg-red-700 text-white font-bold px-3 py-1 rounded-md text-xs inline-block shadow-sm', bg: 'bg-red-950/20', border: 'border-red-900/50', desc: 'Immediate risk of data breach, financial loss, or severe disruption.' },
+    'High': { label: 'High Business Risk', badge: 'bg-rose-600 text-white font-bold px-3 py-1 rounded-md text-xs inline-block shadow-sm', bg: 'bg-rose-950/20', border: 'border-rose-900/50', desc: 'Significant risk of unauthorized access or reputational damage.' },
+    'Medium': { label: 'Moderate Business Risk', badge: 'bg-amber-500 text-black font-bold px-3 py-1 rounded-md text-xs inline-block shadow-sm', bg: 'bg-amber-950/20', border: 'border-amber-900/50', desc: 'Operational risk that could be exploited if combined with other flaws.' },
+    'Low': { label: 'Minimal Business Risk', badge: 'bg-yellow-400 text-black font-bold px-3 py-1 rounded-md text-xs inline-block shadow-sm', bg: 'bg-yellow-950/20', border: 'border-yellow-900/50', desc: 'Minor risk, mostly missing recommended security best practices.' },
+    'Informational': { label: 'Observation', badge: 'bg-blue-600 text-white font-bold px-3 py-1 rounded-md text-xs inline-block shadow-sm', bg: 'bg-blue-950/20', border: 'border-blue-900/50', desc: 'Technical details that are not directly exploitable.' },
   };
   return risks[severity] || risks['Informational'];
 };
@@ -222,13 +222,15 @@ const SimpleReport = ({ reportData }) => {
 
                   <div className="w-full md:w-80 space-y-4">
                     <div className={`p-5 rounded-2xl border ${risk.bg} ${risk.border}`}>
-                      <div className={`font-black text-lg ${risk.color}`}>{risk.label}</div>
-                      <div className="text-sm text-slate-400 mt-2 font-medium">{risk.desc}</div>
+                      <div className="mb-1">
+                        <span className={risk.badge}>{risk.label}</span>
+                      </div>
+                      <div className="text-sm text-slate-300 mt-2 font-medium">{risk.desc}</div>
                     </div>
                     
-                    <div className="bg-slate-800/30 p-5 rounded-2xl border border-slate-700/50">
-                      <div className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1">Estimated Effort</div>
-                      <div className="font-black text-slate-200">{getEffort(issue.severity)}</div>
+                    <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-700/60">
+                      <div className="text-sm font-bold text-slate-200 uppercase tracking-widest mb-1">Estimated Effort</div>
+                      <div className="font-black text-slate-300">{getEffort(issue.severity)}</div>
                     </div>
                   </div>
                 </div>
