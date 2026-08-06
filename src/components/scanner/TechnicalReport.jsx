@@ -119,7 +119,7 @@ const TechnicalReport = ({ reportData }) => {
                 <div className="text-slate-400 text-xs font-mono uppercase tracking-wider font-semibold">SSL/TLS ENCRYPTION</div>
               </div>
               <div 
-                className="font-mono text-base font-bold text-white tracking-tight truncate cursor-help"
+                className="font-mono text-sm font-bold text-white tracking-tight leading-tight break-words line-clamp-2 cursor-help"
                 title={reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}
               >
                 {reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}
