@@ -144,7 +144,7 @@ const TechnicalReport = ({ reportData }) => {
             </div>
             <div>
               <span className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider inline-block border ${
-                reportData?.metadata?.ssl_days_left_int < 0 ? 'bg-red-500/10 text-red-500 border-red-500/30' :
+                reportData?.metadata?.ssl_days_left_int < 0 ? 'bg-red-500/10 text-red-400 border-red-500/30' :
                 reportData?.metadata?.ssl_days_left_int <= 30 ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 
                 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
               }`}>
