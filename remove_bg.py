@@ -1,27 +1,30 @@
 from PIL import Image
 
-def make_transparent(img_path):
-    img = Image.open(img_path).convert("RGBA")
+def remove_bg(input_path, output_path):
+    img = Image.open(input_path).convert("RGBA")
     data = img.getdata()
-    
     new_data = []
-    for item in data:
-        # Calculate grayscale intensity
-        intensity = (item[0] + item[1] + item[2]) / 3
-        # Use intensity as alpha channel to perfectly blend glowing edges without harsh cuts
-        # We can scale it: if it's pure black, alpha is 0.
-        # But wait, it's easier to just use the max of RGB as alpha for a black background image.
-        alpha = max(item[0], item[1], item[2])
+    
+    # Background is approx 14, 21, 39
+    bg_r, bg_g, bg_b = 14, 21, 39
+    
+    for r, g, b, a in data:
+        # Calculate distance from background
+        dist = ((r - bg_r)**2 + (g - bg_g)**2 + (b - bg_b)**2)**0.5
         
-        # If it's completely black, make it completely transparent
-        if alpha < 10:
-            new_data.append((item[0], item[1], item[2], 0))
+        if dist < 20:
+            # It's background or dots
+            new_data.append((r, g, b, 0))
+        elif dist < 80:
+            # Anti-aliasing edge
+            alpha = int((dist - 20) / 60 * 255)
+            new_data.append((r, g, b, alpha))
         else:
-            # We preserve the original color but map the alpha smoothly based on brightness
-            # This works flawlessly for removing black backgrounds on glowing images.
-            new_data.append((item[0], item[1], item[2], alpha))
+            new_data.append((r, g, b, 255))
             
     img.putdata(new_data)
-    img.save(img_path, "PNG")
+    img.save(output_path, "PNG")
 
-make_transparent("public/logo.png")
+if __name__ == "__main__":
+    remove_bg("public/logo-new.png", "public/logo-transparent.png")
+    print("Background removed")

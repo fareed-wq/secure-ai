@@ -278,7 +278,10 @@ def safe_request(method: str, url: str, session: requests.Session = None, max_re
                 )
 
             resp = session.request(method, current_url, timeout=timeout, **kwargs)
-            accumulated_headers.update(resp.headers)
+            
+            # Merge headers from all redirect hops
+            for k, v in resp.headers.items():
+                accumulated_headers[k] = v
 
             if resp.is_redirect or resp.status_code in (301, 302, 303, 307, 308):
                 location = resp.headers.get("Location")
