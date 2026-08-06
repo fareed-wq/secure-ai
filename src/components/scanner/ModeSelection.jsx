@@ -44,11 +44,11 @@ const ModeSelection = ({ onSelectMode }) => {
             </div>
 
             <p className="text-slate-300 mb-8 leading-relaxed">
-              A business-focused executive summary. Translates complex vulnerabilities into clear business risks and easy-to-follow remediation steps.
+              A business-focused executive summary. Translates complex vulnerabilities into clear business risks, health scores, and prioritized remediation timelines.
             </p>
 
             <div className="space-y-3 mb-8 flex-1">
-              {['No technical jargon', 'Business impact analysis', 'Prioritized action items', 'Great for founders & managers'].map((feature, i) => (
+              {['Executive risk & health score', 'Plain-English business impact', 'Prioritized effort & timelines', 'Great for Founders, C-Suite & Managers'].map((feature, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                   <span className="text-slate-300 text-sm">{feature}</span>
@@ -84,11 +84,11 @@ const ModeSelection = ({ onSelectMode }) => {
             </div>
 
             <p className="text-slate-300 mb-8 leading-relaxed">
-              A comprehensive engineering breakdown. Provides raw payloads, HTTP headers, TLS handshake details, and OWASP Top 10 mappings.
+              A comprehensive engineering & compliance breakdown. Features multi-framework audit readiness (PCI-DSS, NIST, ISO 27001), raw HTTP evidence, server metadata, and OWASP Top 10 mappings.
             </p>
 
             <div className="space-y-3 mb-8 flex-1">
-              {['Raw finding evidence', 'OWASP category mapping', 'Detailed technical descriptions', 'Built for Developers & DevOps'].map((feature, i) => (
+              {['PCI-DSS, NIST & ISO 27001 compliance', 'Raw header & payload evidence', 'OWASP Top 10 & CVSS risk scoring', 'Built for Developers, SecOps & Auditors'].map((feature, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                   <span className="text-slate-300 text-sm">{feature}</span>
