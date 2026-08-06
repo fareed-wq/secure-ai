@@ -142,7 +142,7 @@ COMPLIANCE_MAP = {
     },
     "Missing X-Frame-Options": {
         "pci_dss": "6.4.1 (Public Web Application Protection)",
-        "nist": "SA-11 (Developer Security Testing)",
+        "nist": "SI-10 (Information Input Validation)",
         "iso27001": "A.8.20 (Network Security)"
     },
     "Missing X-Content-Type-Options": {
@@ -1028,6 +1028,27 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
             if n_c and n_c != "N/A": passed_nist.add(n_c)
             if i_c and i_c != "N/A": passed_iso.add(i_c)
 
+    def process_compliance(failed_set, passed_set):
+        # 1. Deduplicate failed
+        failed_dedup = {}
+        for c in failed_set:
+            code = c.split(" ")[0]
+            if code not in failed_dedup:
+                failed_dedup[code] = c
+                
+        # 2. Deduplicate passed, excluding ANY code that is in failed_dedup
+        passed_dedup = {}
+        for c in passed_set:
+            code = c.split(" ")[0]
+            if code not in failed_dedup and code not in passed_dedup:
+                passed_dedup[code] = c
+                
+        return sorted(list(failed_dedup.values())), sorted(list(passed_dedup.values()))
+
+    failed_pci_list, passed_pci_list = process_compliance(failed_pci, passed_pci)
+    failed_nist_list, passed_nist_list = process_compliance(failed_nist, passed_nist)
+    failed_iso_list, passed_iso_list = process_compliance(failed_iso, passed_iso)
+
     score = max(0, 100 - sum(penalties.values()))
     
     # Calculate Radar Sub-scores out of 100
@@ -1050,19 +1071,19 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         "owasp_coverage": list(owasp_categories),
         "technical_compliance": {
             "pci_dss_4_0": {
-                "status": "Compliant" if len(failed_pci) == 0 else "Action Required",
-                "failed_controls": sorted(list(failed_pci)),
-                "passed_controls": sorted(list(passed_pci))
+                "status": "Compliant" if len(failed_pci_list) == 0 else "Action Required",
+                "failed_controls": failed_pci_list,
+                "passed_controls": passed_pci_list
             },
             "nist_sp_800_53": {
-                "status": "Compliant" if len(failed_nist) == 0 else "Action Required",
-                "failed_controls": sorted(list(failed_nist)),
-                "passed_controls": sorted(list(passed_nist))
+                "status": "Compliant" if len(failed_nist_list) == 0 else "Action Required",
+                "failed_controls": failed_nist_list,
+                "passed_controls": passed_nist_list
             },
             "iso_27001": {
-                "status": "Compliant" if len(failed_iso) == 0 else "Action Required",
-                "failed_controls": sorted(list(failed_iso)),
-                "passed_controls": sorted(list(passed_iso))
+                "status": "Compliant" if len(failed_iso_list) == 0 else "Action Required",
+                "failed_controls": failed_iso_list,
+                "passed_controls": passed_iso_list
             }
         },
         "findings": all_findings,
