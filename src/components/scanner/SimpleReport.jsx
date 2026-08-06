@@ -88,11 +88,38 @@ const TRANSLATIONS = {
     problem: "Your domain has email verification set to 'monitoring only' mode (p=none).",
     why: "Receiving mail servers are instructed to deliver spoofed emails pretending to be from your domain rather than blocking them.",
     category: "Email Trust"
+  },
+  "Missing X-Content-Type-Options": {
+    name: "Missing Malicious File Guard (nosniff)",
+    problem: "Your server does not explicitly instruct browsers to strictly enforce file types.",
+    why: "Browsers may try to guess a file's format and accidentally execute a fake image or document containing hidden script code.",
+    category: "Browser Protection"
+  },
+  "Missing Referrer-Policy": {
+    name: "Missing External Link Privacy (Referrer-Policy)",
+    problem: "Your website does not control what URL details are shared when visitors click links leading to external websites.",
+    why: "Sensitive internal page URLs or parameters could leak to third-party web servers when users leave your site.",
+    category: "Privacy Protection"
+  },
+  "Missing HttpOnly Flag on Cookie": {
+    name: "Unsecured Session Cookie (HttpOnly)",
+    problem: "A cookie saved in your browser is missing the HttpOnly security restriction.",
+    why: "If a malicious script runs on your site, it can steal this cookie and hijack active user logins or sessions.",
+    category: "Privacy Protection"
   }
 };
 
 const getTranslation = (technicalName) => {
-  return TRANSLATIONS[technicalName] || {
+  if (TRANSLATIONS[technicalName]) {
+    return TRANSLATIONS[technicalName];
+  }
+  
+  // Handle dynamic cookie finding names
+  if (technicalName.startsWith("Missing HttpOnly Flag on Cookie")) {
+    return TRANSLATIONS["Missing HttpOnly Flag on Cookie"];
+  }
+
+  return {
     name: technicalName, // fallback
     problem: "A security misconfiguration was detected that deviates from industry best practices.",
     why: "Leaving this unresolved slightly increases your overall attack surface.",
