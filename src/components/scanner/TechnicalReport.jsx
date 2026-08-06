@@ -20,8 +20,8 @@ const TechnicalReport = ({ reportData }) => {
     const styles = {
       'Critical': 'bg-red-950 text-red-400 border border-red-800 font-bold px-2 py-0.5 rounded text-xs',
       'High': 'bg-red-600 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm',
-      'Medium': 'bg-amber-500 text-black font-bold px-2.5 py-1 rounded text-xs shadow-sm',
-      'Low': 'bg-cyan-500 text-black font-bold px-2.5 py-1 rounded text-xs shadow-sm',
+      'Medium': 'bg-orange-500 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm',
+      'Low': 'bg-yellow-400 text-black font-bold px-2.5 py-1 rounded text-xs shadow-sm',
       'Informational': 'bg-blue-600 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm',
       'Passed': 'bg-emerald-500 text-black font-bold px-2.5 py-1 rounded text-xs shadow-sm'
     };
