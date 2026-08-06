@@ -181,13 +181,13 @@ const TechnicalReport = ({ reportData }) => {
                             </td>
                             <td className="px-6 py-4">
                               {finding.owasp && finding.owasp !== "N/A" ? (
-                                <span className="px-2 py-1 bg-slate-800 text-slate-300 text-xs font-mono rounded border border-slate-700">{finding.owasp}</span>
+                                <span className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2.5 py-1 rounded-md text-xs hover:bg-indigo-500/20 cursor-pointer">{finding.owasp}</span>
                               ) : (
                                 <span className="text-slate-600 text-xs">-</span>
                               )}
                             </td>
                             <td className="px-6 py-4 text-center">
-                              <span className="text-slate-400 text-xs font-mono">{finding.confidence || '100%'}</span>
+                              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-md text-xs font-bold whitespace-nowrap">🟢 {finding.confidence || 'High'} Confidence</span>
                             </td>
                             <td className="px-6 py-4 text-right print:hidden align-top">
                               <button className="text-slate-500 hover:text-white transition-colors">
@@ -243,8 +243,8 @@ const TechnicalReport = ({ reportData }) => {
                                                 <Copy className="w-3 h-3" /> Copy
                                               </button>
                                             </div>
-                                            <pre className="bg-[#05070a] border border-slate-800 p-4 rounded-lg text-emerald-400 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
-                                              {finding.evidence}
+                                            <pre className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                                              {`[-] HTTP Response Header Audit\n[!] Target: ${finding.name} -> [NOT FOUND]\n\n${finding.evidence}`}
                                             </pre>
                                           </div>
                                         )}
@@ -266,7 +266,7 @@ const TechnicalReport = ({ reportData }) => {
                                                 <button
                                                   key={platform}
                                                   onClick={(e) => { e.stopPropagation(); handleSnippetTabChange(idx, platform); }}
-                                                  className={`px-4 py-2 text-xs font-mono uppercase tracking-wider transition-colors ${activeTab === platform ? 'bg-indigo-900/40 text-indigo-300 border-b-2 border-indigo-500' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
+                                                  className={`px-4 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors m-1 ${activeTab === platform ? 'bg-indigo-600 text-white font-medium rounded-md shadow-sm' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded-md'}`}
                                                 >
                                                   {platform}
                                                 </button>
@@ -277,8 +277,8 @@ const TechnicalReport = ({ reportData }) => {
                                                 </button>
                                               </div>
                                             </div>
-                                            <div className="p-4 bg-[#0a0d12]">
-                                              <pre className="text-indigo-200 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                                            <div className="bg-slate-950 border-t-0 border border-slate-800/80 rounded-b-lg p-4">
+                                              <pre className="text-emerald-400 font-mono text-xs overflow-x-auto whitespace-pre-wrap leading-relaxed">
                                                 {finding.remediation_snippets[activeTab]}
                                               </pre>
                                             </div>
@@ -288,32 +288,34 @@ const TechnicalReport = ({ reportData }) => {
                                       </div>
 
                                       <div className="space-y-6">
-                                        {finding.remediation && finding.remediation !== "N/A" && (
-                                          <div className="bg-indigo-950/20 border border-indigo-900/50 rounded-xl p-5">
-                                            <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                              <Shield className="w-4 h-4" /> Remediation Directive
-                                            </div>
-                                            <p className="text-indigo-200/80 font-mono text-sm leading-relaxed p-3 bg-indigo-950/40 rounded-lg border border-indigo-900/30">
-                                              {finding.remediation}
-                                            </p>
-                                          </div>
-                                        )}
-                                        
-                                        <div className="space-y-3">
-                                          <div className="flex justify-between items-center text-xs border-b border-slate-800 pb-2">
-                                            <span className="text-slate-500">Category</span>
-                                            <span className="font-mono text-slate-300 uppercase">{finding.category || 'N/A'}</span>
-                                          </div>
-                                          <div className="flex justify-between items-center text-xs border-b border-slate-800 pb-2">
-                                            <span className="text-slate-500">Scanner Module</span>
-                                            <span className="font-mono text-slate-300">{finding.module || 'HeuristicEngine'}</span>
-                                          </div>
-                                          {finding.cvss && (
-                                            <div className="flex justify-between items-center text-xs border-b border-slate-800 pb-2">
-                                              <span className="text-slate-500">CVSS v3.1</span>
-                                              <span className="font-mono text-rose-400 font-bold">{finding.cvss}</span>
-                                            </div>
+                                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 h-full">
+                                          {finding.remediation && finding.remediation !== "N/A" && (
+                                            <>
+                                              <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                <Shield className="w-4 h-4" /> Remediation Directive
+                                              </div>
+                                              <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                                                {finding.remediation}
+                                              </p>
+                                            </>
                                           )}
+                                          
+                                          <div className="space-y-3 mt-auto pt-4 border-t border-slate-800/80">
+                                            <div className="flex justify-between items-center text-xs">
+                                              <span className="text-slate-500">Category</span>
+                                              <span className="font-mono text-slate-300 uppercase">{finding.category || 'HTTP_HEADERS'}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs">
+                                              <span className="text-slate-500">Scanner Module</span>
+                                              <span className="font-mono text-slate-300">{finding.module || 'SecurityHeaders'}</span>
+                                            </div>
+                                            {finding.cvss && (
+                                              <div className="flex justify-between items-center text-xs">
+                                                <span className="text-slate-500">CVSS Score</span>
+                                                <span className="font-mono text-rose-400 font-bold">{finding.cvss}</span>
+                                              </div>
+                                            )}
+                                          </div>
                                         </div>
                                       </div>
 
