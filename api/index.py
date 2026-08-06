@@ -1011,6 +1011,52 @@ def get_metadata(domain: str, response: requests.Response):
     except Exception:
         pass
 
+    # 5. Network & Security Posture
+    waf_cdn_detection = "Direct Origin"
+    org_lower = location_or_cdn.lower()
+    if "cloudflare" in org_lower:
+        waf_cdn_detection = "Cloudflare WAF / CDN"
+    elif "amazon" in org_lower or "aws" in org_lower or (response and "x-amz-cf-id" in response.headers):
+        waf_cdn_detection = "AWS CloudFront"
+    elif "fastly" in org_lower:
+        waf_cdn_detection = "Fastly CDN"
+    elif "akamai" in org_lower:
+        waf_cdn_detection = "Akamai CDN"
+
+    # Performance Rating
+    rtt_val = getattr(response, 'elapsed', None)
+    if rtt_val:
+        rtt_ms = int(rtt_val.total_seconds() * 1000)
+        performance_rating = "Optimal Latency" if rtt_ms < 150 else "Average Latency" if rtt_ms < 500 else "High Latency"
+    else:
+        performance_rating = "Unknown"
+
+    # IPv6 Support
+    ipv6_supported = False
+    try:
+        ipv6_info = socket.getaddrinfo(domain, None, socket.AF_INET6)
+        if ipv6_info:
+            ipv6_supported = True
+    except Exception:
+        pass
+
+    # Protocol & HTTPS Enforcement
+    http_protocol = "HTTP/1.1"
+    https_enforced = "HTTP Exposed"
+    clean_redirect = "No Auto-Redirect"
+    
+    if response:
+        if response.url.startswith("https"):
+            https_enforced = "HTTPS Enforced"
+        if response.history and any(r.status_code in [301, 302, 307, 308] for r in response.history):
+            clean_redirect = "Clean 301 Redirect"
+        
+        alt_svc = response.headers.get("Alt-Svc", "")
+        if "h3=" in alt_svc:
+            http_protocol = "HTTP/3 (QUIC)"
+        elif "h2=" in alt_svc or response.url.startswith("https"):
+            http_protocol = "HTTP/2"
+
     return {
         "ip_address": ip,
         "location_or_cdn": location_or_cdn,
@@ -1019,7 +1065,13 @@ def get_metadata(domain: str, response: requests.Response):
         "ssl_issuer": ssl_issuer,
         "ssl_days_left": ssl_days_left,
         "ssl_days_left_int": ssl_days_left_int,
-        "tls_version": tls_version
+        "tls_version": tls_version,
+        "waf_cdn_detection": waf_cdn_detection,
+        "performance_rating": performance_rating,
+        "ipv6_supported": ipv6_supported,
+        "http_protocol": http_protocol,
+        "https_enforced": https_enforced,
+        "clean_redirect": clean_redirect
     }
 
 

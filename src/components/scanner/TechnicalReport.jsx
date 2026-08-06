@@ -65,41 +65,62 @@ const TechnicalReport = ({ reportData }) => {
           </div>
           <div className="text-emerald-400 font-bold">STATUS: COMPLETED</div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3 p-4 bg-[#0D1117]">
-          {/* Card 1: IP Address & Location */}
-          <div className="p-3 bg-slate-900/80 rounded-lg border border-slate-800">
-            <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">IP ADDRESS & LOCATION</div>
-            <div className="text-slate-100 font-bold text-sm">{reportData?.metadata?.ip_address || reportData?.ip_address || 'N/A'}</div>
-            <div className="text-slate-400 text-xs mt-1">{reportData?.metadata?.location_or_cdn || reportData?.location_or_cdn || 'CDN / Cloud'}</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-3 p-4 bg-[#0D1117]">
+          {/* Card 1: Network & Edge Security */}
+          <div className="bg-slate-900/80 border border-slate-800/90 rounded-xl p-4 shadow-sm hover:border-slate-700/80 transition-colors">
+            <div className="text-slate-400 text-xs font-mono tracking-wider mb-2">IP ADDRESS & LOCATION</div>
+            <div className="text-slate-100 font-bold text-[15px] truncate">{reportData?.metadata?.ip_address || reportData?.ip_address || 'N/A'}</div>
+            <div className="text-slate-400 text-xs mt-1 truncate mb-3">{reportData?.metadata?.location_or_cdn || reportData?.location_or_cdn || 'CDN / Cloud'}</div>
+            <span className="inline-block px-2 py-1 bg-indigo-500/10 text-indigo-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-indigo-500/20">
+              {reportData?.metadata?.waf_cdn_detection || 'Direct Origin'}
+            </span>
           </div>
           
-          {/* Card 2: HTTP Status & Server Banner */}
-          <div className="p-3 bg-slate-900/80 rounded-lg border border-slate-800">
-            <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">HTTP STATUS & SERVER</div>
-            <div className="text-slate-100 font-bold text-sm">{reportData?.metadata?.http_status || '200 OK'}</div>
-            <div className="text-slate-400 text-xs mt-1">{
+          {/* Card 2: HTTP & Performance */}
+          <div className="bg-slate-900/80 border border-slate-800/90 rounded-xl p-4 shadow-sm hover:border-slate-700/80 transition-colors">
+            <div className="text-slate-400 text-xs font-mono tracking-wider mb-2">HTTP STATUS & SERVER</div>
+            <div className="text-slate-100 font-bold text-[15px] truncate">{reportData?.metadata?.http_status || '200 OK'}</div>
+            <div className="text-slate-400 text-xs mt-1 truncate mb-3">{
               (reportData?.metadata?.server_header || reportData?.server_header) 
                 ? (String(reportData?.metadata?.server_header || reportData?.server_header).startsWith("Server:") 
                    ? (reportData?.metadata?.server_header || reportData?.server_header) 
                    : `Server: ${reportData?.metadata?.server_header || reportData?.server_header}`)
                 : 'Server: Hidden'
             }</div>
+            <span className={`inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+              {reportData?.metadata?.performance_rating || 'Unknown Latency'}
+            </span>
           </div>
           
-          {/* Card 3: SSL/TLS Certificate Quick-Check */}
-          <div className="p-3 bg-slate-900/80 rounded-lg border border-slate-800">
-            <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">SSL/TLS CERTIFICATE</div>
-            <div className="text-slate-100 font-bold text-sm">{reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}</div>
-            <div className="text-slate-400 text-xs mt-1">
-              {reportData?.metadata?.tls_version || 'TLS'} ·{' '}
+          {/* Card 3: SSL/TLS Certificate */}
+          <div className="bg-slate-900/80 border border-slate-800/90 rounded-xl p-4 shadow-sm hover:border-slate-700/80 transition-colors">
+            <div className="text-slate-400 text-xs font-mono tracking-wider mb-2">SSL/TLS ENCRYPTION</div>
+            <div className="text-slate-100 font-bold text-[15px] truncate">{reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}</div>
+            <div className="text-xs mt-1 truncate mb-3">
+              <span className="text-slate-400">{reportData?.metadata?.tls_version || 'TLS'} · </span>
               <span className={
                 reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
                 reportData?.metadata?.ssl_days_left_int <= 30 ? "text-amber-400 font-semibold" :
-                "text-slate-400"
+                "text-emerald-400 font-semibold"
               }>
                 {reportData?.metadata?.ssl_days_left || reportData?.ssl_days_left || 'Active'}
               </span>
             </div>
+            <span className={`inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.metadata?.ssl_days_left_int > 14 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+              {reportData?.metadata?.ssl_days_left_int > 14 ? 'Valid Certificate' : 'Renewal Imminent'}
+            </span>
+          </div>
+
+          {/* Card 4: Traffic & Protocol Posture */}
+          <div className="bg-slate-900/80 border border-slate-800/90 rounded-xl p-4 shadow-sm hover:border-slate-700/80 transition-colors">
+            <div className="text-slate-400 text-xs font-mono tracking-wider mb-2">SECURITY & PROTOCOL</div>
+            <div className="text-slate-100 font-bold text-[15px] truncate">{reportData?.metadata?.https_enforced || 'HTTPS Status Unknown'}</div>
+            <div className="text-slate-400 text-xs mt-1 truncate mb-3">
+              {reportData?.metadata?.http_protocol || 'HTTP/1.1'} · {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}
+            </div>
+            <span className={`inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.metadata?.clean_redirect === 'Clean 301 Redirect' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+              {reportData?.metadata?.clean_redirect || 'No Auto-Redirect'}
+            </span>
           </div>
         </div>
       </div>
