@@ -1148,7 +1148,11 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
                 for item in issuer_tuple:
                     for key, val in item:
                         if key == 'commonName' or key == 'organizationName':
-                            ssl_issuer = val
+                            clean_val = str(val)
+                            for suffix in [" TLS RSA SHA256 CA", " RSA SHA256 CA", " TLS RSA CA", " Intermediate CA", " RSA CA", " ECC CA", " ECC SHA384 CA", " CA"]:
+                                if clean_val.endswith(suffix):
+                                    clean_val = clean_val[:-len(suffix)].strip()
+                            ssl_issuer = clean_val
                             break
     except Exception:
         pass

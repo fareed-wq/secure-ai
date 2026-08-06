@@ -118,7 +118,12 @@ const TechnicalReport = ({ reportData }) => {
                 <Lock className="w-3.5 h-3.5 text-slate-400" />
                 <div className="text-slate-400 text-xs font-mono uppercase tracking-wider font-semibold">SSL/TLS ENCRYPTION</div>
               </div>
-              <div className="font-mono text-lg font-bold text-white tracking-tight truncate">{reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}</div>
+              <div 
+                className="font-mono text-base font-bold text-white tracking-tight truncate cursor-help"
+                title={reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}
+              >
+                {reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}
+              </div>
               <div className="text-xs text-slate-400 mt-1 truncate mb-3">
                 {reportData?.metadata?.tls_version || 'TLS'} · <span className={
                   reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
