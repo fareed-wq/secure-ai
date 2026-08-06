@@ -5,8 +5,11 @@ import re
 import whois
 import os
 import requests
+import urllib3
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse, urljoin
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 import logging
 from http.cookiejar import DefaultCookiePolicy
 import requests
@@ -23,6 +26,15 @@ from io import BytesIO
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def canonicalize_url(raw_input: str) -> str:
+    clean_url = raw_input.strip()
+    if not clean_url.startswith("http://") and not clean_url.startswith("https://"):
+        clean_url = "https://" + clean_url
+    match = re.match(r'(https?://[^\s\]\)\>\"\']+)', clean_url)
+    if match:
+        clean_url = match.group(1)
+    return clean_url
 
 # --- CENTRAL CONFIGURATION ---
 class Config:
@@ -1152,15 +1164,7 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
     else:
         server = "Undisclosed (Hardened)"
 
-    # 3. HTTP Status
-    if response:
-        rtt_ms = int(response.elapsed.total_seconds() * 1000) if hasattr(response, 'elapsed') else 0
-        status = f"{response.status_code} {response.reason} ({rtt_ms}ms)"
-    else:
-        timeout_ms = int(Config.REQUEST_TIMEOUT * 1000)
-        status = f"Timeout (>{timeout_ms}ms)"
-
-    # 4. SSL Cert Info Extraction
+    # 3. SSL Cert Info Extraction
     ssl_issuer = "Unknown"
     ssl_days_left = "N/A"
     ssl_days_left_int = None
@@ -1168,8 +1172,10 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
     ssl_success = False
     is_expired = False
     ssl_cert_error = False
+    ssl_badge = "NO SSL / UNKNOWN"
 
     try:
+        # Pass 1: Verified
         ctx = ssl.create_default_context()
         with socket.create_connection((domain, 443), timeout=3) as sock:
             with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
@@ -1183,9 +1189,11 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
                 if not_after_str:
                     clean_date = re.sub(r'\s+', ' ', not_after_str)
                     expiry_date = datetime.datetime.strptime(clean_date, '%b %d %H:%M:%S %Y %Z').replace(tzinfo=datetime.timezone.utc)
-                    days_left = (expiry_date - datetime.datetime.now(datetime.timezone.utc)).days
+                    now = datetime.datetime.now(datetime.timezone.utc)
+                    days_left = (expiry_date - now).days
                     ssl_days_left_int = days_left
                     ssl_days_left = f"{days_left} Days Left"
+                    ssl_badge = "VALID CERTIFICATE"
 
                 issuer_tuple = cert.get('issuer', ())
                 for item in issuer_tuple:
@@ -1195,7 +1203,7 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
                             break
     except Exception:
         ssl_cert_error = True
-        # UNVERIFIED FALLBACK FOR EXPIRED / UNTRUSTED CERTS
+        # Pass 2: Unverified Fallback
         try:
             unverified_ctx = ssl._create_unverified_context()
             with socket.create_connection((domain, 443), timeout=3) as sock:
@@ -1218,25 +1226,31 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
                         if not_after:
                             if not_after.tzinfo is None:
                                 not_after = not_after.replace(tzinfo=datetime.timezone.utc)
-                            days_left = (not_after - datetime.datetime.now(datetime.timezone.utc)).days
+                            now = datetime.datetime.now(datetime.timezone.utc)
+                            days_left = (not_after - now).days
                             ssl_days_left_int = days_left
                             if days_left < 0:
                                 is_expired = True
                                 ssl_days_left = f"Expired ({abs(days_left)} Days Ago)"
+                                ssl_badge = "EXPIRED"
+                            elif days_left <= 30:
+                                ssl_days_left = f"{days_left} Days Left"
+                                ssl_badge = "RENEWAL IMMINENT"
                             else:
                                 ssl_days_left = f"{days_left} Days Left"
+                                ssl_badge = "VALID CERTIFICATE (UNTRUSTED)"
         except Exception as err:
             logger.error(f"Unverified cert fetch failed: {err}")
 
-    # BADGE SELECTION LOGIC
-    if is_expired or (ssl_days_left_int is not None and ssl_days_left_int < 0):
-        ssl_badge = "EXPIRED"
-    elif ssl_days_left_int is not None and ssl_days_left_int < 30:
-        ssl_badge = "RENEWAL IMMINENT"
-    elif ssl_success:
-        ssl_badge = "VALID CERTIFICATE"
+    # 4. Decoupled HTTP Status
+    if response:
+        rtt_ms = int(response.elapsed.total_seconds() * 1000) if hasattr(response, 'elapsed') else 0
+        status = f"{response.status_code} {response.reason} ({rtt_ms}ms)"
     else:
-        ssl_badge = "NO SSL / UNKNOWN"
+        if ssl_cert_error:
+            status = "TLS Handshake Aborted"
+        else:
+            status = "Connection Timeout"
 
     # 5. Network & Security Posture
     waf_cdn_detection = "Direct Origin"
@@ -1255,22 +1269,21 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
     is_403 = response and response.status_code == 403
     rtt_val = getattr(response, 'elapsed', None)
     
-    if is_timeout:
-        if ssl_cert_error:
-            status = "TLS Handshake Aborted"
-        else:
-            status = "Connection Timeout"
-    elif is_403:
-        status = f"403 Forbidden ({int(rtt_val.total_seconds() * 1000)}ms)"
+    if is_403:
         waf_cdn_detection = "PROTECTED BY WAF" if ssl_success else waf_cdn_detection
 
-    # Performance Rating
-    if rtt_val and not is_timeout:
-        rtt_ms_val = int(rtt_val.total_seconds() * 1000)
+    # Performance Rating & HTTP Badge
+    if response:
+        rtt_ms_val = int(rtt_val.total_seconds() * 1000) if rtt_val else 0
         if rtt_ms_val > 1500 or is_403:
             performance_rating = "TIMEOUT" if is_403 else "High Latency"
         else:
-            performance_rating = "Optimal Latency" if rtt_ms_val < 150 else "Average Latency" if rtt_ms_val < 500 else "High Latency"
+            if response.status_code >= 500:
+                performance_rating = "SERVER ERROR"
+            elif response.status_code >= 400:
+                performance_rating = "CLIENT ERROR"
+            else:
+                performance_rating = "Optimal Latency" if rtt_ms_val < 150 else "Average Latency" if rtt_ms_val < 500 else "High Latency"
     else:
         if ssl_cert_error:
             performance_rating = "NO HTTP RESPONSE"
@@ -1356,6 +1369,7 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
 
 
 def scan_url(url: str, probe_subdomains: bool = False) -> dict:
+    url = canonicalize_url(url)
     hostname = urlparse(url).hostname
     if not hostname:
         return {"url": url, "error": "Could not parse a hostname from that URL."}
@@ -1371,10 +1385,11 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         
     with get_http_session() as session:
         try:
-            initial_resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            metadata = get_metadata(hostname, initial_resp, url)
-        except Exception as e:
-            metadata = get_metadata(hostname, None, url)
+            initial_resp = safe_request("GET", url, session=session, timeout=5, verify=False)
+        except Exception:
+            initial_resp = None
+            
+        metadata = get_metadata(hostname, initial_resp, url)
 
         with ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE) as pool:
             futures = {pool.submit(mod.run, url, hostname, session): mod for mod in active_modules}
