@@ -1140,35 +1140,27 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
     except (ssl.SSLCertVerificationError, ssl.SSLError):
         ssl_cert_error = True
         try:
-            ctx = ssl._create_unverified_context()
-            with socket.create_connection((domain, 443), timeout=3) as sock:
-                with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
-                    ver = ssock.version()
-                    try:
-                        from cryptography import x509
-                        from cryptography.hazmat.backends import default_backend
-                        der_cert = ssock.getpeercert(True)
-                        cert_obj = x509.load_der_x509_certificate(der_cert, default_backend())
-                        
-                        issuer_tuple = ()
-                        for attr in cert_obj.issuer:
-                            name = attr.oid._name if hasattr(attr.oid, '_name') else attr.oid.dotted_string
-                            if name in ("commonName", "2.5.4.3"):
-                                issuer_tuple = ((("commonName", attr.value),),)
-                                break
-                            elif name in ("organizationName", "2.5.4.10"):
-                                issuer_tuple = ((("organizationName", attr.value),),)
+            pem_cert = ssl.get_server_certificate((domain, 443), timeout=3.0)
+            try:
+                from cryptography import x509
+                from cryptography.hazmat.backends import default_backend
+                cert_obj = x509.load_pem_x509_certificate(pem_cert.encode(), default_backend())
+                
+                issuer_tuple = ()
+                for attr in cert_obj.issuer:
+                    name = attr.oid._name if hasattr(attr.oid, '_name') else attr.oid.dotted_string
+                    if name in ("commonName", "2.5.4.3"):
+                        issuer_tuple = ((("commonName", attr.value),),)
+                        break
+                    elif name in ("organizationName", "2.5.4.10"):
+                        issuer_tuple = ((("organizationName", attr.value),),)
 
-                        cert = {
-                            'notAfter': cert_obj.not_valid_after.strftime('%b %d %H:%M:%S %Y GMT'),
-                            'issuer': issuer_tuple
-                        }
-                    except Exception:
-                        try:
-                            import _ssl
-                            cert = _ssl._test_decode_cert(ssock.getpeercert(True))
-                        except Exception:
-                            cert = ssock.getpeercert()
+                cert = {
+                    'notAfter': cert_obj.not_valid_after.strftime('%b %d %H:%M:%S %Y GMT'),
+                    'issuer': issuer_tuple
+                }
+            except Exception:
+                pass
         except Exception:
             pass
     except Exception:
