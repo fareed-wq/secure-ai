@@ -28,6 +28,7 @@ function Scanner() {
   const [reportData, setReportData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [reportMode, setReportMode] = useState('simple'); // simple, technical
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authFeatureName, setAuthFeatureName] = useState('');
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const urlInputRef = useRef(null);
