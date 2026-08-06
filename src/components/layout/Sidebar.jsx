@@ -41,11 +41,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     { label: "Contact", href: "/contact", icon: <MessageSquare size={18} /> },
   ];
 
-  const recentScans = [
-    "paypal-security-login.com",
-    "github.com",
-    "phishing-test-site.net"
-  ];
+
 
   return (
     <>
@@ -149,24 +145,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           )}
         </div>
 
-        {/* 3. RECENTS SECTION */}
-        <div className="mt-6 mb-2">
-          {!isCollapsed && <h3 className="px-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Recents</h3>}
-          <div className="flex flex-col gap-1">
-            {recentScans.map((domain, index) => (
-              <button 
-                key={index}
-                className="flex items-center gap-3 p-2 rounded-lg text-sm text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors text-left"
-                title={isCollapsed ? domain : undefined}
-              >
-                <div className="text-slate-600 min-w-[18px]">
-                  <Shield size={16} />
-                </div>
-                {!isCollapsed && <span className="truncate">{domain}</span>}
-              </button>
-            ))}
-          </div>
-        </div>
+
       </div>
 
       {/* 4. FOOTER */}
