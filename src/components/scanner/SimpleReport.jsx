@@ -230,9 +230,14 @@ const SimpleReport = ({ reportData }) => {
                       <div className={risk.text}>{risk.desc}</div>
                     </div>
                     
-                    <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 mt-3 w-full md:w-80">
-                      <div className="text-sm font-mono font-bold text-slate-400 tracking-wider uppercase block">Estimated Effort</div>
-                      <div className="text-lg font-bold text-white mt-1.5 block">{getEffort(issue.severity)}</div>
+                    <div className="bg-slate-900/80 border border-indigo-500/30 rounded-xl p-4 mt-3 shadow-sm w-full md:w-80">
+                      <div className="text-xs font-mono font-bold text-indigo-400 tracking-wider uppercase flex items-center gap-1.5">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Estimated Effort
+                      </div>
+                      <div className="text-base font-bold text-white mt-1 block">{getEffort(issue.severity)}</div>
                     </div>
                   </div>
                 </div>
