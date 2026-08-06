@@ -19,13 +19,13 @@ const TechnicalReport = ({ reportData }) => {
   const getSeverityBadge = (severity) => {
     const styles = {
       'Critical': 'bg-red-950 text-red-400 border border-red-800 font-bold px-2 py-0.5 rounded text-xs',
-      'High': 'bg-rose-600 text-white font-bold px-2 py-0.5 rounded text-xs',
-      'Medium': 'bg-amber-600 text-white font-bold px-2 py-0.5 rounded text-xs',
-      'Low': 'bg-cyan-950/80 text-cyan-300 border border-cyan-800/80 font-medium px-2 py-0.5 rounded text-xs',
-      'Informational': 'bg-slate-800/90 text-slate-300 border border-slate-700 font-medium px-2 py-0.5 rounded text-xs',
-      'Passed': 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/80 font-medium px-2 py-0.5 rounded text-xs'
+      'High': 'bg-red-600 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm',
+      'Medium': 'bg-amber-500 text-black font-bold px-2.5 py-1 rounded text-xs shadow-sm',
+      'Low': 'bg-cyan-500 text-black font-bold px-2.5 py-1 rounded text-xs shadow-sm',
+      'Informational': 'bg-blue-600 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm',
+      'Passed': 'bg-emerald-500 text-black font-bold px-2.5 py-1 rounded text-xs shadow-sm'
     };
-    return <span className={`uppercase tracking-widest ${styles[severity] || 'bg-slate-700 text-white border border-slate-600 font-medium px-2 py-0.5 rounded text-xs'}`}>{severity}</span>;
+    return <span className={`uppercase tracking-widest ${styles[severity] || 'bg-slate-700 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm'}`}>{severity}</span>;
   };
 
   const copyToClipboard = (text) => {
