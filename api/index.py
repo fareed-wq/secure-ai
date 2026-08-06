@@ -1120,15 +1120,14 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
         timeout_ms = int(Config.REQUEST_TIMEOUT * 1000)
         status = f"Timeout (>{timeout_ms}ms)"
 
-    # 4. SSL Cert Info
+    # 4. SSL Cert Info Extraction
     ssl_issuer = "Unknown"
     ssl_days_left = "N/A"
     ssl_days_left_int = None
     tls_version = "TLS"
     ssl_success = False
+    is_expired = False
     ssl_cert_error = False
-    cert = None
-    ver = None
 
     try:
         ctx = ssl.create_default_context()
@@ -1137,60 +1136,67 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
                 cert = ssock.getpeercert()
                 ver = ssock.version()
                 ssl_success = True
-    except (ssl.SSLCertVerificationError, ssl.SSLError):
-        ssl_cert_error = True
-        try:
-            pem_cert = ssl.get_server_certificate((domain, 443), timeout=3.0)
-            try:
-                from cryptography import x509
-                from cryptography.hazmat.backends import default_backend
-                cert_obj = x509.load_pem_x509_certificate(pem_cert.encode(), default_backend())
+                if ver: 
+                    tls_version = ver
                 
-                issuer_tuple = ()
-                for attr in cert_obj.issuer:
-                    name = attr.oid._name if hasattr(attr.oid, '_name') else attr.oid.dotted_string
-                    if name in ("commonName", "2.5.4.3"):
-                        issuer_tuple = ((("commonName", attr.value),),)
-                        break
-                    elif name in ("organizationName", "2.5.4.10"):
-                        issuer_tuple = ((("organizationName", attr.value),),)
+                not_after_str = cert.get('notAfter')
+                if not_after_str:
+                    clean_date = re.sub(r'\s+', ' ', not_after_str)
+                    expiry_date = datetime.datetime.strptime(clean_date, '%b %d %H:%M:%S %Y %Z').replace(tzinfo=datetime.timezone.utc)
+                    days_left = (expiry_date - datetime.datetime.now(datetime.timezone.utc)).days
+                    ssl_days_left_int = days_left
+                    ssl_days_left = f"{days_left} Days Left"
 
-                cert = {
-                    'notAfter': cert_obj.not_valid_after.strftime('%b %d %H:%M:%S %Y GMT'),
-                    'issuer': issuer_tuple
-                }
-            except Exception:
-                pass
-        except Exception:
-            pass
+                issuer_tuple = cert.get('issuer', ())
+                for item in issuer_tuple:
+                    for key, val in item:
+                        if key in ['commonName', 'organizationName']:
+                            ssl_issuer = val
+                            break
     except Exception:
-        pass
+        ssl_cert_error = True
+        # UNVERIFIED FALLBACK FOR EXPIRED / UNTRUSTED CERTS
+        try:
+            unverified_ctx = ssl._create_unverified_context()
+            with socket.create_connection((domain, 443), timeout=3) as sock:
+                with unverified_ctx.wrap_socket(sock, server_hostname=domain) as ssock:
+                    ver = ssock.version()
+                    if ver: 
+                        tls_version = ver
+                    cert_der = ssock.getpeercert(binary_form=True)
+                    if cert_der:
+                        from cryptography import x509
+                        from cryptography.hazmat.backends import default_backend
+                        cert_obj = x509.load_der_x509_certificate(cert_der, default_backend())
+                        
+                        for attr in cert_obj.issuer:
+                            if attr.oid._name in ['commonName', 'organizationName']:
+                                ssl_issuer = attr.value
+                                break
+                        
+                        not_after = getattr(cert_obj, 'not_valid_after_utc', getattr(cert_obj, 'not_valid_after', None))
+                        if not_after:
+                            if not_after.tzinfo is None:
+                                not_after = not_after.replace(tzinfo=datetime.timezone.utc)
+                            days_left = (not_after - datetime.datetime.now(datetime.timezone.utc)).days
+                            ssl_days_left_int = days_left
+                            if days_left < 0:
+                                is_expired = True
+                                ssl_days_left = f"Expired ({abs(days_left)} Days Ago)"
+                            else:
+                                ssl_days_left = f"{days_left} Days Left"
+        except Exception as err:
+            logger.error(f"Unverified cert fetch failed: {err}")
 
-    if cert:
-        if ver:
-            tls_version = ver
-        # Expiry calculation
-        not_after_str = cert.get('notAfter')
-        if not_after_str:
-            expiry_date = datetime.datetime.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')
-            days_left = (expiry_date - datetime.datetime.utcnow()).days
-            ssl_days_left_int = days_left
-            if days_left < 0:
-                ssl_days_left = f"Expired ({abs(days_left)} Days Ago)"
-            else:
-                ssl_days_left = f"{days_left} Days Left"
-        
-        # Issuer calculation
-        issuer_tuple = cert.get('issuer', ())
-        for item in issuer_tuple:
-            for key, val in item:
-                if key == 'commonName' or key == 'organizationName':
-                    clean_val = str(val)
-                    for suffix in [" TLS RSA SHA256 CA", " RSA SHA256 CA", " TLS RSA CA", " Intermediate CA", " RSA CA", " ECC CA", " ECC SHA384 CA", " DV TLS CA", " CA"]:
-                        if clean_val.endswith(suffix):
-                            clean_val = clean_val[:-len(suffix)].strip()
-                    ssl_issuer = clean_val
-                    break
+    # BADGE SELECTION LOGIC
+    if is_expired or (ssl_days_left_int is not None and ssl_days_left_int < 0):
+        ssl_badge = "EXPIRED"
+    elif ssl_days_left_int is not None and ssl_days_left_int < 30:
+        ssl_badge = "RENEWAL IMMINENT"
+    elif ssl_success:
+        ssl_badge = "VALID CERTIFICATE"
+    else:
+        ssl_badge = "NO SSL / UNKNOWN"
 
     # 5. Network & Security Posture
     waf_cdn_detection = "Direct Origin"
@@ -1274,6 +1280,7 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
         "ssl_issuer": ssl_issuer if ssl_issuer != "Unknown" else "Valid SSL" if ssl_success else "Unknown",
         "ssl_days_left": ssl_days_left,
         "ssl_days_left_int": ssl_days_left_int,
+        "ssl_badge": ssl_badge,
         "tls_version": tls_version,
         "waf_cdn_detection": waf_cdn_detection,
         "performance_rating": performance_rating,
