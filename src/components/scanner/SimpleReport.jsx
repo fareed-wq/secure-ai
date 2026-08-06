@@ -72,11 +72,11 @@ const getTranslation = (technicalName) => {
 
 const getBusinessRisk = (severity) => {
   const risks = {
-    'Critical': { label: 'Critical Business Risk', badge: 'bg-red-700 text-white font-bold px-3 py-1 rounded-md text-xs inline-block shadow-sm', bg: 'bg-red-950/20', border: 'border-red-900/50', desc: 'Immediate risk of data breach, financial loss, or severe disruption.' },
-    'High': { label: 'High Business Risk', badge: 'bg-rose-600 text-white font-bold px-3 py-1 rounded-md text-xs inline-block shadow-sm', bg: 'bg-rose-950/20', border: 'border-rose-900/50', desc: 'Significant risk of unauthorized access or reputational damage.' },
-    'Medium': { label: 'Moderate Business Risk', badge: 'bg-amber-500 text-black font-bold px-3 py-1 rounded-md text-xs inline-block shadow-sm', bg: 'bg-amber-950/20', border: 'border-amber-900/50', desc: 'Operational risk that could be exploited if combined with other flaws.' },
-    'Low': { label: 'Minimal Business Risk', badge: 'bg-yellow-400 text-black font-bold px-3 py-1 rounded-md text-xs inline-block shadow-sm', bg: 'bg-yellow-950/20', border: 'border-yellow-900/50', desc: 'Minor risk, mostly missing recommended security best practices.' },
-    'Informational': { label: 'Observation', badge: 'bg-blue-600 text-white font-bold px-3 py-1 rounded-md text-xs inline-block shadow-sm', bg: 'bg-blue-950/20', border: 'border-blue-900/50', desc: 'Technical details that are not directly exploitable.' },
+    'Critical': { label: 'Critical Business Risk', badge: 'bg-red-700 text-white px-2.5 py-1 rounded-md text-xs font-bold tracking-wide inline-block shadow-sm', desc: 'Immediate risk of data breach, financial loss, or severe disruption.' },
+    'High': { label: 'High Business Risk', badge: 'bg-rose-600 text-white px-2.5 py-1 rounded-md text-xs font-bold tracking-wide inline-block shadow-sm', desc: 'Significant risk of unauthorized access or reputational damage.' },
+    'Medium': { label: 'Moderate Business Risk', badge: 'bg-amber-500 text-black px-2.5 py-1 rounded-md text-xs font-bold tracking-wide inline-block shadow-sm', desc: 'Operational risk that could be exploited if combined with other flaws.' },
+    'Low': { label: 'Minimal Business Risk', badge: 'bg-yellow-400 text-black px-2.5 py-1 rounded-md text-xs font-bold tracking-wide inline-block shadow-sm', desc: 'Minor risk, mostly missing recommended security best practices.' },
+    'Informational': { label: 'Observation', badge: 'bg-blue-600 text-white px-2.5 py-1 rounded-md text-xs font-bold tracking-wide inline-block shadow-sm', desc: 'Technical details that are not directly exploitable.' },
   };
   return risks[severity] || risks['Informational'];
 };
@@ -211,26 +211,26 @@ const SimpleReport = ({ reportData }) => {
                   <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold border border-slate-700">{idx + 1}</div>
-                      <h4 className="font-black text-2xl text-white">{trans.name}</h4>
+                      <h4 className="text-lg font-semibold text-slate-100 tracking-tight">{trans.name}</h4>
                     </div>
                     
-                    <div className="space-y-4 text-slate-300 text-lg">
-                      <p><strong className="text-white">The Problem:</strong> {trans.problem}</p>
-                      <p><strong className="text-white">Why it matters:</strong> {trans.why}</p>
+                    <div className="space-y-4">
+                      <p className="text-sm text-slate-400 leading-relaxed"><strong className="text-sm font-semibold text-slate-200">The Problem:</strong> {trans.problem}</p>
+                      <p className="text-sm text-slate-400 leading-relaxed"><strong className="text-sm font-semibold text-slate-200">Why it matters:</strong> {trans.why}</p>
                     </div>
                   </div>
 
                   <div className="w-full md:w-80 space-y-4">
-                    <div className={`p-5 rounded-2xl border ${risk.bg} ${risk.border}`}>
+                    <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-3.5">
                       <div className="mb-1">
                         <span className={risk.badge}>{risk.label}</span>
                       </div>
-                      <div className="text-sm text-slate-300 mt-2 font-medium">{risk.desc}</div>
+                      <div className="text-xs text-slate-300 leading-normal mt-2.5">{risk.desc}</div>
                     </div>
                     
-                    <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-700/60">
-                      <div className="text-sm font-bold text-slate-200 uppercase tracking-widest mb-1">Estimated Effort</div>
-                      <div className="font-black text-slate-300">{getEffort(issue.severity)}</div>
+                    <div className="bg-slate-900/40 border border-slate-800/80 rounded-xl p-3.5 mt-3">
+                      <div className="text-[11px] font-mono font-medium text-slate-400 tracking-wider uppercase">Estimated Effort</div>
+                      <div className="text-sm font-semibold text-slate-200 mt-1">{getEffort(issue.severity)}</div>
                     </div>
                   </div>
                 </div>
