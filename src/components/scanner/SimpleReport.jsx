@@ -330,7 +330,6 @@ const SimpleReport = ({ reportData }) => {
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-10 h-10 rounded-full bg-slate-800/80 text-white font-bold text-xl flex items-center justify-center shrink-0">{idx + 1}</div>
                       <h4 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                        {getCategoryIcon(trans.category)}
                         {trans.name}
                       </h4>
                     </div>
@@ -372,9 +371,6 @@ const SimpleReport = ({ reportData }) => {
       {passed.length > 0 && (
         <div className="bg-emerald-950/20 border border-emerald-900/50 p-8 rounded-3xl mt-12">
           <div className="flex items-center gap-4 mb-8">
-            <div className="p-3 bg-emerald-500 rounded-2xl text-white shadow-lg shadow-emerald-500/20">
-              <ShieldCheck className="w-8 h-8" />
-            </div>
             <div>
               <h3 className="font-black text-2xl text-white">Security Strengths</h3>
               <p className="text-emerald-200/70">What your website is already doing correctly.</p>
