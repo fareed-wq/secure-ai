@@ -499,6 +499,25 @@ class DNSCAAModule(ScannerModule):
                     ))
         except Exception as e:
             logger.error(f"DNSCAAModule failed: {e}")
+
+        # DNSSEC Check
+        try:
+            dnssec_url = f"https://dns.google/resolve?name={domain}&type=DNSKEY"
+            resp = safe_request("GET", dnssec_url, session=session, timeout=4.0)
+            if resp.status_code == 200:
+                data = resp.json()
+                if "Answer" in data and len(data["Answer"]) > 0:
+                    findings.append(self.make_finding(
+                        "DNSSEC Configured",
+                        "Passed",
+                        "Domain Name System Security Extensions (DNSSEC) is enabled.",
+                        "DNSKEY record found",
+                        owasp="A02: Cryptographic Failures",
+                        category="domain_email"
+                    ))
+        except Exception:
+            pass
+
         return findings
 
 class DNSEmailSecurityModule(ScannerModule):
@@ -595,6 +614,56 @@ class DNSEmailSecurityModule(ScannerModule):
                 ))
         except Exception as e:
             logger.error(f"DNSEmailSecurityModule failed: {e}")
+
+        # MTA-STS Check
+        try:
+            mta_url = f"https://dns.google/resolve?name=_mta-sts.{domain}&type=TXT"
+            resp = safe_request("GET", mta_url, session=session, timeout=4.0)
+            mta_found = False
+            if resp.status_code == 200:
+                for rec in resp.json().get("Answer", []):
+                    if "v=STSv1" in rec.get("data", ""):
+                        mta_found = True
+                        findings.append(self.make_finding(
+                            "MTA-STS Mail Transport Security Configured",
+                            "Passed",
+                            "MTA-STS policy is configured to enforce TLS for email transport.",
+                            rec.get("data", ""),
+                            owasp="A05: Security Misconfiguration",
+                            category="domain_email"
+                        ))
+                        break
+            if not mta_found:
+                findings.append(self.make_finding(
+                    "Missing MTA-STS Record",
+                    "Informational",
+                    "No MTA-STS DNS record found.",
+                    "",
+                    owasp="A05: Security Misconfiguration",
+                    category="domain_email"
+                ))
+        except Exception:
+            pass
+
+        # TLS-RPT Check
+        try:
+            tlsrpt_url = f"https://dns.google/resolve?name=_smtp._tls.{domain}&type=TXT"
+            resp = safe_request("GET", tlsrpt_url, session=session, timeout=4.0)
+            if resp.status_code == 200:
+                for rec in resp.json().get("Answer", []):
+                    if "v=TLSRPTv1" in rec.get("data", ""):
+                        findings.append(self.make_finding(
+                            "TLS-RPT Email Reporting Configured",
+                            "Passed",
+                            "TLS Reporting (TLS-RPT) is configured.",
+                            rec.get("data", ""),
+                            owasp="A05: Security Misconfiguration",
+                            category="domain_email"
+                        ))
+                        break
+        except Exception:
+            pass
+
         return findings
 
 class TechFingerprintModule(ScannerModule):
@@ -765,6 +834,32 @@ class AdvancedCookieModule(ScannerModule):
                         owasp="A01: Broken Access Control",
                         category="session_cookies"
                     ))
+                
+                if cookie_name.startswith("__Host-"):
+                    path_is_root = any(p == "path=/" for p in directives)
+                    has_domain = any(p.startswith("domain=") for p in directives)
+                    if "secure" not in directives or not path_is_root or has_domain:
+                        findings.append(self.make_finding(
+                            "Invalid __Host- Cookie Prefix Configuration",
+                            "Low",
+                            f"The cookie {cookie_name} uses the __Host- prefix but violates its requirements (must have Secure, Path=/, and no Domain).",
+                            f"Cookie: {cookie_str}",
+                            remediation="Ensure __Host- cookies include the Secure attribute, set Path=/, and omit the Domain attribute.",
+                            owasp="A05: Security Misconfiguration",
+                            category="session_cookies"
+                        ))
+                elif cookie_name.startswith("__Secure-"):
+                    if "secure" not in directives:
+                        findings.append(self.make_finding(
+                            "Invalid __Secure- Cookie Prefix Configuration",
+                            "Low",
+                            f"The cookie {cookie_name} uses the __Secure- prefix but lacks the Secure attribute.",
+                            f"Cookie: {cookie_str}",
+                            remediation="Ensure __Secure- cookies include the Secure attribute.",
+                            owasp="A05: Security Misconfiguration",
+                            category="session_cookies"
+                        ))
+
         except Exception:
             pass
         return findings
@@ -817,6 +912,26 @@ class EnhancedTLSModule(ScannerModule):
                             findings.append(self.make_finding("Certificate Expiring Soon", "Medium", f"Certificate expires in {days_left} days.", not_after, remediation="Renew the TLS certificate immediately.", owasp="A02: Cryptographic Failures", category="encryption_tls"))
         except Exception as e:
             findings.append(self.make_finding("SSL/TLS Connection Failure", "High", "Failed to establish a secure TLS connection.", str(e), remediation="Ensure the server supports standard TLS protocols.", owasp="A02: Cryptographic Failures", category="encryption_tls"))
+
+        # Legacy TLS Probe
+        legacy_supported = False
+        try:
+            legacy_context = ssl.create_default_context()
+            legacy_context.options &= ~ssl.OP_NO_TLSv1
+            legacy_context.options &= ~ssl.OP_NO_TLSv1_1
+            legacy_context.maximum_version = ssl.TLSVersion.TLSv1_1
+            
+            with socket.create_connection((hostname, 443), timeout=3.0) as sock:
+                with legacy_context.wrap_socket(sock, server_hostname=hostname) as ssock:
+                    legacy_supported = True
+        except Exception:
+            pass
+
+        if legacy_supported:
+            findings.append(self.make_finding("Deprecated TLS 1.0/1.1 Supported", "Medium", "The server allows connections using deprecated TLS 1.0 or 1.1 protocols.", "", remediation="Disable TLS 1.0 and TLS 1.1 on the server.", owasp="A05: Security Misconfiguration", category="encryption_tls"))
+        else:
+            findings.append(self.make_finding("Legacy TLS Protocols Disabled", "Passed", "Server correctly rejects TLS 1.0/1.1 connections.", "TLS 1.2+ Only", owasp="A02: Cryptographic Failures", category="encryption_tls"))
+
         return findings
 
 class PermissionsPolicyModule(ScannerModule):
@@ -883,6 +998,16 @@ class SecurityHeadersModule(ScannerModule):
                 findings.append(self.make_finding("Weak Content-Security-Policy (CSP)", "Medium", "CSP contains 'unsafe-inline' or 'unsafe-eval'.", csp, remediation="Remove unsafe-inline and unsafe-eval from CSP.", owasp="A05: Security Misconfiguration", category="http_headers"))
             else:
                 findings.append(self.make_finding("Content-Security-Policy Configured", "Passed", "CSP is present and strict.", csp, owasp="A05: Security Misconfiguration", category="http_headers"))
+            
+            if "object-src" not in csp or "base-uri" not in csp:
+                findings.append(self.make_finding("Incomplete CSP Directives (Missing object-src / base-uri)", "Low", "CSP is missing recommended granular directives like object-src or base-uri.", csp, remediation="Add 'object-src \'none\'' and 'base-uri \'self\'' to your CSP.", owasp="A05: Security Misconfiguration", category="http_headers"))
+
+        if "X-Permitted-Cross-Domain-Policies" not in headers:
+            findings.append(self.make_finding("Missing X-Permitted-Cross-Domain-Policies", "Informational", "The X-Permitted-Cross-Domain-Policies header is missing.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
+
+        if "X-DNS-Prefetch-Control" not in headers:
+            findings.append(self.make_finding("Missing X-DNS-Prefetch-Control", "Informational", "The X-DNS-Prefetch-Control header is missing.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
+
 
         if "X-Frame-Options" not in headers:
             findings.append(self.make_finding("Missing X-Frame-Options", "Medium", "The X-Frame-Options header is missing, leaving the application vulnerable to clickjacking attacks.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
@@ -1157,6 +1282,40 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                         "owasp": "N/A",
                         "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
                     })
+
+    if metadata.get("ipv6_supported"):
+        all_findings.append({
+            "name": "IPv6 Dual-Stack Supported",
+            "severity": "Passed",
+            "category": "encryption_tls",
+            "description": "The server supports IPv6 connectivity.",
+            "evidence": "IPv6 Address Reachable",
+            "confidence": "High",
+            "remediation": "N/A",
+            "remediation_snippets": {},
+            "owasp": "A05: Security Misconfiguration",
+            "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"},
+            "module": "Network",
+            "impact": "N/A",
+            "cvss": None
+        })
+
+    if metadata.get("http2_supported") or metadata.get("http3_supported"):
+        all_findings.append({
+            "name": "Modern Protocol Supported (HTTP/2 or HTTP/3)",
+            "severity": "Passed",
+            "category": "encryption_tls",
+            "description": "The server uses modern, performant HTTP protocols.",
+            "evidence": "HTTP/2 or HTTP/3 detected",
+            "confidence": "High",
+            "remediation": "N/A",
+            "remediation_snippets": {},
+            "owasp": "A05: Security Misconfiguration",
+            "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"},
+            "module": "Network",
+            "impact": "N/A",
+            "cvss": None
+        })
 
     # --- SCORING & CATEGORY ENGINE ---
     severity_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0, "Passed": 0}
