@@ -484,6 +484,7 @@ class DNSCAAModule(ScannerModule):
                         "Passed",
                         "Certificate Authority Authorization (CAA) DNS records restrict which CAs can issue certificates.",
                         ", ".join(caa_issuers),
+                        owasp="A02: Cryptographic Failures",
                         category="domain_email"
                     ))
                 else:
@@ -535,6 +536,7 @@ class DNSEmailSecurityModule(ScannerModule):
                                 "Passed",
                                 "Sender Policy Framework (SPF) record is validly configured.",
                                 data_str,
+                                owasp="A05: Security Misconfiguration",
                                 category="domain_email"
                             ))
                         break
@@ -576,6 +578,7 @@ class DNSEmailSecurityModule(ScannerModule):
                                 "Passed",
                                 "DMARC record is enforced with quarantine or reject policy.",
                                 d_str,
+                                owasp="A05: Security Misconfiguration",
                                 category="domain_email"
                             ))
                         break
@@ -605,7 +608,7 @@ class TechFingerprintModule(ScannerModule):
             headers = get_all_headers(resp)
             server = headers.get("Server")
             if server:
-                findings.append(self.make_finding("Server Header Exposed", "Informational", "The server software and version might be exposed.", server, category="information_exposure"))
+                findings.append(self.make_finding("Server Header Exposed", "Informational", "The server software and version might be exposed.", server, remediation="Configure server to return generic names.", owasp="A05: Security Misconfiguration", category="information_exposure"))
             x_powered = headers.get("X-Powered-By")
             if x_powered:
                 findings.append(self.make_finding("X-Powered-By Header Exposed", "Low", "Backend technology is explicitly declared.", x_powered, remediation="Remove X-Powered-By header.", owasp="A05: Security Misconfiguration", category="information_exposure"))
@@ -640,7 +643,7 @@ class RobotsTxtModule(ScannerModule):
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.status_code == 200 and "user-agent" in resp.text.lower():
                 lines = len(resp.text.splitlines())
-                findings.append(self.make_finding("robots.txt Found", "Informational", f"Found robots.txt with {lines} lines.", target, category="information_exposure"))
+                findings.append(self.make_finding("robots.txt Found", "Informational", f"Found robots.txt with {lines} lines.", target, owasp="A05: Security Misconfiguration", category="information_exposure"))
         except Exception:
             pass
         return findings
@@ -655,7 +658,7 @@ class SitemapModule(ScannerModule):
             target = f"https://{hostname}/sitemap.xml" if url.startswith("https") else f"http://{hostname}/sitemap.xml"
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.status_code == 200 and ("<urlset" in resp.text or "<sitemapindex" in resp.text):
-                findings.append(self.make_finding("sitemap.xml Found", "Informational", "Found XML sitemap.", target, category="information_exposure"))
+                findings.append(self.make_finding("sitemap.xml Found", "Informational", "Found XML sitemap.", target, owasp="A05: Security Misconfiguration", category="information_exposure"))
         except Exception:
             pass
         return findings
@@ -670,7 +673,7 @@ class SecurityTxtModule(ScannerModule):
             target = f"https://{hostname}/.well-known/security.txt" if url.startswith("https") else f"http://{hostname}/.well-known/security.txt"
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.status_code == 200 and "contact" in resp.text.lower():
-                findings.append(self.make_finding("security.txt Found", "Passed", "Organization has published security.txt.", target, category="information_exposure"))
+                findings.append(self.make_finding("security.txt Found", "Passed", "Organization has published security.txt.", target, owasp="A05: Security Misconfiguration", category="information_exposure"))
             else:
                 findings.append(self.make_finding("security.txt Missing", "Informational", "No standard security.txt found.", target, remediation="Publish a security.txt file at /.well-known/security.txt.", category="information_exposure"))
         except Exception:
@@ -772,7 +775,7 @@ class HTTPSRedirectModule(ScannerModule):
         try:
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.url.startswith("https://"):
-                findings.append(self.make_finding("HTTPS Redirection Configured", "Passed", "HTTP traffic is correctly redirected to HTTPS.", f"Final Target: {resp.url}", category="encryption_tls"))
+                findings.append(self.make_finding("HTTPS Redirection Configured", "Passed", "HTTP traffic is correctly redirected to HTTPS.", f"Final Target: {resp.url}", owasp="A02: Cryptographic Failures", category="encryption_tls"))
             else:
                 findings.append(self.make_finding("Missing HTTPS Redirection", "High", "The server accepts cleartext HTTP connections without redirecting to HTTPS.", f"Final URL: {resp.url}", remediation="Configure the server to redirect all port 80 traffic to 443 (HTTPS).", owasp="A02: Cryptographic Failures", category="encryption_tls"))
         except requests.exceptions.RequestException:
@@ -837,6 +840,7 @@ class PermissionsPolicyModule(ScannerModule):
                     "Passed",
                     "Permissions-Policy header is active.",
                     headers["Permissions-Policy"][:100],
+                    owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
         except Exception:
@@ -865,7 +869,7 @@ class SecurityHeadersModule(ScannerModule):
         if "Strict-Transport-Security" not in headers:
             findings.append(self.make_finding("Missing Strict-Transport-Security (HSTS)", "High", "The HTTP Strict-Transport-Security response header is missing, leaving the application vulnerable to SSL-stripping attacks.", "", remediation="Enable HTTP Strict Transport Security (HSTS) with a long max-age directive and includeSubDomains flag.", owasp="A05: Security Misconfiguration", category="encryption_tls"))
         else:
-            findings.append(self.make_finding("Strict-Transport-Security Configured", "Passed", "HSTS is present.", headers["Strict-Transport-Security"], category="encryption_tls"))
+            findings.append(self.make_finding("Strict-Transport-Security Configured", "Passed", "HSTS is present.", headers["Strict-Transport-Security"], owasp="A02: Cryptographic Failures", category="encryption_tls"))
 
         if "Content-Security-Policy" not in headers:
             findings.append(self.make_finding("Missing Content-Security-Policy (CSP)", "High", "The HTTP Content-Security-Policy (CSP) response header is missing, leaving the application vulnerable to Cross-Site Scripting (XSS) and data injection attacks.", "", remediation="Configure your web server to issue strict Content-Security-Policy HTTP headers to restrict script execution sources to trusted domains.", owasp="A05: Security Misconfiguration", category="http_headers"))
@@ -874,7 +878,7 @@ class SecurityHeadersModule(ScannerModule):
             if "unsafe-inline" in csp or "unsafe-eval" in csp:
                 findings.append(self.make_finding("Weak Content-Security-Policy (CSP)", "Medium", "CSP contains 'unsafe-inline' or 'unsafe-eval'.", csp, remediation="Remove unsafe-inline and unsafe-eval from CSP.", owasp="A05: Security Misconfiguration", category="http_headers"))
             else:
-                findings.append(self.make_finding("Content-Security-Policy Configured", "Passed", "CSP is present and strict.", csp, category="http_headers"))
+                findings.append(self.make_finding("Content-Security-Policy Configured", "Passed", "CSP is present and strict.", csp, owasp="A05: Security Misconfiguration", category="http_headers"))
 
         if "X-Frame-Options" not in headers:
             findings.append(self.make_finding("Missing X-Frame-Options", "Medium", "The X-Frame-Options header is missing, leaving the application vulnerable to clickjacking attacks.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
@@ -885,7 +889,7 @@ class SecurityHeadersModule(ScannerModule):
         if "Referrer-Policy" not in headers:
             findings.append(self.make_finding("Missing Referrer-Policy", "Low", "The Referrer-Policy header is missing, which allows leaking the referring URL.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
         else:
-            findings.append(self.make_finding("Referrer-Policy Configured", "Passed", "Referrer-Policy is present.", headers["Referrer-Policy"], category="http_headers"))
+            findings.append(self.make_finding("Referrer-Policy Configured", "Passed", "Referrer-Policy is present.", headers["Referrer-Policy"], owasp="A05: Security Misconfiguration", category="http_headers"))
             
         return findings
 
