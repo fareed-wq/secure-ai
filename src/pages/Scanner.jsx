@@ -62,7 +62,7 @@ function Scanner() {
     const domainRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/;
     
     if (!domainRegex.test(cleanInput)) {
-      setValidationError("Please enter a complete domain name with an extension (e.g., google.com or site.in).");
+      setValidationError("Please enter a full domain name (e.g., google.com or site.in).");
       urlInputRef.current?.blur();
       return;
     }
