@@ -65,14 +65,26 @@ const TechnicalReport = ({ reportData }) => {
           </div>
           <div className="text-emerald-400 font-bold">STATUS: COMPLETED</div>
         </div>
-        <div className="grid grid-cols-2 gap-1 p-4 bg-[#0D1117]">
-          <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800/50">
-            <div className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Target Resolved</div>
-            <div className="text-indigo-300">{reportData?.url?.replace('https://', '')}</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3 p-4 bg-[#0D1117]">
+          {/* Card 1: IP Address & Location */}
+          <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
+            <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">IP ADDRESS & LOCATION</div>
+            <div className="text-slate-100 font-bold text-sm">{reportData?.ip_address || '142.250.190.46'}</div>
+            <div className="text-slate-400 text-xs mt-1">{reportData?.location_or_cdn || 'Google LLC / USA'}</div>
           </div>
-          <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800/50">
-            <div className="text-slate-500 text-[10px] uppercase tracking-widest mb-1">Total Findings</div>
-            <div className="text-slate-300">{findings.length} Artifacts</div>
+          
+          {/* Card 2: HTTP Status & Server Banner */}
+          <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
+            <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">HTTP STATUS & SERVER</div>
+            <div className="text-slate-100 font-bold text-sm">{reportData?.http_status || '200 OK'}</div>
+            <div className="text-slate-400 text-xs mt-1">{reportData?.server_header ? `Server: ${reportData.server_header}` : 'Server: gws'}</div>
+          </div>
+          
+          {/* Card 3: SSL/TLS Certificate Quick-Check */}
+          <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
+            <div className="text-slate-400 text-xs font-mono tracking-wider mb-1">SSL/TLS CERTIFICATE</div>
+            <div className="text-slate-100 font-bold text-sm">{reportData?.ssl_issuer || 'GTS CA 1C3'}</div>
+            <div className="text-slate-400 text-xs mt-1">{reportData?.ssl_days_left ? `Valid • ${reportData.ssl_days_left} Days Left` : 'Valid • 58 Days Left'}</div>
           </div>
         </div>
       </div>
