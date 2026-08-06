@@ -372,16 +372,23 @@ const SimpleReport = ({ reportData }) => {
         <div className="bg-emerald-950/20 border border-emerald-900/50 p-8 rounded-3xl mt-12">
           <div className="flex items-center gap-4 mb-8">
             <div>
-              <h3 className="font-black text-2xl text-white">Security Strengths</h3>
-              <p className="text-emerald-200/70">What your website is already doing correctly.</p>
+              <h3 className="font-black text-2xl text-white flex items-center">
+                Security Strengths
+                <span className="ml-3 px-3 py-1 text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full">
+                  {passed.length} Passed
+                </span>
+              </h3>
+              <p className="text-emerald-200/70 mt-1">What your website is already doing correctly.</p>
             </div>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {passed.map((item, i) => (
-              <div key={i} className="flex items-center gap-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-800 shadow-sm">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span className="font-bold text-slate-200 text-sm">{item.name}</span>
+              <div key={i} className="bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur-md border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/5 rounded-xl p-3.5 flex items-center gap-3">
+                <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
+                  <Check className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-semibold text-slate-200 leading-snug">{item.name}</span>
               </div>
             ))}
           </div>
