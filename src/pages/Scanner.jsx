@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, ArrowRight, Loader2, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2pdf from 'html2pdf.js';
@@ -28,9 +28,9 @@ function Scanner() {
   const [reportData, setReportData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [reportMode, setReportMode] = useState('simple'); // simple, technical
-  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authFeatureName, setAuthFeatureName] = useState('');
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const urlInputRef = useRef(null);
 
   useEffect(() => {
     if (location.state?.resetScan) {
@@ -56,6 +56,15 @@ function Scanner() {
     if (!url) return;
     
     let parsedUrl = url.trim();
+    let cleanInput = parsedUrl.replace(/^https?:\/\//i, '').replace(/^www\./i, '');
+    const domainRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/;
+    
+    if (!domainRegex.test(cleanInput)) {
+      setErrorMessage("Please enter a complete domain name with an extension (e.g., google.com or site.in).");
+      urlInputRef.current?.focus();
+      return;
+    }
+
     if (!/^https?:\/\//i.test(parsedUrl)) {
       parsedUrl = 'https://' + parsedUrl;
       setUrl(parsedUrl);
@@ -172,11 +181,15 @@ function Scanner() {
                 <div className="relative flex items-center bg-slate-900 border border-slate-700 rounded-2xl p-2 shadow-2xl focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
                   <Search className="w-6 h-6 text-slate-400 ml-4 hidden sm:block" />
                   <input
+                    ref={urlInputRef}
                     type="text"
                     required
                     placeholder="example.com"
                     value={url}
-                    onChange={(e) => setUrl(e.target.value)}
+                    onChange={(e) => {
+                      setUrl(e.target.value);
+                      if (errorMessage) setErrorMessage('');
+                    }}
                     className="w-full bg-transparent border-none text-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-0"
                   />
                   <button 
@@ -187,6 +200,19 @@ function Scanner() {
                   </button>
                 </div>
               </form>
+              
+              <AnimatePresence>
+                {errorMessage && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    exit={{ opacity: 0, y: -10 }}
+                    className="text-rose-400 text-sm font-medium mt-3"
+                  >
+                    {errorMessage}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               
               <div className="flex justify-center text-sm text-slate-400 pt-2 font-medium">
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
