@@ -217,6 +217,19 @@ COMPLIANCE_MAP = {
     }
 }
 
+IMPACT_MAP = {
+    "Missing Strict-Transport-Security (HSTS)": "Allows man-in-the-middle (MitM) attacks to downgrade connections to insecure HTTP, exposing session tokens.",
+    "Missing Content-Security-Policy (CSP)": "Leaves the application vulnerable to Cross-Site Scripting (XSS) and data injection attacks.",
+    "Weak Content-Security-Policy (CSP)": "Allows bypass of CSP restrictions, enabling XSS scripts to execute and steal sensitive data.",
+    "Missing X-Frame-Options": "Permits attackers to embed the site in an iframe, leading to Clickjacking and unauthorized actions.",
+    "Missing X-Content-Type-Options": "Enables MIME-sniffing attacks where malicious files are executed as scripts.",
+    "Missing Permissions-Policy": "Allows third-party scripts to access sensitive browser features like the camera, microphone, or geolocation.",
+    "Missing Referrer-Policy": "Leaks sensitive URLs and tokens in the Referer header to external domains.",
+    "Missing SPF Record": "Allows attackers to easily spoof emails from your domain for phishing campaigns.",
+    "Missing DMARC Policy": "Prevents enforcement of SPF/DKIM, allowing spoofed emails to reach users' inboxes.",
+    "Wildcard CORS Policy": "Permits any malicious domain to read sensitive data from the API on behalf of authenticated users."
+}
+
 app = FastAPI(title="Website Security Posture Checker (Advanced Modular)")
 
 app.add_middleware(
@@ -280,6 +293,19 @@ def get_http_session() -> requests.Session:
     session.mount("https://", adapter)
     return session
 
+from requests.structures import CaseInsensitiveDict
+
+def get_all_headers(resp):
+    if not resp:
+        return {}
+    return getattr(resp, 'all_headers', None) or getattr(resp, 'headers', {})
+
+def get_header(resp, header_name, default=None):
+    headers = get_all_headers(resp)
+    if hasattr(headers, 'get'):
+        return headers.get(header_name, default)
+    return default
+
 # --- SSRF-SAFE REQUEST WRAPPER ---
 def safe_request(method: str, url: str, session: requests.Session = None, max_redirects: int = Config.MAX_REDIRECTS, timeout: float = Config.REQUEST_TIMEOUT, **kwargs) -> requests.Response:
     current_url = url
@@ -290,7 +316,8 @@ def safe_request(method: str, url: str, session: requests.Session = None, max_re
         own_session = True
 
     kwargs["allow_redirects"] = False
-    accumulated_headers = requests.structures.CaseInsensitiveDict()
+    accumulated_headers = CaseInsensitiveDict()
+    resp = None
 
     try:
         for hop in range(max_redirects + 1):
@@ -305,22 +332,25 @@ def safe_request(method: str, url: str, session: requests.Session = None, max_re
             resp = session.request(method, current_url, timeout=timeout, **kwargs)
             
             # Merge headers from all redirect hops
-            for k, v in resp.headers.items():
-                accumulated_headers[k] = v
+            if hasattr(resp, 'headers') and resp.headers:
+                accumulated_headers.update(resp.headers)
 
             if resp.is_redirect or resp.status_code in (301, 302, 303, 307, 308):
                 location = resp.headers.get("Location")
                 if not location:
-                    resp.all_headers = accumulated_headers
-                    return resp
+                    break
                 current_url = urljoin(current_url, location)
             else:
-                resp.all_headers = accumulated_headers
-                return resp
+                break
 
-        raise requests.exceptions.TooManyRedirects(f"Exceeded maximum redirects ({max_redirects})")
+        if resp is not None:
+            resp.all_headers = accumulated_headers
+        return resp
+    except Exception as e:
+        logger.error(f"safe_request error for {url}: {e}")
+        return resp
     finally:
-        if own_session:
+        if own_session and session:
             session.close()
 
 # --- PLUGIN ARCHITECTURE ---
@@ -549,7 +579,7 @@ class TechFingerprintModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            headers = getattr(resp, "all_headers", resp.headers)
+            headers = get_all_headers(resp)
             server = headers.get("Server")
             if server:
                 findings.append(self.make_finding("Server Header Exposed", "Informational", "The server software and version might be exposed.", server, category="information_exposure"))
@@ -568,7 +598,7 @@ class InformationDisclosureModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            headers = getattr(resp, "all_headers", resp.headers)
+            headers = get_all_headers(resp)
             server = headers.get("Server", "")
             if any(char.isdigit() for char in server) and ("/" in server or "-" in server):
                 findings.append(self.make_finding("Verbose Server Banner", "Low", "Server header leaks exact version numbers.", server, remediation="Configure server to only return generic names (e.g., 'nginx').", owasp="A05: Security Misconfiguration", category="information_exposure"))
@@ -632,7 +662,7 @@ class CORSModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            headers = getattr(resp, "all_headers", resp.headers)
+            headers = get_all_headers(resp)
             acao = headers.get("Access-Control-Allow-Origin")
             if acao == "*":
                 findings.append(self.make_finding("Wildcard CORS Policy", "Medium", "The API allows cross-origin requests from any domain.", "Access-Control-Allow-Origin: *", remediation="Restrict CORS to specific trusted origins.", owasp="A05: Security Misconfiguration", category="http_headers"))
@@ -653,7 +683,7 @@ class AdvancedCookieModule(ScannerModule):
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
             
             raw_cookies = resp.raw.headers.getlist("Set-Cookie") if hasattr(resp, "raw") and hasattr(resp.raw, "headers") else []
-            headers = getattr(resp, "all_headers", resp.headers)
+            headers = get_all_headers(resp)
             if not raw_cookies and "Set-Cookie" in headers:
                 raw_cookies = [headers["Set-Cookie"]]
 
@@ -767,7 +797,7 @@ class PermissionsPolicyModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            headers = getattr(resp, "all_headers", resp.headers)
+            headers = get_all_headers(resp)
             if "Permissions-Policy" not in headers:
                 findings.append(self.make_finding(
                     "Missing Permissions-Policy",
@@ -798,7 +828,7 @@ class SecurityHeadersModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            headers = getattr(resp, "all_headers", resp.headers)
+            headers = get_all_headers(resp)
         except requests.exceptions.Timeout as e:
             findings.append(self.make_finding("HTTP Request Failed (Timeout)", "High", "Connection timed out while fetching HTTP headers.", str(e), category="http_headers"))
             return findings
@@ -844,7 +874,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            headers = getattr(resp, "all_headers", resp.headers)
+            headers = get_all_headers(resp)
             
             if "Cross-Origin-Opener-Policy" not in headers:
                 findings.append(self.make_finding("Missing COOP Header", "Informational", "COOP is missing.", "Header absent.", remediation="Add Cross-Origin-Opener-Policy.", owasp="A05: Security Misconfiguration", category="http_headers"))
