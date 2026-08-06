@@ -11,16 +11,22 @@ const TRANSLATIONS = {
     why: "If visitors type 'http://' instead of 'https://', their connection might not be encrypted, allowing attackers to intercept their data.",
     category: "Encryption"
   },
-  "Missing X-Content-Type-Options Header": {
-    name: "Browser Confusion Vulnerability",
-    problem: "Your server does not explicitly tell browsers how to handle certain files.",
-    why: "Attackers can upload malicious scripts masked as safe files (like images). The browser might execute them by mistake.",
+  "Missing Strict-Transport-Security (HSTS)": {
+    name: "Missing Forced Encryption (HSTS)",
+    problem: "Your website does not force browsers to use secure HTTPS connections automatically.",
+    why: "Attackers on public Wi-Fi networks can downgrade visitors' connections to unencrypted HTTP and steal session data.",
+    category: "Encryption"
+  },
+  "Missing Content-Security-Policy (CSP)": {
+    name: "Weak Data Injection Guard (CSP)",
+    problem: "Your site either lacks a Content Security Policy or has permissive rules that allow unauthorized scripts.",
+    why: "Without strict rules, malicious scripts can be injected into your pages to steal user data or passwords.",
     category: "Browser Protection"
   },
-  "Missing X-Frame-Options Header": {
-    name: "Missing Clickjacking Protection (X-Frame-Options)",
-    problem: "Your website lacks rules preventing external sites from embedding your web pages inside hidden frames.",
-    why: "Attackers can overlay invisible buttons over your website to trick users into clicking malicious links or submitting data.",
+  "Missing Content-Security-Policy Header": {
+    name: "Weak Data Injection Guard (CSP)",
+    problem: "Your site either lacks a Content Security Policy or has permissive rules that allow unauthorized scripts.",
+    why: "Without strict rules, malicious scripts can be injected into your pages to steal user data or passwords.",
     category: "Browser Protection"
   },
   "Missing X-Frame-Options": {
@@ -29,65 +35,11 @@ const TRANSLATIONS = {
     why: "Attackers can overlay invisible buttons over your website to trick users into clicking malicious links or submitting data.",
     category: "Browser Protection"
   },
-  "Missing Content-Security-Policy (CSP)": {
-    name: "Missing Data Theft Protection",
-    problem: "Your website is missing an important browser protection against unauthorized scripts.",
-    why: "If a hacker manages to inject a malicious script, there is no defense layer stopping it from stealing user data or passwords.",
+  "Missing X-Frame-Options Header": {
+    name: "Missing Clickjacking Protection (X-Frame-Options)",
+    problem: "Your website lacks rules preventing external sites from embedding your web pages inside hidden frames.",
+    why: "Attackers can overlay invisible buttons over your website to trick users into clicking malicious links or submitting data.",
     category: "Browser Protection"
-  },
-  "Missing Content-Security-Policy Header": {
-    name: "Missing Data Theft Protection",
-    problem: "Your website is missing an important browser protection against unauthorized scripts.",
-    why: "If a hacker manages to inject a malicious script, there is no defense layer stopping it from stealing user data or passwords.",
-    category: "Browser Protection"
-  },
-  "Server Banner Information Disclosure": {
-    name: "Server Information Leak",
-    problem: "Your server is broadcasting its exact software version to the public.",
-    why: "Hackers use this information to search for known weaknesses specific to that exact software version to plan a targeted attack.",
-    category: "Privacy Protection"
-  },
-  "Missing HttpOnly Flag": {
-    name: "Insecure Session Cookies",
-    problem: "Your website cookies can be accessed by scripts running in the browser.",
-    why: "If an attacker runs a malicious script on your site, they can easily steal these cookies and hijack your users' accounts.",
-    category: "Privacy Protection"
-  },
-  "Missing Secure Flag": {
-    name: "Unencrypted Cookies",
-    problem: "Cookies are allowed to be sent over unencrypted connections.",
-    why: "If a user connects over public Wi-Fi, their session could be intercepted and stolen.",
-    category: "Encryption"
-  },
-  "Directory Listing Enabled": {
-    name: "Exposed Website Files",
-    problem: "Anyone can browse the files and folders on your web server.",
-    why: "Attackers can download source code, backup files, or sensitive documents that were not meant for public viewing.",
-    category: "Privacy Protection"
-  },
-  "Missing Strict-Transport-Security (HSTS)": {
-    name: "Missing Forced Encryption (HSTS)",
-    problem: "Your website does not force browsers to use secure HTTPS connections automatically.",
-    why: "Attackers on public Wi-Fi networks can downgrade your visitors' connection to unencrypted HTTP and steal sensitive session data.",
-    category: "Encryption"
-  },
-  "Missing SPF Record": {
-    name: "Missing Email Anti-Spoofing (SPF)",
-    problem: "Your domain is missing an authorization record that specifies who can send email on your behalf.",
-    why: "Scammers can send fake emails pretending to come from your company, damaging your reputation and tricking your customers.",
-    category: "Email Trust"
-  },
-  "Missing DMARC Policy": {
-    name: "Inactive Email Phishing Defense (DMARC)",
-    problem: "Your domain is missing email verification policies.",
-    why: "Receiving mail servers are instructed to deliver spoofed emails pretending to be from your domain rather than blocking them.",
-    category: "Email Trust"
-  },
-  "Weak DMARC Policy (p=none)": {
-    name: "Inactive Email Phishing Defense (DMARC)",
-    problem: "Your domain has email verification set to 'monitoring only' mode (p=none).",
-    why: "Receiving mail servers are instructed to deliver spoofed emails pretending to be from your domain rather than blocking them.",
-    category: "Email Trust"
   },
   "Missing X-Content-Type-Options": {
     name: "Missing Malicious File Guard (nosniff)",
@@ -101,10 +53,100 @@ const TRANSLATIONS = {
     why: "Sensitive internal page URLs or parameters could leak to third-party web servers when users leave your site.",
     category: "Privacy Protection"
   },
+  "Missing Permissions-Policy": {
+    name: "Unrestricted Browser Capabilities (Permissions-Policy)",
+    problem: "Your site does not define rules for accessing browser hardware features (like camera, microphone, or geolocation).",
+    why: "Embedded third-party scripts could attempt to request or misuse browser hardware permissions.",
+    category: "Privacy Protection"
+  },
+  "Missing Cross-Origin-Opener-Policy": {
+    name: "Missing Cross-Window Isolation (COOP)",
+    problem: "Your website does not isolate its browser process from external sites opened via links.",
+    why: "Malicious pop-ups or external links could attempt side-channel timing attacks against active user sessions.",
+    category: "Browser Protection"
+  },
+  "Missing Cross-Origin-Embedder-Policy": {
+    name: "Missing Cross-Origin Resource Isolation (COEP)",
+    problem: "Your site loads external assets without requiring explicit cross-origin loading permission.",
+    why: "Prevents advanced browser-level data isolation needed to defend against processor-level memory leaks.",
+    category: "Browser Protection"
+  },
+  "Missing Cross-Origin-Resource-Policy": {
+    name: "Unprotected Cross-Origin Assets (CORP)",
+    problem: "Your web server does not restrict which external domains are allowed to read your site's images and scripts.",
+    why: "Other websites could embed or read your private media assets directly without authorization.",
+    category: "Privacy Protection"
+  },
+  "Missing SPF Record": {
+    name: "Missing Email Anti-Spoofing (SPF)",
+    problem: "Your domain is missing an authorization record that specifies who can send email on your behalf.",
+    why: "Scammers can send fake emails pretending to come from your company, damaging your reputation and tricking your customers.",
+    category: "Email Trust"
+  },
+  "Missing DMARC Policy": {
+    name: "Inactive Email Phishing Defense (DMARC)",
+    problem: "Your domain has email verification set to 'monitoring only' mode (p=none) or lacks a DMARC policy entirely.",
+    why: "Receiving mail servers are instructed to deliver spoofed emails pretending to be from your domain rather than blocking them.",
+    category: "Email Trust"
+  },
+  "Weak DMARC Policy (p=none)": {
+    name: "Inactive Email Phishing Defense (DMARC)",
+    problem: "Your domain has email verification set to 'monitoring only' mode (p=none) or lacks a DMARC policy entirely.",
+    why: "Receiving mail servers are instructed to deliver spoofed emails pretending to be from your domain rather than blocking them.",
+    category: "Email Trust"
+  },
+  "Missing CAA Record": {
+    name: "Missing Certificate Authority Lock (CAA)",
+    problem: "Your domain DNS settings lack a CAA record restricting who can issue SSL certificates for your site.",
+    why: "Without a CAA record, any unauthorized Certificate Authority could issue a certificate for your domain name.",
+    category: "Domain Trust"
+  },
+  "Missing security.txt": {
+    name: "Missing Vulnerability Disclosure Contact (security.txt)",
+    problem: "Your domain does not publish a standard security contact file at /.well-known/security.txt.",
+    why: "Ethical security researchers who find vulnerabilities on your site have no official path to privately report them to your team.",
+    category: "Website Trust"
+  },
   "Missing HttpOnly Flag on Cookie": {
     name: "Unsecured Session Cookie (HttpOnly)",
     problem: "A cookie saved in your browser is missing the HttpOnly security restriction.",
     why: "If a malicious script runs on your site, it can steal this cookie and hijack active user logins or sessions.",
+    category: "Session Security"
+  },
+  "Missing Secure Flag on Cookie": {
+    name: "Unencrypted Cookie Transmission (Secure Flag)",
+    problem: "Session cookies are missing the 'Secure' flag.",
+    why: "Browsers may send sensitive authentication cookies over unencrypted HTTP connections if requested.",
+    category: "Session Security"
+  },
+  "Missing SameSite Attribute on Cookie": {
+    name: "Unprotected Cross-Site Cookie (SameSite)",
+    problem: "Your website sets browser cookies without defining strict cross-site sharing restrictions.",
+    why: "Browsers may send these cookies automatically on third-party links, making users vulnerable to Cross-Site Request Forgery (CSRF).",
+    category: "Session Security"
+  },
+  "Server Banner Information Disclosure": {
+    name: "Exposed Web Server Technology",
+    problem: "Your web server advertises its exact software name and version in response headers.",
+    why: "Attackers can use visible version numbers to target known software vulnerabilities specific to your web server.",
+    category: "Privacy Protection"
+  },
+  "Missing Automatic HTTPS Forwarding": {
+    name: "Missing Automatic HTTPS Forwarding",
+    problem: "Visitors opening your website via unencrypted http:// are not automatically redirected to secure https://.",
+    why: "Unencrypted traffic can be intercepted, exposed, or modified by attackers on local networks.",
+    category: "Encryption"
+  },
+  "Wildcard SSL Certificate": {
+    name: "Broad Subdomain Certificate Scope",
+    problem: "Your site uses a wildcard SSL certificate (*.yourdomain.com).",
+    why: "If any single sub-domain server is compromised, the private key can be used to intercept traffic across all subdomains.",
+    category: "Encryption"
+  },
+  "Directory Listing Enabled": {
+    name: "Exposed Website Files",
+    problem: "Anyone can browse the files and folders on your web server.",
+    why: "Attackers can download source code, backup files, or sensitive documents that were not meant for public viewing.",
     category: "Privacy Protection"
   }
 };
@@ -118,11 +160,19 @@ const getTranslation = (technicalName) => {
   if (technicalName.startsWith("Missing HttpOnly Flag on Cookie")) {
     return TRANSLATIONS["Missing HttpOnly Flag on Cookie"];
   }
+  if (technicalName.startsWith("Missing Secure Flag on Cookie")) {
+    return TRANSLATIONS["Missing Secure Flag on Cookie"];
+  }
+  if (technicalName.startsWith("Missing SameSite Attribute on Cookie")) {
+    return TRANSLATIONS["Missing SameSite Attribute on Cookie"];
+  }
+
+  console.warn("Unmapped finding ID in SimpleReport:", technicalName);
 
   return {
-    name: technicalName, // fallback
-    problem: "A security misconfiguration was detected that deviates from industry best practices.",
-    why: "Leaving this unresolved slightly increases your overall attack surface.",
+    name: "Security Configuration Requirement", // fallback
+    problem: "A recommended security configuration is missing or partially configured on your web server.",
+    why: "Resolving this configuration aligns your site with industry baseline security standards.",
     category: "Website Trust"
   };
 };
