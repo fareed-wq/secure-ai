@@ -18,14 +18,14 @@ const TechnicalReport = ({ reportData }) => {
 
   const getSeverityBadge = (severity) => {
     const styles = {
-      'Critical': 'bg-red-500 text-white shadow-[0_0_10px_rgba(239,68,68,0.5)]',
-      'High': 'bg-orange-500 text-white',
-      'Medium': 'bg-amber-500 text-slate-900',
-      'Low': 'bg-yellow-400 text-slate-900',
-      'Informational': 'bg-blue-500 text-white',
-      'Passed': 'bg-emerald-500 text-white'
+      'Critical': 'bg-red-950 text-red-400 border border-red-800',
+      'High': 'bg-rose-900/60 text-rose-300 border border-rose-700',
+      'Medium': 'bg-amber-950/80 text-amber-400 border border-amber-700',
+      'Low': 'bg-sky-950 text-sky-400 border border-sky-800',
+      'Informational': 'bg-blue-500 text-white border border-blue-600',
+      'Passed': 'bg-emerald-500 text-white border border-emerald-600'
     };
-    return <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-md ${styles[severity] || 'bg-slate-700 text-white'}`}>{severity}</span>;
+    return <span className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-md ${styles[severity] || 'bg-slate-700 text-white border border-slate-600'}`}>{severity}</span>;
   };
 
   const copyToClipboard = (text) => {
@@ -197,6 +197,15 @@ const TechnicalReport = ({ reportData }) => {
                                           <p className="text-slate-300 leading-relaxed text-sm">{finding.description}</p>
                                         </div>
 
+                                        {finding.impact && finding.impact !== "N/A" && (
+                                          <div>
+                                            <div className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                              <span>⚠️</span> Security Impact & Risk
+                                            </div>
+                                            <p className="text-rose-200/80 leading-relaxed text-sm">{finding.impact}</p>
+                                          </div>
+                                        )}
+
                                         {finding.evidence && finding.evidence !== "N/A" && (
                                           <div>
                                             <div className="flex items-center justify-between mb-2">
@@ -252,10 +261,15 @@ const TechnicalReport = ({ reportData }) => {
                                       <div className="space-y-6">
                                         {finding.remediation && finding.remediation !== "N/A" && (
                                           <div className="bg-indigo-950/20 border border-indigo-900/50 rounded-xl p-5">
-                                            <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                              <Shield className="w-4 h-4" /> Remediation Directive
+                                            <div className="flex justify-between items-center mb-2">
+                                              <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                                                <Shield className="w-4 h-4" /> Remediation Directive
+                                              </div>
+                                              <button onClick={() => copyToClipboard(finding.remediation)} className="text-indigo-400 hover:text-indigo-300 text-xs flex items-center gap-1 transition-colors">
+                                                <Copy className="w-3 h-3" /> Copy Directive
+                                              </button>
                                             </div>
-                                            <p className="text-indigo-200/80 text-sm leading-relaxed">
+                                            <p className="text-indigo-200/80 font-mono text-sm leading-relaxed p-3 bg-indigo-950/40 rounded-lg border border-indigo-900/30">
                                               {finding.remediation}
                                             </p>
                                           </div>
@@ -270,6 +284,12 @@ const TechnicalReport = ({ reportData }) => {
                                             <span className="text-slate-500">Scanner Module</span>
                                             <span className="font-mono text-slate-300">{finding.module || 'HeuristicEngine'}</span>
                                           </div>
+                                          {finding.cvss && (
+                                            <div className="flex justify-between items-center text-xs border-b border-slate-800 pb-2">
+                                              <span className="text-slate-500">CVSS v3.1</span>
+                                              <span className="font-mono text-rose-400 font-bold">{finding.cvss}</span>
+                                            </div>
+                                          )}
                                         </div>
                                       </div>
 

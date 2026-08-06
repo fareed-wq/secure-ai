@@ -336,13 +336,17 @@ class ScannerModule(ABC):
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         pass
 
-    def make_finding(self, name, severity, description, evidence, confidence="High", remediation="N/A", owasp="N/A", compliance=None, category="information_exposure"):
+    def make_finding(self, name, severity, description, evidence, confidence="High", remediation="N/A", owasp="N/A", compliance=None, category="information_exposure", cvss=None):
         if compliance is None:
             compliance = COMPLIANCE_MAP.get(name, {
                 "pci_dss": "6.4.1 (Web App Security)",
                 "nist": "SI-10 (Information Input Validation)",
                 "iso27001": "A.8.20 (Network Security)"
             })
+            
+        impact = IMPACT_MAP.get(name, "Potential exposure of sensitive information or risk of unauthorized actions.")
+        if severity == "Passed":
+            impact = "N/A"
             
         snippets = REMEDIATION_SNIPPETS.get(name, {})
         
@@ -356,7 +360,10 @@ class ScannerModule(ABC):
             "remediation": remediation,
             "remediation_snippets": snippets,
             "owasp": owasp,
-            "compliance": compliance
+            "compliance": compliance,
+            "module": self.module_name,
+            "impact": impact,
+            "cvss": cvss
         }
 
 # --- MODULES ---
@@ -812,9 +819,9 @@ class SecurityHeadersModule(ScannerModule):
         else:
             csp = headers.get("Content-Security-Policy", "")
             if "unsafe-inline" in csp or "unsafe-eval" in csp:
-                findings.append(self.make_finding("Weak Content-Security-Policy (CSP)", "Medium", "CSP contains 'unsafe-inline' or 'unsafe-eval'.", csp[:100], remediation="Remove unsafe-inline and unsafe-eval from CSP.", owasp="A05: Security Misconfiguration", category="http_headers"))
+                findings.append(self.make_finding("Weak Content-Security-Policy (CSP)", "Medium", "CSP contains 'unsafe-inline' or 'unsafe-eval'.", csp, remediation="Remove unsafe-inline and unsafe-eval from CSP.", owasp="A05: Security Misconfiguration", category="http_headers"))
             else:
-                findings.append(self.make_finding("Content-Security-Policy Configured", "Passed", "CSP is present and strict.", csp[:100], category="http_headers"))
+                findings.append(self.make_finding("Content-Security-Policy Configured", "Passed", "CSP is present and strict.", csp, category="http_headers"))
 
         if "X-Frame-Options" not in headers:
             findings.append(self.make_finding("Missing X-Frame-Options", "Medium", "Missing XFO allows clickjacking.", "Header absent.", remediation="Add X-Frame-Options: DENY.", owasp="A05: Security Misconfiguration", category="http_headers"))
