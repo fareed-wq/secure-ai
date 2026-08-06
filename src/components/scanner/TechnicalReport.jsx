@@ -57,7 +57,7 @@ const TechnicalReport = ({ reportData }) => {
       `}</style>
       
       {/* 1. Technical Metadata Table */}
-      <div className="bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden font-mono text-sm shadow-2xl">
+      <div className="report-section bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden font-mono text-sm shadow-2xl">
         <div className="bg-slate-900 px-6 py-3 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2 text-slate-300 font-bold">
             <Terminal className="w-4 h-4 text-indigo-400" />
@@ -117,7 +117,7 @@ const TechnicalReport = ({ reportData }) => {
       <AnimatePresence mode="wait">
         {activeView === 'vulnerabilities' && (
           <motion.div key="vulnerabilities" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-            <div className="bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+            <div className="report-section bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
               <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
                 <FileCode className="w-5 h-5 text-indigo-400" />
                 <h3 className="font-bold text-white text-lg">Detailed Vulnerability Matrix</h3>
@@ -139,7 +139,7 @@ const TechnicalReport = ({ reportData }) => {
                       const activeTab = snippetTabs[idx] || (finding.remediation_snippets ? Object.keys(finding.remediation_snippets)[0] : null);
                       
                       return (
-                        <React.Fragment key={idx}>
+                        <tbody key={idx} className="finding-card divide-y divide-slate-800/50">
                           <tr 
                             onClick={() => setExpandedRow(expandedRow === idx ? null : idx)}
                             className={`cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
@@ -294,18 +294,18 @@ const TechnicalReport = ({ reportData }) => {
                               </tr>
                             )}
                           </AnimatePresence>
-                        </React.Fragment>
+                        </tbody>
                       );
                     })}
-                  </tbody>
-                </table>
+                  </table>
               </div>
             </div>
           </motion.div>
         )}
 
         {activeView === 'compliance' && reportData?.technical_compliance && (
-          <motion.div key="compliance" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+          <motion.div key="compliance" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+            <div className="report-section grid grid-cols-1 gap-6">
             <div className="bg-[#0D1117] border border-slate-800 rounded-xl p-6 shadow-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <ShieldAlert className="w-5 h-5 text-indigo-400" />
@@ -395,6 +395,7 @@ const TechnicalReport = ({ reportData }) => {
                 </div>
 
               </div>
+            </div>
             </div>
           </motion.div>
         )}

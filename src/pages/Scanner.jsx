@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Search, ArrowRight, Loader2, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import html2pdf from 'html2pdf.js';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import WhatsAppWidget from '../WhatsAppWidget';
@@ -87,9 +86,46 @@ function Scanner() {
     setScanState('view-report');
   };
 
-  const handlePdfExport = () => {
-    // Rely on native browser printing and CSS @media print / Tailwind print:* classes
-    window.print();
+  const handlePdfExport = async () => {
+    const reportElement = document.getElementById('report-container') || document.querySelector('main') || document.body;
+    if (!reportElement) return;
+
+    // Save original styles
+    const originalHeight = reportElement.style.height;
+    const originalOverflow = reportElement.style.overflow;
+    
+    // Apply temporary CSS fixes for multi-page export
+    reportElement.style.height = 'auto';
+    reportElement.style.setProperty('height', 'auto', 'important');
+    reportElement.style.overflow = 'visible';
+    reportElement.style.setProperty('overflow', 'visible', 'important');
+
+    const opt = {
+      margin:       [10, 10, 15, 10], // top, left, bottom, right
+      filename:     `Security_Report_${new URL(url).hostname}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, logging: false },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    try {
+      await html2pdf().from(reportElement).set(opt).toPdf().get('pdf').then(function (pdf) {
+        const totalPages = pdf.internal.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+          pdf.setPage(i);
+          pdf.setFontSize(10);
+          pdf.setTextColor(150);
+          pdf.text('Page ' + i + ' of ' + totalPages, pdf.internal.pageSize.getWidth() / 2, pdf.internal.pageSize.getHeight() - 8, { align: 'center' });
+        }
+      }).save();
+    } catch (err) {
+      console.error('PDF generation failed', err);
+    } finally {
+      // Restore CSS
+      reportElement.style.height = originalHeight;
+      reportElement.style.overflow = originalOverflow;
+    }
   };
 
   return (

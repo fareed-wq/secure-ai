@@ -206,7 +206,7 @@ const SimpleReport = ({ reportData }) => {
               const risk = getBusinessRisk(issue.severity);
               
               return (
-                <div key={idx} className="bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col md:flex-row gap-8 items-start shadow-xl">
+                <div key={idx} className="finding-card bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col md:flex-row gap-8 items-start shadow-xl">
                   
                   <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-3 mb-2">

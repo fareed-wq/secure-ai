@@ -40,3 +40,13 @@
     display: none !important;
   }
 }
+
+.finding-card {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.report-section {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
