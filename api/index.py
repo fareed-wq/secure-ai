@@ -122,7 +122,7 @@ COMPLIANCE_MAP = {
     },
     "Exposed .git Repository": {
         "pci_dss": "6.4.1 (Public Web Application Protection)",
-        "nist": "SA-11 (Developer Security Testing)",
+        "nist": "SI-10 (Information Input Validation)",
         "iso27001": "A.8.28 (Secure Coding)"
     },
     "Missing Strict-Transport-Security (HSTS)": {
@@ -156,7 +156,7 @@ COMPLIANCE_MAP = {
         "iso27001": "A.8.20 (Network Security)"
     },
     "Missing Referrer-Policy": {
-        "pci_dss": "6.5.10 (Broken Access Control)",
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
         "nist": "SC-13 (Cryptographic Protection)",
         "iso27001": "A.8.12 (Data Leakage Prevention)"
     },
@@ -189,6 +189,31 @@ COMPLIANCE_MAP = {
         "pci_dss": "6.4.1 (Public Web Application Protection)",
         "nist": "AC-3 (Access Enforcement)",
         "iso27001": "A.8.3 (Access Control)"
+    },
+    "Valid SSL/TLS Certificate": {
+        "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+        "nist": "SC-8 (Transmission Confidentiality)",
+        "iso27001": "A.8.24 (Use of Cryptography)"
+    },
+    "SPF Record Configured": {
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "nist": "SI-8 (Spam & Phishing Protection)",
+        "iso27001": "A.8.20 (Network Security)"
+    },
+    "Strong DMARC Policy Configured": {
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "nist": "SI-8 (Spam & Phishing Protection)",
+        "iso27001": "A.8.20 (Network Security)"
+    },
+    "CAA Records Configured": {
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "nist": "SI-8 (Spam & Phishing Protection)",
+        "iso27001": "A.8.20 (Network Security)"
+    },
+    "security.txt Found": {
+        "pci_dss": "N/A",
+        "nist": "RA-5 (Vulnerability Scanning)",
+        "iso27001": "A.8.8 (Management of Technical Vulnerabilities)"
     }
 }
 
@@ -315,7 +340,7 @@ class ScannerModule(ABC):
         if compliance is None:
             compliance = COMPLIANCE_MAP.get(name, {
                 "pci_dss": "6.4.1 (Web App Security)",
-                "nist": "SA-11 (Developer Testing)",
+                "nist": "SI-10 (Information Input Validation)",
                 "iso27001": "A.8.20 (Network Security)"
             })
             
