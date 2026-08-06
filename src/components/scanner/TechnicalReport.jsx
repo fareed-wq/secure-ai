@@ -81,8 +81,16 @@ const TechnicalReport = ({ reportData }) => {
               <div className="text-base sm:text-lg font-bold font-mono text-white tracking-tight truncate mt-2 h-7 flex items-center">
                 {reportData?.metadata?.ip_address || reportData?.ip_address || 'N/A'}
               </div>
-              <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
+              <div 
+                className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center cursor-help"
+                title={reportData?.metadata?.whois?.registrar !== 'Unknown' ? `Registrar: ${reportData?.metadata?.whois?.registrar} | Age: ${reportData?.metadata?.whois?.age}` : undefined}
+              >
                 {reportData?.metadata?.location_or_cdn || reportData?.location_or_cdn || 'CDN / Cloud'}
+                {reportData?.metadata?.whois?.registrar && reportData?.metadata?.whois?.registrar !== 'Unknown' && (
+                  <span className="ml-1.5 text-slate-500 font-medium">
+                    · {reportData.metadata.whois.registrar} ({reportData.metadata.whois.age})
+                  </span>
+                )}
               </div>
             </div>
             <div className="mt-3 flex items-center h-7">

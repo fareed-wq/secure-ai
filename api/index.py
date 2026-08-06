@@ -2,6 +2,7 @@ import ipaddress
 import socket
 import ssl
 import re
+import whois
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse, urljoin
 import logging
@@ -1272,6 +1273,25 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
             https_enforced = "HTTPS Enforced"
             clean_redirect = "HTTPS ACTIVE (PROBE TIMED OUT)"
 
+    # WHOIS Lookup
+    whois_data = {"registrar": "Unknown", "creation_date": "Unknown", "expiration_date": "Unknown", "age": "Unknown"}
+    try:
+        w = whois.whois(domain)
+        if w.registrar:
+            whois_data["registrar"] = w.registrar
+        
+        c_date = w.creation_date[0] if isinstance(w.creation_date, list) else w.creation_date
+        if c_date:
+            whois_data["creation_date"] = c_date.strftime("%Y-%m-%d")
+            age_days = (datetime.datetime.now() - c_date.replace(tzinfo=None)).days
+            whois_data["age"] = f"{age_days // 365} Years Old" if age_days > 365 else f"{age_days} Days Old"
+            
+        e_date = w.expiration_date[0] if isinstance(w.expiration_date, list) else w.expiration_date
+        if e_date:
+            whois_data["expiration_date"] = e_date.strftime("%Y-%m-%d")
+    except Exception as e:
+        logger.error(f"WHOIS lookup failed for {domain}: {e}")
+
     return {
         "ip_address": ip,
         "location_or_cdn": location_or_cdn,
@@ -1287,7 +1307,8 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
         "ipv6_supported": ipv6_supported,
         "http_protocol": http_protocol,
         "https_enforced": https_enforced,
-        "clean_redirect": clean_redirect
+        "clean_redirect": clean_redirect,
+        "whois": whois_data
     }
 
 
