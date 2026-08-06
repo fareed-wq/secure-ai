@@ -18,9 +18,15 @@ const TRANSLATIONS = {
     category: "Browser Protection"
   },
   "Missing X-Frame-Options Header": {
-    name: "Clickjacking Vulnerability",
-    problem: "Your website can be secretly embedded inside another website.",
-    why: "Hackers can trick your users into clicking invisible buttons on your site while they think they are interacting with a different site.",
+    name: "Missing Clickjacking Protection (X-Frame-Options)",
+    problem: "Your website lacks rules preventing external sites from embedding your web pages inside hidden frames.",
+    why: "Attackers can overlay invisible buttons over your website to trick users into clicking malicious links or submitting data.",
+    category: "Browser Protection"
+  },
+  "Missing X-Frame-Options": {
+    name: "Missing Clickjacking Protection (X-Frame-Options)",
+    problem: "Your website lacks rules preventing external sites from embedding your web pages inside hidden frames.",
+    why: "Attackers can overlay invisible buttons over your website to trick users into clicking malicious links or submitting data.",
     category: "Browser Protection"
   },
   "Missing Content-Security-Policy (CSP)": {
@@ -58,6 +64,30 @@ const TRANSLATIONS = {
     problem: "Anyone can browse the files and folders on your web server.",
     why: "Attackers can download source code, backup files, or sensitive documents that were not meant for public viewing.",
     category: "Privacy Protection"
+  },
+  "Missing Strict-Transport-Security (HSTS)": {
+    name: "Missing Forced Encryption (HSTS)",
+    problem: "Your website does not force browsers to use secure HTTPS connections automatically.",
+    why: "Attackers on public Wi-Fi networks can downgrade your visitors' connection to unencrypted HTTP and steal sensitive session data.",
+    category: "Encryption"
+  },
+  "Missing SPF Record": {
+    name: "Missing Email Anti-Spoofing (SPF)",
+    problem: "Your domain is missing an authorization record that specifies who can send email on your behalf.",
+    why: "Scammers can send fake emails pretending to come from your company, damaging your reputation and tricking your customers.",
+    category: "Email Trust"
+  },
+  "Missing DMARC Policy": {
+    name: "Inactive Email Phishing Defense (DMARC)",
+    problem: "Your domain is missing email verification policies.",
+    why: "Receiving mail servers are instructed to deliver spoofed emails pretending to be from your domain rather than blocking them.",
+    category: "Email Trust"
+  },
+  "Weak DMARC Policy (p=none)": {
+    name: "Inactive Email Phishing Defense (DMARC)",
+    problem: "Your domain has email verification set to 'monitoring only' mode (p=none).",
+    why: "Receiving mail servers are instructed to deliver spoofed emails pretending to be from your domain rather than blocking them.",
+    category: "Email Trust"
   }
 };
 
@@ -163,7 +193,7 @@ const SimpleReport = ({ reportData }) => {
           <div className="mt-6">
             <div className="text-sm font-bold uppercase tracking-widest text-slate-400">Risk Meter</div>
             <div className={`text-2xl font-black mt-1 ${score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400'}`}>
-              {score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 60 ? 'Fair' : 'Poor'}
+              {score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 70 ? 'Fair' : 'Poor'}
             </div>
           </div>
         </div>
