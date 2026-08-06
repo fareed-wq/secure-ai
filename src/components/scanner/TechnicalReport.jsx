@@ -310,9 +310,9 @@ const TechnicalReport = ({ reportData }) => {
                                               <span className="font-mono text-slate-300">{finding.module || 'SecurityHeaders'}</span>
                                             </div>
                                             {finding.cvss && (
-                                              <div className="flex justify-between items-center text-xs">
-                                                <span className="text-slate-500">CVSS Score</span>
-                                                <span className="font-mono text-rose-400 font-bold">{finding.cvss}</span>
+                                              <div className="flex items-center justify-between text-xs text-slate-400">
+                                                <span>CVSS v3.1 Score:</span>
+                                                <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold">{finding.cvss}</span>
                                               </div>
                                             )}
                                           </div>

@@ -825,9 +825,9 @@ class PermissionsPolicyModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Missing Permissions-Policy",
                     "Low",
-                    "Missing Permissions-Policy header allows web pages to access browser feature APIs unconditionally.",
-                    "Header absent.",
-                    remediation="Add Permissions-Policy: camera=(), microphone=(), geolocation=().",
+                    "The Permissions-Policy header is missing, allowing web pages to access browser feature APIs unconditionally.",
+                    "",
+                    remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
@@ -863,12 +863,12 @@ class SecurityHeadersModule(ScannerModule):
             return findings
 
         if "Strict-Transport-Security" not in headers:
-            findings.append(self.make_finding("Missing Strict-Transport-Security (HSTS)", "High", "Missing HSTS allows SSL-stripping.", "Header absent.", remediation="Add Strict-Transport-Security header.", owasp="A05: Security Misconfiguration", category="encryption_tls"))
+            findings.append(self.make_finding("Missing Strict-Transport-Security (HSTS)", "High", "The HTTP Strict-Transport-Security response header is missing, leaving the application vulnerable to SSL-stripping attacks.", "", remediation="Enable HTTP Strict Transport Security (HSTS) with a long max-age directive and includeSubDomains flag.", owasp="A05: Security Misconfiguration", category="encryption_tls"))
         else:
             findings.append(self.make_finding("Strict-Transport-Security Configured", "Passed", "HSTS is present.", headers["Strict-Transport-Security"], category="encryption_tls"))
 
         if "Content-Security-Policy" not in headers:
-            findings.append(self.make_finding("Missing Content-Security-Policy (CSP)", "High", "Missing CSP allows XSS.", "Header absent.", remediation="Implement CSP.", owasp="A05: Security Misconfiguration", category="http_headers"))
+            findings.append(self.make_finding("Missing Content-Security-Policy (CSP)", "High", "The HTTP Content-Security-Policy (CSP) response header is missing, leaving the application vulnerable to Cross-Site Scripting (XSS) and data injection attacks.", "", remediation="Configure your web server to issue strict Content-Security-Policy HTTP headers to restrict script execution sources to trusted domains.", owasp="A05: Security Misconfiguration", category="http_headers"))
         else:
             csp = headers.get("Content-Security-Policy", "")
             if "unsafe-inline" in csp or "unsafe-eval" in csp:
@@ -877,13 +877,13 @@ class SecurityHeadersModule(ScannerModule):
                 findings.append(self.make_finding("Content-Security-Policy Configured", "Passed", "CSP is present and strict.", csp, category="http_headers"))
 
         if "X-Frame-Options" not in headers:
-            findings.append(self.make_finding("Missing X-Frame-Options", "Medium", "Missing XFO allows clickjacking.", "Header absent.", remediation="Add X-Frame-Options: DENY.", owasp="A05: Security Misconfiguration", category="http_headers"))
+            findings.append(self.make_finding("Missing X-Frame-Options", "Medium", "The X-Frame-Options header is missing, leaving the application vulnerable to clickjacking attacks.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
 
         if "X-Content-Type-Options" not in headers:
-            findings.append(self.make_finding("Missing X-Content-Type-Options", "Low", "Missing this allows MIME-sniffing.", "Header absent.", remediation="Add X-Content-Type-Options: nosniff.", owasp="A05: Security Misconfiguration", category="http_headers"))
+            findings.append(self.make_finding("Missing X-Content-Type-Options", "Low", "The X-Content-Type-Options header is missing, which allows browsers to perform MIME-sniffing.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
             
         if "Referrer-Policy" not in headers:
-            findings.append(self.make_finding("Missing Referrer-Policy", "Low", "Missing Referrer-Policy allows leaking the referring URL.", "Header absent.", remediation="Add Referrer-Policy: strict-origin-when-cross-origin.", owasp="A05: Security Misconfiguration", category="http_headers"))
+            findings.append(self.make_finding("Missing Referrer-Policy", "Low", "The Referrer-Policy header is missing, which allows leaking the referring URL.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
         else:
             findings.append(self.make_finding("Referrer-Policy Configured", "Passed", "Referrer-Policy is present.", headers["Referrer-Policy"], category="http_headers"))
             
@@ -900,11 +900,11 @@ class AdvancedSecurityHeadersModule(ScannerModule):
             headers = get_all_headers(resp)
             
             if "Cross-Origin-Opener-Policy" not in headers:
-                findings.append(self.make_finding("Missing COOP Header", "Informational", "COOP is missing.", "Header absent.", remediation="Add Cross-Origin-Opener-Policy.", owasp="A05: Security Misconfiguration", category="http_headers"))
+                findings.append(self.make_finding("Missing COOP Header", "Informational", "The Cross-Origin-Opener-Policy header is missing.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
             if "Cross-Origin-Embedder-Policy" not in headers:
-                findings.append(self.make_finding("Missing COEP Header", "Informational", "COEP is missing.", "Header absent.", remediation="Add Cross-Origin-Embedder-Policy.", owasp="A05: Security Misconfiguration", category="http_headers"))
+                findings.append(self.make_finding("Missing COEP Header", "Informational", "The Cross-Origin-Embedder-Policy header is missing.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
             if "Cross-Origin-Resource-Policy" not in headers:
-                findings.append(self.make_finding("Missing CORP Header", "Informational", "CORP is missing.", "Header absent.", remediation="Add Cross-Origin-Resource-Policy.", owasp="A05: Security Misconfiguration", category="http_headers"))
+                findings.append(self.make_finding("Missing CORP Header", "Informational", "The Cross-Origin-Resource-Policy header is missing.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
         except Exception:
             pass
         return findings
