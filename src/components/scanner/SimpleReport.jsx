@@ -196,18 +196,7 @@ const getEffort = (severity) => {
     'Low': 'Routine Backlog',
   };
   return effort[severity] || 'Minimal';
-};
-
 const SimpleReport = ({ reportData }) => {
-  const [copiedId, setCopiedId] = useState(null);
-  
-  const handleCopy = (issue, trans, idx) => {
-    const text = `[URLScan Security Report] Issue: ${trans.name}. Impact: ${trans.why}. Please review and remediate.`;
-    navigator.clipboard.writeText(text);
-    setCopiedId(idx);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
   const getCategoryIcon = (category) => {
     if (category === 'Encryption') return <Lock className="w-5 h-5 text-red-400" />;
     if (category === 'Browser Protection') return <ShieldAlert className="w-5 h-5 text-red-400" />;
@@ -350,11 +339,6 @@ const SimpleReport = ({ reportData }) => {
                       <span className="text-lg font-bold text-slate-100 block mb-1">Why it matters:</span>
                       <span className="text-lg text-slate-300 leading-relaxed block">{trans.why}</span>
                     </div>
-                    
-                    <button onClick={() => handleCopy(issue, trans, idx)} className="mt-6 flex items-center gap-2 px-3.5 py-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-sm font-semibold rounded-xl transition-colors border border-slate-700/50 shadow-sm">
-                      {copiedId === idx ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                      {copiedId === idx ? 'Copied to clipboard!' : 'Copy Developer Note'}
-                    </button>
                   </div>
 
                   <div className="w-full md:w-80">
