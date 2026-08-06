@@ -253,9 +253,13 @@ app = FastAPI(title="Website Security Posture Checker (Advanced Modular)")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+@app.get("/api/health")
+def health_check():
+    return {"status": "online"}
 
 def normalize_url(value: str) -> str:
     value = value.strip()

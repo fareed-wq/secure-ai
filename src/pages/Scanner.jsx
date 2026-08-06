@@ -14,6 +14,8 @@ import AuthModal from '../components/scanner/AuthModal';
 import PdfComingSoonModal from '../components/scanner/PdfComingSoonModal';
 import BottomTicker from '../components/scanner/BottomTicker';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 function Scanner() {
   const { user } = useAuth();
   const location = useLocation();
@@ -60,7 +62,7 @@ function Scanner() {
     
     try {
       const minWait = new Promise(resolve => setTimeout(resolve, 6000));
-      const fetchPromise = fetch('/api/scan', {
+      const fetchPromise = fetch(`${API_BASE_URL}/api/scan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,8 +82,8 @@ function Scanner() {
       setReportData(data);
       setScanState('mode-select'); // Go to mode selection first
     } catch (error) {
-      console.error('Failed to connect to backend:', error);
-      setErrorMessage('Failed to connect to the backend scanner.');
+      console.error('Backend Connection Error:', error);
+      setErrorMessage(`Failed to connect to the backend scanner: ${error.message || error}`);
       setScanState('error');
     }
   };
