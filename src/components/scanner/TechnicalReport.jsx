@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Clock, Server, FileCode, CheckCircle, AlertTriangle, Info, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, Layers, Check, XCircle } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Cell, LabelList, ResponsiveContainer } from 'recharts';
+
 
 const TechnicalReport = ({ reportData }) => {
   const [expandedRow, setExpandedRow] = useState(null);
@@ -32,13 +32,7 @@ const TechnicalReport = ({ reportData }) => {
     navigator.clipboard.writeText(text);
   };
 
-  const barData = reportData?.category_scores ? [
-    { name: 'Encryption & TLS', score: reportData.category_scores.encryption_tls || 0 },
-    { name: 'HTTP Headers', score: reportData.category_scores.http_headers || 0 },
-    { name: 'Domain & Email', score: reportData.category_scores.domain_email || 0 },
-    { name: 'Session & Cookies', score: reportData.category_scores.session_cookies || 0 },
-    { name: 'Info Exposure', score: reportData.category_scores.information_exposure || 0 }
-  ] : [];
+
 
   const handleSnippetTabChange = (findingIdx, tab) => {
     setSnippetTabs(prev => ({ ...prev, [findingIdx]: tab }));
@@ -83,125 +77,7 @@ const TechnicalReport = ({ reportData }) => {
         </div>
       </div>
 
-      {/* 2. Security Posture Breakdown (Radar Chart) */}
-      {barData.length > 0 && (
-        <div className="bg-[#0D1117] border border-slate-800 rounded-xl shadow-2xl p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <Layers className="w-5 h-5 text-indigo-400" />
-            <h3 className="font-bold text-white text-lg">🛡️ Security Posture Breakdown</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-            {/* Left Column: Horizontal Bar Chart */}
-            <div className="col-span-1 h-[260px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart layout="vertical" data={barData} margin={{ top: 10, right: 40, left: 20, bottom: 10 }}>
-                  <XAxis type="number" domain={[0, 100]} hide />
-                  <YAxis 
-                    type="category" 
-                    dataKey="name" 
-                    stroke="#94a3b8" 
-                    fontSize={12} 
-                    tickLine={false} 
-                    axisLine={false} 
-                    width={120} 
-                  />
-                  <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={16}>
-                    {barData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={entry.score >= 85 ? '#10b981' : entry.score >= 70 ? '#f59e0b' : '#ef4444'} 
-                      />
-                    ))}
-                    <LabelList 
-                      dataKey="score" 
-                      position="right" 
-                      formatter={(val) => `${val}%`} 
-                      style={{ fill: '#f8fafc', fontSize: '12px', fontWeight: 'bold' }} 
-                    />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            
-            {/* Right Column: Executive Risk & Remediation Overview */}
-            <div className="col-span-1 w-full space-y-6">
-              <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-6 shadow-inner">
-                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Executive Risk & Remediation Overview</h4>
-                
-                {/* Active Issue Counts */}
-                <div className="grid grid-cols-4 gap-3 mb-6">
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-black text-red-500">{reportData?.severity_counts?.Critical || 0}</div>
-                    <div className="text-[10px] uppercase tracking-wider text-red-400 font-bold mt-1">Critical</div>
-                  </div>
-                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-black text-orange-500">{reportData?.severity_counts?.High || 0}</div>
-                    <div className="text-[10px] uppercase tracking-wider text-orange-400 font-bold mt-1">High</div>
-                  </div>
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-black text-amber-500">{reportData?.severity_counts?.Medium || 0}</div>
-                    <div className="text-[10px] uppercase tracking-wider text-amber-400 font-bold mt-1">Medium</div>
-                  </div>
-                  <div className="bg-yellow-400/10 border border-yellow-400/20 rounded-lg p-3 text-center">
-                    <div className="text-2xl font-black text-yellow-400">{reportData?.severity_counts?.Low || 0}</div>
-                    <div className="text-[10px] uppercase tracking-wider text-yellow-500 font-bold mt-1">Low</div>
-                  </div>
-                </div>
 
-                {/* Compliance Snapshot */}
-                <div className="mb-6">
-                  <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Compliance Readiness Snapshot</h5>
-                  <div className="space-y-2">
-                    {[
-                      { label: 'PCI-DSS 4.0', key: 'pci_dss_4_0' },
-                      { label: 'NIST SP 800-53', key: 'nist_sp_800_53' },
-                      { label: 'ISO 27001', key: 'iso_27001' }
-                    ].map(framework => {
-                      const data = reportData?.technical_compliance?.[framework.key];
-                      const isCompliant = data?.status === 'Compliant';
-                      return (
-                        <div key={framework.key} className="flex justify-between items-center text-sm border-b border-slate-800/50 pb-2">
-                          <span className="text-slate-300 font-medium">{framework.label}</span>
-                          {isCompliant ? (
-                            <span className="text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Compliant</span>
-                          ) : (
-                            <span className="text-red-400 text-xs font-bold bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">Action Required ({data?.failed_controls?.length || 0} Failed)</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* OWASP Coverage Badges */}
-                <div className="mb-6">
-                  <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">OWASP Threat Coverage</h5>
-                  <div className="flex flex-wrap gap-2">
-                    {reportData?.owasp_coverage?.length > 0 ? reportData.owasp_coverage.map((cat, idx) => (
-                      <span key={idx} className="bg-slate-800 text-slate-300 text-[10px] font-mono px-2 py-1 rounded border border-slate-700">
-                        {cat}
-                      </span>
-                    )) : (
-                      <span className="text-slate-500 text-xs italic">No OWASP mappings active for findings.</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Remediation Speed Highlight */}
-                <div className="bg-indigo-900/30 border border-indigo-500/30 rounded-lg p-3 flex items-center gap-3">
-                  <div className="text-xl">⚡</div>
-                  <div className="text-xs text-indigo-200 font-medium leading-relaxed">
-                    <strong className="text-indigo-400 font-bold block mb-0.5">Instant Remediation Ready</strong>
-                    Copy-paste server config fixes (Nginx, Apache, Vercel, Cloudflare) are available in the Vulnerability Matrix below.
-                  </div>
-                </div>
-                
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 3. Tab Switcher: Vulnerabilities vs Compliance */}
       <div className="flex bg-[#0D1117] border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-xl print:hidden">
