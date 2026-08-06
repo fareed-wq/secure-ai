@@ -644,6 +644,8 @@ class RobotsTxtModule(ScannerModule):
             if resp.status_code == 200 and "user-agent" in resp.text.lower():
                 lines = len(resp.text.splitlines())
                 findings.append(self.make_finding("robots.txt Found", "Informational", f"Found robots.txt with {lines} lines.", target, owasp="A05: Security Misconfiguration", category="information_exposure"))
+            else:
+                findings.append(self.make_finding("robots.txt Missing", "Informational", "No robots.txt found.", target, owasp="A05: Security Misconfiguration", category="information_exposure"))
         except Exception:
             pass
         return findings
@@ -659,6 +661,8 @@ class SitemapModule(ScannerModule):
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
             if resp.status_code == 200 and ("<urlset" in resp.text or "<sitemapindex" in resp.text):
                 findings.append(self.make_finding("sitemap.xml Found", "Informational", "Found XML sitemap.", target, owasp="A05: Security Misconfiguration", category="information_exposure"))
+            else:
+                findings.append(self.make_finding("sitemap.xml Missing", "Informational", "No sitemap.xml found.", target, owasp="A05: Security Misconfiguration", category="information_exposure"))
         except Exception:
             pass
         return findings
@@ -675,7 +679,7 @@ class SecurityTxtModule(ScannerModule):
             if resp.status_code == 200 and "contact" in resp.text.lower():
                 findings.append(self.make_finding("security.txt Found", "Passed", "Organization has published security.txt.", target, owasp="A05: Security Misconfiguration", category="information_exposure"))
             else:
-                findings.append(self.make_finding("security.txt Missing", "Informational", "No standard security.txt found.", target, remediation="Publish a security.txt file at /.well-known/security.txt.", category="information_exposure"))
+                findings.append(self.make_finding("security.txt Missing", "Informational", "No standard security.txt found.", target, remediation="Publish a security.txt file at /.well-known/security.txt.", owasp="A05: Security Misconfiguration", category="information_exposure"))
         except Exception:
             pass
         return findings
