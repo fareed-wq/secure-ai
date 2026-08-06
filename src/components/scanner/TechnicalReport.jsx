@@ -38,6 +38,18 @@ const TechnicalReport = ({ reportData }) => {
     setSnippetTabs(prev => ({ ...prev, [findingIdx]: tab }));
   };
 
+  const getAuditLabel = (category) => {
+    if (category === 'dns_records' || category === 'email_trust' || category === 'domain_trust') return '[-] DNS Record Audit';
+    if (category === 'session_security' || category === 'cookies') return '[-] Browser Cookie Security Audit';
+    return '[-] HTTP Response Header Audit';
+  };
+
+  const getStatusText = (finding) => {
+    if (finding.severity === 'Passed') return '[VERIFIED / CONFIGURED]';
+    if (finding.evidence && finding.evidence.trim() !== '') return '[EXPOSED]';
+    return '[NOT FOUND]';
+  };
+
   return (
     <div className="space-y-8" id="report-content">
       <style>{`
@@ -157,11 +169,10 @@ const TechnicalReport = ({ reportData }) => {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                      <th className="px-6 py-4" style={{ width: '12%' }}>Severity</th>
-                      <th className="px-6 py-4" style={{ width: '35%' }}>Vulnerability / Check Name</th>
+                      <th className="px-6 py-4" style={{ width: '15%' }}>Severity</th>
+                      <th className="px-6 py-4" style={{ width: '45%' }}>Vulnerability / Check Name</th>
                       <th className="px-6 py-4" style={{ width: '25%' }}>OWASP Map</th>
-                      <th className="px-6 py-4 text-center" style={{ width: '15%' }}>Confidence</th>
-                      <th className="px-6 py-4 text-right print:hidden" style={{ width: '13%' }}>Action</th>
+                      <th className="px-6 py-4 text-right print:hidden" style={{ width: '15%' }}>Action</th>
                     </tr>
                   </thead>
                     {sortedFindings.map((finding, idx) => {
@@ -185,9 +196,6 @@ const TechnicalReport = ({ reportData }) => {
                               ) : (
                                 <span className="text-slate-600 text-xs">-</span>
                               )}
-                            </td>
-                            <td className="px-6 py-4 text-center">
-                              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-md text-xs font-bold whitespace-nowrap">🟢 {finding.confidence || 'High'} Confidence</span>
                             </td>
                             <td className="px-6 py-4 text-right print:hidden align-top">
                               <button className="text-slate-500 hover:text-white transition-colors">
@@ -235,19 +243,19 @@ const TechnicalReport = ({ reportData }) => {
                                           </div>
                                         )}
 
-                                        {finding.evidence && finding.evidence !== "N/A" && (
-                                          <div>
+                                        <div>
                                             <div className="flex items-center justify-between mb-2">
                                               <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Raw Evidence / Payload</div>
-                                              <button onClick={() => copyToClipboard(finding.evidence)} className="text-slate-500 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors">
-                                                <Copy className="w-3 h-3" /> Copy
-                                              </button>
+                                              {finding.evidence && finding.evidence.trim() !== '' && (
+                                                <button onClick={() => copyToClipboard(finding.evidence)} className="text-slate-500 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors">
+                                                  <Copy className="w-3 h-3" /> Copy
+                                                </button>
+                                              )}
                                             </div>
                                             <pre className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
-                                              {`[-] HTTP Response Header Audit\n[!] Target: ${finding.name} -> [NOT FOUND]\n\n${finding.evidence}`}
+                                              {`${getAuditLabel(finding.category)}\n[!] Target: ${finding.name} -> ${getStatusText(finding)}${finding.evidence && finding.evidence.trim() !== '' ? '\n\n' + finding.evidence : ''}`}
                                             </pre>
-                                          </div>
-                                        )}
+                                        </div>
 
                                         {/* Tabbed Code Snippets */}
                                         {finding.remediation_snippets && Object.keys(finding.remediation_snippets).length > 0 && (
@@ -289,7 +297,25 @@ const TechnicalReport = ({ reportData }) => {
 
                                       <div className="space-y-6">
                                         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 h-full">
-                                          {finding.remediation && finding.remediation !== "N/A" && (
+                                          {finding.severity === 'Passed' ? (
+                                            <>
+                                              <div className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                <CheckCircle2 className="w-4 h-4" /> ✓ CONTROL PASSED
+                                              </div>
+                                              <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                                                This security control is properly configured and meets industry standards.
+                                              </p>
+                                            </>
+                                          ) : finding.severity === 'Informational' ? (
+                                            <>
+                                              <div className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                <Info className="w-4 h-4" /> ℹ️ INFORMATIONAL NOTICE
+                                              </div>
+                                              <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                                                This detail is logged for architectural visibility and server fingerprinting purposes.
+                                              </p>
+                                            </>
+                                          ) : finding.remediation && finding.remediation !== "N/A" ? (
                                             <>
                                               <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                                                 <Shield className="w-4 h-4" /> Remediation Directive
@@ -298,7 +324,7 @@ const TechnicalReport = ({ reportData }) => {
                                                 {finding.remediation}
                                               </p>
                                             </>
-                                          )}
+                                          ) : null}
                                           
                                           <div className="space-y-3 mt-auto pt-4 border-t border-slate-800/80">
                                             <div className="flex justify-between items-center text-xs">
