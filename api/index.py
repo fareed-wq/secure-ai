@@ -122,7 +122,6 @@ COMPLIANCE_MAP = {
     },
     "Exposed .git Repository": {
         "pci_dss": "6.4.1 (Public Web Application Protection)",
-        "nist": "SI-10 (Information Input Validation)",
         "iso27001": "A.8.28 (Secure Coding)"
     },
     "Missing Strict-Transport-Security (HSTS)": {
@@ -137,22 +136,18 @@ COMPLIANCE_MAP = {
     },
     "Weak Content-Security-Policy (CSP)": {
         "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
-        "nist": "SI-10 (Information Input Validation)",
         "iso27001": "A.8.28 (Secure Coding)"
     },
     "Missing X-Frame-Options": {
         "pci_dss": "6.4.1 (Public Web Application Protection)",
-        "nist": "SI-10 (Information Input Validation)",
         "iso27001": "A.8.20 (Network Security)"
     },
     "Missing X-Content-Type-Options": {
         "pci_dss": "6.4.1 (Public Web Application Protection)",
-        "nist": "SI-10 (Information Input Validation)",
         "iso27001": "A.8.28 (Secure Coding)"
     },
     "Missing Permissions-Policy": {
         "pci_dss": "6.4.1 (Public Web Application Protection)",
-        "nist": "AC-3 (Access Enforcement)",
         "iso27001": "A.8.20 (Network Security)"
     },
     "Missing Referrer-Policy": {
@@ -187,7 +182,6 @@ COMPLIANCE_MAP = {
     },
     "Wildcard CORS Policy": {
         "pci_dss": "6.4.1 (Public Web Application Protection)",
-        "nist": "AC-3 (Access Enforcement)",
         "iso27001": "A.8.3 (Access Control)"
     },
     "Valid SSL/TLS Certificate": {
@@ -196,24 +190,48 @@ COMPLIANCE_MAP = {
         "iso27001": "A.8.24 (Use of Cryptography)"
     },
     "SPF Record Configured": {
-        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "pci_dss": "5.4.1 (Anti-Phishing & Email Structure)",
         "nist": "SI-8 (Spam & Phishing Protection)",
-        "iso27001": "A.8.20 (Network Security)"
+        "iso27001": "A.8.19 (Information Security in Systems)"
     },
     "Strong DMARC Policy Configured": {
-        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "pci_dss": "5.4.1 (Anti-Phishing & Spoofing)",
         "nist": "SI-8 (Spam & Phishing Protection)",
-        "iso27001": "A.8.20 (Network Security)"
+        "iso27001": "A.8.19 (Information Security in Systems)"
     },
     "CAA Records Configured": {
-        "pci_dss": "6.4.1 (Public Web Application Protection)",
-        "nist": "SI-8 (Spam & Phishing Protection)",
-        "iso27001": "A.8.20 (Network Security)"
+        "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+        "nist": "SC-13 (Cryptographic Protection)",
+        "iso27001": "A.8.24 (Use of Cryptography)"
     },
     "security.txt Found": {
         "pci_dss": "N/A",
         "nist": "RA-5 (Vulnerability Scanning)",
         "iso27001": "A.8.8 (Management of Technical Vulnerabilities)"
+    },
+    "HTTPS Redirection Configured": {
+        "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+        "nist": "SC-8 (Transmission Confidentiality)",
+        "iso27001": "A.8.24 (Use of Cryptography)"
+    },
+    "Permissions-Policy Configured": {
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "iso27001": "A.8.20 (Network Security)"
+    },
+    "Strict-Transport-Security Configured": {
+        "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+        "nist": "SC-8 (Transmission Confidentiality)",
+        "iso27001": "A.8.24 (Use of Cryptography)"
+    },
+    "Content-Security-Policy Configured": {
+        "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
+        "nist": "SC-28 (Protection of Information at Rest/Transit)",
+        "iso27001": "A.8.20 (Network Security)"
+    },
+    "Referrer-Policy Configured": {
+        "pci_dss": "6.4.1 (Public Web Application Protection)",
+        "nist": "SC-13 (Cryptographic Protection)",
+        "iso27001": "A.8.12 (Data Leakage Prevention)"
     }
 }
 
@@ -369,8 +387,7 @@ class ScannerModule(ABC):
     def make_finding(self, name, severity, description, evidence, confidence="High", remediation="N/A", owasp="N/A", compliance=None, category="information_exposure", cvss=None):
         if compliance is None:
             compliance = COMPLIANCE_MAP.get(name, {
-                "pci_dss": "6.4.1 (Web App Security)",
-                "nist": "SI-10 (Information Input Validation)",
+                "pci_dss": "6.4.1 (Public Web Application Protection)",
                 "iso27001": "A.8.20 (Network Security)"
             })
             
