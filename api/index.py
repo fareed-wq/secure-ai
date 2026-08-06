@@ -8,7 +8,9 @@ import logging
 from http.cookiejar import DefaultCookiePolicy
 import requests
 from requests.adapters import HTTPAdapter
-from fastapi import FastAPI
+import asyncio
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, HTMLResponse
 from pydantic import BaseModel, field_validator
@@ -260,14 +262,6 @@ app.add_middleware(
 @app.get("/api/health")
 def health_check():
     return {"status": "online"}
-
-@app.middleware("http")
-async def add_cors_headers(request, call_next):
-    response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    return response
 
 def normalize_url(value: str) -> str:
     value = value.strip()
@@ -1290,15 +1284,29 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     }
 
 @app.post("/api/scan")
-def scan_single(req: ScanRequest):
-    return scan_url(req.url, req.probe_subdomains)
+@app.post("/scan")
+async def scan_single(req: ScanRequest):
+    try:
+        return await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains), timeout=9.0)
+    except asyncio.TimeoutError:
+        return JSONResponse(status_code=408, content={"error": "Scan timed out. Target may be unresponsive or WAF blocked."})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.post("/api/scan/batch")
-def scan_batch(req: BatchScanRequest):
+@app.post("/scan/batch")
+async def scan_batch(req: BatchScanRequest):
     workers = min(10, len(req.urls)) or 1
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        results = list(pool.map(scan_url, req.urls))
-    return {"results": results}
+    
+    def process_batch():
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            return list(pool.map(scan_url, req.urls))
+            
+    try:
+        results = await asyncio.wait_for(asyncio.to_thread(process_batch), timeout=9.0)
+        return {"results": results}
+    except asyncio.TimeoutError:
+        return JSONResponse(status_code=408, content={"error": "Batch scan timed out."})
 
 # --- PDF EXPORT ENGINE ---
 @app.post("/api/export/pdf")
