@@ -261,13 +261,8 @@ const TechnicalReport = ({ reportData }) => {
                                       <div className="space-y-6">
                                         {finding.remediation && finding.remediation !== "N/A" && (
                                           <div className="bg-indigo-950/20 border border-indigo-900/50 rounded-xl p-5">
-                                            <div className="flex justify-between items-center mb-2">
-                                              <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest flex items-center gap-2">
-                                                <Shield className="w-4 h-4" /> Remediation Directive
-                                              </div>
-                                              <button onClick={() => copyToClipboard(finding.remediation)} className="text-indigo-400 hover:text-indigo-300 text-xs flex items-center gap-1 transition-colors">
-                                                <Copy className="w-3 h-3" /> Copy Directive
-                                              </button>
+                                            <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                              <Shield className="w-4 h-4" /> Remediation Directive
                                             </div>
                                             <p className="text-indigo-200/80 font-mono text-sm leading-relaxed p-3 bg-indigo-950/40 rounded-lg border border-indigo-900/30">
                                               {finding.remediation}
