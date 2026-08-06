@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Terminal, Clock, Server, FileCode, CheckCircle, AlertTriangle, Info, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, Layers, Check, XCircle } from 'lucide-react';
+import { Terminal, Clock, Server, FileCode, CheckCircle, AlertTriangle, Info, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, Layers, Check, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
 
 
 const TechnicalReport = ({ reportData }) => {
@@ -56,71 +56,103 @@ const TechnicalReport = ({ reportData }) => {
         }
       `}</style>
       
-      {/* 1. Technical Metadata Table */}
-      <div className="report-section bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden font-mono text-sm shadow-2xl">
-        <div className="bg-slate-900 px-6 py-3 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-slate-300 font-bold">
-            <Terminal className="w-4 h-4 text-indigo-400" />
-            <span>SCAN_METADATA // {reportData?.url}</span>
+      {/* 1. Technical Metadata Table HUD */}
+      <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+        
+        {/* Top Header Bar */}
+        <div className="flex items-center gap-3 mb-2">
+          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ SCAN_METADATA</span>
+          <span className="text-slate-600 font-mono text-xs">/</span>
+          <div className="flex items-center gap-2">
+            <div className="bg-emerald-500 animate-pulse w-2 h-2 rounded-full"></div>
+            <span className="font-mono text-xs text-slate-300">{reportData?.url}</span>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-3 p-4 bg-[#0D1117]">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          
           {/* Card 1: Network & Edge Security */}
-          <div className="bg-slate-900/80 border border-slate-800/90 rounded-xl p-4 shadow-sm hover:border-slate-700/80 transition-colors">
-            <div className="text-slate-400 text-xs font-mono tracking-wider mb-2">IP ADDRESS & LOCATION</div>
-            <div className="text-slate-100 font-bold text-[15px] truncate">{reportData?.metadata?.ip_address || reportData?.ip_address || 'N/A'}</div>
-            <div className="text-slate-400 text-xs mt-1 truncate mb-3">{reportData?.metadata?.location_or_cdn || reportData?.location_or_cdn || 'CDN / Cloud'}</div>
-            <span className="inline-block px-2 py-1 bg-indigo-500/10 text-indigo-400 text-[10px] font-bold uppercase tracking-wider rounded-md border border-indigo-500/20">
-              {reportData?.metadata?.waf_cdn_detection || 'Direct Origin'}
-            </span>
+          <div className="bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-4.5 flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5 p-4">
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Globe className="w-3.5 h-3.5 text-slate-400" />
+                <div className="text-slate-400 text-xs font-mono uppercase tracking-wider font-semibold">IP ADDRESS & LOCATION</div>
+              </div>
+              <div className="font-mono text-lg font-bold text-white tracking-tight truncate">{reportData?.metadata?.ip_address || reportData?.ip_address || 'N/A'}</div>
+              <div className="text-xs text-slate-400 mt-1 truncate mb-3">{reportData?.metadata?.location_or_cdn || reportData?.location_or_cdn || 'CDN / Cloud'}</div>
+            </div>
+            <div>
+              <span className="px-2.5 py-1 text-[11px] font-mono font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-md uppercase tracking-wider inline-block">
+                {reportData?.metadata?.waf_cdn_detection || 'DIRECT ORIGIN'}
+              </span>
+            </div>
           </div>
           
           {/* Card 2: HTTP & Performance */}
-          <div className="bg-slate-900/80 border border-slate-800/90 rounded-xl p-4 shadow-sm hover:border-slate-700/80 transition-colors">
-            <div className="text-slate-400 text-xs font-mono tracking-wider mb-2">HTTP STATUS & SERVER</div>
-            <div className="text-slate-100 font-bold text-[15px] truncate">{reportData?.metadata?.http_status || '200 OK'}</div>
-            <div className="text-slate-400 text-xs mt-1 truncate mb-3">{
-              (reportData?.metadata?.server_header || reportData?.server_header) 
-                ? (String(reportData?.metadata?.server_header || reportData?.server_header).startsWith("Server:") 
-                   ? (reportData?.metadata?.server_header || reportData?.server_header) 
-                   : `Server: ${reportData?.metadata?.server_header || reportData?.server_header}`)
-                : 'Server: Hidden'
-            }</div>
-            <span className={`inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
-              {reportData?.metadata?.performance_rating || 'Unknown Latency'}
-            </span>
+          <div className="bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-4.5 flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5 p-4">
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Activity className="w-3.5 h-3.5 text-slate-400" />
+                <div className="text-slate-400 text-xs font-mono uppercase tracking-wider font-semibold">HTTP STATUS & SERVER</div>
+              </div>
+              <div className="font-mono text-lg font-bold text-white tracking-tight truncate">{reportData?.metadata?.http_status || '200 OK'}</div>
+              <div className="text-xs text-slate-400 mt-1 truncate mb-3">{
+                (reportData?.metadata?.server_header || reportData?.server_header) 
+                  ? (String(reportData?.metadata?.server_header || reportData?.server_header).startsWith("Server:") 
+                     ? (reportData?.metadata?.server_header || reportData?.server_header) 
+                     : `Server: ${reportData?.metadata?.server_header || reportData?.server_header}`)
+                  : 'Server: Hidden'
+              }</div>
+            </div>
+            <div>
+              <span className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider inline-block border ${reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}`}>
+                {reportData?.metadata?.performance_rating || 'OPTIMAL LATENCY'}
+              </span>
+            </div>
           </div>
           
           {/* Card 3: SSL/TLS Certificate */}
-          <div className="bg-slate-900/80 border border-slate-800/90 rounded-xl p-4 shadow-sm hover:border-slate-700/80 transition-colors">
-            <div className="text-slate-400 text-xs font-mono tracking-wider mb-2">SSL/TLS ENCRYPTION</div>
-            <div className="text-slate-100 font-bold text-[15px] truncate">{reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}</div>
-            <div className="text-xs mt-1 truncate mb-3">
-              <span className="text-slate-400">{reportData?.metadata?.tls_version || 'TLS'} · </span>
-              <span className={
-                reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
-                reportData?.metadata?.ssl_days_left_int <= 30 ? "text-amber-400 font-semibold" :
-                "text-emerald-400 font-semibold"
-              }>
-                {reportData?.metadata?.ssl_days_left || reportData?.ssl_days_left || 'Active'}
+          <div className="bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-4.5 flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5 p-4">
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <Lock className="w-3.5 h-3.5 text-slate-400" />
+                <div className="text-slate-400 text-xs font-mono uppercase tracking-wider font-semibold">SSL/TLS ENCRYPTION</div>
+              </div>
+              <div className="font-mono text-lg font-bold text-white tracking-tight truncate">{reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}</div>
+              <div className="text-xs text-slate-400 mt-1 truncate mb-3">
+                {reportData?.metadata?.tls_version || 'TLS'} · <span className={
+                  reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
+                  reportData?.metadata?.ssl_days_left_int <= 30 ? "text-amber-400 font-semibold" :
+                  "text-emerald-400 font-semibold"
+                }>{reportData?.metadata?.ssl_days_left || reportData?.ssl_days_left || 'Active'}</span>
+              </div>
+            </div>
+            <div>
+              <span className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider inline-block border ${reportData?.metadata?.ssl_days_left_int > 14 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}`}>
+                {reportData?.metadata?.ssl_days_left_int > 14 ? 'VALID CERTIFICATE' : 'RENEWAL IMMINENT'}
               </span>
             </div>
-            <span className={`inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.metadata?.ssl_days_left_int > 14 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
-              {reportData?.metadata?.ssl_days_left_int > 14 ? 'Valid Certificate' : 'Renewal Imminent'}
-            </span>
           </div>
 
           {/* Card 4: Traffic & Protocol Posture */}
-          <div className="bg-slate-900/80 border border-slate-800/90 rounded-xl p-4 shadow-sm hover:border-slate-700/80 transition-colors">
-            <div className="text-slate-400 text-xs font-mono tracking-wider mb-2">SECURITY & PROTOCOL</div>
-            <div className="text-slate-100 font-bold text-[15px] truncate">{reportData?.metadata?.https_enforced || 'HTTPS Status Unknown'}</div>
-            <div className="text-slate-400 text-xs mt-1 truncate mb-3">
-              {reportData?.metadata?.http_protocol || 'HTTP/1.1'} · {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}
+          <div className="bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 rounded-xl p-4.5 flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5 p-4">
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                <div className="text-slate-400 text-xs font-mono uppercase tracking-wider font-semibold">SECURITY & PROTOCOL</div>
+              </div>
+              <div className="font-mono text-lg font-bold text-white tracking-tight truncate">{reportData?.metadata?.https_enforced || 'HTTPS Status Unknown'}</div>
+              <div className="text-xs text-slate-400 mt-1 truncate mb-3">
+                {reportData?.metadata?.http_protocol || 'HTTP/1.1'} · {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}
+              </div>
             </div>
-            <span className={`inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${(reportData?.metadata?.clean_redirect === 'Clean 301 Redirect' || reportData?.metadata?.clean_redirect === 'Direct Secure') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
-              {reportData?.metadata?.clean_redirect || 'No Auto-Redirect'}
-            </span>
+            <div>
+              <span className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider inline-block border ${(reportData?.metadata?.clean_redirect === 'Clean 301 Redirect' || reportData?.metadata?.clean_redirect === 'Direct Secure') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}`}>
+                {reportData?.metadata?.clean_redirect || 'DIRECT SECURE'}
+              </span>
+            </div>
           </div>
+          
         </div>
       </div>
 
