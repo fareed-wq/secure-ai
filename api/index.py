@@ -3,6 +3,8 @@ import socket
 import ssl
 import re
 import whois
+import os
+import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import urlparse, urljoin
 import logging
@@ -1097,6 +1099,40 @@ def get_ip_location(ip):
         pass
     return "Global / Cloud"
 
+def check_safe_browsing(url: str) -> str:
+    api_key = os.environ.get("GOOGLE_SAFE_BROWSING_API_KEY")
+    if not api_key:
+        return "CLEAN"
+        
+    endpoint = f"https://safebrowsing.googleapis.com/v4/threatMatches:find?key={api_key}"
+    payload = {
+        "client": {
+            "clientId": "secure-ai",
+            "clientVersion": "1.0"
+        },
+        "threatInfo": {
+            "threatTypes": ["MALWARE", "SOCIAL_ENGINEERING", "UNWANTED_SOFTWARE", "POTENTIALLY_HARMFUL_APPLICATION"],
+            "platformTypes": ["ANY_PLATFORM"],
+            "threatEntryTypes": ["URL"],
+            "threatEntries": [{"url": url}]
+        }
+    }
+    
+    try:
+        resp = requests.post(endpoint, json=payload, timeout=3)
+        if resp.status_code == 200:
+            data = resp.json()
+            if "matches" in data and len(data["matches"]) > 0:
+                return "MALICIOUS / PHISHING FLAGGED"
+            return "CLEAN"
+        else:
+            logger.error(f"Safe Browsing API Error: {resp.text}")
+            return "CLEAN"
+    except Exception as e:
+        logger.error(f"Safe Browsing Exception: {e}")
+        return "CLEAN"
+
+
 def get_metadata(domain: str, response: requests.Response, original_url: str = None):
     # 1. Real IP Address Resolution
     try:
@@ -1292,6 +1328,9 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
     except Exception as e:
         logger.error(f"WHOIS lookup failed for {domain}: {e}")
 
+    # Threat Intelligence Lookup
+    threat_status = check_safe_browsing(original_url or f"https://{domain}")
+
     return {
         "ip_address": ip,
         "location_or_cdn": location_or_cdn,
@@ -1308,7 +1347,8 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
         "http_protocol": http_protocol,
         "https_enforced": https_enforced,
         "clean_redirect": clean_redirect,
-        "whois": whois_data
+        "whois": whois_data,
+        "threat_status": threat_status
     }
 
 

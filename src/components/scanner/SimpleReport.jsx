@@ -247,7 +247,7 @@ const SimpleReport = ({ reportData }) => {
           <p className="text-xl text-slate-300 leading-relaxed">
             {healthSummary}
           </p>
-          <div className="mt-8 flex gap-4">
+          <div className="mt-8 flex flex-wrap gap-4">
             <div className="bg-slate-800/50 border border-slate-700/50 px-6 py-4 rounded-2xl">
               <div className="text-sm font-bold text-slate-400 uppercase">Issues Found</div>
               <div className="text-3xl font-black text-white">{issues.length}</div>
@@ -255,6 +255,12 @@ const SimpleReport = ({ reportData }) => {
             <div className="bg-emerald-950/30 border border-emerald-900/30 px-6 py-4 rounded-2xl">
               <div className="text-sm font-bold text-emerald-500 uppercase">Passed Checks</div>
               <div className="text-3xl font-black text-emerald-400">{passed.length}</div>
+            </div>
+            <div className={`border px-6 py-4 rounded-2xl ${reportData?.metadata?.threat_status === 'MALICIOUS / PHISHING FLAGGED' ? 'bg-red-950/30 border-red-900/50' : 'bg-slate-800/50 border-slate-700/50'}`}>
+              <div className={`text-sm font-bold uppercase ${reportData?.metadata?.threat_status === 'MALICIOUS / PHISHING FLAGGED' ? 'text-red-500' : 'text-slate-400'}`}>Threat Intel</div>
+              <div className={`text-lg font-black mt-2 leading-tight ${reportData?.metadata?.threat_status === 'MALICIOUS / PHISHING FLAGGED' ? 'text-red-400' : 'text-emerald-400'}`}>
+                {reportData?.metadata?.threat_status === 'MALICIOUS / PHISHING FLAGGED' ? 'MALWARE DETECTED' : 'NO THREATS'}
+              </div>
             </div>
           </div>
         </div>
