@@ -27,6 +27,7 @@ function Scanner() {
   const [scanState, setScanState] = useState('idle'); // idle, scanning, error, mode-select, view-report
   const [reportData, setReportData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [validationError, setValidationError] = useState('');
   const [reportMode, setReportMode] = useState('simple'); // simple, technical
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authFeatureName, setAuthFeatureName] = useState('');
@@ -61,8 +62,8 @@ function Scanner() {
     const domainRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/;
     
     if (!domainRegex.test(cleanInput)) {
-      setErrorMessage("Please enter a complete domain name with an extension (e.g., google.com or site.in).");
-      urlInputRef.current?.focus();
+      setValidationError("Please enter a complete domain name with an extension (e.g., google.com or site.in).");
+      urlInputRef.current?.blur();
       return;
     }
 
@@ -151,6 +152,37 @@ function Scanner() {
         onClose={() => setPdfModalOpen(false)}
       />
 
+      {/* Validation Error Popup */}
+      <AnimatePresence>
+        {validationError && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-slate-900 border border-rose-500/30 shadow-2xl shadow-rose-500/10 rounded-2xl p-6 max-w-md w-full relative"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="bg-rose-500/10 p-3 rounded-full mb-4">
+                  <ShieldAlert className="w-8 h-8 text-rose-400" />
+                </div>
+                <h4 className="text-white font-bold text-lg mb-2">Invalid Domain Format</h4>
+                <p className="text-slate-300 text-sm mb-6">{validationError}</p>
+                <button 
+                  onClick={() => {
+                    setValidationError('');
+                    setTimeout(() => urlInputRef.current?.focus(), 100);
+                  }}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full"
+                >
+                  Got it
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Dynamic Content */}
       <div className="relative z-10 max-w-7xl mx-auto pb-32 print:hidden">
         <AnimatePresence mode="wait">
@@ -189,7 +221,7 @@ function Scanner() {
                     value={url}
                     onChange={(e) => {
                       setUrl(e.target.value);
-                      if (errorMessage) setErrorMessage('');
+                      if (validationError) setValidationError('');
                     }}
                     className="w-full bg-transparent border-none text-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-0"
                   />
@@ -201,19 +233,6 @@ function Scanner() {
                   </button>
                 </div>
               </form>
-              
-              <AnimatePresence>
-                {errorMessage && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: -10 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    exit={{ opacity: 0, y: -10 }}
-                    className="text-rose-400 text-sm font-medium mt-3"
-                  >
-                    {errorMessage}
-                  </motion.div>
-                )}
-              </AnimatePresence>
               
               <div className="flex justify-center text-sm text-slate-400 pt-2 font-medium">
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
