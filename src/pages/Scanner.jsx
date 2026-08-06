@@ -14,9 +14,11 @@ import AuthModal from '../components/scanner/AuthModal';
 import PdfComingSoonModal from '../components/scanner/PdfComingSoonModal';
 import BottomTicker from '../components/scanner/BottomTicker';
 
+// Force relative paths in production so it hits the Vercel Serverless functions directly
 export const API_BASE_URL = 
-  import.meta.env.VITE_API_URL || 
-  (window.location.hostname === 'localhost' ? 'http://localhost:5000' : '');
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
+    ? (import.meta.env.VITE_API_URL || 'http://localhost:5000') 
+    : '';
 
 function Scanner() {
   const { user } = useAuth();
