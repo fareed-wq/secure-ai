@@ -723,10 +723,12 @@ class AdvancedCookieModule(ScannerModule):
                 seen_cookies.add(cookie_name)
 
                 directives = [p.lower() for p in parts[1:]]
+                cookie_sev = "Informational" if cookie_name.upper() in self.NON_SENSITIVE_COOKIES else "Medium"
+                
                 if "httponly" not in directives:
                     findings.append(self.make_finding(
                         f"Missing HttpOnly Flag on Cookie: {cookie_name}", 
-                        "Medium", 
+                        cookie_sev, 
                         "Cookie can be accessed via client-side scripts.", 
                         f"Cookie: {cookie_name}", 
                         remediation="Add HttpOnly flag to cookies.", 
@@ -737,7 +739,7 @@ class AdvancedCookieModule(ScannerModule):
                 if url.startswith("https") and "secure" not in directives:
                     findings.append(self.make_finding(
                         f"Missing Secure Flag on Cookie: {cookie_name}", 
-                        "Medium", 
+                        cookie_sev, 
                         "Cookie transmitted in cleartext if sent over HTTP.", 
                         f"Cookie: {cookie_name}", 
                         remediation="Add Secure flag to cookies.", 
@@ -749,7 +751,7 @@ class AdvancedCookieModule(ScannerModule):
                 if not samesite_found:
                     findings.append(self.make_finding(
                         f"Missing SameSite Attribute on Cookie: {cookie_name}", 
-                        "Medium", 
+                        "Low", 
                         "Cookie lacks SameSite attribute, increasing CSRF risk.", 
                         f"Cookie: {cookie_name}", 
                         remediation="Add SameSite=Lax or SameSite=Strict.", 
