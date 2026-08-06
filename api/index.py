@@ -1417,16 +1417,9 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         cat: max(0, 100 - pen) for cat, pen in category_penalties.items()
     }
 
-    grade = "F"
-    for letter, threshold in sorted(Config.SCORE_THRESHOLDS.items(), key=lambda x: x[1], reverse=True):
-        if score >= threshold:
-            grade = letter
-            break
-
     return {
         "url": url,
         "score": score,
-        "grade": grade,
         "severity_counts": severity_counts,
         "category_scores": category_scores,
         "owasp_coverage": list(owasp_categories),
@@ -1517,7 +1510,7 @@ def export_pdf(req: ScanRequest):
                 <div class="logo">URLScanOnline Security Report</div>
                 <div style="color: #94a3b8; margin-top: 5px;">Target: {data['url']} | Date: {datetime.datetime.now().strftime("%B %d, %Y")}</div>
             </div>
-            <div class="score-badge">{data['score']}/100 ({data['grade']})</div>
+            <div class="score-badge">{data['score']}/100</div>
         </div>
 
         <div class="card">
