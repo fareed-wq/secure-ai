@@ -81,22 +81,22 @@ const TechnicalReport = ({ reportData }) => {
               <div className="text-base sm:text-lg font-bold font-mono text-white tracking-tight truncate mt-2 h-7 flex items-center">
                 {reportData?.metadata?.ip_address || reportData?.ip_address || 'N/A'}
               </div>
-              <div 
-                className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center cursor-help"
-                title={reportData?.metadata?.whois?.registrar !== 'Unknown' ? `Registrar: ${reportData?.metadata?.whois?.registrar} | Age: ${reportData?.metadata?.whois?.age}` : undefined}
-              >
+              <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
                 {reportData?.metadata?.location_or_cdn || reportData?.location_or_cdn || 'CDN / Cloud'}
-                {reportData?.metadata?.whois?.registrar && reportData?.metadata?.whois?.registrar !== 'Unknown' && (
-                  <span className="ml-1.5 text-slate-500 font-medium">
-                    · {reportData.metadata.whois.registrar} ({reportData.metadata.whois.age})
-                  </span>
-                )}
               </div>
             </div>
-            <div className="mt-3 flex items-center h-7">
-              <span className="px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider w-fit border bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
+            <div className="mt-3 flex items-center gap-2 h-7 overflow-hidden">
+              <span className="px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider shrink-0 w-fit border bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
                 {reportData?.metadata?.waf_cdn_detection || 'DIRECT ORIGIN'}
               </span>
+              {reportData?.metadata?.whois?.age && reportData?.metadata?.whois?.age !== 'Unknown' && (
+                <span 
+                  className="px-2 py-1 text-[10px] font-mono font-bold rounded-md uppercase tracking-wider shrink-0 w-fit border bg-slate-800/80 text-slate-400 border-slate-700/80 cursor-help"
+                  title={reportData?.metadata?.whois?.registrar !== 'Unknown' ? `Registrar: ${reportData.metadata.whois.registrar}` : 'WHOIS Data'}
+                >
+                  {reportData.metadata.whois.age}
+                </span>
+              )}
             </div>
           </div>
           
