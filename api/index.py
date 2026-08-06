@@ -1126,6 +1126,10 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
     ssl_days_left_int = None
     tls_version = "TLS"
     ssl_success = False
+    ssl_cert_error = False
+    cert = None
+    ver = None
+
     try:
         ctx = ssl.create_default_context()
         with socket.create_connection((domain, 443), timeout=3) as sock:
@@ -1133,29 +1137,48 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
                 cert = ssock.getpeercert()
                 ver = ssock.version()
                 ssl_success = True
-                if ver:
-                    tls_version = ver
-                # Expiry calculation
-                not_after_str = cert.get('notAfter')
-                if not_after_str:
-                    expiry_date = datetime.datetime.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')
-                    days_left = (expiry_date - datetime.datetime.utcnow()).days
-                    ssl_days_left_int = days_left
-                    ssl_days_left = f"{days_left} Days Left"
-                
-                # Issuer calculation
-                issuer_tuple = cert.get('issuer', ())
-                for item in issuer_tuple:
-                    for key, val in item:
-                        if key == 'commonName' or key == 'organizationName':
-                            clean_val = str(val)
-                            for suffix in [" TLS RSA SHA256 CA", " RSA SHA256 CA", " TLS RSA CA", " Intermediate CA", " RSA CA", " ECC CA", " ECC SHA384 CA", " DV TLS CA", " CA"]:
-                                if clean_val.endswith(suffix):
-                                    clean_val = clean_val[:-len(suffix)].strip()
-                            ssl_issuer = clean_val
-                            break
+    except (ssl.SSLCertVerificationError, ssl.SSLError):
+        ssl_cert_error = True
+        try:
+            ctx = ssl._create_unverified_context()
+            with socket.create_connection((domain, 443), timeout=3) as sock:
+                with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
+                    ver = ssock.version()
+                    try:
+                        import _ssl
+                        cert = _ssl._test_decode_cert(ssock.getpeercert(True))
+                    except Exception:
+                        cert = ssock.getpeercert()
+        except Exception:
+            pass
     except Exception:
         pass
+
+    if cert:
+        if ver:
+            tls_version = ver
+        # Expiry calculation
+        not_after_str = cert.get('notAfter')
+        if not_after_str:
+            expiry_date = datetime.datetime.strptime(not_after_str, '%b %d %H:%M:%S %Y %Z')
+            days_left = (expiry_date - datetime.datetime.utcnow()).days
+            ssl_days_left_int = days_left
+            if days_left < 0:
+                ssl_days_left = f"Expired ({abs(days_left)} Days Ago)"
+            else:
+                ssl_days_left = f"{days_left} Days Left"
+        
+        # Issuer calculation
+        issuer_tuple = cert.get('issuer', ())
+        for item in issuer_tuple:
+            for key, val in item:
+                if key == 'commonName' or key == 'organizationName':
+                    clean_val = str(val)
+                    for suffix in [" TLS RSA SHA256 CA", " RSA SHA256 CA", " TLS RSA CA", " Intermediate CA", " RSA CA", " ECC CA", " ECC SHA384 CA", " DV TLS CA", " CA"]:
+                        if clean_val.endswith(suffix):
+                            clean_val = clean_val[:-len(suffix)].strip()
+                    ssl_issuer = clean_val
+                    break
 
     # 5. Network & Security Posture
     waf_cdn_detection = "Direct Origin"
@@ -1175,8 +1198,12 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
     rtt_val = getattr(response, 'elapsed', None)
     
     if is_timeout:
-        status = "Connection Timeout"
-        waf_cdn_detection = "PROTECTED BY WAF" if ssl_success else "Timeout"
+        if ssl_cert_error:
+            status = "SSL Certificate Expired / Invalid"
+            waf_cdn_detection = "Invalid SSL"
+        else:
+            status = "Connection Timeout"
+            waf_cdn_detection = "PROTECTED BY WAF" if ssl_success else "Timeout"
     elif is_403:
         status = f"403 Forbidden ({int(rtt_val.total_seconds() * 1000)}ms)"
         waf_cdn_detection = "PROTECTED BY WAF" if ssl_success else waf_cdn_detection
