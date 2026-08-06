@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check } from 'lucide-react';
 
 // --- TRANSLATION LAYER ---
 // Maps technical backend findings to plain-English business language
@@ -199,6 +199,22 @@ const getEffort = (severity) => {
 };
 
 const SimpleReport = ({ reportData }) => {
+  const [copiedId, setCopiedId] = useState(null);
+  
+  const handleCopy = (issue, trans, idx) => {
+    const text = `[URLScan Security Report] Issue: ${trans.name}. Impact: ${trans.why}. Please review and remediate.`;
+    navigator.clipboard.writeText(text);
+    setCopiedId(idx);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const getCategoryIcon = (category) => {
+    if (category === 'Encryption') return <Lock className="w-5 h-5 text-red-400" />;
+    if (category === 'Browser Protection') return <ShieldAlert className="w-5 h-5 text-red-400" />;
+    if (category === 'Privacy Protection') return <Layout className="w-5 h-5 text-amber-400" />;
+    return <Key className="w-5 h-5 text-slate-400" />;
+  };
+
   const findings = reportData?.findings || [];
   const passed = findings.filter(f => f.severity === 'Passed');
   const issues = findings.filter(f => f.severity !== 'Passed' && f.severity !== 'Informational').sort((a, b) => {
@@ -282,10 +298,10 @@ const SimpleReport = ({ reportData }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
           {healthMetrics.map((metric, i) => (
             <div key={i} className="space-y-2">
-              <div className="flex justify-between text-sm font-bold">
+              <div className="flex justify-between items-center text-sm font-bold mb-1">
                 <span className="text-slate-300">{metric.name}</span>
-                <span className={metric.val === 100 ? 'text-emerald-400' : metric.val >= 60 ? 'text-amber-400' : 'text-red-400'}>
-                  {metric.val === 100 ? 'Optimal' : metric.val >= 60 ? 'Needs Attention' : 'Vulnerable'}
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${metric.val === 100 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : metric.val >= 60 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                  {metric.val === 100 ? '🟢 Optimal' : metric.val >= 60 ? '🟡 Needs Attention' : '🔴 Vulnerable'}
                 </span>
               </div>
               <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden">
@@ -313,20 +329,32 @@ const SimpleReport = ({ reportData }) => {
               const risk = getBusinessRisk(issue.severity);
               
               return (
-                <div key={idx} className="finding-card bg-slate-900 border border-slate-800 rounded-3xl p-8 flex flex-col md:flex-row gap-8 items-start shadow-xl">
+                <div key={idx} className={`finding-card border-y border-r border-slate-800 rounded-3xl p-8 flex flex-col md:flex-row gap-8 items-start shadow-xl ${
+                  issue.severity === 'Critical' || issue.severity === 'High' ? 'border-l-4 border-l-red-500 bg-red-950/10' :
+                  issue.severity === 'Medium' ? 'border-l-4 border-l-amber-500 bg-amber-950/10' :
+                  'border-l-4 border-l-slate-600 bg-slate-900/40'
+                }`}>
                   
                   <div className="flex-1 space-y-4">
                     <div className="flex items-center gap-3 mb-2">
-                      <div className="w-10 h-10 rounded-full bg-slate-800 text-white font-bold text-xl flex items-center justify-center shrink-0">{idx + 1}</div>
-                      <h4 className="text-2xl font-bold text-white tracking-tight">{trans.name}</h4>
+                      <div className="w-10 h-10 rounded-full bg-slate-800/80 text-white font-bold text-xl flex items-center justify-center shrink-0">{idx + 1}</div>
+                      <h4 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+                        {getCategoryIcon(trans.category)}
+                        {trans.name}
+                      </h4>
                     </div>
                     
                     <div className="space-y-3 mt-3">
                       <span className="text-lg font-bold text-slate-100 block mb-1">The Problem:</span>
-                      <span className="text-lg text-slate-200 leading-relaxed block mb-4">{trans.problem}</span>
+                      <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.problem}</span>
                       <span className="text-lg font-bold text-slate-100 block mb-1">Why it matters:</span>
-                      <span className="text-lg text-slate-200 leading-relaxed block">{trans.why}</span>
+                      <span className="text-lg text-slate-300 leading-relaxed block">{trans.why}</span>
                     </div>
+                    
+                    <button onClick={() => handleCopy(issue, trans, idx)} className="mt-6 flex items-center gap-2 px-3.5 py-2 bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-sm font-semibold rounded-xl transition-colors border border-slate-700/50 shadow-sm">
+                      {copiedId === idx ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                      {copiedId === idx ? 'Copied to clipboard!' : 'Copy Developer Note'}
+                    </button>
                   </div>
 
                   <div className="w-full md:w-80">
@@ -369,9 +397,9 @@ const SimpleReport = ({ reportData }) => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {passed.slice(0, 6).map((item, i) => (
-              <div key={i} className="flex items-center gap-3 bg-slate-900/50 p-5 rounded-2xl border border-slate-800">
-                <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
-                <span className="font-bold text-slate-200">{item.name}</span>
+              <div key={i} className="flex items-center gap-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-800 shadow-sm">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span className="font-bold text-slate-200 text-sm">{item.name}</span>
               </div>
             ))}
           </div>
