@@ -982,16 +982,18 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
         status = f"Timeout (>{timeout_ms}ms)"
 
     # 4. SSL Cert Info
-    ssl_issuer = "Valid SSL"
+    ssl_issuer = "Unknown"
     ssl_days_left = "N/A"
     ssl_days_left_int = None
     tls_version = "TLS"
+    ssl_success = False
     try:
         ctx = ssl.create_default_context()
         with socket.create_connection((domain, 443), timeout=3) as sock:
             with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
                 cert = ssock.getpeercert()
                 ver = ssock.version()
+                ssl_success = True
                 if ver:
                     tls_version = ver
                 # Expiry calculation
@@ -1024,13 +1026,27 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
     elif "akamai" in org_lower:
         waf_cdn_detection = "Akamai CDN"
 
+    # WAF & Timeout Override Logic
+    is_timeout = response is None
+    is_403 = response and response.status_code == 403
+    rtt_ms = getattr(response, 'elapsed', None)
+    
+    if is_timeout:
+        status = "Timeout / Failed to Connect"
+        waf_cdn_detection = "PROTECTED BY WAF" if ssl_success else "Timeout"
+    elif is_403:
+        status = f"403 Forbidden ({int(rtt_ms.total_seconds() * 1000)}ms)"
+        waf_cdn_detection = "PROTECTED BY WAF" if ssl_success else waf_cdn_detection
+
     # Performance Rating
-    rtt_val = getattr(response, 'elapsed', None)
-    if rtt_val:
-        rtt_ms = int(rtt_val.total_seconds() * 1000)
-        performance_rating = "Optimal Latency" if rtt_ms < 150 else "Average Latency" if rtt_ms < 500 else "High Latency"
+    if rtt_val and not is_timeout:
+        rtt_ms_val = int(rtt_val.total_seconds() * 1000)
+        if rtt_ms_val > 1500 or is_403:
+            performance_rating = "TIMEOUT" if is_403 else "High Latency"
+        else:
+            performance_rating = "Optimal Latency" if rtt_ms_val < 150 else "Average Latency" if rtt_ms_val < 500 else "High Latency"
     else:
-        performance_rating = "Unknown"
+        performance_rating = "REQUEST TIMEOUT"
 
     # IPv6 Support
     ipv6_supported = False
@@ -1061,13 +1077,18 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
             http_protocol = "HTTP/3 (QUIC)"
         elif "h2=" in alt_svc or response.url.startswith("https"):
             http_protocol = "HTTP/2"
+    else:
+        # TIMEOUT FALLBACK FOR HTTPS
+        if original_url and original_url.startswith("https") and ssl_success:
+            https_enforced = "HTTPS Enforced"
+            clean_redirect = "HTTPS ACTIVE (PROBE TIMED OUT)"
 
     return {
         "ip_address": ip,
         "location_or_cdn": location_or_cdn,
         "server_header": server,
         "http_status": status,
-        "ssl_issuer": ssl_issuer,
+        "ssl_issuer": ssl_issuer if ssl_issuer != "Unknown" else "Valid SSL" if ssl_success else "Unknown",
         "ssl_days_left": ssl_days_left,
         "ssl_days_left_int": ssl_days_left_int,
         "tls_version": tls_version,
