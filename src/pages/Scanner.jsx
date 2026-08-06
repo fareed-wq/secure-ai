@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, ArrowRight, Loader2, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2pdf from 'html2pdf.js';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import WhatsAppWidget from '../WhatsAppWidget';
 
@@ -16,6 +16,7 @@ import BottomTicker from '../components/scanner/BottomTicker';
 
 function Scanner() {
   const { user } = useAuth();
+  const location = useLocation();
   const [url, setUrl] = useState('');
   const [scanState, setScanState] = useState('idle'); // idle, scanning, error, mode-select, view-report
   const [reportData, setReportData] = useState(null);
@@ -24,6 +25,15 @@ function Scanner() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authFeatureName, setAuthFeatureName] = useState('');
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.resetScan) {
+      setScanState('idle');
+      setReportData(null);
+      setUrl('');
+      setErrorMessage('');
+    }
+  }, [location.state?.resetScan]);
 
   const handleRequireAuth = (featureName) => {
     if (!user) {
