@@ -134,7 +134,6 @@ const TechnicalReport = ({ reportData }) => {
                       <th className="px-6 py-4 text-right print:hidden" style={{ width: '13%' }}>Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/50">
                     {sortedFindings.map((finding, idx) => {
                       const activeTab = snippetTabs[idx] || (finding.remediation_snippets ? Object.keys(finding.remediation_snippets)[0] : null);
                       
