@@ -957,7 +957,7 @@ def get_ip_location(ip):
         pass
     return "Global / Cloud"
 
-def get_metadata(domain: str, response: requests.Response):
+def get_metadata(domain: str, response: requests.Response, original_url: str = None):
     # 1. Real IP Address Resolution
     try:
         ip = socket.gethostbyname(domain)
@@ -978,7 +978,8 @@ def get_metadata(domain: str, response: requests.Response):
         rtt_ms = int(response.elapsed.total_seconds() * 1000) if hasattr(response, 'elapsed') else 0
         status = f"{response.status_code} {response.reason} ({rtt_ms}ms)"
     else:
-        status = "200 OK"
+        timeout_ms = int(Config.REQUEST_TIMEOUT * 1000)
+        status = f"Timeout (>{timeout_ms}ms)"
 
     # 4. SSL Cert Info
     ssl_issuer = "Valid SSL"
@@ -1048,8 +1049,12 @@ def get_metadata(domain: str, response: requests.Response):
     if response:
         if response.url.startswith("https"):
             https_enforced = "HTTPS Enforced"
-        if response.history and any(r.status_code in [301, 302, 307, 308] for r in response.history):
-            clean_redirect = "Clean 301 Redirect"
+            
+        if original_url and original_url.startswith("https"):
+            clean_redirect = "Direct Secure"
+        else:
+            if response.history and any(r.status_code in [301, 302, 307, 308] for r in response.history):
+                clean_redirect = "Clean 301 Redirect"
         
         alt_svc = response.headers.get("Alt-Svc", "")
         if "h3=" in alt_svc:
@@ -1092,9 +1097,9 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     with get_http_session() as session:
         try:
             initial_resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            metadata = get_metadata(hostname, initial_resp)
-        except Exception:
-            metadata = get_metadata(hostname, None)
+            metadata = get_metadata(hostname, initial_resp, url)
+        except Exception as e:
+            metadata = get_metadata(hostname, None, url)
 
         with ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE) as pool:
             futures = {pool.submit(mod.run, url, hostname, session): mod for mod in active_modules}

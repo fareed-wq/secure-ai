@@ -118,7 +118,7 @@ const TechnicalReport = ({ reportData }) => {
             <div className="text-slate-400 text-xs mt-1 truncate mb-3">
               {reportData?.metadata?.http_protocol || 'HTTP/1.1'} · {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}
             </div>
-            <span className={`inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.metadata?.clean_redirect === 'Clean 301 Redirect' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+            <span className={`inline-block px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${(reportData?.metadata?.clean_redirect === 'Clean 301 Redirect' || reportData?.metadata?.clean_redirect === 'Direct Secure') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
               {reportData?.metadata?.clean_redirect || 'No Auto-Redirect'}
             </span>
           </div>
