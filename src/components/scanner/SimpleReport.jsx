@@ -377,8 +377,8 @@ const SimpleReport = ({ reportData }) => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {passed.slice(0, 6).map((item, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {passed.map((item, i) => (
               <div key={i} className="flex items-center gap-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-800 shadow-sm">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 <span className="font-bold text-slate-200 text-sm">{item.name}</span>
