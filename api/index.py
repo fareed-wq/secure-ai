@@ -1145,10 +1145,30 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
                 with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
                     ver = ssock.version()
                     try:
-                        import _ssl
-                        cert = _ssl._test_decode_cert(ssock.getpeercert(True))
+                        from cryptography import x509
+                        from cryptography.hazmat.backends import default_backend
+                        der_cert = ssock.getpeercert(True)
+                        cert_obj = x509.load_der_x509_certificate(der_cert, default_backend())
+                        
+                        issuer_tuple = ()
+                        for attr in cert_obj.issuer:
+                            name = attr.oid._name if hasattr(attr.oid, '_name') else attr.oid.dotted_string
+                            if name in ("commonName", "2.5.4.3"):
+                                issuer_tuple = ((("commonName", attr.value),),)
+                                break
+                            elif name in ("organizationName", "2.5.4.10"):
+                                issuer_tuple = ((("organizationName", attr.value),),)
+
+                        cert = {
+                            'notAfter': cert_obj.not_valid_after.strftime('%b %d %H:%M:%S %Y GMT'),
+                            'issuer': issuer_tuple
+                        }
                     except Exception:
-                        cert = ssock.getpeercert()
+                        try:
+                            import _ssl
+                            cert = _ssl._test_decode_cert(ssock.getpeercert(True))
+                        except Exception:
+                            cert = ssock.getpeercert()
         except Exception:
             pass
     except Exception:
@@ -1216,7 +1236,10 @@ def get_metadata(domain: str, response: requests.Response, original_url: str = N
         else:
             performance_rating = "Optimal Latency" if rtt_ms_val < 150 else "Average Latency" if rtt_ms_val < 500 else "High Latency"
     else:
-        performance_rating = "REQUEST TIMEOUT"
+        if ssl_cert_error:
+            performance_rating = "SSL ERROR"
+        else:
+            performance_rating = "REQUEST TIMEOUT"
 
     # IPv6 Support
     ipv6_supported = False
