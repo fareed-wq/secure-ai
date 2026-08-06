@@ -196,6 +196,8 @@ const getEffort = (severity) => {
     'Low': 'Routine Backlog',
   };
   return effort[severity] || 'Minimal';
+};
+
 const SimpleReport = ({ reportData }) => {
   const getCategoryIcon = (category) => {
     if (category === 'Encryption') return <Lock className="w-5 h-5 text-red-400" />;
