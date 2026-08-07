@@ -247,7 +247,7 @@ const SimpleReport = ({ reportData }) => {
           <p className="text-xl text-slate-300 leading-relaxed">
             {healthSummary}
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mt-4">
             <div className="bg-slate-800/50 border border-slate-700/50 p-4 rounded-xl flex flex-col justify-center">
               <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Issues Found</div>
               <div className="text-2xl font-black text-white mt-1">{issues.length}</div>
@@ -255,23 +255,6 @@ const SimpleReport = ({ reportData }) => {
             <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex flex-col justify-center">
               <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Passed Checks</div>
               <div className="text-2xl font-black text-emerald-400 mt-1">{passed.length}</div>
-            </div>
-            
-            <div className={`p-4 rounded-xl flex flex-col justify-center border ${reportData?.metadata?.threat_status === 'MALICIOUS / PHISHING FLAGGED' ? 'bg-red-500/10 border-red-500/30' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
-              <div className={`text-xs font-bold uppercase tracking-wider mb-1 ${reportData?.metadata?.threat_status === 'MALICIOUS / PHISHING FLAGGED' ? 'text-red-500' : 'text-emerald-500'}`}>Threat Intel</div>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                {reportData?.metadata?.threat_status === 'MALICIOUS / PHISHING FLAGGED' ? (
-                  <>
-                    <ShieldAlert className="w-4 h-4 text-red-400 animate-pulse shrink-0" />
-                    <span className="text-xs sm:text-sm font-bold text-red-400 font-mono tracking-wide truncate">MALICIOUS</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span className="text-xs sm:text-sm font-bold text-emerald-400 font-mono tracking-wide truncate">CLEAN</span>
-                  </>
-                )}
-              </div>
             </div>
           </div>
         </div>
