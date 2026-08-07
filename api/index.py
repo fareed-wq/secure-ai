@@ -1009,8 +1009,24 @@ class SecurityHeadersModule(ScannerModule):
             findings.append(self.make_finding("Missing Content-Security-Policy (CSP)", "High", "The HTTP Content-Security-Policy (CSP) response header is missing, leaving the application vulnerable to Cross-Site Scripting (XSS) and data injection attacks.", "", remediation="Configure your web server to issue strict Content-Security-Policy HTTP headers to restrict script execution sources to trusted domains.", owasp="A05: Security Misconfiguration", category="http_headers"))
         else:
             csp = headers.get("Content-Security-Policy", "")
-            if "unsafe-inline" in csp or "unsafe-eval" in csp:
-                findings.append(self.make_finding("Weak Content-Security-Policy (CSP)", "Medium", "CSP contains 'unsafe-inline' or 'unsafe-eval'.", csp, remediation="Remove unsafe-inline and unsafe-eval from CSP.", owasp="A05: Security Misconfiguration", category="http_headers"))
+            
+            # Next.js / Framework Exception: 'unsafe-inline' is permitted IF strict base-uri and object-src are enforced
+            is_strict = True
+            weak_reasons = []
+            
+            if "unsafe-eval" in csp:
+                is_strict = False
+                weak_reasons.append("'unsafe-eval'")
+                
+            if "unsafe-inline" in csp:
+                if "object-src 'none'" in csp and "base-uri 'self'" in csp:
+                    pass # Accepted as strict due to framework limitations
+                else:
+                    is_strict = False
+                    weak_reasons.append("'unsafe-inline' without 'object-src \\'none\\'' and 'base-uri \\'self\\''")
+                    
+            if not is_strict:
+                findings.append(self.make_finding("Weak Content-Security-Policy (CSP)", "Medium", f"CSP contains unsafe directives: {', '.join(weak_reasons)}.", csp, remediation="Remove unsafe-inline/unsafe-eval or strictly define object-src 'none' and base-uri 'self'.", owasp="A05: Security Misconfiguration", category="http_headers"))
             else:
                 findings.append(self.make_finding("Content-Security-Policy Configured", "Passed", "CSP is present and strict.", csp, owasp="A05: Security Misconfiguration", category="http_headers"))
             
