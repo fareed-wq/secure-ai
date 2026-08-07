@@ -215,9 +215,13 @@ const SimpleReport = ({ reportData }) => {
   const score = reportData?.score ?? 0;
   
   let healthSummary = "";
-  if (score >= 90) healthSummary = "Your website is generally secure. We found a few minor recommendations that will further improve your security.";
-  else if (score >= 70) healthSummary = "Your website has moderate security risks. Addressing the top priorities below is highly recommended.";
-  else healthSummary = "Your website is currently at high risk. Please review the critical action items below immediately.";
+  if (issues.length === 0 || score === 100) {
+    healthSummary = "Your website meets all baseline security best practices with zero open issues or vulnerabilities detected. Outstanding security posture!";
+  } else if (score >= 80) {
+    healthSummary = "Your website is well-secured overall. Addressing the few minor recommendations below will further harden your posture.";
+  } else {
+    healthSummary = "Your website has moderate security risks. Addressing the top priorities below is highly recommended.";
+  }
 
   // Calculate generic health bars based on the translations categories we saw
   const calculateHealth = (category) => {
