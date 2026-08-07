@@ -69,7 +69,7 @@ const TechnicalReport = ({ reportData }) => {
           </div>
         </div>
 
-        <div className="mt-4 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
           
           {/* Card 1: Network & Edge Security */}
           <div className="w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
@@ -78,20 +78,20 @@ const TechnicalReport = ({ reportData }) => {
                 <Globe className="w-3.5 h-3.5 shrink-0 text-slate-400" />
                 IP ADDRESS & LOCATION
               </div>
-              <div className="text-base sm:text-lg font-bold font-mono text-white tracking-tight truncate mt-2 h-7 flex items-center">
+              <div className="text-sm sm:text-base font-bold text-slate-100 font-mono break-all mt-2">
                 {reportData?.metadata?.ip_address || reportData?.ip_address || 'N/A'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
                 {reportData?.metadata?.location_or_cdn || reportData?.location_or_cdn || 'CDN / Cloud'}
               </div>
             </div>
-            <div className="mt-3 flex items-center gap-2 h-7 overflow-hidden">
-              <span className="px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider shrink-0 w-fit border bg-indigo-500/10 text-indigo-400 border-indigo-500/20">
+            <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis border bg-indigo-500/10 text-indigo-400 border-indigo-500/20 uppercase">
                 {reportData?.metadata?.waf_cdn_detection || 'DIRECT ORIGIN'}
               </span>
               {reportData?.metadata?.whois?.age && reportData?.metadata?.whois?.age !== 'Unknown' && (
                 <span 
-                  className="px-2 py-1 text-[10px] font-mono font-bold rounded-md uppercase tracking-wider shrink-0 w-fit border bg-slate-800/80 text-slate-400 border-slate-700/80 cursor-help"
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis border bg-slate-800/80 text-slate-400 border-slate-700/80 uppercase cursor-help"
                   title={reportData?.metadata?.whois?.registrar !== 'Unknown' ? `Registrar: ${reportData.metadata.whois.registrar}` : 'WHOIS Data'}
                 >
                   {reportData.metadata.whois.age}
@@ -108,7 +108,7 @@ const TechnicalReport = ({ reportData }) => {
                 HTTP STATUS & SERVER
               </div>
               <div 
-                className="text-base sm:text-lg font-bold font-mono text-white tracking-tight truncate mt-2 h-7 flex items-center cursor-help"
+                className="text-sm sm:text-base font-bold text-slate-100 font-mono break-all mt-2 cursor-help"
                 title={reportData?.metadata?.http_status || '200 OK'}
               >
                 {reportData?.metadata?.http_status || '200 OK'}
@@ -122,8 +122,8 @@ const TechnicalReport = ({ reportData }) => {
                 }
               </div>
             </div>
-            <div className="mt-3 flex items-center h-7">
-              <span className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider w-fit border ${
+            <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${
                 reportData?.metadata?.performance_rating === 'NO HTTP RESPONSE' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
                 reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 
                 reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 
@@ -142,7 +142,7 @@ const TechnicalReport = ({ reportData }) => {
                 SSL/TLS ENCRYPTION
               </div>
               <div 
-                className="text-base sm:text-lg font-bold font-mono text-white tracking-tight truncate mt-2 h-7 flex items-center cursor-help"
+                className="text-sm sm:text-base font-bold text-slate-100 font-mono break-all mt-2 cursor-help"
                 title={reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}
               >
                 {reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}
@@ -155,8 +155,8 @@ const TechnicalReport = ({ reportData }) => {
                 }`}>{reportData?.metadata?.ssl_days_left || reportData?.ssl_days_left || 'Active'}</span>
               </div>
             </div>
-            <div className="mt-3 flex items-center h-7">
-              <span className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider w-fit border ${
+            <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${
                 reportData?.metadata?.ssl_badge === 'EXPIRED' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
                 reportData?.metadata?.ssl_badge === 'RENEWAL IMMINENT' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
                 reportData?.metadata?.ssl_days_left_int < 0 ? 'bg-red-500/10 text-red-400 border-red-500/30' :
@@ -175,15 +175,15 @@ const TechnicalReport = ({ reportData }) => {
                 <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-slate-400" />
                 SECURITY & PROTOCOL
               </div>
-              <div className="text-base sm:text-lg font-bold font-mono text-white tracking-tight truncate mt-2 h-7 flex items-center">
+              <div className="text-sm sm:text-base font-bold text-slate-100 font-mono break-all mt-2">
                 {reportData?.metadata?.https_enforced || 'HTTPS Status Unknown'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
                 {reportData?.metadata?.http_protocol || 'HTTP/1.1'} · {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}
               </div>
             </div>
-            <div className="mt-3 flex items-center h-7">
-              <span className={`px-2.5 py-1 text-[11px] font-mono font-bold rounded-md uppercase tracking-wider w-fit border ${(reportData?.metadata?.clean_redirect === 'Clean 301 Redirect' || reportData?.metadata?.clean_redirect === 'Direct Secure') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}`}>
+            <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${(reportData?.metadata?.clean_redirect === 'Clean 301 Redirect' || reportData?.metadata?.clean_redirect === 'Direct Secure') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}`}>
                 {reportData?.metadata?.clean_redirect || 'DIRECT SECURE'}
               </span>
             </div>
