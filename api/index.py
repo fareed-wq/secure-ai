@@ -803,6 +803,11 @@ class AdvancedCookieModule(ScannerModule):
 
             seen_cookies = set()
 
+            missing_httponly = []
+            missing_secure = []
+            missing_samesite = []
+            invalid_prefixes = []
+
             for cookie_str in raw_cookies:
                 parts = [p.strip() for p in cookie_str.split(";") if p.strip()]
                 if not parts:
@@ -814,66 +819,53 @@ class AdvancedCookieModule(ScannerModule):
                 seen_cookies.add(cookie_name)
 
                 directives = [p.lower() for p in parts[1:]]
-                cookie_sev = "Informational" if cookie_name.upper() in self.NON_SENSITIVE_COOKIES else "Medium"
                 
                 if "httponly" not in directives:
-                    findings.append(self.make_finding(
-                        f"Missing HttpOnly Flag on Cookie: {cookie_name}", 
-                        cookie_sev, 
-                        "Cookie can be accessed via client-side scripts.", 
-                        f"Cookie: {cookie_name}", 
-                        remediation="Add HttpOnly flag to cookies.", 
-                        owasp="A05: Security Misconfiguration",
-                        category="session_cookies"
-                    ))
+                    missing_httponly.append(cookie_name)
                 
                 if url.startswith("https") and "secure" not in directives:
-                    findings.append(self.make_finding(
-                        f"Missing Secure Flag on Cookie: {cookie_name}", 
-                        cookie_sev, 
-                        "Cookie transmitted in cleartext if sent over HTTP.", 
-                        f"Cookie: {cookie_name}", 
-                        remediation="Add Secure flag to cookies.", 
-                        owasp="A02: Cryptographic Failures",
-                        category="session_cookies"
-                    ))
+                    missing_secure.append(cookie_name)
                 
                 samesite_found = any(p.startswith("samesite") for p in directives)
                 if not samesite_found:
-                    findings.append(self.make_finding(
-                        f"Missing SameSite Attribute on Cookie: {cookie_name}", 
-                        "Low", 
-                        "Cookie lacks SameSite attribute, increasing CSRF risk.", 
-                        f"Cookie: {cookie_name}", 
-                        remediation="Add SameSite=Lax or SameSite=Strict.", 
-                        owasp="A01: Broken Access Control",
-                        category="session_cookies"
-                    ))
+                    missing_samesite.append(cookie_name)
                 
                 if cookie_name.startswith("__Host-"):
                     path_is_root = any(p == "path=/" for p in directives)
                     has_domain = any(p.startswith("domain=") for p in directives)
                     if "secure" not in directives or not path_is_root or has_domain:
-                        findings.append(self.make_finding(
-                            "Invalid __Host- Cookie Prefix Configuration",
-                            "Low",
-                            f"The cookie {cookie_name} uses the __Host- prefix but violates its requirements (must have Secure, Path=/, and no Domain).",
-                            f"Cookie: {cookie_str}",
-                            remediation="Ensure __Host- cookies include the Secure attribute, set Path=/, and omit the Domain attribute.",
-                            owasp="A05: Security Misconfiguration",
-                            category="session_cookies"
-                        ))
+                        invalid_prefixes.append(cookie_name)
                 elif cookie_name.startswith("__Secure-"):
                     if "secure" not in directives:
-                        findings.append(self.make_finding(
-                            "Invalid __Secure- Cookie Prefix Configuration",
-                            "Low",
-                            f"The cookie {cookie_name} uses the __Secure- prefix but lacks the Secure attribute.",
-                            f"Cookie: {cookie_str}",
-                            remediation="Ensure __Secure- cookies include the Secure attribute.",
-                            owasp="A05: Security Misconfiguration",
-                            category="session_cookies"
-                        ))
+                        invalid_prefixes.append(cookie_name)
+
+            all_unsecured = set(missing_httponly + missing_secure + missing_samesite + invalid_prefixes)
+            if all_unsecured:
+                problems = []
+                if missing_httponly:
+                    problems.append(f"The following cookies are missing the HttpOnly flag: {', '.join(missing_httponly)}.")
+                if missing_secure:
+                    problems.append(f"The following cookies are missing the Secure flag: {', '.join(missing_secure)}.")
+                if missing_samesite:
+                    problems.append(f"The following cookies are missing the SameSite attribute: {', '.join(missing_samesite)}.")
+                if invalid_prefixes:
+                    problems.append(f"The following cookies have invalid __Host- or __Secure- prefixes: {', '.join(invalid_prefixes)}.")
+                
+                overall_sev = "Medium"
+                if all(c.upper() in self.NON_SENSITIVE_COOKIES for c in all_unsecured):
+                    overall_sev = "Informational"
+                
+                title = f"Unsecured Cookie{'s' if len(all_unsecured) > 1 else ''} Detected ({len(all_unsecured)} Cookie{'s' if len(all_unsecured) > 1 else ''})"
+                
+                findings.append(self.make_finding(
+                    title,
+                    overall_sev,
+                    " ".join(problems),
+                    f"Cookies affected: {', '.join(all_unsecured)}",
+                    remediation="Add HttpOnly, Secure, and SameSite=Lax/Strict flags to all session cookies.",
+                    owasp="A05: Security Misconfiguration",
+                    category="session_cookies"
+                ))
 
         except Exception:
             pass

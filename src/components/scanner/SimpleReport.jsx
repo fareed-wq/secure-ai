@@ -151,27 +151,25 @@ const TRANSLATIONS = {
   }
 };
 
-const getTranslation = (technicalName) => {
+const getTranslation = (finding) => {
+  const technicalName = finding.name;
+
   if (TRANSLATIONS[technicalName]) {
     return TRANSLATIONS[technicalName];
   }
   
-  // Handle dynamic cookie finding names
-  if (technicalName.startsWith("Missing HttpOnly Flag on Cookie")) {
-    return TRANSLATIONS["Missing HttpOnly Flag on Cookie"];
+  if (technicalName.startsWith("Unsecured Cookie")) {
+    return {
+      name: technicalName,
+      problem: finding.description,
+      why: "If a malicious script runs on your site, it can steal these cookies and hijack active user logins or sessions.",
+      category: "Session Security"
+    };
   }
-  if (technicalName.startsWith("Missing Secure Flag on Cookie")) {
-    return TRANSLATIONS["Missing Secure Flag on Cookie"];
-  }
-  if (technicalName.startsWith("Missing SameSite Attribute on Cookie")) {
-    return TRANSLATIONS["Missing SameSite Attribute on Cookie"];
-  }
-
-  console.warn("Unmapped finding ID in SimpleReport:", technicalName);
 
   return {
-    name: "Security Configuration Requirement", // fallback
-    problem: "A recommended security configuration is missing or partially configured on your web server.",
+    name: technicalName,
+    problem: finding.description || "A recommended security configuration is missing or partially configured on your web server.",
     why: "Resolving this configuration aligns your site with industry baseline security standards.",
     category: "Website Trust"
   };
@@ -316,7 +314,7 @@ const SimpleReport = ({ reportData }) => {
           
           <div className="grid gap-6">
             {topPriorities.map((issue, idx) => {
-              const trans = getTranslation(issue.name);
+              const trans = getTranslation(issue);
               const risk = getBusinessRisk(issue.severity);
               
               return (
