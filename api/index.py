@@ -1017,13 +1017,29 @@ class SecurityHeadersModule(ScannerModule):
                     is_strict = False
                     weak_reasons.append("'unsafe-inline' without 'object-src \\'none\\'' and 'base-uri \\'self\\''")
                     
-            if not is_strict:
-                findings.append(self.make_finding("Weak Content-Security-Policy (CSP)", "Medium", f"CSP contains unsafe directives: {', '.join(weak_reasons)}.", csp, remediation="Remove unsafe-inline/unsafe-eval or strictly define object-src 'none' and base-uri 'self'.", owasp="A05: Security Misconfiguration", category="http_headers"))
+            missing_granular = "object-src" not in csp or "base-uri" not in csp
+            
+            if not is_strict or missing_granular:
+                problems = []
+                if not is_strict:
+                    problems.append(f"unsafe directives: {', '.join(weak_reasons)}")
+                if missing_granular:
+                    problems.append("missing granular directives like object-src or base-uri")
+                
+                problem_desc = f"CSP contains flaws: {'; '.join(problems)}."
+                sev = "Medium" if not is_strict else "Low"
+                
+                findings.append(self.make_finding(
+                    "Weak Content-Security-Policy (CSP)", 
+                    sev, 
+                    problem_desc, 
+                    csp, 
+                    remediation="Remove unsafe-inline/unsafe-eval or strictly define object-src 'none' and base-uri 'self'.", 
+                    owasp="A05: Security Misconfiguration", 
+                    category="http_headers"
+                ))
             else:
                 findings.append(self.make_finding("Content-Security-Policy Configured", "Passed", "CSP is present and strict.", csp, owasp="A05: Security Misconfiguration", category="http_headers"))
-            
-            if "object-src" not in csp or "base-uri" not in csp:
-                findings.append(self.make_finding("Incomplete CSP Directives (Missing object-src / base-uri)", "Low", "CSP is missing recommended granular directives like object-src or base-uri.", csp, remediation="Add 'object-src \'none\'' and 'base-uri \'self\'' to your CSP.", owasp="A05: Security Misconfiguration", category="http_headers"))
 
         if "X-Permitted-Cross-Domain-Policies" not in headers:
             findings.append(self.make_finding("Missing X-Permitted-Cross-Domain-Policies", "Informational", "The X-Permitted-Cross-Domain-Policies header is missing.", "", remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.", owasp="A05: Security Misconfiguration", category="http_headers"))
