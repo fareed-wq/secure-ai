@@ -221,7 +221,7 @@ const SimpleReport = ({ reportData }) => {
 
   // Calculate generic health bars based on the translations categories we saw
   const calculateHealth = (category) => {
-    const catIssues = issues.filter(i => getTranslation(i.name).category === category);
+    const catIssues = issues.filter(i => getTranslation(i).category === category);
     if (catIssues.length === 0) return 100;
     if (catIssues.some(i => i.severity === 'Critical' || i.severity === 'High')) return 20;
     return 60;
