@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import datetime
 from http.cookiejar import DefaultCookiePolicy
 import html
+from html.parser import HTMLParser
 import ipaddress
 import logging
 import re
@@ -1460,6 +1461,230 @@ class SubdomainProbingModule(ScannerModule):
         return findings
 
 
+class SimpleHTMLResourceParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.insecure_resources = []
+        self.insecure_forms = []
+
+    def handle_starttag(self, tag, attrs):
+        attr_dict = {k.lower(): v for k, v in attrs if k and v}
+        
+        # Check subresource URLs
+        target_attr = None
+        if tag in ["script", "img", "iframe", "embed", "audio", "video", "source"]:
+            target_attr = attr_dict.get("src")
+        elif tag == "link" and "stylesheet" in attr_dict.get("rel", "").lower():
+            target_attr = attr_dict.get("href")
+
+        if target_attr and target_attr.strip().lower().startswith("http://"):
+            self.insecure_resources.append((tag, target_attr.strip()))
+
+        # Check HTML Form submissions
+        if tag == "form":
+            action = attr_dict.get("action", "").strip()
+            if action.lower().startswith("http://"):
+                self.insecure_forms.append(action)
+
+
+class MixedContentModule(ScannerModule):
+    module_name = "MixedContent"
+    description = "Checks for active/passive mixed content and insecure HTTP forms on HTTPS pages."
+
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
+        findings = []
+        if not url.startswith("https"):
+            return findings
+
+        try:
+            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            if not resp or not resp.text:
+                return findings
+
+            parser = SimpleHTMLResourceParser()
+            parser.feed(resp.text[:500000])  # Limit parsing to first 500KB for speed
+
+            if parser.insecure_resources:
+                sample_count = len(parser.insecure_resources)
+                samples = ", ".join([f"<{tag} src='{src}'>" for tag, src in parser.insecure_resources[:3]])
+                findings.append(self.make_finding(
+                    "Mixed Content Detected",
+                    "Medium",
+                    f"Found {sample_count} resource(s) loaded over insecure HTTP on an HTTPS page.",
+                    f"Examples: {samples}",
+                    remediation="Update all resource links (scripts, styles, images) to use relative paths or HTTPS URLs.",
+                    owasp="A05: Security Misconfiguration",
+                    category="information_exposure"
+                ))
+
+            if parser.insecure_forms:
+                findings.append(self.make_finding(
+                    "Insecure Form Action (HTTP)",
+                    "High",
+                    "An HTML form on this HTTPS page submits data to an unencrypted HTTP endpoint.",
+                    f"Form action: {', '.join(parser.insecure_forms[:2])}",
+                    remediation="Ensure all form 'action' attributes use relative paths or explicit 'https://' URLs.",
+                    owasp="A02: Cryptographic Failures",
+                    category="encryption_tls"
+                ))
+
+            if not parser.insecure_resources and not parser.insecure_forms:
+                findings.append(self.make_finding(
+                    "No Mixed Content Detected",
+                    "Passed",
+                    "All front-end resources and form actions are safely served over HTTPS.",
+                    "Clean HTML subresources",
+                    owasp="A05: Security Misconfiguration",
+                    category="encryption_tls"
+                ))
+
+        except Exception as e:
+            logger.error(f"MixedContentModule error: {e}")
+
+        return findings
+
+
+class SubdomainTakeoverModule(ScannerModule):
+    module_name = "SubdomainTakeover"
+    description = "Checks CNAME DNS records for dangling cloud provider targets."
+
+    # Cloud service fingerprints indicative of unclaimed resources
+    TAKEOVER_FINGERPRINTS = {
+        "s3.amazonaws.com": ["NoSuchBucket", "The specified bucket does not exist"],
+        "github.io": ["There isn't a GitHub Pages site here"],
+        "herokuapp.com": ["No such app", "There's nothing here, yet."],
+        "azurewebsites.net": ["Web App not found", "404 Web Site Not Found"],
+        "vercel-dns.com": ["The deployment could not be found on Vercel"],
+        "netlify.app": ["Not Found - Request ID:"],
+        "myshopify.com": ["Sorry, this shop is currently unavailable"]
+    }
+
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
+        findings = []
+        domain = hostname[4:] if hostname.startswith("www.") else hostname
+
+        try:
+            cname_url = f"https://dns.google/resolve?name={domain}&type=CNAME"
+            resp = safe_request("GET", cname_url, session=session, timeout=4.0)
+
+            if not resp or resp.status_code != 200:
+                return findings
+
+            data = resp.json()
+            answers = data.get("Answer", [])
+            if not answers:
+                return findings
+
+            cname_target = answers[0].get("data", "").rstrip(".").lower()
+
+            # Check if CNAME points to a known cloud provider
+            vulnerable_provider = None
+            for provider_domain in self.TAKEOVER_FINGERPRINTS:
+                if provider_domain in cname_target:
+                    vulnerable_provider = provider_domain
+                    break
+
+            if vulnerable_provider:
+                # Issue a fast probe to verify if the resource returns an unclaimed error
+                probe_resp = safe_request("GET", f"http://{domain}", session=session, timeout=3.0)
+                page_text = probe_resp.text if probe_resp else ""
+
+                expected_errors = self.TAKEOVER_FINGERPRINTS[vulnerable_provider]
+                if any(err in page_text for err in expected_errors):
+                    findings.append(self.make_finding(
+                        "Subdomain Takeover Vulnerability (Dangling CNAME)",
+                        "High",
+                        f"Domain points via CNAME to an abandoned '{vulnerable_provider}' resource that can be claimed by an attacker.",
+                        f"CNAME Target: {cname_target}",
+                        remediation="Remove the stale DNS CNAME record immediately or reclaim the resource on the third-party service.",
+                        owasp="A05: Security Misconfiguration",
+                        category="domain_email"
+                    ))
+                else:
+                    findings.append(self.make_finding(
+                        "CNAME Alias Configured",
+                        "Passed",
+                        f"Domain uses a valid CNAME target pointing to {vulnerable_provider}.",
+                        f"Target: {cname_target}",
+                        owasp="A05: Security Misconfiguration",
+                        category="domain_email"
+                    ))
+
+        except Exception as e:
+            logger.error(f"SubdomainTakeoverModule error: {e}")
+
+        return findings
+
+
+class TLSCipherStrengthModule(ScannerModule):
+    module_name = "TLSCipherStrength"
+    description = "Tests SSL/TLS cipher suites for weak algorithms (RC4, 3DES, EXPORT)."
+
+    WEAK_CIPHER_KEYWORDS = ["RC4", "3DES", "DES", "MD5", "EXPORT", "NULL", "ANON"]
+
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
+        findings = []
+
+        # Pass 1: Check active negotiated cipher suite
+        try:
+            ctx = ssl.create_default_context()
+            with socket.create_connection((hostname, 443), timeout=Config.REQUEST_TIMEOUT) as sock:
+                with ctx.wrap_socket(sock, server_hostname=hostname) as ssock:
+                    cipher_info = ssock.cipher()
+                    if cipher_info:
+                        cipher_name, tls_ver, bit_len = cipher_info[0], cipher_info[1], cipher_info[2]
+                        
+                        is_weak = any(kw in cipher_name.upper() for kw in self.WEAK_CIPHER_KEYWORDS) or bit_len < 128
+                        if is_weak:
+                            findings.append(self.make_finding(
+                                "Weak TLS Cipher Negotiated",
+                                "Medium",
+                                f"The server negotiated a weak cipher suite ({cipher_name}) with {bit_len}-bit encryption.",
+                                f"Cipher: {cipher_name} ({tls_ver})",
+                                remediation="Disable weak ciphers (3DES, RC4) in server configuration and enforce AES-GCM or CHACHA20.",
+                                owasp="A02: Cryptographic Failures",
+                                category="encryption_tls"
+                            ))
+                        else:
+                            findings.append(self.make_finding(
+                                "Strong TLS Cipher Suite Enforced",
+                                "Passed",
+                                f"Server negotiated a secure cipher ({cipher_name}) with {bit_len}-bit encryption.",
+                                f"Cipher: {cipher_name} ({tls_ver})",
+                                owasp="A02: Cryptographic Failures",
+                                category="encryption_tls"
+                            ))
+        except Exception:
+            pass
+
+        # Pass 2: Probe explicitly for legacy weak ciphers
+        try:
+            weak_ctx = ssl.create_default_context()
+            weak_ctx.check_hostname = False
+            weak_ctx.verify_mode = ssl.CERT_NONE
+            weak_ctx.set_ciphers("3DES:RC4:DES:MD5:EXPORT")
+
+            weak_supported = False
+            with socket.create_connection((hostname, 443), timeout=3.0) as sock:
+                with weak_ctx.wrap_socket(sock, server_hostname=hostname):
+                    weak_supported = True
+
+            if weak_supported:
+                findings.append(self.make_finding(
+                    "Legacy Weak TLS Ciphers Supported",
+                    "Medium",
+                    "Server accepts connections configured with deprecated weak ciphers (e.g. 3DES / RC4).",
+                    "Handshake accepted weak cipher list",
+                    remediation="Reconfigure server TLS cipher order to forbid 3DES, RC4, and EXPORT suites.",
+                    owasp="A02: Cryptographic Failures",
+                    category="encryption_tls"
+                ))
+        except Exception:
+            pass  # Handshake rejection means weak ciphers are disabled (Good)
+
+        return findings
+
+
 # Engine Registry
 REGISTERED_MODULES = [
     ExposedFilesModule(),
@@ -1476,7 +1701,11 @@ REGISTERED_MODULES = [
     HTTPSRedirectModule(),
     EnhancedTLSModule(),
     SecurityHeadersModule(),
-    AdvancedSecurityHeadersModule()
+    AdvancedSecurityHeadersModule(),
+    # --- Category A New Additions ---
+    MixedContentModule(),
+    SubdomainTakeoverModule(),
+    TLSCipherStrengthModule()
 ]
 
 
