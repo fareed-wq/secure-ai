@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, ArrowRight, Loader2, ShieldAlert } from 'lucide-react';
+import { Search, ArrowRight, Loader2, ShieldAlert, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2pdf from 'html2pdf.js';
 import { Link, useLocation } from 'react-router-dom';
@@ -231,6 +231,14 @@ function Scanner() {
                   >
                     Scan <ArrowRight className="w-4 h-4" />
                   </button>
+                </div>
+                
+                {/* Safe Scan Trust Badge */}
+                <div className="flex items-center justify-center gap-2 mt-4 text-[13px] text-slate-400 font-medium">
+                  <Lock className="w-3.5 h-3.5 text-emerald-500/80" />
+                  <span>
+                    <strong className="text-slate-300 font-semibold">100% Safe & Non-Intrusive</strong> &bull; No invasive payloads, exploits, or database risks.
+                  </span>
                 </div>
               </form>
               
