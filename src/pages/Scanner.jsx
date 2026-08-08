@@ -14,7 +14,6 @@ import AuthModal from '../components/scanner/AuthModal';
 import PdfComingSoonModal from '../components/scanner/PdfComingSoonModal';
 import BottomTicker from '../components/scanner/BottomTicker';
 import SafetyComparison from '../components/scanner/SafetyComparison';
-import api from '../utils/api';
 
 // Force relative paths in production so it hits the Vercel Serverless functions directly
 export const API_BASE_URL = 
