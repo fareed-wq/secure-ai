@@ -968,6 +968,7 @@ class CORSModule(ScannerModule):
                     "Informational",
                     "Cross-Origin Resource Sharing is enabled.",
                     f"Access-Control-Allow-Origin: {acao}",
+                    owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
         except Exception:
