@@ -2576,6 +2576,19 @@ def get_metadata(domain: str, response: Optional[requests.Response], original_ur
     }
 
 
+
+def check_liveness(hostname: str, timeout: float = 2.5) -> bool:
+    try:
+        with socket.create_connection((hostname, 443), timeout=timeout):
+            return True
+    except Exception:
+        try:
+            with socket.create_connection((hostname, 80), timeout=timeout):
+                return True
+        except Exception:
+            return False
+
+
 def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     url = canonicalize_url(url)
     hostname = urlparse(url).hostname
@@ -2584,7 +2597,12 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     if not is_public_hostname(hostname):
         return {"url": url, "error": "That host resolves to a private/internal address and can't be scanned."}
 
+
+    if not check_liveness(hostname):
+        return {"url": url, "error": "Scan Failed: Target is unresponsive, down, or aggressively blocking our scanner (WAF dropped packets)."}
+
     metadata = {}
+
     all_findings = []
 
     active_modules = [mod for mod in REGISTERED_MODULES if mod.enabled]
