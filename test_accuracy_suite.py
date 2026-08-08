@@ -63,12 +63,12 @@ BENCHMARK_TARGETS = [
         "description": "Verifies DNS CAA module handles domains with or without CAA."
     },
     {
-        "name": "CORS & Security Headers Audit (httpbin.org)",
-        "url": "https://httpbin.org/get",
+        "name": "CORS & Security Headers Audit (api.github.com)",
+        "url": "https://api.github.com",
         "check_type": "finding_status",
         "expected_statuses": ["info", "informational", "low", "medium", "passed"],
         "finding_keyword": "cors",
-        "description": "Verifies CORS and security header detection on open API endpoints."
+        "description": "Verifies CORS header evaluation on public REST APIs."
     },
 
     # --- 4 New Benchmark Targets ---
