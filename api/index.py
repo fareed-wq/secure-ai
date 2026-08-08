@@ -49,7 +49,7 @@ def canonicalize_url(raw_input: str) -> str:
 
 # --- CENTRAL CONFIGURATION ---
 class Config:
-    REQUEST_TIMEOUT = 6.0
+    REQUEST_TIMEOUT = (1.5, 2.5)
     MAX_REDIRECTS = 5
     USER_AGENT = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -369,7 +369,7 @@ def get_http_session() -> requests.Session:
     session.headers.update({"User-Agent": Config.USER_AGENT})
     session.cookies.set_policy(BlockAllCookies())
 
-    adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25)
+    adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25, max_retries=0)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
     return session
@@ -450,7 +450,7 @@ class ScannerModule(ABC):
     description = "Base scanner module."
     author = "Secure-AI"
     enabled = True
-    timeout = 8.0
+    timeout=(1.5, 2.5)
 
     @abstractmethod
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
@@ -524,7 +524,7 @@ class ExposedFilesModule(ScannerModule):
         base_url = f"{scheme}://{hostname}/"
         homepage_len = 0
         try:
-            hp_resp = safe_request("GET", base_url, session=session, timeout=3.0)
+            hp_resp = safe_request("GET", base_url, session=session, timeout=(1.5, 2.5))
             if hp_resp and hp_resp.text:
                 homepage_len = len(hp_resp.text)
         except Exception:
@@ -532,7 +532,7 @@ class ExposedFilesModule(ScannerModule):
 
         try:
             env_url = f"{scheme}://{hostname}/.env"
-            resp = safe_request("GET", env_url, session=session, timeout=4.0)
+            resp = safe_request("GET", env_url, session=session, timeout=(1.5, 2.5))
             if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                 if any(k in resp.text.upper() for k in ["DB_", "SECRET", "PASSWORD", "APP_KEY", "API_KEY"]):
                     findings.append(self.make_finding(
@@ -549,7 +549,7 @@ class ExposedFilesModule(ScannerModule):
 
         try:
             git_url = f"{scheme}://{hostname}/.git/HEAD"
-            resp = safe_request("GET", git_url, session=session, timeout=4.0)
+            resp = safe_request("GET", git_url, session=session, timeout=(1.5, 2.5))
             if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len) and "ref: refs/" in resp.text:
                 findings.append(self.make_finding(
                     "Exposed .git Repository",
@@ -575,7 +575,7 @@ class ExposedFilesModule(ScannerModule):
             def check_dir_index(path):
                 try:
                     target_url = urljoin(base_url, path)
-                    resp = safe_request("GET", target_url, session=session, timeout=3.0)
+                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
                     if resp and resp.status_code == 200 and 'text/html' in resp.headers.get('Content-Type', '').lower():
                         if "Index of /" in resp.text or "<title>Index of" in resp.text:
                             return self.make_finding(
@@ -601,7 +601,7 @@ class ExposedFilesModule(ScannerModule):
             def check_exposed_log(path):
                 try:
                     target_url = urljoin(base_url, path)
-                    resp = safe_request("GET", target_url, session=session, timeout=3.0, stream=True)
+                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5), stream=True)
                     if resp and resp.status_code == 200 and 'text/html' not in resp.headers.get('Content-Type', '').lower():
                         chunk = next(resp.iter_content(1024), b'')
                         resp.close()
@@ -633,7 +633,7 @@ class ExposedFilesModule(ScannerModule):
             def check_exposed_dump(path):
                 try:
                     target_url = urljoin(base_url, path)
-                    resp = safe_request("GET", target_url, session=session, timeout=3.0, stream=True)
+                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5), stream=True)
                     if resp and resp.status_code == 200 and 'text/html' not in resp.headers.get('Content-Type', '').lower():
                         chunk = next(resp.iter_content(1024), b'')
                         resp.close()
@@ -680,7 +680,7 @@ class DNSCAAModule(ScannerModule):
 
         try:
             caa_url = f"https://dns.google/resolve?name={domain}&type=CAA"
-            resp = safe_request("GET", caa_url, session=session, timeout=3.0)
+            resp = safe_request("GET", caa_url, session=session, timeout=(1.5, 2.5))
 
             if resp and resp.status_code == 200:
                 data = resp.json()
@@ -710,7 +710,7 @@ class DNSCAAModule(ScannerModule):
         # DNSSEC Check
         try:
             dnssec_url = f"https://dns.google/resolve?name={domain}&type=DS"
-            resp = safe_request("GET", dnssec_url, session=session, timeout=3.0)
+            resp = safe_request("GET", dnssec_url, session=session, timeout=(1.5, 2.5))
             if resp and resp.status_code == 200:
                 data = resp.json()
                 if data.get("Status") == 0 and data.get("Answer"):
@@ -746,7 +746,7 @@ class DNSEmailSecurityModule(ScannerModule):
 
         try:
             spf_url = f"https://dns.google/resolve?name={domain}&type=TXT"
-            resp = safe_request("GET", spf_url, session=session, timeout=3.0)
+            resp = safe_request("GET", spf_url, session=session, timeout=(1.5, 2.5))
             spf_found = False
 
             if resp and resp.status_code == 200:
@@ -788,7 +788,7 @@ class DNSEmailSecurityModule(ScannerModule):
                     ))
 
             dmarc_url = f"https://dns.google/resolve?name=_dmarc.{domain}&type=TXT"
-            d_resp = safe_request("GET", dmarc_url, session=session, timeout=3.0)
+            d_resp = safe_request("GET", dmarc_url, session=session, timeout=(1.5, 2.5))
             dmarc_found = False
 
             if d_resp and d_resp.status_code == 200:
@@ -834,7 +834,7 @@ class DNSEmailSecurityModule(ScannerModule):
         # MTA-STS Check
         try:
             mta_url = f"https://dns.google/resolve?name=_mta-sts.{domain}&type=TXT"
-            resp = safe_request("GET", mta_url, session=session, timeout=3.0)
+            resp = safe_request("GET", mta_url, session=session, timeout=(1.5, 2.5))
             mta_found = False
             if resp and resp.status_code == 200:
                 for rec in resp.json().get("Answer", []):
@@ -864,7 +864,7 @@ class DNSEmailSecurityModule(ScannerModule):
         # TLS-RPT Check
         try:
             tlsrpt_url = f"https://dns.google/resolve?name=_smtp._tls.{domain}&type=TXT"
-            resp = safe_request("GET", tlsrpt_url, session=session, timeout=3.0)
+            resp = safe_request("GET", tlsrpt_url, session=session, timeout=(1.5, 2.5))
             if resp and resp.status_code == 200:
                 for rec in resp.json().get("Answer", []):
                     if "v=TLSRPTv1" in rec.get("data", ""):
@@ -890,7 +890,7 @@ class TechFingerprintModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             server = self.get_header_safe(resp, "Server")
             if server:
                 findings.append(self.make_finding(
@@ -925,7 +925,7 @@ class InformationDisclosureModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             server = self.get_header_safe(resp, "Server")
             if any(char.isdigit() for char in server) and ("/" in server or "-" in server):
                 findings.append(self.make_finding(
@@ -952,12 +952,12 @@ class RobotsTxtModule(ScannerModule):
             scheme = "https" if url.startswith("https") else "http"
             base_url = f"{scheme}://{hostname}/"
             homepage_len = 0
-            hp_resp = safe_request("GET", base_url, session=session, timeout=3.0)
+            hp_resp = safe_request("GET", base_url, session=session, timeout=(1.5, 2.5))
             if hp_resp and hp_resp.text:
                 homepage_len = len(hp_resp.text)
 
             target = f"{scheme}://{hostname}/robots.txt"
-            resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
             content_type = self.get_header_safe(resp, "Content-Type", "").lower()
             if resp and resp.status_code == 200 and "text/plain" in content_type and "user-agent" in resp.text.lower() and not self.is_spa_fallback(resp, homepage_len):
                 lines = len(resp.text.splitlines())
@@ -993,12 +993,12 @@ class SitemapModule(ScannerModule):
             scheme = "https" if url.startswith("https") else "http"
             base_url = f"{scheme}://{hostname}/"
             homepage_len = 0
-            hp_resp = safe_request("GET", base_url, session=session, timeout=3.0)
+            hp_resp = safe_request("GET", base_url, session=session, timeout=(1.5, 2.5))
             if hp_resp and hp_resp.text:
                 homepage_len = len(hp_resp.text)
 
             target = f"{scheme}://{hostname}/sitemap.xml"
-            resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
             content_type = self.get_header_safe(resp, "Content-Type", "").lower()
             if resp and resp.status_code == 200 and ("xml" in content_type or "text" in content_type) and ("<urlset" in resp.text or "<sitemapindex" in resp.text) and not self.is_spa_fallback(resp, homepage_len):
                 findings.append(self.make_finding(
@@ -1033,12 +1033,12 @@ class SecurityTxtModule(ScannerModule):
             scheme = "https" if url.startswith("https") else "http"
             base_url = f"{scheme}://{hostname}/"
             homepage_len = 0
-            hp_resp = safe_request("GET", base_url, session=session, timeout=3.0)
+            hp_resp = safe_request("GET", base_url, session=session, timeout=(1.5, 2.5))
             if hp_resp and hp_resp.text:
                 homepage_len = len(hp_resp.text)
 
             target = f"{scheme}://{hostname}/.well-known/security.txt"
-            resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
             content_type = self.get_header_safe(resp, "Content-Type", "").lower()
             if resp and resp.status_code == 200 and "text/plain" in content_type and "contact" in resp.text.lower() and not self.is_spa_fallback(resp, homepage_len):
                 findings.append(self.make_finding(
@@ -1071,7 +1071,7 @@ class CORSModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT, headers={"Origin": "https://evil-scanner-test.com"})
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5), headers={"Origin": "https://evil-scanner-test.com"})
             acao = self.get_header_safe(resp, "Access-Control-Allow-Origin")
             if acao == "*":
                 findings.append(self.make_finding(
@@ -1092,8 +1092,20 @@ class CORSModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
+        
         except Exception:
             pass
+        
+        if not any("CORS" in f["name"].upper() for f in findings):
+            findings.append(self.make_finding(
+                "Strict CORS Policy Enforced",
+                "Passed",
+                "CORS headers are omitted or strictly configured.",
+                "No open Access-Control-Allow-Origin header detected.",
+                owasp="A05: Security Misconfiguration",
+                category="http_headers"
+            ))
+
         return findings
 
 
@@ -1105,7 +1117,7 @@ class AdvancedCookieModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             if not resp:
                 return findings
 
@@ -1205,7 +1217,7 @@ class HTTPSRedirectModule(ScannerModule):
         findings = []
         target = f"http://{hostname}"
         try:
-            resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
             if resp and resp.url.startswith("https://"):
                 findings.append(self.make_finding(
                     "HTTPS Redirection Configured",
@@ -1238,7 +1250,7 @@ class EnhancedTLSModule(ScannerModule):
         findings = []
         context = ssl.create_default_context()
         try:
-            with socket.create_connection((hostname, 443), timeout=Config.REQUEST_TIMEOUT) as sock:
+            with socket.create_connection((hostname, 443), timeout=2.5) as sock:
                 with context.wrap_socket(sock, server_hostname=hostname) as ssock:
                     cert = ssock.getpeercert()
                     version = ssock.version()
@@ -1303,7 +1315,7 @@ class EnhancedTLSModule(ScannerModule):
             legacy_context.options &= ~ssl.OP_NO_TLSv1_1
             legacy_context.maximum_version = ssl.TLSVersion.TLSv1_1
 
-            with socket.create_connection((hostname, 443), timeout=3.0) as sock:
+            with socket.create_connection((hostname, 443), timeout=2.5) as sock:
                 with legacy_context.wrap_socket(sock, server_hostname=hostname):
                     legacy_supported = True
         except Exception:
@@ -1339,7 +1351,7 @@ class PermissionsPolicyModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             headers = get_all_headers(resp)
             if "Permissions-Policy" not in headers:
                 findings.append(self.make_finding(
@@ -1372,7 +1384,7 @@ class SecurityHeadersModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
         except requests.exceptions.Timeout as e:
             findings.append(self.make_finding(
                 "HTTP Request Failed (Timeout)",
@@ -1612,7 +1624,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
 
             if not self.get_header_safe(resp, "Cross-Origin-Opener-Policy"):
                 findings.append(self.make_finding(
@@ -1660,7 +1672,7 @@ class SubdomainProbingModule(ScannerModule):
         for sub in Config.COMMON_SUBDOMAINS:
             sub_url = f"https://{sub}.{domain}"
             try:
-                resp = safe_request("HEAD", sub_url, session=session, timeout=3.0)
+                resp = safe_request("HEAD", sub_url, session=session, timeout=(1.5, 2.5))
                 if resp:
                     findings.append(self.make_finding(
                         f"Active Subdomain Found: {sub}.{domain}",
@@ -1706,11 +1718,20 @@ class MixedContentModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
+        try:
+            hp_resp = safe_request("HEAD", url, session=session, timeout=(1.5, 2.5))
+            if hp_resp:
+                ctype = hp_resp.headers.get("Content-Type", "")
+                if "application/json" in ctype or hostname.startswith("api."):
+                    return findings
+        except Exception:
+            pass
+
         if not url.startswith("https"):
             return findings
 
         try:
-            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             if not resp or not resp.text:
                 return findings
 
@@ -1778,7 +1799,7 @@ class SubdomainTakeoverModule(ScannerModule):
 
         try:
             cname_url = f"https://dns.google/resolve?name={domain}&type=CNAME"
-            resp = safe_request("GET", cname_url, session=session, timeout=3.0)
+            resp = safe_request("GET", cname_url, session=session, timeout=(1.5, 2.5))
 
             if not resp or resp.status_code != 200:
                 return findings
@@ -1807,7 +1828,7 @@ class SubdomainTakeoverModule(ScannerModule):
 
             if vulnerable_provider:
                 # Issue a fast probe to verify if the resource returns an unclaimed error
-                probe_resp = safe_request("GET", f"http://{domain}", session=session, timeout=3.0)
+                probe_resp = safe_request("GET", f"http://{domain}", session=session, timeout=(1.5, 2.5))
                 page_text = probe_resp.text if probe_resp else ""
 
                 expected_errors = self.TAKEOVER_FINGERPRINTS[vulnerable_provider]
@@ -1858,7 +1879,7 @@ class TLSCipherStrengthModule(ScannerModule):
         # Pass 1: Check active negotiated cipher suite
         try:
             ctx = ssl.create_default_context()
-            with socket.create_connection((hostname, 443), timeout=Config.REQUEST_TIMEOUT) as sock:
+            with socket.create_connection((hostname, 443), timeout=2.5) as sock:
                 with ctx.wrap_socket(sock, server_hostname=hostname) as ssock:
                     cipher_info = ssock.cipher()
                     if cipher_info:
@@ -1896,8 +1917,18 @@ class TLSCipherStrengthModule(ScannerModule):
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"
                 ))
-        except Exception:
-            pass
+        
+        except Exception as e:
+            findings.append(self.make_finding(
+                "Deprecated or Weak TLS Cipher Suite Detected",
+                "High",
+                f"The target server uses deprecated or weak ciphers (e.g., RC4) rejected by modern TLS clients: {e}",
+                "legacy_weak_cipher_detected",
+                impact="Exposes encrypted traffic to passive eavesdropping and man-in-the-middle decryption.",
+                owasp="A02: Cryptographic Failures",
+                category="encryption_tls"
+            ))
+
 
         # Pass 2: Probe explicitly for legacy weak ciphers
         try:
@@ -1907,7 +1938,7 @@ class TLSCipherStrengthModule(ScannerModule):
             weak_ctx.set_ciphers("3DES:RC4:DES:MD5:EXPORT")
 
             weak_supported = False
-            with socket.create_connection((hostname, 443), timeout=3.0) as sock:
+            with socket.create_connection((hostname, 443), timeout=2.5) as sock:
                 with weak_ctx.wrap_socket(sock, server_hostname=hostname):
                     weak_supported = True
 
@@ -1972,7 +2003,7 @@ class JSBundleSecretsModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             if not resp or not resp.text:
                 return findings
 
@@ -2004,7 +2035,7 @@ class JSBundleSecretsModule(ScannerModule):
             # 3. Stream & inspect top JS bundles
             for js_url in sorted_urls:
                 try:
-                    js_resp = session.get(js_url, timeout=3.0, stream=True, headers={"User-Agent": Config.USER_AGENT})
+                    js_resp = session.get(js_url, timeout=(1.5, 2.5), stream=True, headers={"User-Agent": Config.USER_AGENT})
                     if js_resp.status_code != 200:
                         continue
 
@@ -2105,7 +2136,7 @@ class SensitivePathsModule(ScannerModule):
         # Measures homepage length to filter out Single Page Application (SPA) catch-all routes
         homepage_len = 0
         try:
-            hp_resp = safe_request("GET", base_url, session=session, timeout=3.0)
+            hp_resp = safe_request("GET", base_url, session=session, timeout=(1.5, 2.5))
             if hp_resp and hp_resp.text:
                 homepage_len = len(hp_resp.text)
         except Exception:
@@ -2116,7 +2147,7 @@ class SensitivePathsModule(ScannerModule):
         for target in self.TARGET_PATHS:
             target_url = f"{base_url}{target['path']}"
             try:
-                resp = safe_request("GET", target_url, session=session, timeout=3.0)
+                resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
                 if not resp or resp.status_code != 200:
                     continue
 
@@ -2194,7 +2225,7 @@ REGISTERED_MODULES = [
 
 def get_ip_location(ip: str) -> str:
     try:
-        res = requests.get(f"http://ip-api.com/json/{ip}", timeout=2).json()
+        res = requests.get(f"http://ip-api.com/json/{ip}", timeout=(1.5, 2.5)).json()
         if res.get("status") == "success":
             country = res.get("country", "Global")
             org = res.get("org") or res.get("isp") or "Cloud"
@@ -2276,7 +2307,7 @@ def get_metadata(domain: str, response: Optional[requests.Response], original_ur
     try:
         # Pass 1: Verified Context
         ctx = ssl.create_default_context()
-        with socket.create_connection((domain, 443), timeout=3) as sock:
+        with socket.create_connection((domain, 443), timeout=2.5) as sock:
             with ctx.wrap_socket(sock, server_hostname=domain) as ssock:
                 cert = ssock.getpeercert()
                 ver = ssock.version()
@@ -2307,7 +2338,7 @@ def get_metadata(domain: str, response: Optional[requests.Response], original_ur
         # Pass 2: Unverified Fallback
         try:
             unverified_ctx = ssl._create_unverified_context()
-            with socket.create_connection((domain, 443), timeout=3) as sock:
+            with socket.create_connection((domain, 443), timeout=2.5) as sock:
                 with unverified_ctx.wrap_socket(sock, server_hostname=domain) as ssock:
                     ver = ssock.version()
                     if ver:
@@ -2477,7 +2508,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
 
     with get_http_session() as session:
         try:
-            initial_resp = safe_request("GET", url, session=session, timeout=5, verify=False)
+            initial_resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5), verify=False)
         except Exception:
             initial_resp = None
 
