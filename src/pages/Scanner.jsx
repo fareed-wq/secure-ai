@@ -206,7 +206,7 @@ function Scanner() {
                 </p>
               </div>
 
-              <div className="mt-8 mb-0 w-full">
+              <div className="mt-4 w-full">
                 <BottomTicker />
               </div>
 
