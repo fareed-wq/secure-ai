@@ -41,21 +41,6 @@ const TechnicalReport = ({ reportData }) => {
 
   return (
     <div className="space-y-8" id="report-content">
-      <style>{`
-        @media print {
-          body, html, #report-content { background: white !important; color: #0f172a !important; }
-          * { border-color: #e2e8f0 !important; }
-          .bg-\\[\\#0D1117\\], .bg-slate-900, .bg-slate-900\\/50, .bg-slate-800 { background: white !important; box-shadow: none !important; }
-          .text-white, .text-slate-200, .text-slate-300 { color: #0f172a !important; }
-          .text-slate-400, .text-slate-500 { color: #475569 !important; }
-          .shadow-2xl, .shadow-xl, .shadow-inner { box-shadow: none !important; }
-          .text-indigo-400 { color: #4338ca !important; }
-          .text-emerald-400 { color: #059669 !important; }
-          .text-red-500, .text-red-400 { color: #dc2626 !important; }
-          .text-orange-500, .text-orange-400 { color: #ea580c !important; }
-          .text-amber-500, .text-amber-400 { color: #d97706 !important; }
-        }
-      `}</style>
       
       {/* 1. Technical Metadata Table HUD */}
       <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden">

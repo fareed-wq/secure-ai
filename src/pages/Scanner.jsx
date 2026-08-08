@@ -295,29 +295,30 @@ function Scanner() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-6xl mx-auto"
             >
-              <ReportHeader 
-                url={url} 
-                score={reportData.score} 
-                timestamp={reportData.scan_start} 
-                activeMode={reportMode} 
-                onToggleMode={setReportMode}
-                onExportPdf={handlePdfExport}
-                onRequireAuth={handleRequireAuth}
-              />
-              
               <ErrorBoundary>
+                <ReportHeader 
+                  url={url} 
+                  score={reportData.score} 
+                  timestamp={reportData.scan_start} 
+                  activeMode={reportMode} 
+                  onToggleMode={setReportMode}
+                  onExportPdf={handlePdfExport}
+                  onRequireAuth={handleRequireAuth}
+                />
+                
                 {reportMode === 'simple' ? (
                   <SimpleReport reportData={reportData} />
                 ) : (
                   <TechnicalReport reportData={reportData} />
                 )}
-              </ErrorBoundary>
 
-              <div className="mt-12 flex justify-center">
-                <button onClick={resetScan} className="text-slate-400 hover:text-white transition-colors underline underline-offset-4">
-                  Run another scan
-                </button>
-              </div>
+
+                <div className="mt-12 flex justify-center">
+                  <button onClick={resetScan} className="text-slate-400 hover:text-white transition-colors underline underline-offset-4">
+                    Run another scan
+                  </button>
+                </div>
+              </ErrorBoundary>
             </motion.div>
           )}
 
