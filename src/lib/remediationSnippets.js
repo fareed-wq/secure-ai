@@ -143,5 +143,101 @@ export const REMEDIATION_SNIPPETS = {
       platform: "Vercel / Next.js",
       code: `// next.config.js\n{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }`
     }
+  ],
+
+  // 9. Missing X-Content-Type-Options
+  "Missing X-Content-Type-Options": [
+    {
+      platform: "Nginx",
+      code: `add_header X-Content-Type-Options "nosniff" always;`
+    },
+    {
+      platform: "Apache",
+      code: `Header always set X-Content-Type-Options "nosniff"`
+    },
+    {
+      platform: "Vercel / Next.js",
+      code: `// next.config.js\n{ key: 'X-Content-Type-Options', value: 'nosniff' }`
+    }
+  ],
+
+  // 10. Missing Referrer-Policy
+  "Missing Referrer-Policy": [
+    {
+      platform: "Nginx",
+      code: `add_header Referrer-Policy "strict-origin-when-cross-origin" always;`
+    },
+    {
+      platform: "Apache",
+      code: `Header always set Referrer-Policy "strict-origin-when-cross-origin"`
+    },
+    {
+      platform: "Vercel / Next.js",
+      code: `// next.config.js\n{ key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }`
+    }
+  ],
+
+  // 11. Missing Permissions-Policy
+  "Missing Permissions-Policy": [
+    {
+      platform: "Nginx",
+      code: `add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;`
+    },
+    {
+      platform: "Apache",
+      code: `Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"`
+    },
+    {
+      platform: "Vercel / Next.js",
+      code: `// next.config.js\n{ key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=()' }`
+    }
+  ],
+
+  // 12. SPF & DMARC Records
+  "Missing SPF Record": [
+    {
+      platform: "DNS TXT Record",
+      code: `Name/Host: @\nValue: v=spf1 include:_spf.google.com ~all\nTTL: 3600`,
+      notes: "Adjust include statements for your actual email providers (e.g. Google, Outlook, SendGrid)."
+    }
+  ],
+  "Missing DMARC Record": [
+    {
+      platform: "DNS TXT Record",
+      code: `Name/Host: _dmarc\nValue: v=DMARC1; p=quarantine; rua=mailto:postmaster@yourdomain.com;\nTTL: 3600`,
+      notes: "Start with p=quarantine or p=none to monitor, then move to p=reject."
+    }
+  ],
+  "Weak DMARC Policy (p=none)": [
+    {
+      platform: "DNS TXT Record",
+      code: `Name/Host: _dmarc\nValue: v=DMARC1; p=quarantine; rua=mailto:postmaster@yourdomain.com;\nTTL: 3600`,
+      notes: "Update your existing p=none policy to p=quarantine or p=reject to enforce spoofing protection."
+    }
+  ],
+
+  // 13. Information Disclosure
+  "X-Powered-By Header Exposed": [
+    {
+      platform: "Express.js",
+      code: `app.disable('x-powered-by');`
+    },
+    {
+      platform: "PHP",
+      code: `; php.ini\nexpose_php = Off`
+    },
+    {
+      platform: "Vercel / Next.js",
+      code: `// next.config.js\nmodule.exports = {\n  poweredByHeader: false,\n}`
+    }
+  ],
+
+  // 14. Missing Basic Files
+  "security.txt Missing": [
+    {
+      platform: "File Creation",
+      code: `# Create /.well-known/security.txt\nContact: mailto:security@yourdomain.com\nExpires: 2026-12-31T23:59:00.000Z\nPreferred-Languages: en`,
+      notes: "Upload this file to the /.well-known/ folder at the root of your web server."
+    }
   ]
 };
