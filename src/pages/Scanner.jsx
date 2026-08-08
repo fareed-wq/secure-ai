@@ -197,20 +197,13 @@ function Scanner() {
               className="flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto mt-20"
             >
               {/* 1. Hero Headline */}
-              <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-300 to-teal-300">
-                IS YOUR WEBSITE SAFE?
-              </h1>
-              <p className="text-lg font-bold tracking-widest text-slate-200 mt-2 uppercase">
-                Find out in one click.
-              </p>
-
-              {/* 2. Description Paragraph (Fixed Overflow) */}
-              <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto mt-4 leading-relaxed">
-                Enter your domain to uncover hidden security risks automatically and get a simple, easy-to-read safety report for your website instantly.
-              </p>
-
-              <div className="mt-8 w-full">
-                <BottomTicker />
+              <div className="space-y-4">
+                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400">
+                  IS YOUR WEBSITE SAFE?
+                </h1>
+                <p className="text-2xl font-semibold text-slate-300 max-w-2xl mx-auto tracking-wide">
+                  FIND OUT IN ONE CLICK.
+                </p>
               </div>
 
               {/* 3. Input Bar Container */}
