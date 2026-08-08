@@ -1577,7 +1577,7 @@ class SubdomainTakeoverModule(ScannerModule):
                     "No Subdomain Takeover Risk Detected",
                     "Passed",
                     "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
-                    "Validated CNAME and DNS routing records",
+                    f"[-] HTTP Response Header Audit\n[!] Target: {hostname} -> [NO CNAME FOUND]\n\nValidated CNAME and DNS routing records",
                     owasp="A05: Security Misconfiguration",
                     category="domain_email"
                 ))
@@ -1622,7 +1622,7 @@ class SubdomainTakeoverModule(ScannerModule):
                     "No Subdomain Takeover Risk Detected",
                     "Passed",
                     "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
-                    "Validated CNAME and DNS routing records",
+                    f"[-] HTTP Response Header Audit\n[!] Target: {hostname} -> [NO CNAME FOUND]\n\nValidated CNAME and DNS routing records",
                     owasp="A05: Security Misconfiguration",
                     category="domain_email"
                 ))
