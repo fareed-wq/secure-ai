@@ -123,21 +123,6 @@ function Scanner() {
     <div className="min-h-screen bg-slate-950 font-sans text-slate-50 selection:bg-indigo-500/30">
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
       
-      {/* Top Navbar */}
-      <nav className="border-b border-white/10 bg-white/5 backdrop-blur-md sticky top-0 z-50 print:hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center cursor-pointer" onClick={resetScan}>
-            <img src="/logo-transparent.png" alt="URLScan Online Logo" className="h-12 w-auto object-contain" />
-          </div>
-          <div className="flex items-center gap-4">
-            {user && (
-              <Link to="/dashboard" className="text-sm font-bold text-slate-300 hover:text-white bg-slate-800/50 hover:bg-slate-800 px-4 py-2 rounded-lg transition-colors">
-                Go to Dashboard
-              </Link>
-            )}
-          </div>
-        </div>
-      </nav>
 
       {/* Auth Modal */}
       <AuthModal 
