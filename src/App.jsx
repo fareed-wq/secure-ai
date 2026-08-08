@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { Analytics } from '@vercel/analytics/react';
 import SaaSLayout from './components/layout/SaaSLayout';
 import RootLayout from './components/layout/RootLayout';
 import Login from './pages/Login';
@@ -56,6 +57,7 @@ const App = () => {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
+      <Analytics />
     </AuthProvider>
   );
 };
