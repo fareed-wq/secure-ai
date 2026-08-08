@@ -12,7 +12,6 @@ import SimpleReport from '../components/scanner/SimpleReport';
 import TechnicalReport from '../components/scanner/TechnicalReport';
 import AuthModal from '../components/scanner/AuthModal';
 import PdfComingSoonModal from '../components/scanner/PdfComingSoonModal';
-import BottomTicker from '../components/scanner/BottomTicker';
 import SafetyComparison from '../components/scanner/SafetyComparison';
 
 // Force relative paths in production so it hits the Vercel Serverless functions directly
@@ -205,10 +204,6 @@ function Scanner() {
                 <p className="text-2xl font-semibold text-slate-300 max-w-2xl mx-auto tracking-wide">
                   FIND OUT IN ONE CLICK.
                 </p>
-              </div>
-
-              <div className="mt-8 w-full">
-                <BottomTicker />
               </div>
 
               {/* 3. Input Bar Container */}
