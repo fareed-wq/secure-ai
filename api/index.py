@@ -563,6 +563,110 @@ class ExposedFilesModule(ScannerModule):
         except Exception:
             pass
 
+        # Smart Path Scoping: Skip path probes if the root endpoint is a JSON API
+        is_json_api = False
+        try:
+            if 'application/json' in self.get_header_safe(hp_resp, 'Content-Type', '').lower():
+                is_json_api = True
+        except Exception:
+            pass
+            
+        if not is_json_api:
+            def check_dir_index(path):
+                try:
+                    target_url = urljoin(base_url, path)
+                    resp = safe_request("GET", target_url, session=session, timeout=3.0)
+                    if resp and resp.status_code == 200 and 'text/html' in resp.headers.get('Content-Type', '').lower():
+                        if "Index of /" in resp.text or "<title>Index of" in resp.text:
+                            return self.make_finding(
+                                f"Directory Indexing Enabled ({path})",
+                                "Medium",
+                                "Web server is configured to display raw directory file listings when an index page is missing.",
+                                target_url,
+                                impact="Allows unauthenticated users to browse and download internal media uploads, unlinked assets, and temporary server files.",
+                                category="information_exposure"
+                            )
+                except requests.exceptions.RequestException:
+                    pass
+                except Exception:
+                    pass
+                return None
+
+            paths_to_probe = ['/uploads/', '/images/', '/assets/', '/static/']
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                for result in executor.map(check_dir_index, paths_to_probe):
+                    if result:
+                        findings.append(result)
+
+            def check_exposed_log(path):
+                try:
+                    target_url = urljoin(base_url, path)
+                    resp = safe_request("GET", target_url, session=session, timeout=3.0, stream=True)
+                    if resp and resp.status_code == 200 and 'text/html' not in resp.headers.get('Content-Type', '').lower():
+                        chunk = next(resp.iter_content(1024), b'')
+                        resp.close()
+                        try:
+                            chunk_text = chunk.decode('utf-8', errors='ignore')
+                        except Exception:
+                            chunk_text = ""
+                        if any(x in chunk_text for x in ['[202', '[ERROR]', '[DEBUG]', 'Stack trace:']):
+                            return self.make_finding(
+                                f"Exposed Application Log File ({path})",
+                                "High",
+                                f"Publicly accessible application log file discovered at {path}.",
+                                target_url,
+                                impact="Log files frequently expose unhandled stack traces, database query parameters, internal file paths, user emails, and API session tokens.",
+                                category="information_exposure"
+                            )
+                except requests.exceptions.RequestException:
+                    pass
+                except Exception:
+                    pass
+                return None
+            
+            log_paths = ['/laravel.log', '/error.log', '/app.log', '/debug.log', '/logs/laravel.log']
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                for result in executor.map(check_exposed_log, log_paths):
+                    if result:
+                        findings.append(result)
+
+            def check_exposed_dump(path):
+                try:
+                    target_url = urljoin(base_url, path)
+                    resp = safe_request("GET", target_url, session=session, timeout=3.0, stream=True)
+                    if resp and resp.status_code == 200 and 'text/html' not in resp.headers.get('Content-Type', '').lower():
+                        chunk = next(resp.iter_content(1024), b'')
+                        resp.close()
+                        is_zip = chunk.startswith(b'PK\x03\x04') or chunk.startswith(b'\x1f\x8b')
+                        
+                        try:
+                            chunk_text = chunk.decode('utf-8', errors='ignore')
+                        except Exception:
+                            chunk_text = ""
+                            
+                        is_sql = '-- MySQL dump' in chunk_text or 'CREATE TABLE' in chunk_text or 'INSERT INTO' in chunk_text
+                        
+                        if is_zip or is_sql:
+                            return self.make_finding(
+                                f"Exposed Site / Database Backup Dump ({path})",
+                                "Critical",
+                                f"A publicly downloadable database or source code backup dump was found at {path}.",
+                                target_url,
+                                impact="Grants unauthenticated attackers immediate access to the full application database, hashed user passwords, internal tables, and raw source code.",
+                                category="information_exposure"
+                            )
+                except requests.exceptions.RequestException:
+                    pass
+                except Exception:
+                    pass
+                return None
+            
+            dump_paths = ['/backup.zip', '/site.tar.gz', '/db.sql', '/dump.sql', '/backup.sql']
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                for result in executor.map(check_exposed_dump, dump_paths):
+                    if result:
+                        findings.append(result)
+
         return findings
 
 
@@ -605,18 +709,26 @@ class DNSCAAModule(ScannerModule):
 
         # DNSSEC Check
         try:
-            dnssec_url = f"https://dns.google/resolve?name={domain}&type=DNSKEY"
+            dnssec_url = f"https://dns.google/resolve?name={domain}&type=DS"
             resp = safe_request("GET", dnssec_url, session=session, timeout=3.0)
             if resp and resp.status_code == 200:
                 data = resp.json()
-                if "Answer" in data and len(data["Answer"]) > 0:
+                if data.get("Status") == 0 and data.get("Answer"):
                     findings.append(self.make_finding(
-                        "DNSSEC Configured",
+                        "DNSSEC Security Enabled",
                         "Passed",
                         "Domain Name System Security Extensions (DNSSEC) is enabled.",
-                        "DNSKEY record found",
-                        owasp="A02: Cryptographic Failures",
-                        category="domain_email"
+                        "DS record found",
+                        category="dns_security"
+                    ))
+                else:
+                    findings.append(self.make_finding(
+                        "DNSSEC Not Enabled for Domain",
+                        "Informational",
+                        "Domain Name System Security Extensions (DNSSEC) records are not published for this domain.",
+                        "",
+                        impact="The domain is more vulnerable to DNS spoofing, cache poisoning, and BGP hijacking attacks.",
+                        category="dns_security"
                     ))
         except Exception:
             pass
@@ -1429,6 +1541,64 @@ class SecurityHeadersModule(ScannerModule):
                 "Referrer-Policy is present.",
                 referrer,
                 owasp="A05: Security Misconfiguration",
+                category="http_headers"
+            ))
+
+        # SRI Check
+        if resp and resp.text:
+            sri_regex = re.compile(r'<(?:script|link)[^>]*(?:src|href)=[\'"](https?://(?:cdnjs|jsdelivr|unpkg|stackpath|maxcdn)[^\'"]+)[\'"][^>]*>', re.IGNORECASE)
+            matches = sri_regex.finditer(resp.text)
+            missing_sri = []
+            for match in matches:
+                tag = match.group(0)
+                url_attr = match.group(1)
+                if 'integrity=' not in tag.lower():
+                    missing_sri.append(url_attr)
+            
+            if missing_sri:
+                findings.append(self.make_finding(
+                    "Missing Subresource Integrity (SRI) on CDN Assets",
+                    "Low",
+                    "Third-party JavaScript or CSS resources are loaded from external CDNs without cryptographic integrity hashes.",
+                    "\n".join(missing_sri),
+                    impact="If an external CDN is compromised, attackers can tamper with the hosted script files to inject malicious code into your website.",
+                    remediation="Add integrity='sha384-...' and crossorigin='anonymous' attributes to all external CDN script tags.",
+                    category="http_headers"
+                ))
+
+        # WAF & Rate-Limiting Detection
+        waf_headers = ['server', 'x-cdn', 'cf-ray', 'x-succinct', 'x-istart-waf', 'awsalb']
+        rl_headers = ['x-ratelimit-limit', 'x-ratelimit-remaining', 'retry-after']
+        
+        waf_found = False
+        rl_found = False
+        evidence_headers = []
+        
+        headers = resp.headers if resp else {}
+        for k, v in headers.items():
+            kl = k.lower()
+            if kl in waf_headers or (kl == 'server' and 'cloudflare' in v.lower()):
+                waf_found = True
+                evidence_headers.append(f"{k}: {v}")
+            if kl in rl_headers:
+                rl_found = True
+                evidence_headers.append(f"{k}: {v}")
+                
+        if not waf_found and not rl_found:
+            findings.append(self.make_finding(
+                "No Web Application Firewall (WAF) / Rate-Limiting Headers Detected",
+                "Informational",
+                "The target application does not expose active WAF or rate-limiting response headers.",
+                "",
+                impact="Leaves public endpoints and login portals more susceptible to automated brute-force, credential stuffing, or Layer 7 DoS attacks.",
+                category="http_headers"
+            ))
+        elif waf_found:
+            findings.append(self.make_finding(
+                "Web Application Firewall (WAF) Active",
+                "Passed",
+                "WAF or CDN headers were detected.",
+                "\n".join(evidence_headers),
                 category="http_headers"
             ))
 

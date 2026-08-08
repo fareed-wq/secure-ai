@@ -386,8 +386,8 @@ const TechnicalReport = ({ reportData }) => {
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                     <h4 className="font-bold text-slate-200 text-sm">PCI-DSS 4.0</h4>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData.technical_compliance.pci_dss_4_0?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
-                      {reportData.technical_compliance.pci_dss_4_0?.status || 'Unknown'}
+                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                      {reportData?.technical_compliance?.pci_dss_4_0?.status || 'Unknown'}
                     </span>
                   </div>
                   
@@ -395,15 +395,15 @@ const TechnicalReport = ({ reportData }) => {
                     <div>
                       <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
                       <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData.technical_compliance.pci_dss_4_0?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData.technical_compliance.pci_dss_4_0?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {(reportData?.technical_compliance?.pci_dss_4_0?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                        {reportData?.technical_compliance?.pci_dss_4_0?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
                     </div>
                     <div>
                       <div className="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
                       <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData.technical_compliance.pci_dss_4_0?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData.technical_compliance.pci_dss_4_0?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {(reportData?.technical_compliance?.pci_dss_4_0?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                        {reportData?.technical_compliance?.pci_dss_4_0?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
                     </div>
                   </div>
@@ -413,8 +413,8 @@ const TechnicalReport = ({ reportData }) => {
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                     <h4 className="font-bold text-slate-200 text-sm">NIST SP 800-53</h4>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData.technical_compliance.nist_sp_800_53?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
-                      {reportData.technical_compliance.nist_sp_800_53?.status || 'Unknown'}
+                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                      {reportData?.technical_compliance?.nist_sp_800_53?.status || 'Unknown'}
                     </span>
                   </div>
                   
@@ -422,15 +422,15 @@ const TechnicalReport = ({ reportData }) => {
                     <div>
                       <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
                       <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData.technical_compliance.nist_sp_800_53?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData.technical_compliance.nist_sp_800_53?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {(reportData?.technical_compliance?.nist_sp_800_53?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                        {reportData?.technical_compliance?.nist_sp_800_53?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
                     </div>
                     <div>
                       <div className="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
                       <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData.technical_compliance.nist_sp_800_53?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData.technical_compliance.nist_sp_800_53?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {(reportData?.technical_compliance?.nist_sp_800_53?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                        {reportData?.technical_compliance?.nist_sp_800_53?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
                     </div>
                   </div>
@@ -440,8 +440,8 @@ const TechnicalReport = ({ reportData }) => {
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                     <h4 className="font-bold text-slate-200 text-sm">ISO 27001</h4>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData.technical_compliance.iso_27001?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
-                      {reportData.technical_compliance.iso_27001?.status || 'Unknown'}
+                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                      {reportData?.technical_compliance?.iso_27001?.status || 'Unknown'}
                     </span>
                   </div>
                   
@@ -449,15 +449,15 @@ const TechnicalReport = ({ reportData }) => {
                     <div>
                       <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
                       <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData.technical_compliance.iso_27001?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData.technical_compliance.iso_27001?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {(reportData?.technical_compliance?.iso_27001?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                        {reportData?.technical_compliance?.iso_27001?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
                     </div>
                     <div>
                       <div className="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
                       <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData.technical_compliance.iso_27001?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData.technical_compliance.iso_27001?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {(reportData?.technical_compliance?.iso_27001?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                        {reportData?.technical_compliance?.iso_27001?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
                     </div>
                   </div>
