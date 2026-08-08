@@ -151,20 +151,25 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
 
       {/* 4. FOOTER */}
       <div className="p-3 flex flex-col gap-2 border-t border-slate-800/80">
-        <div className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
-          <div className="flex items-center gap-3 w-full">
-            <div className="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 text-indigo-400">
-              <User size={14} />
-            </div>
-            {!isCollapsed && (
-              <div className="flex-1 overflow-hidden flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-200 truncate">{user?.email || 'Security Admin'}</span>
-                <Link to="/settings" className="text-slate-500 hover:text-slate-300 transition-colors shrink-0">
-                  <Settings size={16} />
-                </Link>
-              </div>
-            )}
+        <div
+          className={`flex items-center transition-all duration-200 ${
+            isCollapsed 
+              ? 'justify-center w-full px-0'  // Center icon when collapsed
+              : 'justify-start px-3 gap-3'   // Standard row layout when expanded
+          }`}
+        >
+          {/* User Avatar Circle */}
+          <div className="w-9 h-9 rounded-full bg-indigo-600/30 flex items-center justify-center shrink-0">
+            <User className="w-5 h-5 text-indigo-400" />
           </div>
+
+          {/* User Info Text (Hidden when collapsed) */}
+          {!isCollapsed && (
+            <div className="flex flex-col truncate">
+              <span className="text-sm font-medium text-slate-200">Security Admin</span>
+              <span className="text-xs text-slate-400">admin@urlscanonline.com</span>
+            </div>
+          )}
         </div>
         {!isCollapsed && (
           <button
