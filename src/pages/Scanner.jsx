@@ -213,7 +213,7 @@ function Scanner() {
               {/* 3. Input Bar Container */}
               <form onSubmit={handleScan} className="w-full max-w-2xl mt-4 flex flex-col items-center gap-3">
                 {/* Input Box with Glow focused ONLY on the box */}
-                <div className="relative w-full rounded-2xl p-1 bg-slate-900/80 border border-slate-700/60 shadow-[0_0_30px_rgba(124,58,237,0.25)] flex items-center">
+                <div className="relative w-full rounded-2xl p-1 bg-slate-900/80 border border-slate-700/60 shadow-[0_0_30px_rgba(124,58,237,0.25)] flex items-center focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 focus-within:shadow-[0_0_40px_rgba(124,58,237,0.4)] transition-all duration-300">
                   <Search className="w-5 h-5 text-slate-400 ml-4 shrink-0 hidden sm:block" />
                   <input
                     ref={urlInputRef}
