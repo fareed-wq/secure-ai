@@ -138,6 +138,12 @@ const TRANSLATIONS = {
     why: "Revealing exact backend technologies helps attackers run automated recon to target known, published vulnerabilities in your tech stack.",
     category: "Privacy Protection"
   },
+  "X-Powered-By Header Exposed": {
+    name: "X-Powered-By Header Exposed",
+    problem: "Backend technology is explicitly declared.",
+    why: "Revealing exact backend technologies helps attackers run automated recon to target known, published vulnerabilities in your tech stack.",
+    category: "Privacy Protection"
+  },
   "Missing Automatic HTTPS Forwarding": {
     name: "Missing Automatic HTTPS Forwarding",
     problem: "Visitors opening your website via unencrypted http:// are not automatically redirected to secure https://.",
@@ -171,6 +177,12 @@ const TRANSLATIONS = {
   "Insecure or Obsolete TLS Ciphers Enforced": {
     name: "Obsolete TLS Ciphers Enforced",
     problem: "Your server enforces deprecated legacy TLS ciphers or protocols.",
+    why: "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
+    category: "Encryption"
+  },
+  "Legacy Weak TLS Ciphers Supported": {
+    name: "Legacy Weak TLS Ciphers Supported",
+    problem: "Server accepts connections configured with deprecated weak ciphers (e.g. 3DES / RC4).",
     why: "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
     category: "Encryption"
   }

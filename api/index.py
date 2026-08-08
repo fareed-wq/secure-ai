@@ -281,8 +281,10 @@ IMPACT_MAP = {
     "Wildcard CORS Policy": "Malicious external websites can make authenticated API requests on behalf of logged-in users and exfiltrate private session data.",
     "Weak TLS Cipher Negotiated": "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
     "Insecure or Obsolete TLS Ciphers Enforced": "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
+    "Legacy Weak TLS Ciphers Supported": "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
     "Exposed Server Header": "Revealing exact backend technologies helps attackers run automated recon to target known, published vulnerabilities in your tech stack.",
     "Exposed X-Powered-By Header": "Revealing exact backend technologies helps attackers run automated recon to target known, published vulnerabilities in your tech stack.",
+    "X-Powered-By Header Exposed": "Revealing exact backend technologies helps attackers run automated recon to target known, published vulnerabilities in your tech stack.",
     "Missing DNS CAA Record": "Allows any unauthorized Certificate Authority (CA) to issue SSL/TLS certificates for your domain without restriction."
 }
 
