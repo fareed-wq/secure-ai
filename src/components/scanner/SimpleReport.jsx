@@ -15,19 +15,19 @@ const TRANSLATIONS = {
   "Missing Strict-Transport-Security (HSTS)": {
     name: "Missing Forced Encryption (HSTS)",
     problem: "Your website does not force browsers to use secure HTTPS connections automatically.",
-    why: "Attackers on public Wi-Fi networks can downgrade visitors' connections to unencrypted HTTP and steal session data.",
+    why: "Allows attackers to downgrade HTTPS connections to unencrypted HTTP via man-in-the-middle SSL stripping attacks.",
     category: "Encryption"
   },
   "Missing Content-Security-Policy (CSP)": {
     name: "Weak Data Injection Guard (CSP)",
     problem: "Your site either lacks a Content Security Policy or has permissive rules that allow unauthorized scripts.",
-    why: "Without strict rules, malicious scripts can be injected into your pages to steal user data or passwords.",
+    why: "Permissive directives like 'unsafe-inline' or 'unsafe-eval' weaken browser defenses, leaving your site vulnerable to Cross-Site Scripting (XSS) and data theft.",
     category: "Browser Protection"
   },
-  "Missing Content-Security-Policy Header": {
+  "Weak Content-Security-Policy (CSP)": {
     name: "Weak Data Injection Guard (CSP)",
-    problem: "Your site either lacks a Content Security Policy or has permissive rules that allow unauthorized scripts.",
-    why: "Without strict rules, malicious scripts can be injected into your pages to steal user data or passwords.",
+    problem: "Your site has a permissive Content Security Policy that allows unauthorized scripts.",
+    why: "Permissive directives like 'unsafe-inline' or 'unsafe-eval' weaken browser defenses, leaving your site vulnerable to Cross-Site Scripting (XSS) and data theft.",
     category: "Browser Protection"
   },
   "Missing X-Frame-Options": {
@@ -96,10 +96,10 @@ const TRANSLATIONS = {
     why: "Receiving mail servers are instructed to deliver spoofed emails pretending to be from your domain rather than blocking them.",
     category: "Email Trust"
   },
-  "Missing CAA Record": {
+  "Missing DNS CAA Record": {
     name: "Missing Certificate Authority Lock (CAA)",
     problem: "Your domain DNS settings lack a CAA record restricting who can issue SSL certificates for your site.",
-    why: "Without a CAA record, any unauthorized Certificate Authority could issue a certificate for your domain name.",
+    why: "Allows any unauthorized Certificate Authority (CA) to issue SSL/TLS certificates for your domain without restriction.",
     category: "Domain Trust"
   },
   "Missing security.txt": {
@@ -126,10 +126,16 @@ const TRANSLATIONS = {
     why: "Browsers may send these cookies automatically on third-party links, making users vulnerable to Cross-Site Request Forgery (CSRF).",
     category: "Session Security"
   },
-  "Server Banner Information Disclosure": {
+  "Exposed Server Header": {
     name: "Exposed Web Server Technology",
     problem: "Your web server advertises its exact software name and version in response headers.",
-    why: "Attackers can use visible version numbers to target known software vulnerabilities specific to your web server.",
+    why: "Revealing exact backend technologies helps attackers run automated recon to target known, published vulnerabilities in your tech stack.",
+    category: "Privacy Protection"
+  },
+  "Exposed X-Powered-By Header": {
+    name: "Exposed Web Server Technology",
+    problem: "Your web server advertises its exact software name and version in response headers.",
+    why: "Revealing exact backend technologies helps attackers run automated recon to target known, published vulnerabilities in your tech stack.",
     category: "Privacy Protection"
   },
   "Missing Automatic HTTPS Forwarding": {
@@ -149,6 +155,24 @@ const TRANSLATIONS = {
     problem: "Anyone can browse the files and folders on your web server.",
     why: "Attackers can download source code, backup files, or sensitive documents that were not meant for public viewing.",
     category: "Privacy Protection"
+  },
+  "Wildcard CORS Policy": {
+    name: "Permissive CORS Policy",
+    problem: "Your API allows cross-origin requests from any domain using a wildcard origin.",
+    why: "Malicious external websites can make authenticated API requests on behalf of logged-in users and exfiltrate private session data.",
+    category: "Session Security"
+  },
+  "Weak TLS Cipher Negotiated": {
+    name: "Weak TLS Cipher",
+    problem: "Your server negotiates weak or obsolete TLS ciphers.",
+    why: "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
+    category: "Encryption"
+  },
+  "Insecure or Obsolete TLS Ciphers Enforced": {
+    name: "Obsolete TLS Ciphers Enforced",
+    problem: "Your server enforces deprecated legacy TLS ciphers or protocols.",
+    why: "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
+    category: "Encryption"
   }
 };
 

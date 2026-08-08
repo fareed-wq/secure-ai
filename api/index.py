@@ -269,16 +269,21 @@ COMPLIANCE_MAP = {
 }
 
 IMPACT_MAP = {
-    "Missing Strict-Transport-Security (HSTS)": "Allows man-in-the-middle (MitM) attacks to downgrade connections to insecure HTTP, exposing session tokens.",
-    "Missing Content-Security-Policy (CSP)": "Leaves the application vulnerable to Cross-Site Scripting (XSS) and data injection attacks.",
-    "Weak Content-Security-Policy (CSP)": "Allows bypass of CSP restrictions, enabling XSS scripts to execute and steal sensitive data.",
+    "Missing Strict-Transport-Security (HSTS)": "Allows attackers to downgrade HTTPS connections to unencrypted HTTP via man-in-the-middle SSL stripping attacks.",
+    "Missing Content-Security-Policy (CSP)": "Permissive directives like 'unsafe-inline' or 'unsafe-eval' weaken browser defenses, leaving your site vulnerable to Cross-Site Scripting (XSS) and data theft.",
+    "Weak Content-Security-Policy (CSP)": "Permissive directives like 'unsafe-inline' or 'unsafe-eval' weaken browser defenses, leaving your site vulnerable to Cross-Site Scripting (XSS) and data theft.",
     "Missing X-Frame-Options": "Permits attackers to embed the site in an iframe, leading to Clickjacking and unauthorized actions.",
     "Missing X-Content-Type-Options": "Enables MIME-sniffing attacks where malicious files are executed as scripts.",
     "Missing Permissions-Policy": "Allows third-party scripts to access sensitive browser features like the camera, microphone, or geolocation.",
     "Missing Referrer-Policy": "Leaks sensitive URLs and tokens in the Referer header to external domains.",
     "Missing SPF Record": "Allows attackers to easily spoof emails from your domain for phishing campaigns.",
     "Missing DMARC Policy": "Prevents enforcement of SPF/DKIM, allowing spoofed emails to reach users' inboxes.",
-    "Wildcard CORS Policy": "Permits any malicious domain to read sensitive data from the API on behalf of authenticated users."
+    "Wildcard CORS Policy": "Malicious external websites can make authenticated API requests on behalf of logged-in users and exfiltrate private session data.",
+    "Weak TLS Cipher Negotiated": "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
+    "Insecure or Obsolete TLS Ciphers Enforced": "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
+    "Exposed Server Header": "Revealing exact backend technologies helps attackers run automated recon to target known, published vulnerabilities in your tech stack.",
+    "Exposed X-Powered-By Header": "Revealing exact backend technologies helps attackers run automated recon to target known, published vulnerabilities in your tech stack.",
+    "Missing DNS CAA Record": "Allows any unauthorized Certificate Authority (CA) to issue SSL/TLS certificates for your domain without restriction."
 }
 
 app = FastAPI(title="Website Security Posture Checker (Advanced Modular)")
