@@ -22,6 +22,23 @@ RESET = "\033[0m"
 
 # Benchmark Target Definitions
 BENCHMARK_TARGETS = [
+
+    {
+        "name": "GraphQL Introspection Test (trevorblades.com)",
+        "url": "https://countries.trevorblades.com",
+        "check_type": "finding_status",
+        "expected_statuses": ["informational"],
+        "finding_keyword": "graphql",
+        "description": "Verifies that public GraphQL endpoints emit an informational finding."
+    },
+    {
+        "name": "Verbose Stack Trace Guardrail Test (nextjs.org)",
+        "url": "https://nextjs.org",
+        "check_type": "anti_false_positive",
+        "forbidden_findings": ["Verbose Backend Error / Stack Trace Disclosure"],
+        "description": "Verifies that HTML/SPA routes do not trigger false positive stack trace leaks."
+    },
+
     # --- Existing 6 Benchmark Targets ---
     {
         "name": "TLS Expiration Test (badssl.com)",
