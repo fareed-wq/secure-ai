@@ -231,7 +231,7 @@ export const REMEDIATION_SNIPPETS = {
       notes: "Adjust include statements for your actual email providers (e.g. Google, Outlook, SendGrid)."
     }
   ],
-  "Missing DMARC Record": [
+  "Missing DMARC Policy": [
     {
       platform: "DNS TXT Record",
       code: `Name/Host: _dmarc\nValue: v=DMARC1; p=quarantine; rua=mailto:postmaster@yourdomain.com;\nTTL: 3600`,
@@ -324,7 +324,7 @@ export const REMEDIATION_SNIPPETS = {
   ],
 
   // 16. CORS Issues
-  "Wildcard CORS Policy (*)": [
+  "Wildcard CORS Policy": [
     {
       platform: "Nginx",
       code: `# Remove or specify origin instead of '*'\nadd_header Access-Control-Allow-Origin "https://trusted-domain.com" always;`
@@ -336,7 +336,7 @@ export const REMEDIATION_SNIPPETS = {
   ],
 
   // 17. Exposed Files & Paths
-  "Exposed .env File": [
+  "Exposed .env Configuration File": [
     {
       platform: "Nginx",
       code: `location ~ /\\.env {\n    deny all;\n    return 404;\n}`
@@ -376,6 +376,41 @@ export const REMEDIATION_SNIPPETS = {
       platform: "DNS TXT Record",
       code: `Name/Host: _mta-sts\nType: TXT\nValue: v=STSv1; id=20240101000000Z;`,
       notes: "Requires hosting an mta-sts.txt policy file as well."
+    }
+  ],
+  "Weak SPF Record (+all)": [
+    {
+      platform: "DNS TXT Record",
+      code: `Name/Host: @\nValue: v=spf1 include:_spf.google.com ~all\nTTL: 3600`,
+      notes: "Replace '+all' (allow all) or '?all' with '~all' (softfail) or '-all' (hardfail)."
+    }
+  ],
+
+  // 19. Misconfigurations
+  "Missing HTTPS Redirection": [
+    {
+      platform: "Nginx",
+      code: `server {\n    listen 80;\n    server_name yourdomain.com;\n    return 301 https://$host$request_uri;\n}`
+    },
+    {
+      platform: "Apache",
+      code: `RewriteEngine On\nRewriteCond %{HTTPS} off\nRewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]`
+    }
+  ],
+  "Weak Content-Security-Policy (CSP)": [
+    {
+      platform: "Nginx",
+      code: `add_header Content-Security-Policy "default-src 'self'; script-src 'self'; object-src 'none';" always;`
+    }
+  ],
+  "Verbose Server Banner": [
+    {
+      platform: "Nginx",
+      code: `server_tokens off;`
+    },
+    {
+      platform: "Apache",
+      code: `ServerTokens Prod\nServerSignature Off`
     }
   ]
 };
