@@ -207,7 +207,7 @@ const getTranslation = (finding) => {
   return {
     name: technicalName,
     problem: finding.description || "A recommended security configuration is missing or partially configured on your web server.",
-    why: "Resolving this configuration aligns your site with industry baseline security standards.",
+    why: finding.impact && finding.impact !== "N/A" ? finding.impact : "Resolving this configuration aligns your site with industry baseline security standards.",
     category: "Website Trust"
   };
 };

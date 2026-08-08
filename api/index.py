@@ -476,7 +476,8 @@ class ScannerModule(ABC):
         owasp: str = "N/A",
         compliance: Optional[dict] = None,
         category: str = "information_exposure",
-        cvss: Optional[float] = None
+        cvss: Optional[float] = None,
+        impact: Optional[str] = None
     ) -> dict:
         if compliance is None:
             compliance = COMPLIANCE_MAP.get(name, {
@@ -484,10 +485,11 @@ class ScannerModule(ABC):
                 "iso27001": "A.8.20 (Network Security)"
             })
 
-        impact = IMPACT_MAP.get(
-            name,
-            "Potential exposure of sensitive information or risk of unauthorized actions."
-        )
+        if impact is None:
+            impact = IMPACT_MAP.get(
+                name,
+                "Potential exposure of sensitive information or risk of unauthorized actions."
+            )
         if severity == "Passed":
             impact = "N/A"
 
