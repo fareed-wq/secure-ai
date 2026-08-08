@@ -251,8 +251,14 @@ const SimpleReport = ({ reportData }) => {
   const topPriorities = issues.slice(0, 5); // Max 5 items
   const score = reportData?.score ?? 0;
   
+  // Check if this is a WAF-blocked scan (only 1 finding and it's the WAF finding)
+  const isWafBlocked = findings.length === 1 && findings[0]?.name?.includes('WAF');
+
   let healthSummary = "";
-  if (issues.length === 0 || score === 100) {
+  if (reportData?.executive_summary && isWafBlocked) {
+    // Use backend-provided summary for WAF-blocked or limited scans
+    healthSummary = reportData.executive_summary;
+  } else if (issues.length === 0 || score === 100) {
     healthSummary = "Your website meets all baseline security best practices with zero open issues or vulnerabilities detected. Outstanding security posture!";
   } else if (score >= 80) {
     healthSummary = "Your website is well-secured overall. Addressing the few minor recommendations below will further harden your posture.";
