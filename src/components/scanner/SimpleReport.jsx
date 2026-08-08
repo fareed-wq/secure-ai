@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check } from 'lucide-react';
+import { RemediationSnippetBox } from './RemediationSnippetBox';
 
 // --- TRANSLATION LAYER ---
 // Maps technical backend findings to plain-English business language
@@ -341,6 +342,10 @@ const SimpleReport = ({ reportData }) => {
                       <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.problem}</span>
                       <span className="text-lg font-bold text-slate-100 block mb-1">Why it matters:</span>
                       <span className="text-lg text-slate-300 leading-relaxed block">{trans.why}</span>
+                    </div>
+
+                    <div className="mt-6 w-full max-w-2xl">
+                      <RemediationSnippetBox findingName={issue.name} />
                     </div>
                   </div>
 

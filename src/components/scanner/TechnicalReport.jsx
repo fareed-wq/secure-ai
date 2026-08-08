@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Terminal, Clock, Server, FileCode, CheckCircle, AlertTriangle, Info, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, Layers, Check, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
+import { RemediationSnippetBox } from './RemediationSnippetBox';
 
 
 const TechnicalReport = ({ reportData }) => {
@@ -312,42 +313,7 @@ const TechnicalReport = ({ reportData }) => {
                                           </div>
                                         )}
 
-                                        {/* Tabbed Code Snippets */}
-                                        {finding.remediation_snippets && Object.keys(finding.remediation_snippets).length > 0 && (
-                                          <div className="mt-6">
-                                            <div className="mb-4">
-                                              <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2 mb-1">
-                                                <span>🛠️</span> QUICK FIX / REMEDIATION SNIPPET
-                                              </h4>
-                                              <p className="text-xs text-slate-400">
-                                                Select your web server or hosting platform below to copy the required configuration code:
-                                              </p>
-                                            </div>
-                                            <div className="border border-slate-800 rounded-xl overflow-hidden bg-[#0D1117]">
-                                            <div className="flex items-center bg-slate-900 border-b border-slate-800 overflow-x-auto">
-                                              {Object.keys(finding.remediation_snippets).map(platform => (
-                                                <button
-                                                  key={platform}
-                                                  onClick={(e) => { e.stopPropagation(); handleSnippetTabChange(idx, platform); }}
-                                                  className={`px-4 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors m-1 ${activeTab === platform ? 'bg-indigo-600 text-white font-medium rounded-md shadow-sm' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded-md'}`}
-                                                >
-                                                  {platform}
-                                                </button>
-                                              ))}
-                                              <div className="ml-auto pr-3">
-                                                <button onClick={() => copyToClipboard(finding.remediation_snippets[activeTab])} className="text-slate-500 hover:text-white text-xs flex items-center gap-1 transition-colors">
-                                                  <Copy className="w-3 h-3" /> Copy Code
-                                                </button>
-                                              </div>
-                                            </div>
-                                            <div className="bg-slate-950 border-t-0 border border-slate-800/80 rounded-b-lg p-4">
-                                              <pre className="text-emerald-400 font-mono text-xs overflow-x-auto whitespace-pre-wrap leading-relaxed">
-                                                {finding.remediation_snippets[activeTab]}
-                                              </pre>
-                                            </div>
-                                            </div>
-                                          </div>
-                                        )}
+                                        <RemediationSnippetBox findingName={finding.name} />
                                       </div>
 
                                       <div className="space-y-6">
