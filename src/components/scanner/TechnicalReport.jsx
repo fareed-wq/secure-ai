@@ -307,7 +307,7 @@ const TechnicalReport = ({ reportData }) => {
                                               </button>
                                             </div>
                                             <pre className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
-                                              {`[-] HTTP Response Header Audit\n[!] Target: ${finding.name} -> [NOT FOUND]\n\n${finding.evidence}`}
+                                              {finding.evidence}
                                             </pre>
                                           </div>
                                         )}
