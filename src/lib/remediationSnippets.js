@@ -239,5 +239,113 @@ export const REMEDIATION_SNIPPETS = {
       code: `# Create /.well-known/security.txt\nContact: mailto:security@yourdomain.com\nExpires: 2026-12-31T23:59:00.000Z\nPreferred-Languages: en`,
       notes: "Upload this file to the /.well-known/ folder at the root of your web server."
     }
+  ],
+  "robots.txt Missing": [
+    {
+      platform: "File Creation",
+      code: `# Create robots.txt at root\nUser-agent: *\nDisallow: /admin/\nSitemap: https://yourdomain.com/sitemap.xml`
+    }
+  ],
+  "sitemap.xml Missing": [
+    {
+      platform: "File Creation",
+      code: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>https://yourdomain.com/</loc>\n  </url>\n</urlset>`
+    }
+  ],
+
+  // 15. Advanced Cookies
+  "Cookie Missing Secure Flag": [
+    {
+      platform: "Nginx (Proxy)",
+      code: `proxy_cookie_path / "/; HTTPOnly; Secure";`
+    },
+    {
+      platform: "Node.js (Express)",
+      code: `res.cookie('session', 'value', { secure: true });`
+    },
+    {
+      platform: "PHP",
+      code: `session_set_cookie_params(['secure' => true]);`
+    }
+  ],
+  "Cookie Missing HttpOnly Flag": [
+    {
+      platform: "Nginx (Proxy)",
+      code: `proxy_cookie_path / "/; HTTPOnly; Secure";`
+    },
+    {
+      platform: "Node.js (Express)",
+      code: `res.cookie('session', 'value', { httpOnly: true });`
+    },
+    {
+      platform: "PHP",
+      code: `session_set_cookie_params(['httponly' => true]);`
+    }
+  ],
+  "Cookie Missing SameSite Attribute": [
+    {
+      platform: "Node.js (Express)",
+      code: `res.cookie('session', 'value', { sameSite: 'strict' });`
+    },
+    {
+      platform: "PHP",
+      code: `session_set_cookie_params(['samesite' => 'Strict']);`
+    }
+  ],
+
+  // 16. CORS Issues
+  "Wildcard CORS Policy (*)": [
+    {
+      platform: "Nginx",
+      code: `# Remove or specify origin instead of '*'\nadd_header Access-Control-Allow-Origin "https://trusted-domain.com" always;`
+    },
+    {
+      platform: "Apache",
+      code: `Header set Access-Control-Allow-Origin "https://trusted-domain.com"`
+    }
+  ],
+
+  // 17. Exposed Files & Paths
+  "Exposed .env File": [
+    {
+      platform: "Nginx",
+      code: `location ~ /\\.env {\n    deny all;\n    return 404;\n}`
+    },
+    {
+      platform: "Apache",
+      code: `<FilesMatch "^\\.env">\n    Require all denied\n</FilesMatch>`
+    }
+  ],
+  "Exposed .git Repository": [
+    {
+      platform: "Nginx",
+      code: `location ~ /\\.git {\n    deny all;\n    return 404;\n}`
+    },
+    {
+      platform: "Apache",
+      code: `<DirectoryMatch "^/.*/\\.git/">\n    Require all denied\n</DirectoryMatch>`
+    }
+  ],
+  "X-AspNet-Version Header Exposed": [
+    {
+      platform: "IIS / web.config",
+      code: `<httpRuntime enableVersionHeader="false" />`
+    }
+  ],
+
+  // 18. Additional DNS Records
+  "Missing CAA Record": [
+    {
+      platform: "DNS TXT Record",
+      code: `Name/Host: @\nType: CAA\nValue: 0 issue "letsencrypt.org"`,
+      notes: "Restricts which Certificate Authorities can issue certificates for your domain."
+    }
+  ],
+  "Missing MTA-STS Record": [
+    {
+      platform: "DNS TXT Record",
+      code: `Name/Host: _mta-sts\nType: TXT\nValue: v=STSv1; id=20240101000000Z;`,
+      notes: "Requires hosting an mta-sts.txt policy file as well."
+    }
   ]
 };
