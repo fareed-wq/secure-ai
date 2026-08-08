@@ -5,7 +5,7 @@ const SafetyComparison = () => {
   return (
     <div className="w-full mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
       <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-200 inline-flex items-center gap-3">
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-200 flex flex-wrap items-center justify-center gap-2 md:gap-3">
           <span className="text-3xl">🌟</span> Safe for Live Production Environments
         </h2>
         <p className="text-slate-400 mt-2 font-medium">100% zero-impact scanning. No slowdowns, no downtime, no risks.</p>
