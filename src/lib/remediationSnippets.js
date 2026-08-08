@@ -193,6 +193,36 @@ export const REMEDIATION_SNIPPETS = {
     }
   ],
 
+  // 11b. Additional Security Headers
+  "Missing X-Permitted-Cross-Domain-Policies": [
+    {
+      platform: "Nginx",
+      code: `add_header X-Permitted-Cross-Domain-Policies "none" always;`
+    },
+    {
+      platform: "Apache",
+      code: `Header always set X-Permitted-Cross-Domain-Policies "none"`
+    },
+    {
+      platform: "Vercel / Next.js",
+      code: `// next.config.js\n{ key: 'X-Permitted-Cross-Domain-Policies', value: 'none' }`
+    }
+  ],
+  "Missing X-DNS-Prefetch-Control": [
+    {
+      platform: "Nginx",
+      code: `add_header X-DNS-Prefetch-Control "off" always;`
+    },
+    {
+      platform: "Apache",
+      code: `Header always set X-DNS-Prefetch-Control "off"`
+    },
+    {
+      platform: "Vercel / Next.js",
+      code: `// next.config.js\n{ key: 'X-DNS-Prefetch-Control', value: 'off' }`
+    }
+  ],
+
   // 12. SPF & DMARC Records
   "Missing SPF Record": [
     {
