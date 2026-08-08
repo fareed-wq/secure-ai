@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Terminal, Clock, Server, FileCode, CheckCircle, AlertTriangle, Info, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, Layers, Check, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
 
@@ -41,6 +41,21 @@ const TechnicalReport = ({ reportData }) => {
 
   return (
     <div className="space-y-8" id="report-content">
+      <style>{`
+        @media print {
+          body, html, #report-content { background: white !important; color: #0f172a !important; }
+          * { border-color: #e2e8f0 !important; }
+          .bg-\\[\\#0D1117\\], .bg-slate-900, .bg-slate-900\\/50, .bg-slate-800 { background: white !important; box-shadow: none !important; }
+          .text-white, .text-slate-200, .text-slate-300 { color: #0f172a !important; }
+          .text-slate-400, .text-slate-500 { color: #475569 !important; }
+          .shadow-2xl, .shadow-xl, .shadow-inner { box-shadow: none !important; }
+          .text-indigo-400 { color: #4338ca !important; }
+          .text-emerald-400 { color: #059669 !important; }
+          .text-red-500, .text-red-400 { color: #dc2626 !important; }
+          .text-orange-500, .text-orange-400 { color: #ea580c !important; }
+          .text-amber-500, .text-amber-400 { color: #d97706 !important; }
+        }
+      `}</style>
       
       {/* 1. Technical Metadata Table HUD */}
       <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden">
@@ -197,9 +212,9 @@ const TechnicalReport = ({ reportData }) => {
       </div>
 
       {/* 4. Main Content Area */}
-      <AnimatePresence mode="wait">
+      <div>
         {activeView === 'vulnerabilities' && (
-          <motion.div key="vulnerabilities" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="w-full max-w-full overflow-hidden">
+          <div className="w-full max-w-full overflow-hidden">
             <div className="report-section bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
               <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
                 <FileCode className="w-5 h-5 text-indigo-400" />
@@ -257,15 +272,11 @@ const TechnicalReport = ({ reportData }) => {
                             </tr>
                           )}
                           
-                          <AnimatePresence>
-                            {expandedRow === idx && (
+                          {expandedRow === idx && (
                               <tr className="print:hidden">
                                 <td colSpan={5} className="p-0 border-b-2 border-indigo-500/50">
-                                  <motion.div 
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="bg-[#0a0d12] overflow-hidden"
+                                  <div 
+                                    className="bg-[#0a0d12] overflow-hidden transition-all duration-300"
                                   >
                                     <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
                                       
@@ -348,22 +359,21 @@ const TechnicalReport = ({ reportData }) => {
                                       </div>
 
                                     </div>
-                                  </motion.div>
+                                  </div>
                                 </td>
                               </tr>
                             )}
-                          </AnimatePresence>
                         </tbody>
                       );
                     })}
                   </table>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {activeView === 'compliance' && reportData?.technical_compliance && (
-          <motion.div key="compliance" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="w-full max-w-full overflow-hidden">
+          <div className="w-full max-w-full overflow-hidden">
             <div className="report-section grid grid-cols-1 gap-6">
             <div className="bg-[#0D1117] border border-slate-800 rounded-xl p-6 shadow-2xl">
               <div className="flex items-center gap-3 mb-6">
@@ -456,9 +466,9 @@ const TechnicalReport = ({ reportData }) => {
               </div>
             </div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </div>
 
       {/* 5. Final Recommendation */}
       <div className="text-center mt-12 py-12 border-t border-slate-800">
