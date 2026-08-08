@@ -1700,21 +1700,32 @@ class ScriptTagParser(HTMLParser):
 
 class JSBundleSecretsModule(ScannerModule):
     module_name = "JSBundleSecrets"
-    description = "Inspects primary JavaScript bundles for exposed API keys and secrets."
+    description = "Lightweight surface probe inspecting primary JavaScript bundles for exposed keys."
 
-    # High-confidence regex patterns for client-side leaks
-    SECRET_PATTERNS = {
+    # Categorized patterns: Private (High) vs Public Client Keys (Informational)
+    PRIVATE_SECRET_PATTERNS = {
         "AWS Access Key ID": re.compile(r'\b(AKIA[0-9A-Z]{16})\b'),
-        "Stripe Live API Key": re.compile(r'\b(sk_live_[0-9a-zA-Z]{24,34})\b'),
-        "Google / Firebase API Key": re.compile(r'\b(AIzaSy[0-9A-Za-z\-_]{35})\b'),
+        "Stripe Live Secret Key": re.compile(r'\b(sk_live_[0-9a-zA-Z]{24,34})\b'),
         "Slack Incoming Webhook": re.compile(r'https://hooks\.slack\.com/services/T[a-zA-Z0-9_]+/B[a-zA-Z0-9_]+/[a-zA-Z0-9_]+'),
-        "OpenAI API Key": re.compile(r'\b(sk-(?:proj-)?[a-zA-Z0-9\-_]{32,60})\b'),
+        "OpenAI Secret Key": re.compile(r'\b(sk-(?:proj-)?[a-zA-Z0-9\-_]{32,60})\b'),
         "GitHub Access Token": re.compile(r'\b(ghp_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59})\b'),
         "Private RSA/SSH Key": re.compile(r'-----BEGIN (?:RSA|EC|DSA|OPENSSH) PRIVATE KEY-----')
     }
 
+    PUBLIC_KEY_PATTERNS = {
+        "Google / Firebase Client API Key": re.compile(r'\b(AIzaSy[0-9A-Za-z\-_]{35})\b')
+    }
+
+    # Known dummy / test key strings to filter out
+    IGNORE_KEYWORDS = ["EXAMPLE", "TEST", "DUMMY", "SAMPLE", "MOCK", "123456", "000000", "AKIAIOSFODNN7EXAMPLE"]
+
     MAX_JS_FILES = 3
     MAX_FILE_SIZE_BYTES = 1024 * 1024  # 1 MB Limit per script
+
+    def _is_test_key(self, match_str: str) -> bool:
+        """Returns True if the string looks like an example or mock key."""
+        upper_match = match_str.upper()
+        return any(keyword in upper_match for keyword in self.IGNORE_KEYWORDS)
 
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
@@ -1725,19 +1736,18 @@ class JSBundleSecretsModule(ScannerModule):
 
             # 1. Parse HTML to find <script src="..."> tags
             parser = ScriptTagParser()
-            parser.feed(resp.text[:500000])  # First 500KB of HTML
+            parser.feed(resp.text[:500000])
 
             if not parser.script_srcs:
                 return findings
 
-            # 2. Filter & prioritize main JS bundles
+            # 2. Resolve absolute URLs & prioritize primary bundles
             absolute_urls = []
             for src in parser.script_srcs:
                 full_url = urljoin(url, src)
                 if full_url not in absolute_urls:
                     absolute_urls.append(full_url)
 
-            # Sort priority: main/app/index/bundle first
             def bundle_priority(js_url: str) -> int:
                 lower = js_url.lower()
                 if any(k in lower for k in ["main", "app", "index", "bundle", "page"]):
@@ -1745,7 +1755,9 @@ class JSBundleSecretsModule(ScannerModule):
                 return 1
 
             sorted_urls = sorted(absolute_urls, key=bundle_priority)[:self.MAX_JS_FILES]
-            detected_secrets = []
+
+            high_severity_secrets = []
+            info_severity_keys = []
 
             # 3. Stream & inspect top JS bundles
             for js_url in sorted_urls:
@@ -1763,36 +1775,57 @@ class JSBundleSecretsModule(ScannerModule):
                             break
 
                     js_text = "".join(content_chunks)
+                    filename = js_url.split('/')[-1].split('?')[0] or "bundle.js"
 
-                    # Scan script text against patterns
-                    for secret_name, pattern in self.SECRET_PATTERNS.items():
-                        match = pattern.search(js_text)
-                        if match:
+                    # Check Private / Sensitive Secrets (High Severity)
+                    for secret_name, pattern in self.PRIVATE_SECRET_PATTERNS.items():
+                        for match in pattern.finditer(js_text):
                             raw_match = match.group(0)
-                            # Safe truncation/redaction for evidence logging
+                            if self._is_test_key(raw_match):
+                                continue
                             redacted = raw_match[:4] + "..." + raw_match[-4:] if len(raw_match) > 8 else "***"
-                            filename = js_url.split('/')[-1].split('?')[0] or "bundle.js"
-                            detected_secrets.append(f"{secret_name} in {filename} ({redacted})")
+                            high_severity_secrets.append(f"{secret_name} in {filename} ({redacted})")
+
+                    # Check Public Client Keys (Informational Severity)
+                    for key_name, pattern in self.PUBLIC_KEY_PATTERNS.items():
+                        for match in pattern.finditer(js_text):
+                            raw_match = match.group(0)
+                            if self._is_test_key(raw_match):
+                                continue
+                            redacted = raw_match[:4] + "..." + raw_match[-4:] if len(raw_match) > 8 else "***"
+                            info_severity_keys.append(f"{key_name} in {filename} ({redacted})")
 
                 except Exception:
                     continue
 
-            # 4. Generate Finding
-            if detected_secrets:
+            # 4. Generate Findings with Appropriate Severities
+            if high_severity_secrets:
                 findings.append(self.make_finding(
-                    "Exposed API Key / Secret in JS Bundle",
+                    "Exposed Secret in JS Bundle",
                     "High",
-                    "Front-end JavaScript bundles contain hardcoded sensitive API keys or credentials.",
-                    f"Detected: {'; '.join(detected_secrets[:3])}",
-                    remediation="Move API keys to backend environment variables and re-issue compromised credentials immediately.",
+                    "Lightweight JS surface probe detected hardcoded private API keys or credentials in front-end JavaScript bundles.",
+                    f"Detected: {'; '.join(high_severity_secrets[:3])}",
+                    remediation="Move secrets to backend environment variables and re-issue compromised credentials immediately.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
                 ))
-            else:
+
+            if info_severity_keys:
+                findings.append(self.make_finding(
+                    "Client-Side API Key Detected",
+                    "Informational",
+                    "Lightweight JS surface probe detected public client-side keys (e.g., Firebase/Google Maps). Verify domain referrer restrictions are active on cloud console.",
+                    f"Detected: {'; '.join(info_severity_keys[:3])}",
+                    remediation="Ensure public API keys have HTTP Referrer restrictions configured in Google Cloud Console / Firebase.",
+                    owasp="A05: Security Misconfiguration",
+                    category="information_exposure"
+                ))
+
+            if not high_severity_secrets and not info_severity_keys:
                 findings.append(self.make_finding(
                     "No Secrets Found in Main JS Bundles",
                     "Passed",
-                    "Analyzed primary front-end JavaScript bundles; no hardcoded credentials or API keys were detected.",
+                    "Lightweight JS surface probe completed on primary bundles; no exposed credentials or unflagged keys detected.",
                     f"Scanned {len(sorted_urls)} primary bundle(s)",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
