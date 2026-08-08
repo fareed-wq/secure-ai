@@ -13,6 +13,8 @@ import TechnicalReport from '../components/scanner/TechnicalReport';
 import AuthModal from '../components/scanner/AuthModal';
 import PdfComingSoonModal from '../components/scanner/PdfComingSoonModal';
 import BottomTicker from '../components/scanner/BottomTicker';
+import SafetyComparison from '../components/scanner/SafetyComparison';
+import api from '../utils/api';
 
 // Force relative paths in production so it hits the Vercel Serverless functions directly
 export const API_BASE_URL = 
@@ -241,6 +243,10 @@ function Scanner() {
 
               <div className="flex justify-center text-sm text-slate-400 mt-8 font-medium">
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
+              </div>
+              
+              <div className="w-full mt-12 pb-16">
+                <SafetyComparison />
               </div>
             </motion.div>
           )}
