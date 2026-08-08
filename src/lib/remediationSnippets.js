@@ -94,7 +94,7 @@ export const REMEDIATION_SNIPPETS = {
   ],
 
   // 6. Missing Content-Security-Policy (CSP)
-  "Missing Content-Security-Policy Header": [
+  "Missing Content-Security-Policy (CSP)": [
     {
       platform: "Nginx",
       code: `add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:;" always;`
@@ -110,7 +110,7 @@ export const REMEDIATION_SNIPPETS = {
   ],
 
   // 7. Missing HSTS
-  "Missing HSTS Header": [
+  "Missing Strict-Transport-Security (HSTS)": [
     {
       platform: "Nginx",
       code: `add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;`
@@ -130,7 +130,7 @@ export const REMEDIATION_SNIPPETS = {
   ],
 
   // 8. Missing X-Frame-Options
-  "Missing X-Frame-Options Header": [
+  "Missing X-Frame-Options": [
     {
       platform: "Nginx",
       code: `add_header X-Frame-Options "SAMEORIGIN" always;`
