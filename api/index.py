@@ -1685,6 +1685,125 @@ class TLSCipherStrengthModule(ScannerModule):
         return findings
 
 
+class ScriptTagParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.script_srcs = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() == "script":
+            attr_dict = {k.lower(): v for k, v in attrs if k and v}
+            src = attr_dict.get("src")
+            if src:
+                self.script_srcs.append(src.strip())
+
+
+class JSBundleSecretsModule(ScannerModule):
+    module_name = "JSBundleSecrets"
+    description = "Inspects primary JavaScript bundles for exposed API keys and secrets."
+
+    # High-confidence regex patterns for client-side leaks
+    SECRET_PATTERNS = {
+        "AWS Access Key ID": re.compile(r'\b(AKIA[0-9A-Z]{16})\b'),
+        "Stripe Live API Key": re.compile(r'\b(sk_live_[0-9a-zA-Z]{24,34})\b'),
+        "Google / Firebase API Key": re.compile(r'\b(AIzaSy[0-9A-Za-z\-_]{35})\b'),
+        "Slack Incoming Webhook": re.compile(r'https://hooks\.slack\.com/services/T[a-zA-Z0-9_]+/B[a-zA-Z0-9_]+/[a-zA-Z0-9_]+'),
+        "OpenAI API Key": re.compile(r'\b(sk-(?:proj-)?[a-zA-Z0-9\-_]{32,60})\b'),
+        "GitHub Access Token": re.compile(r'\b(ghp_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9]{22}_[a-zA-Z0-9]{59})\b'),
+        "Private RSA/SSH Key": re.compile(r'-----BEGIN (?:RSA|EC|DSA|OPENSSH) PRIVATE KEY-----')
+    }
+
+    MAX_JS_FILES = 3
+    MAX_FILE_SIZE_BYTES = 1024 * 1024  # 1 MB Limit per script
+
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
+        findings = []
+        try:
+            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            if not resp or not resp.text:
+                return findings
+
+            # 1. Parse HTML to find <script src="..."> tags
+            parser = ScriptTagParser()
+            parser.feed(resp.text[:500000])  # First 500KB of HTML
+
+            if not parser.script_srcs:
+                return findings
+
+            # 2. Filter & prioritize main JS bundles
+            absolute_urls = []
+            for src in parser.script_srcs:
+                full_url = urljoin(url, src)
+                if full_url not in absolute_urls:
+                    absolute_urls.append(full_url)
+
+            # Sort priority: main/app/index/bundle first
+            def bundle_priority(js_url: str) -> int:
+                lower = js_url.lower()
+                if any(k in lower for k in ["main", "app", "index", "bundle", "page"]):
+                    return 0
+                return 1
+
+            sorted_urls = sorted(absolute_urls, key=bundle_priority)[:self.MAX_JS_FILES]
+            detected_secrets = []
+
+            # 3. Stream & inspect top JS bundles
+            for js_url in sorted_urls:
+                try:
+                    js_resp = session.get(js_url, timeout=3.0, stream=True, headers={"User-Agent": Config.USER_AGENT})
+                    if js_resp.status_code != 200:
+                        continue
+
+                    content_chunks = []
+                    downloaded_bytes = 0
+                    for chunk in js_resp.iter_content(chunk_size=8192):
+                        downloaded_bytes += len(chunk)
+                        content_chunks.append(chunk.decode('utf-8', errors='ignore'))
+                        if downloaded_bytes >= self.MAX_FILE_SIZE_BYTES:
+                            break
+
+                    js_text = "".join(content_chunks)
+
+                    # Scan script text against patterns
+                    for secret_name, pattern in self.SECRET_PATTERNS.items():
+                        match = pattern.search(js_text)
+                        if match:
+                            raw_match = match.group(0)
+                            # Safe truncation/redaction for evidence logging
+                            redacted = raw_match[:4] + "..." + raw_match[-4:] if len(raw_match) > 8 else "***"
+                            filename = js_url.split('/')[-1].split('?')[0] or "bundle.js"
+                            detected_secrets.append(f"{secret_name} in {filename} ({redacted})")
+
+                except Exception:
+                    continue
+
+            # 4. Generate Finding
+            if detected_secrets:
+                findings.append(self.make_finding(
+                    "Exposed API Key / Secret in JS Bundle",
+                    "High",
+                    "Front-end JavaScript bundles contain hardcoded sensitive API keys or credentials.",
+                    f"Detected: {'; '.join(detected_secrets[:3])}",
+                    remediation="Move API keys to backend environment variables and re-issue compromised credentials immediately.",
+                    owasp="A05: Security Misconfiguration",
+                    category="information_exposure"
+                ))
+            else:
+                findings.append(self.make_finding(
+                    "No Secrets Found in Main JS Bundles",
+                    "Passed",
+                    "Analyzed primary front-end JavaScript bundles; no hardcoded credentials or API keys were detected.",
+                    f"Scanned {len(sorted_urls)} primary bundle(s)",
+                    owasp="A05: Security Misconfiguration",
+                    category="information_exposure"
+                ))
+
+        except Exception as e:
+            logger.error(f"JSBundleSecretsModule error: {e}")
+
+        return findings
+
+
 # Engine Registry
 REGISTERED_MODULES = [
     ExposedFilesModule(),
@@ -1702,10 +1821,11 @@ REGISTERED_MODULES = [
     EnhancedTLSModule(),
     SecurityHeadersModule(),
     AdvancedSecurityHeadersModule(),
-    # --- Category A New Additions ---
     MixedContentModule(),
     SubdomainTakeoverModule(),
-    TLSCipherStrengthModule()
+    TLSCipherStrengthModule(),
+    # --- Category B Addition ---
+    JSBundleSecretsModule()
 ]
 
 
