@@ -85,7 +85,7 @@ const SafetyComparison = () => {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-slate-400">Production Safe</span>
-                <span className="text-sm text-slate-500">High Downtime Risk</span>
+                <span className="text-sm text-slate-400">High Downtime Risk</span>
               </div>
             </li>
             <li className="flex items-start gap-3">
@@ -94,7 +94,7 @@ const SafetyComparison = () => {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-slate-400">Database Integrity</span>
-                <span className="text-sm text-slate-500">Risk of Data Corruption (SQLi)</span>
+                <span className="text-sm text-slate-400">Risk of Data Corruption (SQLi)</span>
               </div>
             </li>
             <li className="flex items-start gap-3">
@@ -103,7 +103,7 @@ const SafetyComparison = () => {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-slate-400">WAF & Firewall</span>
-                <span className="text-sm text-slate-500">Triggers IP Bans / Alerts</span>
+                <span className="text-sm text-slate-400">Triggers IP Bans / Alerts</span>
               </div>
             </li>
             <li className="flex items-start gap-3">
@@ -112,7 +112,7 @@ const SafetyComparison = () => {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-slate-400">Audit Speed</span>
-                <span className="text-sm text-slate-500">⏳ Hours to Days</span>
+                <span className="text-sm text-slate-400">⏳ Hours to Days</span>
               </div>
             </li>
           </ul>
