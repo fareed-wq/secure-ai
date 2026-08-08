@@ -214,7 +214,7 @@ const TechnicalReport = ({ reportData }) => {
       {/* 4. Main Content Area */}
       <AnimatePresence mode="wait">
         {activeView === 'vulnerabilities' && (
-          <motion.div key="vulnerabilities" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+          <motion.div key="vulnerabilities" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="w-full max-w-full overflow-hidden">
             <div className="report-section bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
               <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
                 <FileCode className="w-5 h-5 text-indigo-400" />
@@ -378,7 +378,7 @@ const TechnicalReport = ({ reportData }) => {
         )}
 
         {activeView === 'compliance' && reportData?.technical_compliance && (
-          <motion.div key="compliance" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
+          <motion.div key="compliance" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="w-full max-w-full overflow-hidden">
             <div className="report-section grid grid-cols-1 gap-6">
             <div className="bg-[#0D1117] border border-slate-800 rounded-xl p-6 shadow-2xl">
               <div className="flex items-center gap-3 mb-6">
