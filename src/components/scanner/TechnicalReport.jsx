@@ -318,16 +318,7 @@ const TechnicalReport = ({ reportData }) => {
 
                                       <div className="space-y-6">
                                         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 h-full">
-                                          {finding.remediation && finding.remediation !== "N/A" ? (
-                                            <>
-                                              <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                                <Shield className="w-4 h-4" /> Remediation Directive
-                                              </div>
-                                              <p className="text-slate-300 text-sm leading-relaxed mb-4">
-                                                {finding.remediation}
-                                              </p>
-                                            </>
-                                          ) : (
+                                          {finding.severity === 'Passed' ? (
                                             <div className="flex flex-col items-center justify-center p-6 text-center rounded-lg bg-emerald-950/20 border border-emerald-800/30 my-auto">
                                               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 mb-2">
                                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -341,7 +332,16 @@ const TechnicalReport = ({ reportData }) => {
                                                 This configuration complies with security standards. No action required.
                                               </p>
                                             </div>
-                                          )}
+                                          ) : finding.remediation && finding.remediation !== "N/A" ? (
+                                            <>
+                                              <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                <Shield className="w-4 h-4" /> Remediation Directive
+                                              </div>
+                                              <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                                                {finding.remediation}
+                                              </p>
+                                            </>
+                                          ) : null}
                                           
                                           <div className="space-y-3 mt-auto pt-4 border-t border-slate-800/80">
                                             <div className="flex justify-between items-center text-xs">
