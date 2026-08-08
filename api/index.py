@@ -448,6 +448,15 @@ class ScannerModule(ABC):
     @abstractmethod
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         pass
+    def is_spa_fallback(self, resp, homepage_len: int) -> bool:
+        if not resp or not resp.text or homepage_len <= 0:
+            return False
+        return abs(len(resp.text) - homepage_len) < 100
+
+    def get_header_safe(self, response, header_name: str, default: str = "") -> str:
+        if not response or not hasattr(response, "headers"):
+            return default
+        return response.headers.get(header_name, response.headers.get(header_name.lower(), default))
 
     def make_finding(
         self,
@@ -503,29 +512,36 @@ class ExposedFilesModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         scheme = "https" if url.startswith("https") else "http"
+        base_url = f"{scheme}://{hostname}/"
+        homepage_len = 0
+        try:
+            hp_resp = safe_request("GET", base_url, session=session, timeout=3.0)
+            if hp_resp and hp_resp.text:
+                homepage_len = len(hp_resp.text)
+        except Exception:
+            pass
 
         try:
             env_url = f"{scheme}://{hostname}/.env"
             resp = safe_request("GET", env_url, session=session, timeout=4.0)
-            if resp and resp.status_code == 200 and any(
-                k in resp.text.upper() for k in ["DB_", "SECRET", "PASSWORD", "APP_KEY", "API_KEY"]
-            ):
-                findings.append(self.make_finding(
-                    "Exposed .env Configuration File",
-                    "Critical",
-                    "A .env file containing sensitive credentials or API keys is publicly accessible.",
-                    env_url,
-                    remediation="Restrict web server access to dotfiles or move .env outside the web root immediately.",
-                    owasp="A05: Security Misconfiguration",
-                    category="information_exposure"
-                ))
+            if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
+                if any(k in resp.text.upper() for k in ["DB_", "SECRET", "PASSWORD", "APP_KEY", "API_KEY"]):
+                    findings.append(self.make_finding(
+                        "Exposed .env Configuration File",
+                        "Critical",
+                        "A .env file containing sensitive credentials or API keys is publicly accessible.",
+                        env_url,
+                        remediation="Restrict web server access to dotfiles or move .env outside the web root immediately.",
+                        owasp="A05: Security Misconfiguration",
+                        category="information_exposure"
+                    ))
         except Exception:
             pass
 
         try:
             git_url = f"{scheme}://{hostname}/.git/HEAD"
             resp = safe_request("GET", git_url, session=session, timeout=4.0)
-            if resp and resp.status_code == 200 and "ref: refs/" in resp.text:
+            if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len) and "ref: refs/" in resp.text:
                 findings.append(self.make_finding(
                     "Exposed .git Repository",
                     "High",
@@ -639,16 +655,16 @@ class DNSEmailSecurityModule(ScannerModule):
                             ))
                         break
 
-            if not spf_found:
-                findings.append(self.make_finding(
-                    "Missing SPF Record",
-                    "Medium",
-                    "No SPF TXT record found. The domain is exposed to email spoofing and phishing attacks.",
-                    "TXT record absent.",
-                    remediation="Publish a valid SPF TXT record (e.g., 'v=spf1 include:_spf.google.com ~all').",
-                    owasp="A05: Security Misconfiguration",
-                    category="domain_email"
-                ))
+                if not spf_found:
+                    findings.append(self.make_finding(
+                        "Missing SPF Record",
+                        "Medium",
+                        "No SPF TXT record found. The domain is exposed to email spoofing and phishing attacks.",
+                        "TXT record absent.",
+                        remediation="Publish a valid SPF TXT record (e.g., 'v=spf1 include:_spf.google.com ~all').",
+                        owasp="A05: Security Misconfiguration",
+                        category="domain_email"
+                    ))
 
             dmarc_url = f"https://dns.google/resolve?name=_dmarc.{domain}&type=TXT"
             d_resp = safe_request("GET", dmarc_url, session=session, timeout=4.0)
@@ -681,16 +697,16 @@ class DNSEmailSecurityModule(ScannerModule):
                             ))
                         break
 
-            if not dmarc_found:
-                findings.append(self.make_finding(
-                    "Missing DMARC Policy",
-                    "Medium",
-                    f"No DMARC record found at _dmarc.{domain}. Increases domain impersonation risk.",
-                    "_dmarc TXT record absent.",
-                    remediation=f"Publish a DMARC TXT record at _dmarc.{domain} with a valid enforcement policy.",
-                    owasp="A05: Security Misconfiguration",
-                    category="domain_email"
-                ))
+                if not dmarc_found:
+                    findings.append(self.make_finding(
+                        "Missing DMARC Policy",
+                        "Medium",
+                        f"No DMARC record found at _dmarc.{domain}. Increases domain impersonation risk.",
+                        "_dmarc TXT record absent.",
+                        remediation=f"Publish a DMARC TXT record at _dmarc.{domain} with a valid enforcement policy.",
+                        owasp="A05: Security Misconfiguration",
+                        category="domain_email"
+                    ))
         except Exception as e:
             logger.error(f"DNSEmailSecurityModule failed: {e}")
 
@@ -712,15 +728,15 @@ class DNSEmailSecurityModule(ScannerModule):
                             category="domain_email"
                         ))
                         break
-            if not mta_found:
-                findings.append(self.make_finding(
-                    "Missing MTA-STS Record",
-                    "Informational",
-                    "No MTA-STS DNS record found.",
-                    "",
-                    owasp="A05: Security Misconfiguration",
-                    category="domain_email"
-                ))
+                if not mta_found:
+                    findings.append(self.make_finding(
+                        "Missing MTA-STS Record",
+                        "Informational",
+                        "No MTA-STS DNS record found.",
+                        "",
+                        owasp="A05: Security Misconfiguration",
+                        category="domain_email"
+                    ))
         except Exception:
             pass
 
@@ -754,8 +770,7 @@ class TechFingerprintModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            headers = get_all_headers(resp)
-            server = headers.get("Server")
+            server = self.get_header_safe(resp, "Server")
             if server:
                 findings.append(self.make_finding(
                     "Server Header Exposed",
@@ -766,7 +781,7 @@ class TechFingerprintModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
                 ))
-            x_powered = headers.get("X-Powered-By")
+            x_powered = self.get_header_safe(resp, "X-Powered-By")
             if x_powered:
                 findings.append(self.make_finding(
                     "X-Powered-By Header Exposed",
@@ -790,8 +805,7 @@ class InformationDisclosureModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            headers = get_all_headers(resp)
-            server = headers.get("Server", "")
+            server = self.get_header_safe(resp, "Server")
             if any(char.isdigit() for char in server) and ("/" in server or "-" in server):
                 findings.append(self.make_finding(
                     "Verbose Server Banner",
@@ -814,9 +828,17 @@ class RobotsTxtModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            target = f"https://{hostname}/robots.txt" if url.startswith("https") else f"http://{hostname}/robots.txt"
+            scheme = "https" if url.startswith("https") else "http"
+            base_url = f"{scheme}://{hostname}/"
+            homepage_len = 0
+            hp_resp = safe_request("GET", base_url, session=session, timeout=3.0)
+            if hp_resp and hp_resp.text:
+                homepage_len = len(hp_resp.text)
+
+            target = f"{scheme}://{hostname}/robots.txt"
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
-            if resp and resp.status_code == 200 and "user-agent" in resp.text.lower():
+            content_type = self.get_header_safe(resp, "Content-Type", "").lower()
+            if resp and resp.status_code == 200 and "text/plain" in content_type and "user-agent" in resp.text.lower() and not self.is_spa_fallback(resp, homepage_len):
                 lines = len(resp.text.splitlines())
                 findings.append(self.make_finding(
                     "robots.txt Found",
@@ -847,9 +869,17 @@ class SitemapModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            target = f"https://{hostname}/sitemap.xml" if url.startswith("https") else f"http://{hostname}/sitemap.xml"
+            scheme = "https" if url.startswith("https") else "http"
+            base_url = f"{scheme}://{hostname}/"
+            homepage_len = 0
+            hp_resp = safe_request("GET", base_url, session=session, timeout=3.0)
+            if hp_resp and hp_resp.text:
+                homepage_len = len(hp_resp.text)
+
+            target = f"{scheme}://{hostname}/sitemap.xml"
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
-            if resp and resp.status_code == 200 and ("<urlset" in resp.text or "<sitemapindex" in resp.text):
+            content_type = self.get_header_safe(resp, "Content-Type", "").lower()
+            if resp and resp.status_code == 200 and ("xml" in content_type or "text" in content_type) and ("<urlset" in resp.text or "<sitemapindex" in resp.text) and not self.is_spa_fallback(resp, homepage_len):
                 findings.append(self.make_finding(
                     "sitemap.xml Found",
                     "Informational",
@@ -879,13 +909,17 @@ class SecurityTxtModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            target = (
-                f"https://{hostname}/.well-known/security.txt"
-                if url.startswith("https")
-                else f"http://{hostname}/.well-known/security.txt"
-            )
+            scheme = "https" if url.startswith("https") else "http"
+            base_url = f"{scheme}://{hostname}/"
+            homepage_len = 0
+            hp_resp = safe_request("GET", base_url, session=session, timeout=3.0)
+            if hp_resp and hp_resp.text:
+                homepage_len = len(hp_resp.text)
+
+            target = f"{scheme}://{hostname}/.well-known/security.txt"
             resp = safe_request("GET", target, session=session, timeout=Config.REQUEST_TIMEOUT)
-            if resp and resp.status_code == 200 and "contact" in resp.text.lower():
+            content_type = self.get_header_safe(resp, "Content-Type", "").lower()
+            if resp and resp.status_code == 200 and "text/plain" in content_type and "contact" in resp.text.lower() and not self.is_spa_fallback(resp, homepage_len):
                 findings.append(self.make_finding(
                     "security.txt Found",
                     "Passed",
@@ -917,8 +951,7 @@ class CORSModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            headers = get_all_headers(resp)
-            acao = headers.get("Access-Control-Allow-Origin")
+            acao = self.get_header_safe(resp, "Access-Control-Allow-Origin")
             if acao == "*":
                 findings.append(self.make_finding(
                     "Wildcard CORS Policy",
@@ -959,9 +992,9 @@ class AdvancedCookieModule(ScannerModule):
                 if hasattr(resp, "raw") and hasattr(resp.raw, "headers")
                 else []
             )
-            headers = get_all_headers(resp)
-            if not raw_cookies and "Set-Cookie" in headers:
-                raw_cookies = [headers["Set-Cookie"]]
+            set_cookie_header = self.get_header_safe(resp, "Set-Cookie")
+            if not raw_cookies and set_cookie_header:
+                raw_cookies = [set_cookie_header]
 
             seen_cookies = set()
             missing_httponly = []
@@ -1218,7 +1251,6 @@ class SecurityHeadersModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            headers = get_all_headers(resp)
         except requests.exceptions.Timeout as e:
             findings.append(self.make_finding(
                 "HTTP Request Failed (Timeout)",
@@ -1247,7 +1279,8 @@ class SecurityHeadersModule(ScannerModule):
             ))
             return findings
 
-        if "Strict-Transport-Security" not in headers:
+        hsts = self.get_header_safe(resp, "Strict-Transport-Security")
+        if not hsts:
             findings.append(self.make_finding(
                 "Missing Strict-Transport-Security (HSTS)",
                 "High",
@@ -1262,12 +1295,13 @@ class SecurityHeadersModule(ScannerModule):
                 "Strict-Transport-Security Configured",
                 "Passed",
                 "HSTS is present.",
-                headers["Strict-Transport-Security"],
+                hsts,
                 owasp="A02: Cryptographic Failures",
                 category="encryption_tls"
             ))
 
-        if "Content-Security-Policy" not in headers:
+        csp = self.get_header_safe(resp, "Content-Security-Policy", "")
+        if not csp:
             findings.append(self.make_finding(
                 "Missing Content-Security-Policy (CSP)",
                 "High",
@@ -1278,7 +1312,6 @@ class SecurityHeadersModule(ScannerModule):
                 category="http_headers"
             ))
         else:
-            csp = headers.get("Content-Security-Policy", "")
             is_strict = True
             weak_reasons = []
 
@@ -1324,7 +1357,7 @@ class SecurityHeadersModule(ScannerModule):
                     category="http_headers"
                 ))
 
-        if "X-Permitted-Cross-Domain-Policies" not in headers:
+        if not self.get_header_safe(resp, "X-Permitted-Cross-Domain-Policies"):
             findings.append(self.make_finding(
                 "Missing X-Permitted-Cross-Domain-Policies",
                 "Informational",
@@ -1335,7 +1368,7 @@ class SecurityHeadersModule(ScannerModule):
                 category="http_headers"
             ))
 
-        if "X-DNS-Prefetch-Control" not in headers:
+        if not self.get_header_safe(resp, "X-DNS-Prefetch-Control"):
             findings.append(self.make_finding(
                 "Missing X-DNS-Prefetch-Control",
                 "Informational",
@@ -1346,7 +1379,7 @@ class SecurityHeadersModule(ScannerModule):
                 category="http_headers"
             ))
 
-        if "X-Frame-Options" not in headers:
+        if not self.get_header_safe(resp, "X-Frame-Options"):
             findings.append(self.make_finding(
                 "Missing X-Frame-Options",
                 "Medium",
@@ -1357,7 +1390,7 @@ class SecurityHeadersModule(ScannerModule):
                 category="http_headers"
             ))
 
-        if "X-Content-Type-Options" not in headers:
+        if not self.get_header_safe(resp, "X-Content-Type-Options"):
             findings.append(self.make_finding(
                 "Missing X-Content-Type-Options",
                 "Low",
@@ -1368,7 +1401,8 @@ class SecurityHeadersModule(ScannerModule):
                 category="http_headers"
             ))
 
-        if "Referrer-Policy" not in headers:
+        referrer = self.get_header_safe(resp, "Referrer-Policy")
+        if not referrer:
             findings.append(self.make_finding(
                 "Missing Referrer-Policy",
                 "Low",
@@ -1383,7 +1417,7 @@ class SecurityHeadersModule(ScannerModule):
                 "Referrer-Policy Configured",
                 "Passed",
                 "Referrer-Policy is present.",
-                headers["Referrer-Policy"],
+                referrer,
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
             ))
@@ -1399,9 +1433,8 @@ class AdvancedSecurityHeadersModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
-            headers = get_all_headers(resp)
 
-            if "Cross-Origin-Opener-Policy" not in headers:
+            if not self.get_header_safe(resp, "Cross-Origin-Opener-Policy"):
                 findings.append(self.make_finding(
                     "Missing COOP Header",
                     "Informational",
@@ -1411,7 +1444,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
-            if "Cross-Origin-Embedder-Policy" not in headers:
+            if not self.get_header_safe(resp, "Cross-Origin-Embedder-Policy"):
                 findings.append(self.make_finding(
                     "Missing COEP Header",
                     "Informational",
@@ -1421,7 +1454,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
-            if "Cross-Origin-Resource-Policy" not in headers:
+            if not self.get_header_safe(resp, "Cross-Origin-Resource-Policy"):
                 findings.append(self.make_finding(
                     "Missing CORP Header",
                     "Informational",
@@ -1734,7 +1767,7 @@ class JSBundleSecretsModule(ScannerModule):
     }
 
     # Known dummy / test key strings to filter out
-    IGNORE_KEYWORDS = ["EXAMPLE", "TEST", "DUMMY", "SAMPLE", "MOCK", "123456", "000000", "AKIAIOSFODNN7EXAMPLE"]
+    IGNORE_KEYWORDS = ["EXAMPLE", "TEST", "DUMMY", "SAMPLE", "MOCK", "123456", "000000", "AKIAIOSFODNN7EXAMPLE", "PK_LIVE_", "NEXT_PUBLIC_"]
 
     MAX_JS_FILES = 3
     MAX_FILE_SIZE_BYTES = 1024 * 1024  # 1 MB Limit per script
@@ -1895,12 +1928,12 @@ class SensitivePathsModule(ScannerModule):
                 if not resp or resp.status_code != 200:
                     continue
 
-                content_type = resp.headers.get("Content-Type", "").lower()
+                content_type = self.get_header_safe(resp, "Content-Type", "").lower()
                 body_text = resp.text[:50000] if resp.text else ""
                 body_lower = body_text.lower()
 
-                # Filter out SPA catch-all fallbacks (same length as homepage)
-                if homepage_len > 0 and abs(len(resp.text) - homepage_len) < 100:
+                # Filter out SPA catch-all fallbacks
+                if self.is_spa_fallback(resp, homepage_len):
                     continue
 
                 # Strict type-specific validation
