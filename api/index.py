@@ -950,7 +950,7 @@ class CORSModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT, headers={"Origin": "https://evil.com"})
+            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT, headers={"Origin": "https://evil-scanner-test.com"})
             acao = self.get_header_safe(resp, "Access-Control-Allow-Origin")
             if acao == "*":
                 findings.append(self.make_finding(
@@ -1705,6 +1705,18 @@ class TLSCipherStrengthModule(ScannerModule):
                                 owasp="A02: Cryptographic Failures",
                                 category="encryption_tls"
                             ))
+        except ssl.SSLError as e:
+            err_str = str(e).upper()
+            if "HANDSHAKE_FAILURE" in err_str or "UNSUPPORTED_PROTOCOL" in err_str or "WRONG_VERSION" in err_str or "EOF" in err_str:
+                findings.append(self.make_finding(
+                    "Insecure or Obsolete TLS Ciphers Enforced",
+                    "High",
+                    f"The server enforces deprecated legacy ciphers or protocols (e.g. RC4/3DES) that modern clients reject: {e}",
+                    "Handshake Error",
+                    remediation="Disable weak SSLv3/TLS1.0/1.1 protocols and legacy RC4/3DES ciphers in server configuration.",
+                    owasp="A02: Cryptographic Failures",
+                    category="encryption_tls"
+                ))
         except Exception:
             pass
 

@@ -22,11 +22,12 @@ RESET = "\033[0m"
 
 # Benchmark Target Definitions
 BENCHMARK_TARGETS = [
+    # --- Existing 6 Benchmark Targets ---
     {
         "name": "TLS Expiration Test (badssl.com)",
         "url": "https://expired.badssl.com",
         "check_type": "finding_status",
-        "expected_statuses": ["High", "Medium", "Critical"],
+        "expected_statuses": ["high", "medium", "critical"],
         "finding_keyword": "ssl",
         "description": "Verifies that expired SSL certificates trigger security alerts."
     },
@@ -34,7 +35,7 @@ BENCHMARK_TARGETS = [
         "name": "Missing HSTS & Redirection Test (neverssl.com)",
         "url": "http://neverssl.com",
         "check_type": "finding_status",
-        "expected_statuses": ["Medium", "High"],
+        "expected_statuses": ["medium", "high"],
         "finding_keyword": "hsts",
         "description": "Verifies that unencrypted sites with missing HSTS/HTTPS are flagged."
     },
@@ -49,7 +50,7 @@ BENCHMARK_TARGETS = [
         "name": "Subdomain Takeover Apex Domain Test (github.com)",
         "url": "https://github.com",
         "check_type": "finding_status",
-        "expected_statuses": ["Passed"],
+        "expected_statuses": ["passed"],
         "finding_keyword": "subdomain takeover",
         "description": "Verifies clean PASSED status for apex domains with direct IP records."
     },
@@ -57,17 +58,51 @@ BENCHMARK_TARGETS = [
         "name": "Missing DNS CAA Test (neverssl.com)",
         "url": "http://neverssl.com",
         "check_type": "finding_status",
-        "expected_statuses": ["Low", "Informational", "Passed"],
+        "expected_statuses": ["low", "info", "informational", "passed"],
         "finding_keyword": "caa",
         "description": "Verifies DNS CAA module handles domains with or without CAA."
     },
     {
         "name": "CORS & Security Headers Audit (httpbin.org)",
-        "url": "https://httpbin.org",
+        "url": "https://httpbin.org/get",
         "check_type": "finding_status",
         "expected_statuses": ["info", "informational", "low", "medium", "passed"],
         "finding_keyword": "cors",
         "description": "Verifies CORS and security header detection on open API endpoints."
+    },
+
+    # --- 4 New Benchmark Targets ---
+    {
+        "name": "Self-Signed Certificate Test (badssl.com)",
+        "url": "https://self-signed.badssl.com",
+        "check_type": "finding_status",
+        "expected_statuses": ["high", "critical", "medium"],
+        "finding_keyword": "ssl",
+        "description": "Verifies detection of untrusted or self-signed SSL/TLS certificates."
+    },
+    {
+        "name": "Enterprise Email Security (google.com)",
+        "url": "https://google.com",
+        "check_type": "finding_status",
+        "expected_statuses": ["passed", "info", "informational"],
+        "finding_keyword": "dmarc",
+        "description": "Verifies strict SPF and DMARC enforcement on enterprise domains."
+    },
+    {
+        "name": "Security Policy Disclosure (securitytxt.org)",
+        "url": "https://securitytxt.org",
+        "check_type": "finding_status",
+        "expected_statuses": ["passed", "info", "informational"],
+        "finding_keyword": "security.txt",
+        "description": "Verifies detection of standard .well-known/security.txt files."
+    },
+    {
+        "name": "Legacy Weak Cipher Test (badssl.com)",
+        "url": "https://rc4.badssl.com",
+        "check_type": "finding_status",
+        "expected_statuses": ["medium", "high"],
+        "finding_keyword": "cipher",
+        "description": "Verifies detection of deprecated or weak SSL/TLS ciphers."
     }
 ]
 
