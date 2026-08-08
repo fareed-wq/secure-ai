@@ -1573,6 +1573,14 @@ class SubdomainTakeoverModule(ScannerModule):
             data = resp.json()
             answers = data.get("Answer", [])
             if not answers:
+                findings.append(self.make_finding(
+                    "No Subdomain Takeover Risk Detected",
+                    "Passed",
+                    "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
+                    "Validated CNAME and DNS routing records",
+                    owasp="A05: Security Misconfiguration",
+                    category="domain_email"
+                ))
                 return findings
 
             cname_target = answers[0].get("data", "").rstrip(".").lower()
@@ -1609,6 +1617,15 @@ class SubdomainTakeoverModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="domain_email"
                     ))
+            else:
+                findings.append(self.make_finding(
+                    "No Subdomain Takeover Risk Detected",
+                    "Passed",
+                    "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
+                    "Validated CNAME and DNS routing records",
+                    owasp="A05: Security Misconfiguration",
+                    category="domain_email"
+                ))
 
         except Exception as e:
             logger.error(f"SubdomainTakeoverModule error: {e}")
