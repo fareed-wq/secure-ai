@@ -194,25 +194,30 @@ function Scanner() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="text-center space-y-8 mt-20"
+              className="flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto mt-20"
             >
-              <div className="space-y-6 overflow-hidden">
-                <div className="space-y-4">
-                  <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400">
-                    IS YOUR WEBSITE SAFE?
-                  </h1>
-                  <p className="text-2xl font-semibold text-slate-300 max-w-2xl mx-auto tracking-wide">
-                    FIND OUT IN ONE CLICK.
-                  </p>
-                </div>
+              {/* 1. Hero Headline */}
+              <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-300 to-teal-300">
+                IS YOUR WEBSITE SAFE?
+              </h1>
+              <p className="text-lg font-bold tracking-widest text-slate-200 mt-2 uppercase">
+                Find out in one click.
+              </p>
+
+              {/* 2. Description Paragraph (Fixed Overflow) */}
+              <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto mt-4 leading-relaxed">
+                Enter your domain to uncover hidden security risks automatically and get a simple, easy-to-read safety report for your website instantly.
+              </p>
+
+              <div className="mt-8 w-full">
+                <BottomTicker />
               </div>
 
-              <BottomTicker />
-
-              <form onSubmit={handleScan} className="max-w-2xl mx-auto relative group">
-                <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative flex items-center bg-slate-900 border border-slate-700 rounded-2xl p-2 shadow-2xl focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition-all">
-                  <Search className="w-6 h-6 text-slate-400 ml-4 hidden sm:block" />
+              {/* 3. Input Bar Container */}
+              <form onSubmit={handleScan} className="w-full max-w-2xl mt-8 flex flex-col items-center gap-3">
+                {/* Input Box with Glow focused ONLY on the box */}
+                <div className="relative w-full rounded-2xl p-1 bg-slate-900/80 border border-slate-700/60 shadow-[0_0_30px_rgba(124,58,237,0.25)] flex items-center">
+                  <Search className="w-5 h-5 text-slate-400 ml-4 shrink-0 hidden sm:block" />
                   <input
                     ref={urlInputRef}
                     type="text"
@@ -223,26 +228,21 @@ function Scanner() {
                       setUrl(e.target.value);
                       if (validationError) setValidationError('');
                     }}
-                    className="w-full bg-transparent border-none text-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-0"
+                    className="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none"
                   />
-                  <button 
-                    type="submit"
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-medium flex items-center gap-2 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-                  >
+                  <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 shrink-0">
                     Scan <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
-                
-                {/* Safe Scan Trust Badge */}
-                <div className="flex items-center justify-center gap-2 mt-4 text-[13px] text-slate-400 font-medium">
-                  <Lock className="w-3.5 h-3.5 text-emerald-500/80" />
-                  <span>
-                    <strong className="text-slate-300 font-semibold">100% Safe & Non-Intrusive</strong> &bull; No invasive payloads, exploits, or database risks.
-                  </span>
+
+                {/* 4. Trust Badge Outside the Glow Box (Crisp Contrast) */}
+                <div className="flex items-center gap-2 text-xs text-slate-400 mt-2 font-medium">
+                  <span className="text-indigo-400">🔒</span>
+                  <span><strong className="text-slate-300">100% Safe & Non-Intrusive</strong> • No invasive payloads, exploits, or database risks.</span>
                 </div>
               </form>
-              
-              <div className="flex justify-center text-sm text-slate-400 pt-2 font-medium">
+
+              <div className="flex justify-center text-sm text-slate-400 mt-8 font-medium">
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
               </div>
             </motion.div>
