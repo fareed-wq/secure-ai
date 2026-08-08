@@ -16,7 +16,8 @@ import {
   MessageSquare,
   LogOut,
   LayoutDashboard,
-  Activity
+  Activity,
+  X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -73,10 +74,19 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           </button>
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)} 
-            className="p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors"
+            className="hidden md:block p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors"
             title="Toggle Sidebar"
           >
             {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
+          
+          {/* Mobile Close Button */}
+          <button 
+            onClick={() => setIsMobileOpen(false)} 
+            className="md:hidden p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors"
+            title="Close Sidebar"
+          >
+            <X size={18} />
           </button>
         </div>
       </div>
