@@ -11,6 +11,7 @@ import ReportHeader from '../components/scanner/ReportHeader';
 import SimpleReport from '../components/scanner/SimpleReport';
 import AuthModal from '../components/scanner/AuthModal';
 import PdfComingSoonModal from '../components/scanner/PdfComingSoonModal';
+import ErrorBoundary from '../components/ErrorBoundary';
 import SafetyComparison from '../components/scanner/SafetyComparison';
 import BottomTicker from '../components/scanner/BottomTicker';
 
@@ -304,11 +305,13 @@ function Scanner() {
                 onRequireAuth={handleRequireAuth}
               />
               
-              {reportMode === 'simple' ? (
-                <SimpleReport reportData={reportData} />
-              ) : (
-                <TechnicalReport reportData={reportData} />
-              )}
+              <ErrorBoundary>
+                {reportMode === 'simple' ? (
+                  <SimpleReport reportData={reportData} />
+                ) : (
+                  <TechnicalReport reportData={reportData} />
+                )}
+              </ErrorBoundary>
 
               <div className="mt-12 flex justify-center">
                 <button onClick={resetScan} className="text-slate-400 hover:text-white transition-colors underline underline-offset-4">
