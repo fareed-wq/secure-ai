@@ -35,7 +35,7 @@ class TestScannerModules(unittest.TestCase):
         resp.headers = headers or {}
         return resp
 
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_tech_fingerprint_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Server": "nginx", "X-Powered-By": "PHP"})
         module = TechFingerprintModule()
@@ -44,14 +44,14 @@ class TestScannerModules(unittest.TestCase):
         self.assertTrue(any(f['name'] == 'Server Header Exposed' for f in findings))
         self.assertTrue(any(f['name'] == 'X-Powered-By Header Exposed' for f in findings))
 
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_tech_fingerprint_module_empty(self, mock_get):
         mock_get.return_value = self.mock_response(headers={})
         module = TechFingerprintModule()
         findings = module.run(self.url, self.hostname, self.session)
         self.assertEqual(len(findings), 0)
 
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_information_disclosure_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Server": "nginx/1.18.0"})
         module = InformationDisclosureModule()
@@ -59,35 +59,35 @@ class TestScannerModules(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]['name'], 'Verbose Server Banner')
 
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_information_disclosure_module_safe(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Server": "nginx"})
         module = InformationDisclosureModule()
         findings = module.run(self.url, self.hostname, self.session)
         self.assertEqual(len(findings), 0)
 
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_robots_txt_module(self, mock_get):
         mock_get.return_value = self.mock_response(status_code=200, text="User-agent: *\nDisallow: /admin")
         module = RobotsTxtModule()
         findings = module.run(self.url, self.hostname, self.session)
         self.assertEqual(len(findings), 1)
 
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_sitemap_module(self, mock_get):
         mock_get.return_value = self.mock_response(status_code=200, text="<urlset></urlset>")
         module = SitemapModule()
         findings = module.run(self.url, self.hostname, self.session)
         self.assertEqual(len(findings), 1)
 
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_security_txt_module(self, mock_get):
         mock_get.return_value = self.mock_response(status_code=200, text="Contact: mailto:security@example.com")
         module = SecurityTxtModule()
         findings = module.run(self.url, self.hostname, self.session)
         self.assertEqual(findings[0]['severity'], 'Passed')
 
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_cors_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Access-Control-Allow-Origin": "*"})
         module = CORSModule()
@@ -95,14 +95,14 @@ class TestScannerModules(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]['severity'], 'Medium')
 
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_advanced_cookie_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Set-Cookie": "session=123; path=/"})
         module = AdvancedCookieModule()
         findings = module.run(self.url, self.hostname, self.session)
         self.assertEqual(len(findings), 3) # Missing HttpOnly, Secure, SameSite
 
-    @patch('requests.get')
+    @patch('requests.Session.request')
     def test_https_redirect_module(self, mock_get):
         mock_get.return_value = self.mock_response(status_code=301, headers={"Location": "https://example.com"})
         module = HTTPSRedirectModule()
@@ -132,14 +132,14 @@ class TestScannerModules(unittest.TestCase):
         self.assertTrue(any(f['severity'] == 'Passed' for f in findings))
         self.assertTrue(any(f['name'] == 'Wildcard Certificate in Use' for f in findings))
 
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_security_headers_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={})
         module = SecurityHeadersModule()
         findings = module.run(self.url, self.hostname, self.session)
         self.assertEqual(len(findings), 4) # HSTS, CSP, XFO, XCTO missing
 
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_advanced_security_headers_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={})
         module = AdvancedSecurityHeadersModule()
@@ -147,7 +147,7 @@ class TestScannerModules(unittest.TestCase):
         self.assertEqual(len(findings), 3)
 
     # Edge Cases & Timeouts
-    @patch('requests.Session.get')
+    @patch('requests.Session.request')
     def test_timeout_handling(self, mock_get):
         mock_get.side_effect = requests.exceptions.Timeout("Connection timed out")
         module = SecurityHeadersModule()
@@ -155,7 +155,7 @@ class TestScannerModules(unittest.TestCase):
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]['name'], 'HTTP Request Failed')
 
-    @patch('requests.get')
+    @patch('requests.Session.request')
     def test_redirect_loop_handling(self, mock_get):
         mock_get.side_effect = requests.exceptions.TooManyRedirects("Exceeded redirects")
         module = HTTPSRedirectModule()
