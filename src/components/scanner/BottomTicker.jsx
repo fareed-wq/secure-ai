@@ -16,7 +16,7 @@ const BottomTicker = () => {
   return (
     <div className="relative flex overflow-x-hidden mt-8 pt-4 pb-2" style={{ WebkitMaskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)', maskImage: 'linear-gradient(to right, transparent, black 10%, black 90%, transparent)' }}>
       <motion.div
-        className="flex whitespace-nowrap gap-12 items-center text-slate-400 italic text-sm md:text-base pr-12"
+        className="flex whitespace-nowrap gap-12 items-center text-slate-400 font-medium text-sm md:text-base pr-12"
         animate={{ x: ["0%", "-50%"] }}
         transition={{
           repeat: Infinity,
