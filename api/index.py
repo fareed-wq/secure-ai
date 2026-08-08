@@ -567,7 +567,7 @@ class DNSCAAModule(ScannerModule):
 
         try:
             caa_url = f"https://dns.google/resolve?name={domain}&type=CAA"
-            resp = safe_request("GET", caa_url, session=session, timeout=4.0)
+            resp = safe_request("GET", caa_url, session=session, timeout=3.0)
 
             if resp and resp.status_code == 200:
                 data = resp.json()
@@ -597,7 +597,7 @@ class DNSCAAModule(ScannerModule):
         # DNSSEC Check
         try:
             dnssec_url = f"https://dns.google/resolve?name={domain}&type=DNSKEY"
-            resp = safe_request("GET", dnssec_url, session=session, timeout=4.0)
+            resp = safe_request("GET", dnssec_url, session=session, timeout=3.0)
             if resp and resp.status_code == 200:
                 data = resp.json()
                 if "Answer" in data and len(data["Answer"]) > 0:
@@ -625,7 +625,7 @@ class DNSEmailSecurityModule(ScannerModule):
 
         try:
             spf_url = f"https://dns.google/resolve?name={domain}&type=TXT"
-            resp = safe_request("GET", spf_url, session=session, timeout=4.0)
+            resp = safe_request("GET", spf_url, session=session, timeout=3.0)
             spf_found = False
 
             if resp and resp.status_code == 200:
@@ -667,7 +667,7 @@ class DNSEmailSecurityModule(ScannerModule):
                     ))
 
             dmarc_url = f"https://dns.google/resolve?name=_dmarc.{domain}&type=TXT"
-            d_resp = safe_request("GET", dmarc_url, session=session, timeout=4.0)
+            d_resp = safe_request("GET", dmarc_url, session=session, timeout=3.0)
             dmarc_found = False
 
             if d_resp and d_resp.status_code == 200:
@@ -713,7 +713,7 @@ class DNSEmailSecurityModule(ScannerModule):
         # MTA-STS Check
         try:
             mta_url = f"https://dns.google/resolve?name=_mta-sts.{domain}&type=TXT"
-            resp = safe_request("GET", mta_url, session=session, timeout=4.0)
+            resp = safe_request("GET", mta_url, session=session, timeout=3.0)
             mta_found = False
             if resp and resp.status_code == 200:
                 for rec in resp.json().get("Answer", []):
@@ -743,7 +743,7 @@ class DNSEmailSecurityModule(ScannerModule):
         # TLS-RPT Check
         try:
             tlsrpt_url = f"https://dns.google/resolve?name=_smtp._tls.{domain}&type=TXT"
-            resp = safe_request("GET", tlsrpt_url, session=session, timeout=4.0)
+            resp = safe_request("GET", tlsrpt_url, session=session, timeout=3.0)
             if resp and resp.status_code == 200:
                 for rec in resp.json().get("Answer", []):
                     if "v=TLSRPTv1" in rec.get("data", ""):
@@ -950,7 +950,7 @@ class CORSModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT)
+            resp = safe_request("GET", url, session=session, timeout=Config.REQUEST_TIMEOUT, headers={"Origin": "https://evil.com"})
             acao = self.get_header_safe(resp, "Access-Control-Allow-Origin")
             if acao == "*":
                 findings.append(self.make_finding(
@@ -1599,7 +1599,7 @@ class SubdomainTakeoverModule(ScannerModule):
 
         try:
             cname_url = f"https://dns.google/resolve?name={domain}&type=CNAME"
-            resp = safe_request("GET", cname_url, session=session, timeout=4.0)
+            resp = safe_request("GET", cname_url, session=session, timeout=3.0)
 
             if not resp or resp.status_code != 200:
                 return findings
