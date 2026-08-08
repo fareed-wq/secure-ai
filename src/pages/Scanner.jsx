@@ -304,6 +304,7 @@ function Scanner() {
                 onToggleMode={setReportMode}
                 onExportPdf={handlePdfExport}
                 onRequireAuth={handleRequireAuth}
+                reportData={reportData}
               />
               
               <ErrorBoundary>

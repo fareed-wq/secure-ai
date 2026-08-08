@@ -1,7 +1,9 @@
 import React from 'react';
 import { Globe, Download, Bookmark, Share2 } from 'lucide-react';
 
-const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExportPdf, onRequireAuth }) => {
+const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExportPdf, onRequireAuth, reportData }) => {
+  const findings = reportData?.findings || [];
+  const isWafBlocked = findings.length === 1 && findings[0]?.name?.includes('WAF');
   return (
     <div className="sticky top-6 z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
       {/* Left: Info */}
@@ -65,17 +67,23 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
         </div>
 
         <div className={`flex items-center gap-2.5 px-4 py-2.5 bg-slate-900/90 border rounded-xl backdrop-blur-md shadow-lg ${
-          score >= 90 
-            ? 'border-emerald-500/30' 
-            : score >= 70
-              ? 'border-amber-500/30'
-              : 'border-red-500/30'
+          isWafBlocked
+            ? 'border-slate-500/30'
+            : score >= 90 
+              ? 'border-emerald-500/30' 
+              : score >= 70
+                ? 'border-amber-500/30'
+                : 'border-red-500/30'
         }`}>
           <div className="flex flex-col text-right">
             <span className="text-[10px] font-bold font-mono tracking-wider text-slate-400 uppercase">SCORE</span>
-            <span className={`text-xl font-extrabold font-mono leading-none ${
-               score >= 90 ? 'text-emerald-400' : score >= 70 ? 'text-amber-400' : 'text-red-400'
-            }`}>{score}<span className="text-sm font-normal text-slate-400">/100</span></span>
+            {isWafBlocked ? (
+              <span className="text-xl font-extrabold font-mono leading-none text-slate-400">N/A</span>
+            ) : (
+              <span className={`text-xl font-extrabold font-mono leading-none ${
+                 score >= 90 ? 'text-emerald-400' : score >= 70 ? 'text-amber-400' : 'text-red-400'
+              }`}>{score}<span className="text-sm font-normal text-slate-400">/100</span></span>
+            )}
           </div>
         </div>
       </div>
