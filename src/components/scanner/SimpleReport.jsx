@@ -268,6 +268,8 @@ const SimpleReport = ({ reportData }) => {
 
   // Calculate generic health bars based on the translations categories we saw
   const calculateHealth = (category) => {
+    // For WAF-blocked scans, we have no data on any category
+    if (isWafBlocked) return -1; // -1 = No Data
     const catIssues = issues.filter(i => getTranslation(i).category === category);
     if (catIssues.length === 0) return 100;
     if (catIssues.some(i => i.severity === 'Critical' || i.severity === 'High')) return 20;
@@ -308,21 +310,29 @@ const SimpleReport = ({ reportData }) => {
           <div className="relative">
             <svg className="w-40 h-40 transform -rotate-90">
               <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-800" />
-              <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent"
-                strokeDasharray={2 * Math.PI * 70}
-                strokeDashoffset={2 * Math.PI * 70 * (1 - score / 100)}
-                className={score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-red-500'}
-                strokeLinecap="round"
-              />
+              {!isWafBlocked && (
+                <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent"
+                  strokeDasharray={2 * Math.PI * 70}
+                  strokeDashoffset={2 * Math.PI * 70 * (1 - score / 100)}
+                  className={score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-red-500'}
+                  strokeLinecap="round"
+                />
+              )}
+              {isWafBlocked && (
+                <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent"
+                  strokeDasharray="8 6"
+                  className="text-slate-600"
+                />
+              )}
             </svg>
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-              <span className="text-5xl font-black text-white">{score}</span>
+              <span className="text-5xl font-black text-white">{isWafBlocked ? 'N/A' : score}</span>
             </div>
           </div>
           <div className="mt-6">
             <div className="text-sm font-bold uppercase tracking-widest text-slate-400">Risk Meter</div>
-            <div className={`text-2xl font-black mt-1 ${score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400'}`}>
-              {score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 70 ? 'Fair' : 'Poor'}
+            <div className={`text-2xl font-black mt-1 ${isWafBlocked ? 'text-slate-400' : score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400'}`}>
+              {isWafBlocked ? 'Blocked' : score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 70 ? 'Fair' : 'Poor'}
             </div>
           </div>
         </div>
@@ -336,15 +346,19 @@ const SimpleReport = ({ reportData }) => {
             <div key={i} className="space-y-2">
               <div className="flex justify-between items-center text-sm font-bold mb-1">
                 <span className="text-slate-300">{metric.name}</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${metric.val === 100 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : metric.val >= 60 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                  {metric.val === 100 ? '🟢 Optimal' : metric.val >= 60 ? '🟡 Needs Attention' : '🔴 Vulnerable'}
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${metric.val === -1 ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20' : metric.val === 100 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : metric.val >= 60 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                  {metric.val === -1 ? '⚪ No Data' : metric.val === 100 ? '🟢 Optimal' : metric.val >= 60 ? '🟡 Needs Attention' : '🔴 Vulnerable'}
                 </span>
               </div>
               <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full rounded-full ${metric.val === 100 ? 'bg-emerald-500' : metric.val >= 60 ? 'bg-amber-500' : 'bg-red-500'}`} 
-                  style={{ width: `${metric.val}%` }}
-                ></div>
+                {metric.val === -1 ? (
+                  <div className="h-full rounded-full bg-slate-600/40" style={{ width: '100%', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(148,163,184,0.1) 4px, rgba(148,163,184,0.1) 8px)' }}></div>
+                ) : (
+                  <div 
+                    className={`h-full rounded-full ${metric.val === 100 ? 'bg-emerald-500' : metric.val >= 60 ? 'bg-amber-500' : 'bg-red-500'}`} 
+                    style={{ width: `${metric.val}%` }}
+                  ></div>
+                )}
               </div>
             </div>
           ))}
