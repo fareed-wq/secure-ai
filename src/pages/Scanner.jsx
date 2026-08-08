@@ -206,6 +206,10 @@ function Scanner() {
                 </p>
               </div>
 
+              <div className="mt-8 w-full">
+                <BottomTicker />
+              </div>
+
               {/* 3. Input Bar Container */}
               <form onSubmit={handleScan} className="w-full max-w-2xl mt-8 flex flex-col items-center gap-3">
                 {/* Input Box with Glow focused ONLY on the box */}
