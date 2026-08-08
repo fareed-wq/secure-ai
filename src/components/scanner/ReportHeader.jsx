@@ -3,7 +3,7 @@ import { Globe, Download, Bookmark, Share2 } from 'lucide-react';
 
 const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExportPdf, onRequireAuth }) => {
   return (
-    <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 sticky top-20 z-40 mb-8">
+    <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
       {/* Left: Info */}
       <div className="flex-1">
         <h2 className="text-2xl font-bold mb-1 text-white">Live Security Posture Report</h2>
