@@ -1837,6 +1837,94 @@ class JSBundleSecretsModule(ScannerModule):
         return findings
 
 
+class SensitivePathsModule(ScannerModule):
+    module_name = "SensitivePaths"
+    description = "Non-intrusive surface probe checking primary high-risk endpoints (/admin, /swagger.json) without triggering WAF rate limits."
+
+    TARGET_PATHS = [
+        {
+            "path": "/swagger.json",
+            "type": "api_docs",
+            "expected_content_type": "application/json",
+            "keywords": ["swagger", "openapi", "paths", "info"]
+        },
+        {
+            "path": "/admin",
+            "type": "admin_panel",
+            "expected_content_type": "text/html",
+            "keywords": ["login", "password", "sign in", "dashboard", "admin"]
+        }
+    ]
+
+    def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
+        findings = []
+        base_url = f"https://{hostname}".rstrip("/")
+
+        # Measures homepage length to filter out Single Page Application (SPA) catch-all routes
+        homepage_len = 0
+        try:
+            hp_resp = safe_request("GET", base_url, session=session, timeout=3.0)
+            if hp_resp and hp_resp.text:
+                homepage_len = len(hp_resp.text)
+        except Exception:
+            pass
+
+        detected_exposures = []
+
+        for target in self.TARGET_PATHS:
+            target_url = f"{base_url}{target['path']}"
+            try:
+                resp = safe_request("GET", target_url, session=session, timeout=3.0)
+                if not resp or resp.status_code != 200:
+                    continue
+
+                content_type = resp.headers.get("Content-Type", "").lower()
+                body_text = resp.text[:50000] if resp.text else ""
+                body_lower = body_text.lower()
+
+                # Filter out SPA catch-all fallbacks (same length as homepage)
+                if homepage_len > 0 and abs(len(resp.text) - homepage_len) < 100:
+                    continue
+
+                # Strict type-specific validation
+                if target["type"] == "api_docs":
+                    if "json" in content_type and any(kw in body_lower for kw in target["keywords"]):
+                        detected_exposures.append(f"Public API Specification at {target['path']}")
+
+                elif target["type"] == "admin_panel":
+                    if "text/html" in content_type:
+                        has_password_input = 'type="password"' in body_lower or "type='password'" in body_lower
+                        has_keywords = any(kw in body_lower for kw in target["keywords"])
+                        if has_password_input and has_keywords:
+                            detected_exposures.append(f"Exposed Admin Login Portal at {target['path']}")
+
+            except Exception:
+                continue
+
+        # Generate Findings with clear scope framing
+        if detected_exposures:
+            findings.append(self.make_finding(
+                "Exposed Admin Portal or API Specification",
+                "Medium",
+                "Targeted surface probe detected publicly accessible administrative login interfaces or active OpenAPI documentation.",
+                f"Exposures detected: {'; '.join(detected_exposures)}",
+                remediation="Restrict administrative panels and OpenAPI endpoints to internal networks or authenticated users.",
+                owasp="A01: Broken Access Control",
+                category="information_exposure"
+            ))
+        else:
+            findings.append(self.make_finding(
+                "No Exposed Admin or API Endpoints",
+                "Passed",
+                "Targeted surface probe completed on primary high-risk endpoints (/admin, /swagger.json); no exposed administrative interfaces or API specifications were detected.",
+                "Non-intrusive check on primary paths (/admin, /swagger.json) with SPA catch-all validation",
+                owasp="A01: Broken Access Control",
+                category="information_exposure"
+            ))
+
+        return findings
+
+
 # Engine Registry
 REGISTERED_MODULES = [
     ExposedFilesModule(),
@@ -1857,8 +1945,8 @@ REGISTERED_MODULES = [
     MixedContentModule(),
     SubdomainTakeoverModule(),
     TLSCipherStrengthModule(),
-    # --- Category B Addition ---
-    JSBundleSecretsModule()
+    JSBundleSecretsModule(),
+    SensitivePathsModule()
 ]
 
 
