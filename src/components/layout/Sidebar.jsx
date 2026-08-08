@@ -166,8 +166,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           {/* User Info Text (Hidden when collapsed) */}
           {!isCollapsed && (
             <div className="flex flex-col truncate">
-              <span className="text-sm font-medium text-slate-200">Security Admin</span>
-              <span className="text-xs text-slate-400">admin@urlscanonline.com</span>
+              <span className="text-sm font-medium text-slate-200">Free Tier</span>
+              <span className="text-xs text-slate-400">guest@urlscanonline.com</span>
             </div>
           )}
         </div>
