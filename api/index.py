@@ -584,6 +584,7 @@ class ExposedFilesModule(ScannerModule):
                                 "Web server is configured to display raw directory file listings when an index page is missing.",
                                 target_url,
                                 impact="Allows unauthenticated users to browse and download internal media uploads, unlinked assets, and temporary server files.",
+                                owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
                 except requests.exceptions.RequestException:
@@ -616,6 +617,7 @@ class ExposedFilesModule(ScannerModule):
                                 f"Publicly accessible application log file discovered at {path}.",
                                 target_url,
                                 impact="Log files frequently expose unhandled stack traces, database query parameters, internal file paths, user emails, and API session tokens.",
+                                owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
                 except requests.exceptions.RequestException:
@@ -653,6 +655,7 @@ class ExposedFilesModule(ScannerModule):
                                 f"A publicly downloadable database or source code backup dump was found at {path}.",
                                 target_url,
                                 impact="Grants unauthenticated attackers immediate access to the full application database, hashed user passwords, internal tables, and raw source code.",
+                                owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
                 except requests.exceptions.RequestException:
@@ -719,7 +722,8 @@ class DNSCAAModule(ScannerModule):
                         "Passed",
                         "Domain Name System Security Extensions (DNSSEC) is enabled.",
                         "DS record found",
-                        category="dns_security"
+                        owasp="A05: Security Misconfiguration",
+                                category="dns_security"
                     ))
                 else:
                     findings.append(self.make_finding(
@@ -728,7 +732,8 @@ class DNSCAAModule(ScannerModule):
                         "Domain Name System Security Extensions (DNSSEC) records are not published for this domain.",
                         "",
                         impact="The domain is more vulnerable to DNS spoofing, cache poisoning, and BGP hijacking attacks.",
-                        category="dns_security"
+                        owasp="A05: Security Misconfiguration",
+                                category="dns_security"
                     ))
         except Exception:
             pass
@@ -1391,7 +1396,8 @@ class SecurityHeadersModule(ScannerModule):
                 "High",
                 "Connection timed out while fetching HTTP headers.",
                 str(e),
-                category="http_headers"
+                owasp="A05: Security Misconfiguration",
+                                category="http_headers"
             ))
             return findings
         except requests.exceptions.ConnectionError as e:
@@ -1400,7 +1406,8 @@ class SecurityHeadersModule(ScannerModule):
                 "High",
                 "Connection refused or DNS failure while fetching HTTP headers.",
                 str(e),
-                category="http_headers"
+                owasp="A05: Security Misconfiguration",
+                                category="http_headers"
             ))
             return findings
         except Exception as e:
@@ -1409,7 +1416,8 @@ class SecurityHeadersModule(ScannerModule):
                 "High",
                 "Failed to fetch HTTP headers.",
                 str(e),
-                category="http_headers"
+                owasp="A05: Security Misconfiguration",
+                                category="http_headers"
             ))
             return findings
 
@@ -1575,7 +1583,8 @@ class SecurityHeadersModule(ScannerModule):
                     "\n".join(missing_sri),
                     impact="If an external CDN is compromised, attackers can tamper with the hosted script files to inject malicious code into your website.",
                     remediation="Add integrity='sha384-...' and crossorigin='anonymous' attributes to all external CDN script tags.",
-                    category="http_headers"
+                    owasp="A05: Security Misconfiguration",
+                                category="http_headers"
                 ))
 
         # WAF & Rate-Limiting Detection
@@ -1603,7 +1612,8 @@ class SecurityHeadersModule(ScannerModule):
                 "The target application does not expose active WAF or rate-limiting response headers.",
                 "",
                 impact="Leaves public endpoints and login portals more susceptible to automated brute-force, credential stuffing, or Layer 7 DoS attacks.",
-                category="http_headers"
+                owasp="A05: Security Misconfiguration",
+                                category="http_headers"
             ))
         elif waf_found:
             findings.append(self.make_finding(
@@ -1611,7 +1621,8 @@ class SecurityHeadersModule(ScannerModule):
                 "Passed",
                 "WAF or CDN headers were detected.",
                 "\n".join(evidence_headers),
-                category="http_headers"
+                owasp="A05: Security Misconfiguration",
+                                category="http_headers"
             ))
 
         return findings
@@ -1679,7 +1690,8 @@ class SubdomainProbingModule(ScannerModule):
                         "Informational",
                         f"Probed subdomain responded with status {resp.status_code}.",
                         sub_url,
-                        category="information_exposure"
+                        owasp="A05: Security Misconfiguration",
+                                category="information_exposure"
                     ))
             except Exception:
                 pass
