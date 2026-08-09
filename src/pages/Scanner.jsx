@@ -10,7 +10,6 @@ import ModeSelection from '../components/scanner/ModeSelection';
 import ReportHeader from '../components/scanner/ReportHeader';
 import SimpleReport from '../components/scanner/SimpleReport';
 import AuthModal from '../components/scanner/AuthModal';
-import PdfComingSoonModal from '../components/scanner/PdfComingSoonModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 import SafetyComparison from '../components/scanner/SafetyComparison';
 import BottomTicker from '../components/scanner/BottomTicker';
@@ -117,8 +116,61 @@ function Scanner() {
     setScanState('view-report');
   };
 
-  const handlePdfExport = () => {
-    setPdfModalOpen(true);
+  const handlePdfExport = async () => {
+    if (!reportRef.current) return;
+    setIsGeneratingPdf(true);
+    
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+      
+      const element = reportRef.current;
+      
+      // Temporarily hide elements not meant for print
+      const hideElements = element.querySelectorAll('.print\\:hidden');
+      hideElements.forEach(el => el.style.display = 'none');
+      
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#020617', // slate-950
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight
+      });
+      
+      hideElements.forEach(el => el.style.display = '');
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = pdfWidth / imgWidth;
+      const totalPdfHeight = imgHeight * ratio;
+
+      let heightLeft = totalPdfHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, totalPdfHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - totalPdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, totalPdfHeight);
+        heightLeft -= pdfHeight;
+      }
+      
+      pdf.save(`SecureAI-Report-${url.replace(/^https?:\/\//, '').split('/')[0]}.pdf`);
+    } catch (error) {
+      console.error('Failed to generate PDF', error);
+      alert("There was an error generating the PDF. Please try again.");
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   return (
@@ -133,11 +185,23 @@ function Scanner() {
         featureName={authFeatureName} 
       />
 
-      {/* PDF Coming Soon Modal */}
-      <PdfComingSoonModal
-        isOpen={pdfModalOpen}
-        onClose={() => setPdfModalOpen(false)}
-      />
+      {/* Loading overlay for PDF generation */}
+      <AnimatePresence>
+        {isGeneratingPdf && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm"
+          >
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 flex flex-col items-center max-w-sm w-full mx-4 text-center">
+              <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
+              <h3 className="text-xl font-bold text-white mb-2">Generating PDF</h3>
+              <p className="text-slate-400">Please wait while we prepare your report...</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Validation Error Popup */}
       <AnimatePresence>
@@ -291,6 +355,7 @@ function Scanner() {
           {/* 5. VIEW REPORT STATE */}
           {scanState === 'view-report' && reportData && (
             <motion.div
+              ref={reportRef}
               key="view-report"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
