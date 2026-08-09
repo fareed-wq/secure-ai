@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, ArrowRight, Loader2, ShieldAlert, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import html2pdf from 'html2pdf.js';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import WhatsAppWidget from '../WhatsAppWidget';
