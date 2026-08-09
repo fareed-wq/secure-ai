@@ -2162,18 +2162,27 @@ class JSBundleSecretsModule(ScannerModule):
                     # Extract & Verify Source Maps
                     map_urls_to_test = []
                     
-                    # 1. Search for sourceMappingURL comment
-                    map_match = re.search(r'//[#@]\s*sourceMappingURL=([^\s]+)', js_text)
-                    if map_match:
-                        map_urls_to_test.append(urljoin(js_url, map_match.group(1)))
-                    else:
-                        # 2. Fallback probing
+                    # 1. Check HTTP Response Header for SourceMap
+                    header_map = js_resp.headers.get("SourceMap") or js_resp.headers.get("X-SourceMap")
+                    if header_map:
+                        map_urls_to_test.append(urljoin(js_url, header_map))
+                    
+                    # 2. Check JS Body for sourceMappingURL comment
+                    # Matches: //# sourceMappingURL=foo.js.map OR /*# sourceMappingURL=foo.js.map */
+                    regex = r'(?://#|/\*#)\s*sourceMappingURL=([^\s\*]+)'
+                    matches = re.findall(regex, js_text)
+                    for match in matches:
+                        map_urls_to_test.append(urljoin(js_url, match.strip()))
+                        
+                    # 3. Fallback probing
+                    if not map_urls_to_test:
                         map_urls_to_test.append(f"{js_url}.map")
                         if ".min.js" in js_url:
                             map_urls_to_test.append(js_url.replace(".min.js", ".map"))
                             
-                    for map_url in map_urls_to_test:
+                    for map_url in set(map_urls_to_test):
                         try:
+                            # Lightweight head/get check
                             map_resp = session.get(map_url, timeout=(1.0, 1.5), headers={"User-Agent": Config.USER_AGENT})
                             if map_resp.status_code == 200 and ("version" in map_resp.text[:100] or "sources" in map_resp.text[:100]):
                                 detected_maps.append(map_url)
