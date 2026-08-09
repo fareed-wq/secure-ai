@@ -2,6 +2,7 @@ import asyncio
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import datetime
+import json
 from http.cookiejar import DefaultCookiePolicy
 import html
 from html.parser import HTMLParser
@@ -54,7 +55,7 @@ class Config:
     USER_AGENT = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
+        "Chrome/126.0.0.0 Safari/537.36"
     )
     THREAD_POOL_SIZE = 15
     COMMON_SUBDOMAINS = ["trcadmin", "console", "s3", "s3b", "beta", "api", "dev"]
@@ -366,7 +367,19 @@ class BlockAllCookies(DefaultCookiePolicy):
 
 def get_http_session() -> requests.Session:
     session = requests.Session()
-    session.headers.update({"User-Agent": Config.USER_AGENT})
+    session.headers.update({
+        "User-Agent": Config.USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Sec-Ch-Ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Windows"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1"
+    })
     session.cookies.set_policy(BlockAllCookies())
 
     adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25, max_retries=0)
@@ -480,21 +493,23 @@ class ScannerModule(ABC):
         impact: Optional[str] = None,
         domain: str = ""
     ) -> dict:
-        import re, json
-        if isinstance(evidence, str):
-            evidence = {"raw": evidence[:180]}
-        elif isinstance(evidence, dict):
-            if "proof_snippet" in evidence and isinstance(evidence["proof_snippet"], str):
-                evidence["proof_snippet"] = evidence["proof_snippet"][:180]
-        else:
-            evidence = {"raw": str(evidence)[:180]}
+        try:
+            if isinstance(evidence, str):
+                evidence = {"raw": evidence[:180]}
+            elif isinstance(evidence, dict):
+                if "proof_snippet" in evidence and isinstance(evidence["proof_snippet"], str):
+                    evidence["proof_snippet"] = evidence["proof_snippet"][:180]
+            else:
+                evidence = {"raw": str(evidence)[:180]}
 
-        ev_str = json.dumps(evidence)
-        ev_str = re.sub(r'sk_live_[a-zA-Z0-9]+', '[REDACTED]', ev_str)
-        ev_str = re.sub(r'sk_test_[a-zA-Z0-9]+', '[REDACTED]', ev_str)
-        ev_str = re.sub(r'Bearer\s+[a-zA-Z0-9\.\-_]+', '[REDACTED]', ev_str)
-        ev_str = re.sub(r'token=[a-zA-Z0-9\.\-_]+', '[REDACTED]', ev_str)
-        evidence = json.loads(ev_str)
+            ev_str = json.dumps(evidence, default=str)
+            ev_str = re.sub(r'sk_live_[a-zA-Z0-9]+', '[REDACTED]', ev_str)
+            ev_str = re.sub(r'sk_test_[a-zA-Z0-9]+', '[REDACTED]', ev_str)
+            ev_str = re.sub(r'Bearer\s+[a-zA-Z0-9\.\-_]+', '[REDACTED]', ev_str)
+            ev_str = re.sub(r'token=[a-zA-Z0-9\.\-_]+', '[REDACTED]', ev_str)
+            evidence = json.loads(ev_str)
+        except Exception:
+            evidence = {"raw": str(evidence)[:180]}
 
         if compliance is None:
             compliance = COMPLIANCE_MAP.get(name, {
@@ -2664,7 +2679,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
             "severity": "Informational",
             "category": "security_defenses",
             "description": "The target server is intentionally dropping connection packets from our scanner's IP address (Vercel Datacenter). This typically indicates an aggressive Web Application Firewall (WAF), rate limiting, or country-level Geo-blocking (common for government domains).",
-            "evidence": "TCP Connection Timeout on ports 443 and 80.",
+            "evidence": {"raw": "TCP Connection Timeout on ports 443 and 80."},
             "confidence": "High",
             "remediation": "No remediation required. The server's perimeter defenses are actively blocking automated scanners.",
             "remediation_snippets": {},
@@ -2746,7 +2761,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                         "severity": "Informational",
                         "category": "information_exposure",
                         "description": "The scanner module crashed or timed out.",
-                        "evidence": str(e),
+                        "evidence": {"raw": str(e)[:180]},
                         "confidence": "High",
                         "remediation": "N/A",
                         "remediation_snippets": {},
