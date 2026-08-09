@@ -2899,7 +2899,9 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     server_hdr = metadata.get("server_header", "")
     waf_cdn = metadata.get("waf_cdn_detection", "Direct Origin")
     target_surface = {
-        "waf_server": f"{waf_cdn} ({metadata.get('http_status', 'Unknown')})",
+        "waf_server": waf_cdn or "Direct Origin",
+        "waf_status": metadata.get("http_status", "Unknown"),
+        "performance": metadata.get("performance_rating", "Unknown Latency"),
         "frontend_stack": metadata.get("detected_tech", "Standard Web Stack"),
         "api_surface": "No Public API Spec Exposed",
         "js_health": "Clean (0 .map Leaks)"

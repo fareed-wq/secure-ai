@@ -362,11 +362,21 @@ const SimpleReport = ({ reportData }) => {
         const ts = reportData.target_surface;
         const isApiClean = (ts.api_surface || '').toLowerCase().includes('no public');
         const isJsClean = (ts.js_health || '').toLowerCase().includes('clean');
+        const perfRating = reportData?.metadata?.performance_rating || ts.performance || '';
+        const wafSubtext = (() => {
+          const status = ts.waf_status || '';
+          const statusCode = status.match(/\d{3}/)?.[0] || '';
+          if (statusCode === '200') return '200 OK • Healthy';
+          if (statusCode === '403') return '403 • Access Restricted';
+          if (statusCode === '503') return '503 • Service Issue';
+          if (statusCode) return `${statusCode} • Detected`;
+          return perfRating || 'Status Unknown';
+        })();
         const surfaceCards = [
           {
             title: 'WAF / SERVER',
             value: ts.waf_server || 'Direct Origin',
-            subtext: reportData?.metadata?.performance_rating || 'Unknown Latency',
+            subtext: wafSubtext,
             icon: Shield,
             accentColor: 'text-sky-400 bg-sky-500/10 border-sky-500/20',
             status: 'neutral',
@@ -381,7 +391,7 @@ const SimpleReport = ({ reportData }) => {
           },
           {
             title: 'API SURFACE',
-            value: ts.api_surface || 'No Public Spec Exposed',
+            value: isApiClean ? 'No Public Spec Exposed' : (ts.api_surface || 'Unknown'),
             subtext: isApiClean ? 'GraphQL / OpenAPI Clean' : 'Public Endpoint Detected',
             icon: Code2,
             accentColor: isApiClean ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20',
@@ -389,8 +399,8 @@ const SimpleReport = ({ reportData }) => {
           },
           {
             title: 'JS HEALTH',
-            value: isJsClean ? 'Clean Build' : (ts.js_health || 'Unknown'),
-            subtext: isJsClean ? '0 .map Leaks Detected' : 'Source Map Leak Found',
+            value: isJsClean ? 'Clean Build' : 'Leak Detected',
+            subtext: isJsClean ? '0 .map Leaks Detected' : 'Source Map Exposed',
             icon: Box,
             accentColor: isJsClean ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20',
             status: isJsClean ? 'success' : 'warning',
