@@ -2973,21 +2973,76 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     target_surface = {
         "waf_server": waf_cdn or "Direct Origin",
         "waf_status": metadata.get("http_status", "Unknown"),
-        "performance": metadata.get("performance_rating", "Unknown Latency"),
-        "frontend_stack": metadata.get("detected_tech", "Standard Web Stack"),
-        "api_surface": "No Public API Spec Exposed",
-        "js_health": "Clean (0 .map Leaks)"
+        "performance": metadata.get("performance_rating", "Unknown Latency")
     }
 
-    # Check findings for API surface and JS health
+    # 1. Frontend Stack
+    frontend_stack = "Standard Web Stack"
+    frontend_subtext = "HTML5 / JavaScript Application"
+    if initial_resp:
+        body = initial_resp.text.lower() if hasattr(initial_resp, 'text') and initial_resp.text else ""
+        headers = initial_resp.headers
+        cookies = str(initial_resp.cookies).lower() if hasattr(initial_resp, 'cookies') else ""
+        
+        techs = []
+        x_powered = headers.get("X-Powered-By", "").lower()
+        if "next" in x_powered or "_next/static" in body:
+            techs.append("Next.js App")
+        elif "react" in body or "data-reactroot" in body or "react-dom" in body:
+            techs.append("React SPA")
+        elif "wp-content" in body or "wordpress" in body:
+            techs.append("WordPress CMS")
+        elif "laravel_session" in cookies or "laravel" in x_powered:
+            techs.append("Laravel / PHP")
+        elif "nuxt" in body or "_nuxt" in body:
+            techs.append("Nuxt.js Vue App")
+        
+        subtechs = []
+        if "tailwindcss" in body or "tailwind" in body:
+            subtechs.append("Tailwind CSS")
+        if "express" in x_powered:
+            subtechs.append("Express.js Node")
+        if "php" in x_powered:
+            subtechs.append("PHP Backend")
+            
+        if techs:
+            frontend_stack = techs[0]
+            if subtechs:
+                frontend_subtext = " • ".join(subtechs)
+            else:
+                frontend_subtext = "Verified Modern Stack"
+
+    target_surface["frontend_stack"] = frontend_stack
+    target_surface["frontend_subtext"] = frontend_subtext
+    target_surface["frontend_pill"] = "VERIFIED STACK"
+
+    # 2. API Surface
+    api_surface = "No Public Spec Exposed"
+    api_subtext = "GraphQL / OpenAPI Clean"
+    api_pill = "CLEAN SURFACE"
+    
     for f in all_findings:
         fname = f.get("name", "")
-        if "GraphQL" in fname and f.get("severity") != "Passed":
-            target_surface["api_surface"] = "Public GraphQL Endpoint Found"
-        if "OpenAPI" in fname or "Swagger" in fname:
-            target_surface["api_surface"] = "Public OpenAPI Spec Found"
-        if "Source Map" in fname and f.get("severity") != "Passed":
-            target_surface["js_health"] = f"{fname}"
+        if ("API" in fname or "GraphQL" in fname or "Swagger" in fname or "OpenAPI" in fname) and f.get("severity") != "Passed" and "Module" not in fname:
+            api_surface = "Public API Spec Exposed"
+            api_subtext = fname
+            api_pill = "EXPOSED API"
+            break
+
+    target_surface["api_surface"] = api_surface
+    target_surface["api_subtext"] = api_subtext
+    target_surface["api_pill"] = api_pill
+
+    # 3. JS Health
+    map_leaks = sum(1 for f in all_findings if "Source Map" in f.get("name", "") and f.get("severity") != "Passed")
+    if map_leaks > 0:
+        target_surface["js_health"] = f"{map_leaks} .map File(s) Leaked"
+        target_surface["js_subtext"] = "Source Code Reconstruction Risk"
+        target_surface["js_pill"] = "LEAKS DETECTED"
+    else:
+        target_surface["js_health"] = "Clean Build"
+        target_surface["js_subtext"] = "0 .map Leaks Detected"
+        target_surface["js_pill"] = "0 LEAKS DETECTED"
 
     return {
         "url": url,
