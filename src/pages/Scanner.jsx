@@ -32,7 +32,9 @@ function Scanner() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authFeatureName, setAuthFeatureName] = useState('');
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const urlInputRef = useRef(null);
+  const reportRef = useRef(null);
 
   useEffect(() => {
     if (location.state?.resetScan) {
