@@ -185,6 +185,18 @@ const TRANSLATIONS = {
     problem: "Server accepts connections configured with deprecated weak ciphers (e.g. 3DES / RC4).",
     why: "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
     category: "Encryption"
+  },
+  "Missing HTTPS Redirection": {
+    name: "Missing HTTPS Redirection",
+    problem: "Your website does not redirect visitors from unencrypted HTTP to secure HTTPS.",
+    why: "Unencrypted HTTP traffic can be intercepted by eavesdroppers on public networks, exposing passwords, cookies, and sensitive user data.",
+    category: "Encryption"
+  },
+  "SSL/TLS Connection Failure": {
+    name: "SSL/TLS Connection Failure",
+    problem: "Your server's SSL/TLS certificate is invalid, expired, or the secure handshake is failing.",
+    why: "Browsers display severe security warnings or block access entirely, destroying user trust and preventing secure data transmission.",
+    category: "Encryption"
   }
 };
 
