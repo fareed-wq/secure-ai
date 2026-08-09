@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Search, Lock, EyeOff, Mail, Globe, FileCheck, Key } from 'lucide-react';
+import { Shield, Search, Lock, EyeOff, Mail, Globe, FileCheck, Key, XCircle } from 'lucide-react';
 import { TRANSLATIONS, CATEGORY_METADATA } from '../config/translations';
 
 // Map icon strings to actual Lucide components
@@ -36,9 +36,16 @@ const Services = () => {
     if (!acc.find(i => i.name === curr.name)) acc.push(curr);
     return acc;
   }, []);
-  const totalChecksCount = allUniqueChecks.length;
+  const totalAuditCount = allUniqueChecks.length;
 
-  // Group translations by category
+  // Category counts
+  const categoryCounts = {};
+  allUniqueChecks.forEach(service => {
+    categoryCounts[service.category] = (categoryCounts[service.category] || 0) + 1;
+  });
+  const categoryCount = Object.keys(categoryCounts).length;
+
+  // Group translations by category (with filters applied)
   const servicesByCategory = Object.values(TRANSLATIONS).reduce((acc, service) => {
     // If category filter is active, skip if not match
     if (activeCategory !== 'all' && service.category !== activeCategory) {
@@ -68,18 +75,10 @@ const Services = () => {
     return acc;
   }, {});
 
-  // For the filter row
-  const categoryCounts = Object.values(TRANSLATIONS).reduce((acc, service) => {
-    const existsInAll = allUniqueChecks.find(s => s.name === service.name && s.category === service.category);
-    // Since we deduped in allUniqueChecks, we need a similar simple count. 
-    // Actually, just counting allUniqueChecks by category is safer:
-    return acc;
-  }, {});
-  
-  // Real count
-  allUniqueChecks.forEach(service => {
-    categoryCounts[service.category] = (categoryCounts[service.category] || 0) + 1;
-  });
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setActiveCategory('all');
+  };
 
   return (
     <div className="space-y-12 pb-12">
@@ -90,9 +89,9 @@ const Services = () => {
         </div>
         
         <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-mono text-indigo-400 mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-mono text-indigo-400 mb-4">
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-            ⚡ {totalChecksCount} Automated Security Checks Enabled
+            ⚡ {totalAuditCount} Active Audits across {categoryCount} Security Domains
           </div>
           
           <h1 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
@@ -122,11 +121,11 @@ const Services = () => {
               onClick={() => setActiveCategory('all')}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 activeCategory === 'all' 
-                  ? 'bg-indigo-600 text-white' 
-                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' 
+                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
               }`}
             >
-              All Checks ({totalChecksCount})
+              All Audits ({totalAuditCount})
             </button>
             {Object.keys(categoryCounts).map(cat => (
               <button
@@ -134,8 +133,8 @@ const Services = () => {
                 onClick={() => setActiveCategory(cat)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   activeCategory === cat 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' 
+                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
                 }`}
               >
                 {CATEGORY_METADATA[cat]?.title || cat} ({categoryCounts[cat]})
@@ -145,11 +144,28 @@ const Services = () => {
         </div>
       </section>
 
-      {/* Dynamic Categories */}
+      {/* Dynamic Categories & Empty State */}
       {Object.keys(servicesByCategory).length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-slate-400 text-lg">No checks match your criteria.</p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center py-24 px-4 bg-slate-900/50 border border-slate-800/80 rounded-2xl text-center"
+        >
+          <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-6">
+            <Search className="w-8 h-8 text-slate-500" />
+          </div>
+          <h3 className="text-xl font-bold text-white mb-2">No matching security checks found</h3>
+          <p className="text-slate-400 max-w-md mb-8">
+            We couldn't find any audits matching "{searchTerm}" in the selected category. Try adjusting your search terms.
+          </p>
+          <button 
+            onClick={handleClearFilters}
+            className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors"
+          >
+            <XCircle className="w-4 h-4" />
+            Clear Filters
+          </button>
+        </motion.div>
       ) : (
         <div className="space-y-8">
           <AnimatePresence mode="popLayout">
@@ -191,7 +207,7 @@ const Services = () => {
                     {services.map((service, i) => (
                       <div 
                         key={i} 
-                        className="rounded-xl border border-slate-800/80 bg-slate-900/50 p-5 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-indigo-500/5 flex flex-col justify-between min-h-[180px] group"
+                        className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/90 hover:shadow-xl hover:shadow-indigo-500/5 flex flex-col justify-between group"
                       >
                         <div>
                           <div className="flex items-start justify-between mb-3">
@@ -202,16 +218,16 @@ const Services = () => {
                               {service.impact || 'High'}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-400 leading-relaxed mt-2 line-clamp-3">
+                          <p className="text-xs text-slate-400 leading-relaxed my-3 line-clamp-3">
                             {service.why}
                           </p>
                         </div>
                         
-                        <div className="pt-4 mt-4 border-t border-slate-800/50">
+                        <div className="pt-4 mt-auto border-t border-slate-800/50">
                           <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider block mb-1">
                             Scanner Inspection:
                           </span>
-                          <p className="text-[11px] text-slate-300 line-clamp-2">
+                          <p className="text-[11px] text-slate-300 font-mono line-clamp-2">
                             {service.problem}
                           </p>
                         </div>
