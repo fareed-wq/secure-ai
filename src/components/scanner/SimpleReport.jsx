@@ -274,8 +274,10 @@ const SimpleReport = ({ reportData }) => {
     healthSummary = "Your website meets all baseline security best practices with zero open issues or vulnerabilities detected. Outstanding security posture!";
   } else if (score >= 80) {
     healthSummary = "Your website is well-secured overall. Addressing the few minor recommendations below will further harden your posture.";
-  } else {
+  } else if (score >= 50) {
     healthSummary = "Your website has moderate security risks. Addressing the top priorities below is highly recommended.";
+  } else {
+    healthSummary = "Your website faces significant security risks. Resolving the top priorities below is strongly recommended to protect your users.";
   }
 
   // Calculate generic health bars based on the translations categories we saw
@@ -344,7 +346,7 @@ const SimpleReport = ({ reportData }) => {
           <div className="mt-6">
             <div className="text-sm font-bold uppercase tracking-widest text-slate-400">Risk Meter</div>
             <div className={`text-2xl font-black mt-1 ${isWafBlocked ? 'text-slate-400' : score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400'}`}>
-              {isWafBlocked ? 'Blocked' : score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 70 ? 'Fair' : 'Poor'}
+              {isWafBlocked ? 'Blocked' : score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 50 ? 'Fair' : 'Poor'}
             </div>
           </div>
         </div>
