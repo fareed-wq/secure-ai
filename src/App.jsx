@@ -13,6 +13,7 @@ import SavedReports from './pages/SavedReports';
 import Compare from './pages/Compare';
 import Settings from './pages/Settings';
 import Services from './pages/Services';
+import About from './pages/About';
 
 const PlaceholderPage = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
@@ -30,6 +31,7 @@ const App = () => {
           <Route element={<RootLayout />}>
             <Route path="/" element={<Scanner />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/about" element={<About />} />
             <Route path="/scan" element={<Scanner />} />
             
             {/* New ChatGPT-Sidebar Routes */}
