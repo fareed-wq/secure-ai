@@ -17,6 +17,13 @@ const TechnicalReport = ({ reportData }) => {
     return (weights[b.severity] || 0) - (weights[a.severity] || 0);
   });
 
+  const domainGroups = [
+    { key: 'transport_tls', label: 'Transport & TLS Security', icon: <Lock className="w-4 h-4 text-cyan-400" /> },
+    { key: 'browser_defense', label: 'Browser Defense Headers', icon: <Shield className="w-4 h-4 text-indigo-400" /> },
+    { key: 'api_surface', label: 'API & Application Surface', icon: <Terminal className="w-4 h-4 text-amber-400" /> },
+    { key: 'email_domain', label: 'Email & Domain Trust', icon: <Globe className="w-4 h-4 text-emerald-400" /> },
+  ];
+
   const getSeverityBadge = (severity) => {
     const styles = {
       'Critical': 'bg-red-950 text-red-400 border border-red-800 font-bold px-2 py-0.5 rounded text-xs',
@@ -214,32 +221,38 @@ const TechnicalReport = ({ reportData }) => {
       {/* 4. Main Content Area */}
       <div>
         {activeView === 'vulnerabilities' && (
-          <div className="w-full max-w-full overflow-hidden">
-            <div className="report-section bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
-              <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
-                <FileCode className="w-5 h-5 text-indigo-400" />
-                <h3 className="font-bold text-white text-lg">Detailed Vulnerability Matrix</h3>
-              </div>
-              
-              <div className="w-full overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                      <th className="px-6 py-4" style={{ width: '15%' }}>Severity</th>
-                      <th className="px-6 py-4" style={{ width: '45%' }}>Vulnerability / Check Name</th>
-                      <th className="px-6 py-4" style={{ width: '25%' }}>OWASP Map</th>
-                      <th className="px-6 py-4 text-right print:hidden" style={{ width: '15%' }}>Action</th>
-                    </tr>
-                  </thead>
-                    {sortedFindings.map((finding, idx) => {
-                      const activeTab = snippetTabs[idx] || (finding.remediation_snippets ? Object.keys(finding.remediation_snippets)[0] : null);
-                      
-                      return (
-                        <tbody key={idx} className="finding-card divide-y divide-slate-800/50">
-                          <tr 
-                            onClick={() => setExpandedRow(expandedRow === idx ? null : idx)}
-                            className={`cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
-                          >
+          <div className="w-full max-w-full overflow-hidden space-y-6">
+            {domainGroups.map((group) => {
+              const groupFindings = sortedFindings.filter(f => f.domain === group.key);
+              if (groupFindings.length === 0) return null;
+
+              return (
+                <div key={group.key} className="report-section bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+                  <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                    {group.icon}
+                    <h3 className="font-bold text-white text-lg">{group.label}</h3>
+                  </div>
+                  
+                  <div className="w-full overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                          <th className="px-6 py-4" style={{ width: '15%' }}>Severity</th>
+                          <th className="px-6 py-4" style={{ width: '45%' }}>Vulnerability / Check Name</th>
+                          <th className="px-6 py-4" style={{ width: '25%' }}>OWASP Map</th>
+                          <th className="px-6 py-4 text-right print:hidden" style={{ width: '15%' }}>Action</th>
+                        </tr>
+                      </thead>
+                      {groupFindings.map((finding) => {
+                        const idx = sortedFindings.indexOf(finding);
+                        const activeTab = snippetTabs[idx] || (finding.remediation_snippets ? Object.keys(finding.remediation_snippets)[0] : null);
+                        
+                        return (
+                          <tbody key={idx} className="finding-card divide-y divide-slate-800/50">
+                            <tr 
+                              onClick={() => setExpandedRow(expandedRow === idx ? null : idx)}
+                              className={`cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
+                            >
                             <td className="px-6 py-4 whitespace-nowrap">
                               {getSeverityBadge(finding.severity)}
                             </td>
@@ -299,13 +312,26 @@ const TechnicalReport = ({ reportData }) => {
                                           <div>
                                             <div className="flex items-center justify-between mb-2">
                                               <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Raw Evidence / Payload</div>
-                                              <button onClick={() => copyToClipboard(finding.evidence)} className="text-slate-500 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors">
+                                              <button onClick={() => copyToClipboard(typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence))} className="text-slate-500 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors">
                                                 <Copy className="w-3 h-3" /> Copy
                                               </button>
                                             </div>
-                                            <pre className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
-                                              {finding.evidence}
-                                            </pre>
+                                            {typeof finding.evidence === 'object' && finding.evidence.request_path ? (
+                                              <div className="bg-slate-950 border border-slate-700/50 rounded-lg p-4 font-mono text-sm">
+                                                <div className="text-cyan-400 mb-2">
+                                                  GET {finding.evidence.request_path} • Status: {finding.evidence.status_code} • {finding.evidence.content_type}
+                                                </div>
+                                                {finding.evidence.proof_snippet && (
+                                                  <div className="text-slate-300 border-t border-slate-700/50 pt-2 mt-2">
+                                                    Proof: {finding.evidence.proof_snippet}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            ) : (
+                                              <pre className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                                                {typeof finding.evidence === 'object' && finding.evidence.raw ? finding.evidence.raw : (typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence))}
+                                              </pre>
+                                            )}
                                           </div>
                                         )}
 
@@ -366,9 +392,11 @@ const TechnicalReport = ({ reportData }) => {
                         </tbody>
                       );
                     })}
-                  </table>
-              </div>
-            </div>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 

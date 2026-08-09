@@ -282,21 +282,24 @@ const SimpleReport = ({ reportData }) => {
     healthSummary = "Your website faces significant security risks. Resolving the top priorities below is strongly recommended to protect your users.";
   }
 
-  // Calculate generic health bars based on the translations categories we saw
-  const calculateHealth = (category) => {
-    // For WAF-blocked scans, we have no data on any category
-    if (isWafBlocked) return -1; // -1 = No Data
-    const catIssues = issues.filter(i => getTranslation(i).category === category);
-    if (catIssues.length === 0) return 100;
-    if (catIssues.some(i => i.severity === 'Critical' || i.severity === 'High')) return 20;
-    return 60;
+  // Calculate domain-based health from backend findings
+  const calculateDomainHealth = (domain) => {
+    if (isWafBlocked) return -1;
+    const domainFindings = findings.filter(f => f.domain === domain);
+    const domainIssues = domainFindings.filter(f => f.severity !== 'Passed' && f.severity !== 'Informational');
+    const domainPassed = domainFindings.filter(f => f.severity === 'Passed');
+    if (domainFindings.length === 0) return 100; // No checks in this domain
+    if (domainIssues.length === 0) return 100;
+    if (domainIssues.some(f => f.severity === 'Critical' || f.severity === 'High')) return 20;
+    if (domainIssues.some(f => f.severity === 'Medium')) return 50;
+    return 70;
   };
 
   const healthMetrics = [
-    { name: 'Website Trust', val: calculateHealth('Website Trust') },
-    { name: 'Encryption', val: calculateHealth('Encryption') },
-    { name: 'Browser Protection', val: calculateHealth('Browser Protection') },
-    { name: 'Privacy Protection', val: calculateHealth('Privacy Protection') }
+    { name: 'Transport & TLS', val: calculateDomainHealth('transport_tls') },
+    { name: 'Browser Defense', val: calculateDomainHealth('browser_defense') },
+    { name: 'API Surface', val: calculateDomainHealth('api_surface') },
+    { name: 'Email & Domain', val: calculateDomainHealth('email_domain') }
   ];
 
   return (
@@ -353,6 +356,30 @@ const SimpleReport = ({ reportData }) => {
           </div>
         </div>
       </div>
+
+      {/* 1.5. Target Surface Breakdown */}
+      {reportData?.target_surface && (
+        <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl">
+          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+            <Target className="w-5 h-5 text-cyan-400" />
+            Target Surface Breakdown
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'WAF / Server', value: reportData.target_surface.waf_server, icon: '🛡️' },
+              { label: 'Frontend Stack', value: reportData.target_surface.frontend_stack, icon: '⚛️' },
+              { label: 'API Surface', value: reportData.target_surface.api_surface, icon: '🔌' },
+              { label: 'JS Health', value: reportData.target_surface.js_health, icon: '📦' },
+            ].map((tile, i) => (
+              <div key={i} className="bg-slate-950/60 border border-slate-700/50 rounded-xl p-4 hover:border-cyan-500/30 transition-all duration-300">
+                <div className="text-lg mb-2">{tile.icon}</div>
+                <div className="text-[11px] font-bold font-mono text-slate-400 uppercase tracking-wider mb-1">{tile.label}</div>
+                <div className="text-sm font-bold text-slate-200">{tile.value || 'Unknown'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 2. Security Health Bars */}
       <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl">

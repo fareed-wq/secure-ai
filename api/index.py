@@ -470,15 +470,32 @@ class ScannerModule(ABC):
         name: str,
         severity: str,
         description: str,
-        evidence: str,
+        evidence,
         confidence: str = "High",
         remediation: str = "N/A",
         owasp: str = "N/A",
         compliance: Optional[dict] = None,
         category: str = "information_exposure",
         cvss: Optional[float] = None,
-        impact: Optional[str] = None
+        impact: Optional[str] = None,
+        domain: str = ""
     ) -> dict:
+        import re, json
+        if isinstance(evidence, str):
+            evidence = {"raw": evidence[:180]}
+        elif isinstance(evidence, dict):
+            if "proof_snippet" in evidence and isinstance(evidence["proof_snippet"], str):
+                evidence["proof_snippet"] = evidence["proof_snippet"][:180]
+        else:
+            evidence = {"raw": str(evidence)[:180]}
+
+        ev_str = json.dumps(evidence)
+        ev_str = re.sub(r'sk_live_[a-zA-Z0-9]+', '[REDACTED]', ev_str)
+        ev_str = re.sub(r'sk_test_[a-zA-Z0-9]+', '[REDACTED]', ev_str)
+        ev_str = re.sub(r'Bearer\s+[a-zA-Z0-9\.\-_]+', '[REDACTED]', ev_str)
+        ev_str = re.sub(r'token=[a-zA-Z0-9\.\-_]+', '[REDACTED]', ev_str)
+        evidence = json.loads(ev_str)
+
         if compliance is None:
             compliance = COMPLIANCE_MAP.get(name, {
                 "pci_dss": "6.4.1 (Public Web Application Protection)",
@@ -508,7 +525,8 @@ class ScannerModule(ABC):
             "compliance": compliance,
             "module": self.module_name,
             "impact": impact,
-            "cvss": cvss
+            "cvss": cvss,
+            "domain": domain
         }
 
 
@@ -2282,6 +2300,31 @@ class VerboseStackTraceModule(ScannerModule):
             pass
         return findings
 
+DOMAIN_MAP = {
+    "EnhancedTLSModule": "transport_tls",
+    "TLSCipherStrengthModule": "transport_tls",
+    "HTTPSRedirectModule": "transport_tls",
+    "MixedContentModule": "transport_tls",
+    "SecurityHeadersModule": "browser_defense",
+    "AdvancedSecurityHeadersModule": "browser_defense",
+    "PermissionsPolicyModule": "browser_defense",
+    "CORSModule": "browser_defense",
+    "AdvancedCookieModule": "browser_defense",
+    "GraphQLIntrospectionModule": "api_surface",
+    "VerboseStackTraceModule": "api_surface",
+    "ExposedFilesModule": "api_surface",
+    "SensitivePathsModule": "api_surface",
+    "JSBundleSecretsModule": "api_surface",
+    "RobotsTxtModule": "api_surface",
+    "SitemapModule": "api_surface",
+    "TechFingerprintModule": "api_surface",
+    "InformationDisclosureModule": "api_surface",
+    "DNSCAAModule": "email_domain",
+    "DNSEmailSecurityModule": "email_domain",
+    "SecurityTxtModule": "email_domain",
+    "SubdomainTakeoverModule": "transport_tls",
+}
+
 REGISTERED_MODULES = [
     GraphQLIntrospectionModule(),
     VerboseStackTraceModule(),
@@ -2711,6 +2754,11 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                         "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
                     })
 
+    # Auto-assign security domains to findings based on their source module
+    for f in all_findings:
+        if not f.get("domain"):
+            f["domain"] = DOMAIN_MAP.get(f.get("module", ""), "browser_defense")
+
     if metadata.get("ipv6_supported"):
         all_findings.append({
             "name": "IPv6 Dual-Stack Supported",
@@ -2847,12 +2895,33 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         cat: max(0, 100 - pen) for cat, pen in category_penalties.items()
     }
 
+    # Compute target surface summary
+    server_hdr = metadata.get("server_header", "")
+    waf_cdn = metadata.get("waf_cdn_detection", "Direct Origin")
+    target_surface = {
+        "waf_server": f"{waf_cdn} ({metadata.get('http_status', 'Unknown')})",
+        "frontend_stack": metadata.get("detected_tech", "Standard Web Stack"),
+        "api_surface": "No Public API Spec Exposed",
+        "js_health": "Clean (0 .map Leaks)"
+    }
+
+    # Check findings for API surface and JS health
+    for f in all_findings:
+        fname = f.get("name", "")
+        if "GraphQL" in fname and f.get("severity") != "Passed":
+            target_surface["api_surface"] = "Public GraphQL Endpoint Found"
+        if "OpenAPI" in fname or "Swagger" in fname:
+            target_surface["api_surface"] = "Public OpenAPI Spec Found"
+        if "Source Map" in fname and f.get("severity") != "Passed":
+            target_surface["js_health"] = f"{fname}"
+
     return {
         "url": url,
         "score": score,
         "severity_counts": severity_counts,
         "category_scores": category_scores,
         "owasp_coverage": list(owasp_categories),
+        "target_surface": target_surface,
         "technical_compliance": {
             "pci_dss_4_0": {
                 "status": get_status(high_critical_failed_pci, passed_pci_list),
