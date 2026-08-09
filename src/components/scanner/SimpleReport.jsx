@@ -270,8 +270,10 @@ const SimpleReport = ({ reportData }) => {
   if (reportData?.executive_summary && isWafBlocked) {
     // Use backend-provided summary for WAF-blocked or limited scans
     healthSummary = reportData.executive_summary;
-  } else if (issues.length === 0 || score === 100) {
+  } else if (score === 100) {
     healthSummary = "Your website meets all baseline security best practices with zero open issues or vulnerabilities detected. Outstanding security posture!";
+  } else if (score >= 90) {
+    healthSummary = "Your website demonstrates a strong security posture. Addressing the few remaining recommendations below will achieve a perfect score.";
   } else if (score >= 80) {
     healthSummary = "Your website is well-secured overall. Addressing the few minor recommendations below will further harden your posture.";
   } else if (score >= 50) {
