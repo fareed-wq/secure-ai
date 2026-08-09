@@ -2096,30 +2096,32 @@ class JSBundleSecretsModule(ScannerModule):
             if not resp or not resp.text:
                 return findings
 
-            # 1. Parse HTML to find <script src="..."> tags
-            parser = ScriptTagParser()
-            parser.feed(resp.text[:500000])
+            sorted_urls = []
+            
+            # 1. Direct JS URL Handling vs HTML Parsing
+            if url.split('?')[0].endswith('.js') or 'application/javascript' in resp.headers.get('Content-Type', '').lower():
+                sorted_urls.append(url)
+            else:
+                parser = ScriptTagParser()
+                parser.feed(resp.text[:500000])
+                if parser.script_srcs:
+                    absolute_urls = []
+                    for src in parser.script_srcs:
+                        full_url = urljoin(url, src)
+                        if full_url not in absolute_urls:
+                            absolute_urls.append(full_url)
 
-            if not parser.script_srcs:
-                return findings
+                    def bundle_priority(js_url: str) -> int:
+                        lower = js_url.lower()
+                        if any(k in lower for k in ["main", "app", "index", "bundle", "page"]):
+                            return 0
+                        return 1
 
-            # 2. Resolve absolute URLs & prioritize primary bundles
-            absolute_urls = []
-            for src in parser.script_srcs:
-                full_url = urljoin(url, src)
-                if full_url not in absolute_urls:
-                    absolute_urls.append(full_url)
-
-            def bundle_priority(js_url: str) -> int:
-                lower = js_url.lower()
-                if any(k in lower for k in ["main", "app", "index", "bundle", "page"]):
-                    return 0
-                return 1
-
-            sorted_urls = sorted(absolute_urls, key=bundle_priority)[:self.MAX_JS_FILES]
+                    sorted_urls = sorted(absolute_urls, key=bundle_priority)[:self.MAX_JS_FILES]
 
             high_severity_secrets = []
             info_severity_keys = []
+            detected_maps = []
 
             # 3. Stream & inspect top JS bundles
             for js_url in sorted_urls:
@@ -2157,6 +2159,28 @@ class JSBundleSecretsModule(ScannerModule):
                             redacted = raw_match[:4] + "..." + raw_match[-4:] if len(raw_match) > 8 else "***"
                             info_severity_keys.append(f"{key_name} in {filename} ({redacted})")
 
+                    # Extract & Verify Source Maps
+                    map_urls_to_test = []
+                    
+                    # 1. Search for sourceMappingURL comment
+                    map_match = re.search(r'//[#@]\s*sourceMappingURL=([^\s]+)', js_text)
+                    if map_match:
+                        map_urls_to_test.append(urljoin(js_url, map_match.group(1)))
+                    else:
+                        # 2. Fallback probing
+                        map_urls_to_test.append(f"{js_url}.map")
+                        if ".min.js" in js_url:
+                            map_urls_to_test.append(js_url.replace(".min.js", ".map"))
+                            
+                    for map_url in map_urls_to_test:
+                        try:
+                            map_resp = session.get(map_url, timeout=(1.0, 1.5), headers={"User-Agent": Config.USER_AGENT})
+                            if map_resp.status_code == 200 and ("version" in map_resp.text[:100] or "sources" in map_resp.text[:100]):
+                                detected_maps.append(map_url)
+                                break 
+                        except Exception:
+                            continue
+
                 except Exception:
                     continue
 
@@ -2182,12 +2206,23 @@ class JSBundleSecretsModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
                 ))
+                
+            if detected_maps:
+                findings.append(self.make_finding(
+                    "Source Map Leak Detected",
+                    "Medium",
+                    "Source maps (.map files) are publicly accessible, allowing attackers to reconstruct original unminified source code.",
+                    f"Detected {len(detected_maps)} .map file(s), e.g., {detected_maps[0]}",
+                    remediation="Disable source maps in production builds or restrict access to .map files via WAF/server rules.",
+                    owasp="A05: Security Misconfiguration",
+                    category="information_exposure"
+                ))
 
-            if not high_severity_secrets and not info_severity_keys:
+            if not high_severity_secrets and not info_severity_keys and not detected_maps:
                 findings.append(self.make_finding(
                     "No Secrets Found in Main JS Bundles",
                     "Passed",
-                    "Lightweight JS surface probe completed on primary bundles; no exposed credentials or unflagged keys detected.",
+                    "Lightweight JS surface probe completed on primary bundles; no exposed credentials, unflagged keys, or source maps detected.",
                     f"Scanned {len(sorted_urls)} primary bundle(s)",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
