@@ -2314,6 +2314,9 @@ def get_ip_location(ip: str) -> str:
         if res.get("status") == "success":
             country = res.get("country", "Global")
             org = res.get("org") or res.get("isp") or "Cloud"
+            # Shorten verbose corporate suffixes for compact UI display
+            for full, short in [("Limited", "Ltd"), ("Corporation", "Corp"), ("Incorporated", "Inc"), ("Company", "Co"), ("International", "Intl"), ("Technologies", "Tech"), ("Enterprise", "Ent")]:
+                org = org.replace(full, short)
             return f"{country} ({org})"
     except Exception:
         pass
