@@ -413,28 +413,29 @@ const SimpleReport = ({ reportData }) => {
           if (!hasExposedApi) {
             return {
               val: ts.api_surface || 'No Public Spec Exposed',
-              sub: ts.api_subtext || 'GraphQL / OpenAPI Clean'
+              sub: ts.api_subtext || 'GraphQL / OpenAPI Clean',
+              pill: ts.api_pill || 'CLEAN SURFACE'
             };
           }
           const rawSubtext = (ts.api_subtext || '').toLowerCase();
           
           if (rawSubtext.includes('wp-json')) {
-            return { val: 'Public API Exposed', sub: 'WordPress REST API (/wp-json/)' };
+            return { val: 'Public API Exposed', sub: 'WordPress REST API (/wp-json/)', pill: 'EXPOSED API' };
           }
           if (rawSubtext.includes('admin') || rawSubtext.includes('wp-admin')) {
-            return { val: 'Admin Surface Exposed', sub: 'Management Portal Disclosed (/wp-admin)' };
+            return { val: 'Admin Surface Exposed', sub: 'Management Portal Disclosed (/wp-admin)', pill: 'ADMIN EXPOSED' };
           }
           if (rawSubtext.includes('swagger') || rawSubtext.includes('openapi')) {
-            return { val: 'Public API Spec Exposed', sub: 'OpenAPI Schema Disclosed' };
+            return { val: 'Public API Spec Exposed', sub: 'OpenAPI Schema Disclosed', pill: 'EXPOSED API' };
           }
           return {
             val: 'Public API Spec Exposed',
-            sub: ts.api_subtext || 'Exposed Specification Found'
+            sub: ts.api_subtext || 'Exposed Specification Found',
+            pill: 'EXPOSED API'
           };
         };
-        const { val: apiVal, sub: apiSub } = getApiSurfaceData();
-        const apiPill = ts.api_pill || (hasExposedApi ? 'EXPOSED API' : 'CLEAN SURFACE');
-        const apiColor = (apiPill === 'EXPOSED API')
+        const { val: apiVal, sub: apiSub, pill: apiPill } = getApiSurfaceData();
+        const apiColor = (apiPill === 'EXPOSED API' || apiPill === 'ADMIN EXPOSED')
           ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
           : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
 
