@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check, Shield, Layers, Code2, Box } from 'lucide-react';
 
 
 // --- TRANSLATION LAYER ---
@@ -358,28 +358,81 @@ const SimpleReport = ({ reportData }) => {
       </div>
 
       {/* 1.5. Target Surface Breakdown */}
-      {reportData?.target_surface && (
-        <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl">
-          <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <Target className="w-5 h-5 text-cyan-400" />
-            Target Surface Breakdown
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: 'WAF / Server', value: reportData.target_surface.waf_server, icon: '🛡️' },
-              { label: 'Frontend Stack', value: reportData.target_surface.frontend_stack, icon: '⚛️' },
-              { label: 'API Surface', value: reportData.target_surface.api_surface, icon: '🔌' },
-              { label: 'JS Health', value: reportData.target_surface.js_health, icon: '📦' },
-            ].map((tile, i) => (
-              <div key={i} className="bg-slate-950/60 border border-slate-700/50 rounded-xl p-4 hover:border-cyan-500/30 transition-all duration-300">
-                <div className="text-lg mb-2">{tile.icon}</div>
-                <div className="text-[11px] font-bold font-mono text-slate-400 uppercase tracking-wider mb-1">{tile.label}</div>
-                <div className="text-sm font-bold text-slate-200">{tile.value || 'Unknown'}</div>
+      {reportData?.target_surface && (() => {
+        const ts = reportData.target_surface;
+        const isApiClean = (ts.api_surface || '').toLowerCase().includes('no public');
+        const isJsClean = (ts.js_health || '').toLowerCase().includes('clean');
+        const surfaceCards = [
+          {
+            title: 'WAF / SERVER',
+            value: ts.waf_server || 'Direct Origin',
+            subtext: reportData?.metadata?.performance_rating || 'Unknown Latency',
+            icon: Shield,
+            accentColor: 'text-sky-400 bg-sky-500/10 border-sky-500/20',
+            status: 'neutral',
+          },
+          {
+            title: 'FRONTEND STACK',
+            value: ts.frontend_stack || 'Standard Web Stack',
+            subtext: 'Detected Technology',
+            icon: Layers,
+            accentColor: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+            status: 'neutral',
+          },
+          {
+            title: 'API SURFACE',
+            value: ts.api_surface || 'No Public Spec Exposed',
+            subtext: isApiClean ? 'GraphQL / OpenAPI Clean' : 'Public Endpoint Detected',
+            icon: Code2,
+            accentColor: isApiClean ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+            status: isApiClean ? 'success' : 'warning',
+          },
+          {
+            title: 'JS HEALTH',
+            value: isJsClean ? 'Clean Build' : (ts.js_health || 'Unknown'),
+            subtext: isJsClean ? '0 .map Leaks Detected' : 'Source Map Leak Found',
+            icon: Box,
+            accentColor: isJsClean ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20',
+            status: isJsClean ? 'success' : 'warning',
+          },
+        ];
+        return (
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-6 backdrop-blur-md shadow-xl">
+            <div className="flex items-center gap-2.5 mb-6">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
+                </span>
               </div>
-            ))}
+              <h2 className="text-lg font-semibold tracking-tight text-white">Target Surface Breakdown</h2>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {surfaceCards.map((card, idx) => {
+                const Icon = card.icon;
+                return (
+                  <div key={idx} className="group relative flex flex-col justify-between rounded-xl border border-slate-800/80 bg-slate-900/60 p-4 transition-all duration-200 hover:border-slate-700 hover:bg-slate-900/90 hover:shadow-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{card.title}</span>
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg border ${card.accentColor}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-slate-100 group-hover:text-white">{card.value}</p>
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        {card.status === 'success' && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />}
+                        {card.status === 'warning' && <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />}
+                        <span className="text-xs text-slate-400 font-mono">{card.subtext}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 2. Security Health Bars */}
       <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl">
