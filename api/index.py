@@ -11,12 +11,15 @@ import logging
 import re
 import socket
 import ssl
+import time
+import os
+from collections import defaultdict
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, field_validator
@@ -31,6 +34,47 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# --- RATE LIMITING STATE ---
+IN_MEMORY_LIMITS = defaultdict(list)
+
+def get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.headers.get("X-Real-IP", "127.0.0.1")
+
+def check_rate_limit(ip: str) -> bool:
+    limit = 10
+    window = 60
+    
+    redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
+    redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+    
+    if redis_url and redis_token:
+        try:
+            key = f"rate_limit:{ip}"
+            headers = {"Authorization": f"Bearer {redis_token}"}
+            payload = [
+                ["INCR", key],
+                ["EXPIRE", key, window]
+            ]
+            resp = requests.post(f"{redis_url}/pipeline", json=payload, headers=headers, timeout=1.0)
+            if resp.status_code == 200:
+                results = resp.json()
+                count = results[0].get("result", 1)
+                return count <= limit
+        except Exception as e:
+            logger.error(f"Redis rate limit failed, falling back to memory: {e}")
+            pass
+
+    now = time.time()
+    history = [t for t in IN_MEMORY_LIMITS[ip] if now - t < window]
+    if len(history) >= limit:
+        return False
+    history.append(now)
+    IN_MEMORY_LIMITS[ip] = history
+    return True
 
 # Pre-compiled regular expressions for performance
 CANONICAL_URL_REGEX = re.compile(r'(https?://[^\s\]\)\>\"\']+)')
@@ -3022,7 +3066,14 @@ def get_waf_fallback_payload(target_url: str) -> dict:
 
 @app.post("/api/scan")
 @app.post("/scan")
-async def scan_single(req: ScanRequest):
+async def scan_single(req: ScanRequest, request: Request):
+    ip = get_client_ip(request)
+    if not check_rate_limit(ip):
+        return JSONResponse(
+            status_code=429,
+            content={"error": "Rate limit exceeded. Maximum 10 scans per minute allowed.", "status": 429},
+            headers={"Retry-After": "60", "X-RateLimit-Limit": "10", "X-RateLimit-Remaining": "0"}
+        )
     try:
         return await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains), timeout=45.0)
     except Exception as e:
@@ -3031,7 +3082,14 @@ async def scan_single(req: ScanRequest):
 
 @app.post("/api/scan/batch")
 @app.post("/scan/batch")
-async def scan_batch(req: BatchScanRequest):
+async def scan_batch(req: BatchScanRequest, request: Request):
+    ip = get_client_ip(request)
+    if not check_rate_limit(ip):
+        return JSONResponse(
+            status_code=429,
+            content={"error": "Rate limit exceeded. Maximum 10 scans per minute allowed.", "status": 429},
+            headers={"Retry-After": "60", "X-RateLimit-Limit": "10", "X-RateLimit-Remaining": "0"}
+        )
     workers = min(10, len(req.urls)) or 1
 
     def process_batch():
