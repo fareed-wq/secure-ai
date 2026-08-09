@@ -3,6 +3,7 @@ import { Search, ArrowRight, Loader2, ShieldAlert, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import WhatsAppWidget from '../WhatsAppWidget';
 
 import ModeSelection from '../components/scanner/ModeSelection';
@@ -98,6 +99,19 @@ function Scanner() {
       
       setReportData(data);
       setScanState('mode-select'); // Go to mode selection first
+
+      // Save scan to Supabase if user is logged in
+      if (user) {
+        // Run asynchronously so it doesn't block the UI
+        supabase.from('scans').insert([{
+          user_id: user.id,
+          target_url: parsedUrl,
+          score: data.security_score,
+          report_data: data
+        }]).then(({ error }) => {
+          if (error) console.error("Failed to save scan history:", error);
+        });
+      }
     } catch (error) {
       console.error('Backend Connection Error:', error);
       setErrorMessage(`Failed to connect to the backend scanner: ${error.message || error}`);
