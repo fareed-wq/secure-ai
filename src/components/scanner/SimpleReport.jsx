@@ -360,80 +360,108 @@ const SimpleReport = ({ reportData }) => {
       {/* 1.5. Target Surface Breakdown */}
       {reportData?.target_surface && (() => {
         const ts = reportData.target_surface;
-        const isApiClean = (ts.api_surface || '').toLowerCase().includes('no public');
-        const isJsClean = (ts.js_health || '').toLowerCase().includes('clean');
+        const findings = reportData?.findings || [];
         const perfRating = reportData?.metadata?.performance_rating || ts.performance || '';
-        const wafSubtext = (() => {
+
+        // ── 1. WAF / SERVER ──────────────────────────────────────────────
+        const serverVal = ts.waf_server || reportData?.server || 'Direct Origin';
+        const serverSub = (() => {
           const status = ts.waf_status || '';
           const statusCode = status.match(/\d{3}/)?.[0] || '';
+          if (reportData?.latency && statusCode === '200') return `200 OK • ${reportData.latency}`;
           if (statusCode === '200') return '200 OK • Healthy';
           if (statusCode === '403') return '403 • Access Restricted';
           if (statusCode === '503') return '503 • Service Issue';
           if (statusCode) return `${statusCode} • Detected`;
           return perfRating || 'Status Unknown';
         })();
-        const getWafPill = () => {
+        const wafPill = (() => {
           if (ts.waf_pill === 'REQUEST TIMEOUT' || ts.waf_pill === 'TIMEOUT') return { label: 'REQUEST TIMEOUT', color: 'bg-rose-500/10 text-rose-400 border-rose-500/30' };
           if (ts.waf_pill === 'WAF BLOCKED') return { label: 'WAF BLOCKED', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
-          
           const status = ts.waf_status || '';
           const statusCode = status.match(/\d{3}/)?.[0] || '';
           const isTimeout = status.toLowerCase().includes('timeout') || perfRating?.toLowerCase() === 'request timeout';
-          
           if (isTimeout) return { label: 'REQUEST TIMEOUT', color: 'bg-rose-500/10 text-rose-400 border-rose-500/30' };
           if (statusCode === '403' || status.toLowerCase().includes('aborted') || perfRating?.toLowerCase() === 'timeout') return { label: 'WAF BLOCKED', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
-          
           const latencyMatch = status.match(/\((\d+)ms\)/);
           if (latencyMatch) {
-            const latencyMs = parseInt(latencyMatch[1], 10);
-            return latencyMs < 800 
+            const ms = parseInt(latencyMatch[1], 10);
+            return ms < 800
               ? { label: 'OPTIMAL LATENCY', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' }
               : { label: 'HIGH LATENCY', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
           }
-          
           if (perfRating?.toLowerCase().includes('high')) return { label: 'HIGH LATENCY', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
           if (perfRating?.toLowerCase().includes('optimal') || statusCode === '200') return { label: 'OPTIMAL LATENCY', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' };
-          
           return { label: 'LATENCY CHECKED', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' };
-        };
-        const wafPillData = getWafPill();
+        })();
 
+        // ── 2. FRONTEND STACK ────────────────────────────────────────────
+        const detectedTech = reportData?.technologies?.join(' • ') || reportData?.detected_framework;
+        const stackVal = detectedTech || ts.frontend_stack || 'Standard Web Stack';
+        const stackSub = ts.frontend_subtext || 'HTML5 / JavaScript Application';
+        const stackPill = detectedTech ? 'DETECTED STACK' : (ts.frontend_pill || 'VERIFIED STACK');
+
+        // ── 3. API SURFACE ───────────────────────────────────────────────
+        const hasExposedApi = findings.some(f =>
+          (f.id?.includes('api') || f.id?.includes('swagger') || f.id?.includes('graphql') || f.id?.includes('openapi'))
+          && f.severity !== 'Passed'
+        );
+        const apiVal = hasExposedApi ? 'Public API Spec Exposed' : (ts.api_surface || 'No Public Spec Exposed');
+        const apiSub = hasExposedApi ? (ts.api_subtext || 'Exposed Specification Found') : (ts.api_subtext || 'GraphQL / OpenAPI Clean');
+        const apiPill = hasExposedApi ? (ts.api_pill || 'EXPOSED API') : (ts.api_pill || 'CLEAN SURFACE');
+        const apiColor = hasExposedApi
+          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+
+        // ── 4. JS HEALTH ─────────────────────────────────────────────────
+        const mapLeaks = findings.filter(f =>
+          (f.id?.includes('map_leak') || f.id?.includes('source_map') || (f.name || '').includes('Source Map'))
+          && f.severity !== 'Passed'
+        ).length;
+        const jsVal = mapLeaks > 0 ? `${mapLeaks} .map Leak(s) Detected` : (ts.js_health || 'Clean Build');
+        const jsSub = mapLeaks > 0 ? 'Source Code Exposure Risk' : (ts.js_subtext || '0 .map Leaks Detected');
+        const jsPill = mapLeaks > 0 ? 'LEAKS DETECTED' : (ts.js_pill || '0 LEAKS DETECTED');
+        const jsColor = mapLeaks > 0
+          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+
+        // ── Build Cards Array ────────────────────────────────────────────
         const surfaceCards = [
           {
             title: 'WAF / SERVER',
-            value: ts.waf_server || 'Direct Origin',
-            subtext: wafSubtext,
+            value: serverVal,
+            subtext: serverSub,
             icon: Shield,
             iconColor: 'text-sky-400',
-            pill: wafPillData.label,
-            pillColor: wafPillData.color,
+            pill: wafPill.label,
+            pillColor: wafPill.color,
           },
           {
             title: 'FRONTEND STACK',
-            value: ts.frontend_stack || 'Standard Web Stack',
-            subtext: ts.frontend_subtext || 'HTML5 / JavaScript Application',
+            value: stackVal,
+            subtext: stackSub,
             icon: Layers,
             iconColor: 'text-indigo-400',
-            pill: ts.frontend_pill || 'VERIFIED STACK',
+            pill: stackPill,
             pillColor: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
           },
           {
             title: 'API SURFACE',
-            value: ts.api_surface || 'Unknown',
-            subtext: ts.api_subtext || 'Unknown',
+            value: apiVal,
+            subtext: apiSub,
             icon: Code2,
-            iconColor: isApiClean ? 'text-emerald-400' : 'text-amber-400',
-            pill: ts.api_pill || (isApiClean ? 'CLEAN SURFACE' : 'EXPOSED ENDPOINT'),
-            pillColor: isApiClean ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+            iconColor: hasExposedApi ? 'text-amber-400' : 'text-emerald-400',
+            pill: apiPill,
+            pillColor: apiColor,
           },
           {
             title: 'JS HEALTH',
-            value: ts.js_health || (isJsClean ? 'Clean Build' : 'Leak Detected'),
-            subtext: ts.js_subtext || (isJsClean ? '0 .map Leaks Detected' : 'Source Map Exposed'),
+            value: jsVal,
+            subtext: jsSub,
             icon: Box,
-            iconColor: isJsClean ? 'text-emerald-400' : 'text-rose-400',
-            pill: ts.js_pill || (isJsClean ? '0 LEAKS DETECTED' : 'LEAK FOUND'),
-            pillColor: isJsClean ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+            iconColor: mapLeaks > 0 ? 'text-rose-400' : 'text-emerald-400',
+            pill: jsPill,
+            pillColor: jsColor,
           },
         ];
         return (
