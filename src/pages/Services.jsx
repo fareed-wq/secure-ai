@@ -1,31 +1,57 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Search, Lock, EyeOff, Mail, Globe, FileCheck, Key } from 'lucide-react';
 import { TRANSLATIONS, CATEGORY_METADATA } from '../config/translations';
 
 // Map icon strings to actual Lucide components
 const IconMap = {
-  Lock: Lock,
-  Shield: Shield,
-  EyeOff: EyeOff,
-  Mail: Mail,
-  Globe: Globe,
-  FileCheck: FileCheck,
-  Key: Key
+  Lock,
+  Shield,
+  EyeOff,
+  Mail,
+  Globe,
+  FileCheck,
+  Key
+};
+
+// Helper for impact badge colors
+const getImpactStyles = (impact) => {
+  const normalized = (impact || 'Medium').toLowerCase();
+  if (normalized.includes('high') || normalized.includes('critical')) {
+    return 'border-rose-500/30 bg-rose-500/10 text-rose-400';
+  }
+  if (normalized.includes('low') || normalized.includes('info')) {
+    return 'border-indigo-500/30 bg-indigo-500/10 text-indigo-400';
+  }
+  // Default Medium
+  return 'border-amber-500/30 bg-amber-500/10 text-amber-400';
 };
 
 const Services = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all');
+
+  // Total unique checks count
+  const allUniqueChecks = Object.values(TRANSLATIONS).reduce((acc, curr) => {
+    if (!acc.find(i => i.name === curr.name)) acc.push(curr);
+    return acc;
+  }, []);
+  const totalChecksCount = allUniqueChecks.length;
 
   // Group translations by category
   const servicesByCategory = Object.values(TRANSLATIONS).reduce((acc, service) => {
-    // If we have a search term, filter the services
+    // If category filter is active, skip if not match
+    if (activeCategory !== 'all' && service.category !== activeCategory) {
+      return acc;
+    }
+
+    // If search term is active, filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       if (!service.name.toLowerCase().includes(searchLower) && 
           !service.problem.toLowerCase().includes(searchLower) &&
           !service.category.toLowerCase().includes(searchLower)) {
-        return acc; // Skip if it doesn't match
+        return acc;
       }
     }
 
@@ -33,7 +59,7 @@ const Services = () => {
       acc[service.category] = [];
     }
     
-    // De-duplicate by name (since some technical findings map to the same business explanation)
+    // De-duplicate by name
     const exists = acc[service.category].find(s => s.name === service.name);
     if (!exists) {
       acc[service.category].push(service);
@@ -41,6 +67,19 @@ const Services = () => {
     
     return acc;
   }, {});
+
+  // For the filter row
+  const categoryCounts = Object.values(TRANSLATIONS).reduce((acc, service) => {
+    const existsInAll = allUniqueChecks.find(s => s.name === service.name && s.category === service.category);
+    // Since we deduped in allUniqueChecks, we need a similar simple count. 
+    // Actually, just counting allUniqueChecks by category is safer:
+    return acc;
+  }, {});
+  
+  // Real count
+  allUniqueChecks.forEach(service => {
+    categoryCounts[service.category] = (categoryCounts[service.category] || 0) + 1;
+  });
 
   return (
     <div className="space-y-12 pb-12">
@@ -51,10 +90,11 @@ const Services = () => {
         </div>
         
         <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-sm font-semibold mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-mono text-indigo-400 mb-6">
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-            Dynamic Scanner Capabilities
+            ⚡ {totalChecksCount} Automated Security Checks Enabled
           </div>
+          
           <h1 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
             Comprehensive Security Posture Audits
           </h1>
@@ -63,7 +103,7 @@ const Services = () => {
             Below are the exact security checks and verifications our scanner performs.
           </p>
           
-          <div className="relative max-w-xl">
+          <div className="relative max-w-xl mb-6">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-slate-500" />
             </div>
@@ -75,71 +115,113 @@ const Services = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
+          {/* Filter Pills Row */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setActiveCategory('all')}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                activeCategory === 'all' 
+                  ? 'bg-indigo-600 text-white' 
+                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+              }`}
+            >
+              All Checks ({totalChecksCount})
+            </button>
+            {Object.keys(categoryCounts).map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  activeCategory === cat 
+                    ? 'bg-indigo-600 text-white' 
+                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
+                }`}
+              >
+                {CATEGORY_METADATA[cat]?.title || cat} ({categoryCounts[cat]})
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Dynamic Categories */}
       {Object.keys(servicesByCategory).length === 0 ? (
         <div className="text-center py-20">
-          <p className="text-slate-400 text-lg">No checks match your search query.</p>
+          <p className="text-slate-400 text-lg">No checks match your criteria.</p>
         </div>
       ) : (
-        <div className="space-y-16">
-          {Object.keys(servicesByCategory).map((categoryKey, index) => {
-            const meta = CATEGORY_METADATA[categoryKey] || { 
-              title: categoryKey, 
-              icon: "Shield", 
-              description: "Security checks and verifications."
-            };
-            const CategoryIcon = IconMap[meta.icon] || Shield;
-            const services = servicesByCategory[categoryKey];
+        <div className="space-y-8">
+          <AnimatePresence mode="popLayout">
+            {Object.keys(servicesByCategory).map((categoryKey) => {
+              const meta = CATEGORY_METADATA[categoryKey] || { 
+                title: categoryKey, 
+                icon: "Shield", 
+                description: "Security checks and verifications."
+              };
+              const CategoryIcon = IconMap[meta.icon] || Shield;
+              const services = servicesByCategory[categoryKey];
 
-            return (
-              <motion.section 
-                key={categoryKey}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="space-y-6"
-              >
-                {/* Category Header */}
-                <div className="flex items-center gap-4 border-b border-slate-800 pb-4">
-                  <div className="p-3 rounded-xl bg-slate-800/50">
-                    <CategoryIcon className="w-6 h-6 text-indigo-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">{meta.title}</h2>
-                    <p className="text-slate-400 text-sm mt-1">{meta.description}</p>
-                  </div>
-                </div>
-
-                {/* Cards Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {services.map((service, i) => (
-                    <div 
-                      key={i} 
-                      className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 hover:bg-slate-800/50 transition-colors group"
-                    >
-                      <h3 className="text-lg font-bold text-slate-200 mb-2 group-hover:text-white transition-colors">
-                        {service.name}
-                      </h3>
-                      <p className="text-sm text-slate-400 mb-4 line-clamp-3">
-                        {service.why}
-                      </p>
-                      <div className="pt-4 border-t border-slate-800/50">
-                        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
-                          Scans for:
-                        </span>
-                        <p className="text-sm text-slate-300 mt-1 line-clamp-2">
-                          {service.problem}
-                        </p>
+              return (
+                <motion.section 
+                  key={categoryKey}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Category Header with Separator */}
+                  <div className="flex items-center justify-between border-b border-slate-800/60 pb-3 mb-6 mt-12">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-slate-800/50">
+                        <CategoryIcon className="w-5 h-5 text-indigo-400" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-white tracking-tight">{meta.title}</h2>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </motion.section>
-            );
-          })}
+                    <div className="px-3 py-1 rounded bg-slate-800/50 text-[10px] font-mono text-slate-400 uppercase tracking-widest">
+                      [ {services.length} AUDIT{services.length !== 1 && 'S'} ]
+                    </div>
+                  </div>
+
+                  {/* Cards Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {services.map((service, i) => (
+                      <div 
+                        key={i} 
+                        className="rounded-xl border border-slate-800/80 bg-slate-900/50 p-5 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-indigo-500/5 flex flex-col justify-between min-h-[180px] group"
+                      >
+                        <div>
+                          <div className="flex items-start justify-between mb-3">
+                            <h3 className="text-base font-semibold text-white tracking-tight group-hover:text-indigo-200 transition-colors">
+                              {service.name}
+                            </h3>
+                            <span className={`shrink-0 ml-3 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${getImpactStyles(service.impact)}`}>
+                              {service.impact || 'High'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-400 leading-relaxed mt-2 line-clamp-3">
+                            {service.why}
+                          </p>
+                        </div>
+                        
+                        <div className="pt-4 mt-4 border-t border-slate-800/50">
+                          <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider block mb-1">
+                            Scanner Inspection:
+                          </span>
+                          <p className="text-[11px] text-slate-300 line-clamp-2">
+                            {service.problem}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.section>
+              );
+            })}
+          </AnimatePresence>
         </div>
       )}
     </div>
