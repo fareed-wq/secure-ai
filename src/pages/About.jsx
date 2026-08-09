@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Lock, Users, Zap, Globe, Github, Twitter } from 'lucide-react';
+import { Shield, Lock, Users, Zap, Globe, Code2, MessageCircle } from 'lucide-react';
 
 const About = () => {
   return (
@@ -111,10 +111,10 @@ const About = () => {
         <h3 className="text-xl font-bold text-white mb-6">Connect with us</h3>
         <div className="flex justify-center gap-4">
           <button className="p-3 bg-slate-900 border border-slate-800 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-white">
-            <Github className="w-5 h-5" />
+            <Code2 className="w-5 h-5" />
           </button>
           <button className="p-3 bg-slate-900 border border-slate-800 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-white">
-            <Twitter className="w-5 h-5" />
+            <MessageCircle className="w-5 h-5" />
           </button>
           <button className="p-3 bg-slate-900 border border-slate-800 rounded-full hover:bg-slate-800 transition-colors text-slate-400 hover:text-white">
             <Globe className="w-5 h-5" />
