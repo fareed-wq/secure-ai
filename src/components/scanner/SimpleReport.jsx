@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check, Shield, Layers, Code2, Box } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check, Shield, Layers, Code2, Box, Mail } from 'lucide-react';
 
 
 // --- TRANSLATION LAYER ---
@@ -296,10 +296,10 @@ const SimpleReport = ({ reportData }) => {
   };
 
   const healthMetrics = [
-    { name: 'Transport & TLS', val: calculateDomainHealth('transport_tls') },
-    { name: 'Browser Defense', val: calculateDomainHealth('browser_defense') },
-    { name: 'API Surface', val: calculateDomainHealth('api_surface') },
-    { name: 'Email & Domain', val: calculateDomainHealth('email_domain') }
+    { name: 'Transport & TLS', val: calculateDomainHealth('transport_tls'), icon: Lock },
+    { name: 'Browser Defense', val: calculateDomainHealth('browser_defense'), icon: ShieldAlert },
+    { name: 'API Surface', val: calculateDomainHealth('api_surface'), icon: Code2 },
+    { name: 'Email & Domain', val: calculateDomainHealth('email_domain'), icon: Mail }
   ];
 
   return (
@@ -455,26 +455,35 @@ const SimpleReport = ({ reportData }) => {
       <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl">
         <h3 className="text-xl font-bold text-white mb-6">Website Health Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-          {healthMetrics.map((metric, i) => (
-            <div key={i} className="space-y-2">
-              <div className="flex justify-between items-center text-sm font-bold mb-1">
-                <span className="text-slate-300">{metric.name}</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${metric.val === -1 ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20' : metric.val === 100 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : metric.val >= 60 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                  {metric.val === -1 ? '⚪ No Data' : metric.val === 100 ? '🟢 Optimal' : metric.val >= 60 ? '🟡 Needs Attention' : '🔴 Vulnerable'}
-                </span>
+          {healthMetrics.map((metric, i) => {
+            const MetricIcon = metric.icon;
+            return (
+              <div key={i} className="space-y-2">
+                <div className="flex justify-between items-center text-sm font-bold mb-1">
+                  <span className="text-slate-300 flex items-center gap-2">
+                    <MetricIcon className="w-4 h-4 text-slate-500 shrink-0" />
+                    {metric.name}
+                    {metric.val !== -1 && (
+                      <span className="text-[11px] font-mono text-slate-500">{metric.val}%</span>
+                    )}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${metric.val === -1 ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20' : metric.val >= 90 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : metric.val >= 50 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                    {metric.val === -1 ? '⚪ No Data' : metric.val >= 90 ? '🟢 Optimal' : metric.val >= 50 ? '🟡 Needs Attention' : '🔴 Vulnerable'}
+                  </span>
+                </div>
+                <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden">
+                  {metric.val === -1 ? (
+                    <div className="h-full rounded-full bg-slate-600/40" style={{ width: '100%', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(148,163,184,0.1) 4px, rgba(148,163,184,0.1) 8px)' }}></div>
+                  ) : (
+                    <div 
+                      className={`h-full rounded-full ${metric.val >= 90 ? 'bg-emerald-500' : metric.val >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} 
+                      style={{ width: `${metric.val}%` }}
+                    ></div>
+                  )}
+                </div>
               </div>
-              <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden">
-                {metric.val === -1 ? (
-                  <div className="h-full rounded-full bg-slate-600/40" style={{ width: '100%', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(148,163,184,0.1) 4px, rgba(148,163,184,0.1) 8px)' }}></div>
-                ) : (
-                  <div 
-                    className={`h-full rounded-full ${metric.val === 100 ? 'bg-emerald-500' : metric.val >= 60 ? 'bg-amber-500' : 'bg-red-500'}`} 
-                    style={{ width: `${metric.val}%` }}
-                  ></div>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
