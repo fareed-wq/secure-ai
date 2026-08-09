@@ -3,15 +3,15 @@ import { ShieldCheck, Activity, Target, AlertTriangle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from "../contexts/AuthContext";
 
-// Mock data for the MVP dashboard
+// Empty state data for a new user
 const mockTrendData = [
-  { name: 'Mon', score: 65 },
-  { name: 'Tue', score: 72 },
-  { name: 'Wed', score: 68 },
-  { name: 'Thu', score: 85 },
-  { name: 'Fri', score: 92 },
-  { name: 'Sat', score: 90 },
-  { name: 'Sun', score: 95 },
+  { name: 'Mon', score: 0 },
+  { name: 'Tue', score: 0 },
+  { name: 'Wed', score: 0 },
+  { name: 'Thu', score: 0 },
+  { name: 'Fri', score: 0 },
+  { name: 'Sat', score: 0 },
+  { name: 'Sun', score: 0 },
 ];
 
 const Dashboard = () => {
@@ -31,7 +31,7 @@ const Dashboard = () => {
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Avg Security Score</p>
-            <p className="text-3xl font-bold text-emerald-400 mt-2">92/100</p>
+            <p className="text-3xl font-bold text-emerald-400 mt-2">--/100</p>
           </div>
           <div className="p-3 bg-emerald-500/10 rounded-lg"><ShieldCheck className="w-6 h-6 text-emerald-500" /></div>
         </div>
@@ -39,7 +39,7 @@ const Dashboard = () => {
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Scans</p>
-            <p className="text-3xl font-bold text-indigo-400 mt-2">1,204</p>
+            <p className="text-3xl font-bold text-indigo-400 mt-2">0</p>
           </div>
           <div className="p-3 bg-indigo-500/10 rounded-lg"><Activity className="w-6 h-6 text-indigo-500" /></div>
         </div>
@@ -47,7 +47,7 @@ const Dashboard = () => {
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Active Targets</p>
-            <p className="text-3xl font-bold text-blue-400 mt-2">8</p>
+            <p className="text-3xl font-bold text-blue-400 mt-2">0</p>
           </div>
           <div className="p-3 bg-blue-500/10 rounded-lg"><Target className="w-6 h-6 text-blue-500" /></div>
         </div>
