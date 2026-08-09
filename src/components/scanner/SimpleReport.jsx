@@ -409,8 +409,30 @@ const SimpleReport = ({ reportData }) => {
             || name.includes('api') || name.includes('swagger') || name.includes('graphql') || name.includes('admin portal');
           return match && f.severity !== 'Passed';
         });
-        const apiVal = hasExposedApi ? 'Public API Spec Exposed' : (ts.api_surface || 'No Public Spec Exposed');
-        const apiSub = ts.api_subtext || (hasExposedApi ? 'Exposed Specification Found' : 'GraphQL / OpenAPI Clean');
+        const getApiSurfaceData = () => {
+          if (!hasExposedApi) {
+            return {
+              val: ts.api_surface || 'No Public Spec Exposed',
+              sub: ts.api_subtext || 'GraphQL / OpenAPI Clean'
+            };
+          }
+          const rawSubtext = (ts.api_subtext || '').toLowerCase();
+          
+          if (rawSubtext.includes('wp-json')) {
+            return { val: 'Public API Exposed', sub: 'WordPress REST API (/wp-json/)' };
+          }
+          if (rawSubtext.includes('admin') || rawSubtext.includes('wp-admin')) {
+            return { val: 'Admin Surface Exposed', sub: 'Management Portal Disclosed (/wp-admin)' };
+          }
+          if (rawSubtext.includes('swagger') || rawSubtext.includes('openapi')) {
+            return { val: 'Public API Spec Exposed', sub: 'OpenAPI Schema Disclosed' };
+          }
+          return {
+            val: 'Public API Spec Exposed',
+            sub: ts.api_subtext || 'Exposed Specification Found'
+          };
+        };
+        const { val: apiVal, sub: apiSub } = getApiSurfaceData();
         const apiPill = ts.api_pill || (hasExposedApi ? 'EXPOSED API' : 'CLEAN SURFACE');
         const apiColor = (apiPill === 'EXPOSED API')
           ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
