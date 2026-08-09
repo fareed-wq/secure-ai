@@ -372,6 +372,32 @@ const SimpleReport = ({ reportData }) => {
           if (statusCode) return `${statusCode} • Detected`;
           return perfRating || 'Status Unknown';
         })();
+        const getWafPill = () => {
+          if (ts.waf_pill === 'REQUEST TIMEOUT' || ts.waf_pill === 'TIMEOUT') return { label: 'REQUEST TIMEOUT', color: 'bg-rose-500/10 text-rose-400 border-rose-500/30' };
+          if (ts.waf_pill === 'WAF BLOCKED') return { label: 'WAF BLOCKED', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
+          
+          const status = ts.waf_status || '';
+          const statusCode = status.match(/\d{3}/)?.[0] || '';
+          const isTimeout = status.toLowerCase().includes('timeout') || perfRating?.toLowerCase() === 'request timeout';
+          
+          if (isTimeout) return { label: 'REQUEST TIMEOUT', color: 'bg-rose-500/10 text-rose-400 border-rose-500/30' };
+          if (statusCode === '403' || status.toLowerCase().includes('aborted') || perfRating?.toLowerCase() === 'timeout') return { label: 'WAF BLOCKED', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
+          
+          const latencyMatch = status.match(/\((\d+)ms\)/);
+          if (latencyMatch) {
+            const latencyMs = parseInt(latencyMatch[1], 10);
+            return latencyMs < 800 
+              ? { label: 'OPTIMAL LATENCY', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' }
+              : { label: 'HIGH LATENCY', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
+          }
+          
+          if (perfRating?.toLowerCase().includes('high')) return { label: 'HIGH LATENCY', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
+          if (perfRating?.toLowerCase().includes('optimal') || statusCode === '200') return { label: 'OPTIMAL LATENCY', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' };
+          
+          return { label: 'LATENCY CHECKED', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' };
+        };
+        const wafPillData = getWafPill();
+
         const surfaceCards = [
           {
             title: 'WAF / SERVER',
@@ -379,8 +405,8 @@ const SimpleReport = ({ reportData }) => {
             subtext: wafSubtext,
             icon: Shield,
             iconColor: 'text-sky-400',
-            pill: perfRating?.toLowerCase().includes('optimal') ? 'OPTIMAL LATENCY' : perfRating?.toLowerCase().includes('average') ? 'AVERAGE LATENCY' : 'LATENCY CHECKED',
-            pillColor: perfRating?.toLowerCase().includes('optimal') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : perfRating?.toLowerCase().includes('high') ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+            pill: wafPillData.label,
+            pillColor: wafPillData.color,
           },
           {
             title: 'FRONTEND STACK',
