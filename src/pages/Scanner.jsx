@@ -106,7 +106,7 @@ function Scanner() {
         supabase.from('scans').insert([{
           user_id: user.id,
           target_url: parsedUrl,
-          score: data.security_score,
+          score: data.score || 0,
           report_data: data
         }]).then(({ error }) => {
           if (error) console.error("Failed to save scan history:", error);
