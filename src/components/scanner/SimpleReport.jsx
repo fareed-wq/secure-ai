@@ -378,32 +378,36 @@ const SimpleReport = ({ reportData }) => {
             value: ts.waf_server || 'Direct Origin',
             subtext: wafSubtext,
             icon: Shield,
-            accentColor: 'text-sky-400 bg-sky-500/10 border-sky-500/20',
-            status: 'neutral',
+            iconColor: 'text-sky-400',
+            pill: perfRating?.toLowerCase().includes('optimal') ? 'OPTIMAL LATENCY' : perfRating?.toLowerCase().includes('average') ? 'AVERAGE LATENCY' : 'LATENCY CHECKED',
+            pillColor: perfRating?.toLowerCase().includes('optimal') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : perfRating?.toLowerCase().includes('high') ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
           },
           {
             title: 'FRONTEND STACK',
             value: ts.frontend_stack || 'Standard Web Stack',
             subtext: 'Detected Technology',
             icon: Layers,
-            accentColor: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
-            status: 'neutral',
+            iconColor: 'text-indigo-400',
+            pill: 'VERIFIED STACK',
+            pillColor: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
           },
           {
             title: 'API SURFACE',
             value: isApiClean ? 'No Public Spec Exposed' : (ts.api_surface || 'Unknown'),
             subtext: isApiClean ? 'GraphQL / OpenAPI Clean' : 'Public Endpoint Detected',
             icon: Code2,
-            accentColor: isApiClean ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-            status: isApiClean ? 'success' : 'warning',
+            iconColor: isApiClean ? 'text-emerald-400' : 'text-amber-400',
+            pill: isApiClean ? 'CLEAN SURFACE' : 'EXPOSED ENDPOINT',
+            pillColor: isApiClean ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30',
           },
           {
             title: 'JS HEALTH',
             value: isJsClean ? 'Clean Build' : 'Leak Detected',
             subtext: isJsClean ? '0 .map Leaks Detected' : 'Source Map Exposed',
             icon: Box,
-            accentColor: isJsClean ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20',
-            status: isJsClean ? 'success' : 'warning',
+            iconColor: isJsClean ? 'text-emerald-400' : 'text-rose-400',
+            pill: isJsClean ? '0 LEAKS DETECTED' : 'LEAK FOUND',
+            pillColor: isJsClean ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30',
           },
         ];
         return (
@@ -421,20 +425,23 @@ const SimpleReport = ({ reportData }) => {
               {surfaceCards.map((card, idx) => {
                 const Icon = card.icon;
                 return (
-                  <div key={idx} className="group relative flex flex-col justify-between rounded-xl border border-slate-800/80 bg-slate-900/60 p-4 transition-all duration-200 hover:border-slate-700 hover:bg-slate-900/90 hover:shadow-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">{card.title}</span>
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg border ${card.accentColor}`}>
-                        <Icon className="h-4 w-4" />
+                  <div key={idx} className="w-full min-w-0 min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
+                    <div>
+                      <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
+                        <Icon className={`w-3.5 h-3.5 shrink-0 ${card.iconColor}`} />
+                        {card.title}
+                      </div>
+                      <div className="text-base sm:text-lg font-bold text-white mt-2">
+                        {card.value}
+                      </div>
+                      <div className="text-xs text-slate-400 mt-1">
+                        {card.subtext}
                       </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-100 group-hover:text-white">{card.value}</p>
-                      <div className="mt-1.5 flex items-center gap-1.5">
-                        {card.status === 'success' && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />}
-                        {card.status === 'warning' && <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />}
-                        <span className="text-xs text-slate-400 font-mono">{card.subtext}</span>
-                      </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-3">
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold font-mono tracking-wider uppercase border ${card.pillColor}`}>
+                        {card.pill}
+                      </span>
                     </div>
                   </div>
                 );
