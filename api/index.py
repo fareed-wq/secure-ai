@@ -463,7 +463,7 @@ class ScannerModule(ABC):
     description = "Base scanner module."
     author = "Secure-AI"
     enabled = True
-    timeout=(1.5, 2.5)
+    timeout = 8  # Max seconds per module execution in ThreadPoolExecutor
 
     @abstractmethod
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
@@ -2747,20 +2747,26 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
 
         metadata = get_metadata(hostname, initial_resp, url)
 
+        import time as _time
+        scan_start = _time.monotonic()
+        SCAN_BUDGET_SECONDS = 25  # Global time budget for all modules
+
         with ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE) as pool:
             futures = {pool.submit(mod.run, url, hostname, session): mod for mod in active_modules}
-            for future in as_completed(futures):
+            for future in as_completed(futures, timeout=SCAN_BUDGET_SECONDS):
                 mod = futures[future]
+                elapsed = _time.monotonic() - scan_start
+                remaining = max(1, SCAN_BUDGET_SECONDS - elapsed)
                 try:
-                    mod_findings = future.result(timeout=mod.timeout)
+                    mod_findings = future.result(timeout=min(getattr(mod, 'timeout', 8), remaining))
                     all_findings.extend(mod_findings)
                 except Exception as e:
-                    logger.error(f"Module {mod.module_name} failed: {e}")
+                    logger.error(f"Module {mod.module_name} failed ({elapsed:.1f}s elapsed): {e}")
                     all_findings.append({
-                        "name": f"Module Crash: {mod.module_name}",
+                        "name": f"Module Timeout: {mod.module_name}",
                         "severity": "Informational",
                         "category": "information_exposure",
-                        "description": "The scanner module crashed or timed out.",
+                        "description": f"The {mod.module_name} module was skipped due to timeout or WAF blocking.",
                         "evidence": {"raw": str(e)[:180]},
                         "confidence": "High",
                         "remediation": "N/A",
@@ -2768,6 +2774,10 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                         "owasp": "N/A",
                         "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
                     })
+            # Cancel any futures still running after budget expires
+            for future in futures:
+                if not future.done():
+                    future.cancel()
 
     # Auto-assign security domains to findings based on their source module
     for f in all_findings:
