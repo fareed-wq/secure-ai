@@ -385,7 +385,7 @@ const SimpleReport = ({ reportData }) => {
           {
             title: 'FRONTEND STACK',
             value: ts.frontend_stack || 'Standard Web Stack',
-            subtext: 'Detected Technology',
+            subtext: (ts.frontend_stack && ts.frontend_stack !== 'Standard Web Stack') ? ts.frontend_stack : 'HTML5 / JavaScript Application',
             icon: Layers,
             iconColor: 'text-indigo-400',
             pill: 'VERIFIED STACK',
