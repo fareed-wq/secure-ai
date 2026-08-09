@@ -176,32 +176,68 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           {/* User Info Text (Hidden when collapsed) */}
           {!isCollapsed && (
             <div className="flex flex-col truncate">
-              <span className="text-sm font-medium text-slate-200">Free Tier</span>
-              <span className="text-xs text-slate-400">guest@urlscanonline.com</span>
+              {user ? (
+                <>
+                  <span className="text-sm font-medium text-slate-200">{user.user_metadata?.full_name || 'Pro Tier'}</span>
+                  <span className="text-xs text-slate-400 truncate">{user.email}</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm font-medium text-slate-200">Guest User</span>
+                  <span className="text-xs text-slate-400">Not logged in</span>
+                </>
+              )}
             </div>
           )}
         </div>
+        
+        {/* Sign In / Sign Out Button */}
         {!isCollapsed && (
-          <button
-            onClick={signOut}
-            className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/50 transition-colors text-sm font-medium"
-          >
-            <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
-              <LogOut size={16} />
-            </div>
-            <span className="truncate">Sign Out</span>
-          </button>
+          user ? (
+            <button
+              onClick={async () => { await signOut(); navigate('/login'); }}
+              className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/50 transition-colors text-sm font-medium"
+            >
+              <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
+                <LogOut size={16} />
+              </div>
+              <span className="truncate">Sign Out</span>
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/20 transition-colors text-sm font-medium"
+            >
+              <div className="w-7 h-7 flex items-center justify-center shrink-0 text-indigo-400">
+                <User size={16} />
+              </div>
+              <span className="truncate">Sign In</span>
+            </Link>
+          )
         )}
+        
         {isCollapsed && (
-          <button
-            onClick={signOut}
-            className="w-full flex justify-center px-2.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/50 transition-colors"
-            title="Sign Out"
-          >
-            <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
-              <LogOut size={16} />
-            </div>
-          </button>
+          user ? (
+            <button
+              onClick={async () => { await signOut(); navigate('/login'); }}
+              className="w-full flex justify-center px-2.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/50 transition-colors"
+              title="Sign Out"
+            >
+              <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
+                <LogOut size={16} />
+              </div>
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="w-full flex justify-center px-2.5 py-2 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/20 transition-colors"
+              title="Sign In"
+            >
+              <div className="w-7 h-7 flex items-center justify-center shrink-0 text-indigo-400">
+                <User size={16} />
+              </div>
+            </Link>
+          )
         )}
       </div>
     </aside>
