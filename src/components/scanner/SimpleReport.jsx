@@ -402,14 +402,17 @@ const SimpleReport = ({ reportData }) => {
         const stackPill = detectedTech ? 'DETECTED STACK' : (ts.frontend_pill || 'VERIFIED STACK');
 
         // ── 3. API SURFACE ───────────────────────────────────────────────
-        const hasExposedApi = findings.some(f =>
-          (f.id?.includes('api') || f.id?.includes('swagger') || f.id?.includes('graphql') || f.id?.includes('openapi'))
-          && f.severity !== 'Passed'
-        );
+        const hasExposedApi = findings.some(f => {
+          const id = (f.id || '').toLowerCase();
+          const name = (f.name || '').toLowerCase();
+          const match = id.includes('api') || id.includes('swagger') || id.includes('graphql') || id.includes('openapi')
+            || name.includes('api') || name.includes('swagger') || name.includes('graphql') || name.includes('admin portal');
+          return match && f.severity !== 'Passed';
+        });
         const apiVal = hasExposedApi ? 'Public API Spec Exposed' : (ts.api_surface || 'No Public Spec Exposed');
-        const apiSub = hasExposedApi ? (ts.api_subtext || 'Exposed Specification Found') : (ts.api_subtext || 'GraphQL / OpenAPI Clean');
-        const apiPill = hasExposedApi ? (ts.api_pill || 'EXPOSED API') : (ts.api_pill || 'CLEAN SURFACE');
-        const apiColor = hasExposedApi
+        const apiSub = ts.api_subtext || (hasExposedApi ? 'Exposed Specification Found' : 'GraphQL / OpenAPI Clean');
+        const apiPill = ts.api_pill || (hasExposedApi ? 'EXPOSED API' : 'CLEAN SURFACE');
+        const apiColor = (apiPill === 'EXPOSED API')
           ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
           : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
 

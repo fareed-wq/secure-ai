@@ -3016,17 +3016,42 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     target_surface["frontend_subtext"] = frontend_subtext
     target_surface["frontend_pill"] = "VERIFIED STACK"
 
-    # 2. API Surface
+    # 2. API Surface — extract precise endpoint path from evidence
     api_surface = "No Public Spec Exposed"
     api_subtext = "GraphQL / OpenAPI Clean"
     api_pill = "CLEAN SURFACE"
     
     for f in all_findings:
         fname = f.get("name", "")
-        if ("API" in fname or "GraphQL" in fname or "Swagger" in fname or "OpenAPI" in fname) and f.get("severity") != "Passed" and "Module" not in fname:
+        fsev = f.get("severity", "")
+        fevidence = str(f.get("evidence", ""))
+        
+        if fsev == "Passed":
+            continue
+
+        if "GraphQL" in fname:
             api_surface = "Public API Spec Exposed"
-            api_subtext = fname
+            api_subtext = "GraphQL Playground (/graphql)"
             api_pill = "EXPOSED API"
+            break
+        
+        if ("API" in fname or "Swagger" in fname or "OpenAPI" in fname) and "Module" not in fname:
+            api_surface = "Public API Spec Exposed"
+            api_pill = "EXPOSED API"
+            # Extract specific path from evidence
+            if "/swagger.json" in fevidence or "swagger" in fevidence.lower():
+                api_subtext = "OpenAPI Spec (/swagger.json)"
+            elif "/openapi.json" in fevidence:
+                api_subtext = "OpenAPI Spec (/openapi.json)"
+            elif "/wp-json" in fevidence or "WordPress" in fname:
+                api_subtext = "WordPress REST API (/wp-json/)"
+            elif "Public API Specification at" in fevidence:
+                path_match = fevidence.split("Public API Specification at")[-1].strip().rstrip("'\"}")
+                api_subtext = f"API Spec ({path_match})" if path_match else "Exposed Specification Found"
+            elif "Exposed Admin" in fevidence:
+                api_subtext = "Exposed Admin Portal Detected"
+            else:
+                api_subtext = fname
             break
 
     target_surface["api_surface"] = api_surface
