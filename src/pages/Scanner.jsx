@@ -59,6 +59,12 @@ function Scanner() {
     try {
       const data = await scanApi.runScan(parsedUrl);
       
+      if (data.status === 'failed' || data.status === 'timeout') {
+        setErrorMessage(data.error || "Unable to complete the security scan because the target could not be reached or the connection timed out.");
+        setScanState('error');
+        return;
+      }
+      
       setReportData(data);
       setScanState('mode-select'); // Go to mode selection first
 
@@ -208,10 +214,10 @@ function Scanner() {
               className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-red-900/20 border border-red-800 backdrop-blur-xl shadow-2xl text-center"
             >
               <ShieldAlert className="w-20 h-20 text-red-500 mx-auto mb-6" />
-              <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Failed</h2>
+              <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Incomplete</h2>
               <p className="text-red-200 mb-8">{errorMessage}</p>
               <button onClick={resetScan} className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl transition-all">
-                Try Again
+                Run Another Scan
               </button>
             </motion.div>
           )}

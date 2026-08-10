@@ -25,94 +25,43 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         return {"url": url, "error": "That host resolves to a private/internal address and can't be scanned."}
 
     if not check_liveness(hostname):
-        # Target is dead or blocking us. Return a mock report instead of crashing the UI.
-        try:
-            ip = socket.gethostbyname(hostname)
-        except Exception:
-            ip = "Unknown (Blocked)"
-            
-        mock_metadata = {
-            "ip_address": ip,
-            "http3_supported": False,
-            "https_enforced": False,
-            "clean_redirect": False,
-            "whois": _get_whois_data(hostname)
-        }
-        
-        mock_finding = {
-            "name": "Aggressive WAF / Geo-Blocking Detected",
-            "severity": "Informational",
-            "category": "security_defenses",
-            "description": "The target server is intentionally dropping connection packets from our scanner's IP address (Vercel Datacenter). This typically indicates an aggressive Web Application Firewall (WAF), rate limiting, or country-level Geo-blocking (common for government domains).",
-            "evidence": {"raw": "TCP Connection Timeout on ports 443 and 80."},
-            "confidence": "High",
-            "remediation": "No remediation required. The server's perimeter defenses are actively blocking automated scanners.",
-            "remediation_snippets": {},
-            "owasp_mapping": "Best Practice",
-            "cwe_id": "CWE-284"
-        }
-        
-        # Return a complete report structure matching the normal scan output format.
-        # The frontend expects "score" (not "overall_score"), severity_counts, etc.
+        # Target is dead or blocking us. Return an explicit failed status instead of a mock report.
         return {
+            "status": "failed",
             "url": url,
-            "score": 100,
-            "severity_counts": {
-                "Critical": 0,
-                "High": 0,
-                "Medium": 0,
-                "Low": 0,
-                "Informational": 1
-            },
-            "category_scores": {
-                "information_exposure": 100,
-                "tls_ssl": 100,
-                "http_headers": 100,
-                "misconfiguration": 100,
-                "security_defenses": 100
-            },
-            "owasp_coverage": ["A05:2021 - Security Misconfiguration"],
-            "technical_compliance": {
-                "pci_dss_4_0": {
-                    "status": "INSUFFICIENT DATA",
-                    "failed_controls": [],
-                    "passed_controls": []
-                },
-                "nist_sp_800_53": {
-                    "status": "INSUFFICIENT DATA",
-                    "failed_controls": [],
-                    "passed_controls": []
-                },
-                "iso_27001": {
-                    "status": "INSUFFICIENT DATA",
-                    "failed_controls": [],
-                    "passed_controls": []
-                }
-            },
-            "findings": [mock_finding],
-            "metadata": mock_metadata,
-            "potential_issues_count": 0,
-            "executive_summary": f"Target {hostname} is actively blocking our scanner via WAF or Geo-restrictions. No vulnerabilities could be assessed. Score reflects lack of detectable issues, not a clean posture.",
-            "disclaimer": "Passive scan only. Target blocked all HTTP probes; only DNS, WHOIS, and TCP liveness data is available."
+            "error": "Unable to complete the security scan because the target could not be reached or the connection timed out."
         }
 
     metadata = {}
-
     all_findings = []
+    import time as _time
+    scan_start = _time.monotonic()
 
-    active_modules = [mod for mod in REGISTERED_MODULES if mod.enabled]
+    # Get active modules from registry based on profile
+    from api.scanner.data.registry import REGISTERED_MODULES
+    active_modules = [m for m in REGISTERED_MODULES if getattr(m, 'enabled', True)]
     if probe_subdomains:
         active_modules.append(SubdomainProbingModule())
 
+    # Fetch initial payload safely to pass down if needed
     with get_http_session() as session:
-        import time as _time
         req_start = _time.monotonic()
         try:
             initial_resp = safe_request("GET", url, session=session, timeout=(1.8, 2.2), verify=False, stream=True, allow_redirects=True)
             if _time.monotonic() - req_start > 3.0:
                 raise requests.exceptions.ReadTimeout("Initial request took longer than 3.0 seconds, assuming WAF tarpit.")
+        except requests.exceptions.Timeout as e:
+            return {
+                "status": "timeout",
+                "url": url,
+                "error": f"Connection timed out: {str(e)}"
+            }
         except (requests.exceptions.RequestException, socket.timeout, Exception) as e:
-            return get_waf_fallback_payload(url)
+            return {
+                "status": "failed",
+                "url": url,
+                "error": f"Failed to establish connection: {str(e)}"
+            }
 
         metadata = get_metadata(hostname, initial_resp, url)
 
