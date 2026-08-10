@@ -197,6 +197,10 @@ class TLSCipherStrengthModule(ScannerModule):
             weak_ctx = ssl.create_default_context()
             weak_ctx.check_hostname = False
             weak_ctx.verify_mode = ssl.CERT_NONE
+            
+            # Explicitly prevent TLS 1.3 fallback which bypasses legacy cipher suites
+            weak_ctx.maximum_version = ssl.TLSVersion.TLSv1_2
+            
             weak_ctx.set_ciphers("3DES:RC4:DES:MD5:EXPORT")
 
             weak_supported = False
