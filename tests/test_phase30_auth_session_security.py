@@ -193,6 +193,29 @@ class TestPhase30AuthSessionSecurity(unittest.TestCase):
         self.assertIn("Authentication Response May Be Publicly Cacheable", names)
 
     @patch('api.scanner.modules.auth_session_security.safe_request')
+    def test_cache_control_revalidate_low(self, mock_safe_req):
+        mock_safe_req.return_value = self._mock_response(
+            url="https://example.com/login",
+            headers={"Cache-Control": "public, max-age=0, must-revalidate"},
+            text="Please login"
+        )
+        findings = self.auth_mod.run("https://example.com/login", "example.com", self.session)
+        finding = next((f for f in findings if f['name'] == "Authentication Response May Be Publicly Cacheable"), None)
+        self.assertIsNotNone(finding)
+        self.assertEqual(finding['severity'], "Low")
+
+    @patch('api.scanner.modules.auth_session_security.safe_request')
+    def test_cache_control_safe(self, mock_safe_req):
+        mock_safe_req.return_value = self._mock_response(
+            url="https://example.com/login",
+            headers={"Cache-Control": "no-store, private"},
+            text="Please login"
+        )
+        findings = self.auth_mod.run("https://example.com/login", "example.com", self.session)
+        names = [f['name'] for f in findings]
+        self.assertNotIn("Authentication Response May Be Publicly Cacheable", names)
+
+    @patch('api.scanner.modules.auth_session_security.safe_request')
     def test_www_authenticate(self, mock_safe_req):
         mock_safe_req.return_value = self._mock_response(
             url="http://example.com/admin",

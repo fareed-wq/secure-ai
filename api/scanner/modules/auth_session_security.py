@@ -67,10 +67,27 @@ class AuthenticationSessionSecurityModule(ScannerModule):
             # Cache & Auth Response Posture
             cache_control = self.get_header_safe(resp, "Cache-Control", "").lower()
             if self.is_auth_related(url) or self.is_auth_related(resp.text):
-                if "public" in cache_control or not cache_control:
+                is_vuln = False
+                severity = "Medium"
+                
+                if not cache_control:
+                    is_vuln = True
+                elif "no-store" in cache_control or "private" in cache_control:
+                    is_vuln = False
+                elif "public" in cache_control:
+                    if "max-age=0" in cache_control and "must-revalidate" in cache_control:
+                        # Effectively forces revalidation, lower risk but still not strict no-store
+                        is_vuln = True
+                        severity = "Low"
+                    else:
+                        # Positive max-age or s-maxage with public is risky for auth
+                        is_vuln = True
+                        severity = "Medium"
+                        
+                if is_vuln:
                     findings.append(self.make_finding(
                         "Authentication Response May Be Publicly Cacheable",
-                        "Medium",
+                        severity,
                         "A page containing authentication or session indicators lacks strict cache prevention directives.",
                         f"Cache-Control: {cache_control}" if cache_control else "No Cache-Control header",
                         remediation="Set Cache-Control: no-store, max-age=0 on sensitive pages.",

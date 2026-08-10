@@ -200,16 +200,19 @@ class TLSCipherStrengthModule(ScannerModule):
             weak_ctx.set_ciphers("3DES:RC4:DES:MD5:EXPORT")
 
             weak_supported = False
+            detected_cipher = None
             with safe_create_connection((hostname, 443), timeout=2.5) as sock:
-                with weak_ctx.wrap_socket(sock, server_hostname=hostname):
+                with weak_ctx.wrap_socket(sock, server_hostname=hostname) as ssock:
                     weak_supported = True
+                    detected_cipher = ssock.cipher()
 
             if weak_supported:
+                cipher_str = f"{detected_cipher[0]} ({detected_cipher[1]})" if detected_cipher else "Handshake accepted weak cipher list"
                 findings.append(self.make_finding(
                     "Legacy Weak TLS Ciphers Supported",
                     "Medium",
                     "Server accepts connections configured with deprecated weak ciphers (e.g. 3DES / RC4).",
-                    "Handshake accepted weak cipher list",
+                    f"Server negotiated: {cipher_str}",
                     remediation="Reconfigure server TLS cipher order to forbid 3DES, RC4, and EXPORT suites.",
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"

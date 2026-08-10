@@ -145,5 +145,27 @@ class TestJavaScriptSecurityModule(unittest.TestCase):
         config_findings = [f for f in findings if f["name"] == "Exposed Frontend Environment & Debug Configuration"]
         self.assertEqual(len(config_findings), 1)
 
+    @patch('api.scanner.modules.javascript_security.safe_request')
+    def test_internal_infrastructure_references(self, mock_request):
+        html_body = '<script src="/app.js"></script>'
+        js_app = 'const devApi = "http://localhost:5000/api"; const localDb = "http://192.168.1.10:8080"; const msg = "welcome to localhost"; const publicApi = "https://api.example.com";'
+        
+        responses = {
+            "https://example.com/": DummyResponse(200, html_body, {"Content-Type": "text/html"}),
+            "https://example.com/app.js": DummyResponse(200, js_app)
+        }
+        
+        mock_request.side_effect = self.create_side_effect(responses)
+        findings = self.module.run("https://example.com/", "example.com", self.session)
+        
+        infra_findings = [f for f in findings if f["name"] == "Internal Infrastructure References Disclosed in Client-Side Code"]
+        self.assertEqual(len(infra_findings), 1)
+        self.assertEqual(infra_findings[0]["severity"], "Low")
+        evidence = str(infra_findings[0]["evidence"])
+        self.assertIn("http://localhost:5000", evidence)
+        self.assertIn("http://192.168.1.10:8080", evidence)
+        self.assertNotIn("welcome to localhost", evidence)
+        self.assertNotIn("https://api.example.com", evidence)
+
 if __name__ == '__main__':
     unittest.main()

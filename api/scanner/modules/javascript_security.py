@@ -54,12 +54,12 @@ class JavaScriptSecurityModule(ScannerModule):
     
     # 2. INTERNAL INFRASTRUCTURE PATTERNS
     INTERNAL_HOST_PATTERNS = [
-        re.compile(r'https?://(?:[a-zA-Z0-9\-]+\.)*(?:internal|staging|dev|corp)\.[a-zA-Z0-9\-]+\.[a-zA-Z]+'),
+        re.compile(r'https?://(?:[a-zA-Z0-9\-]+\.)*(?:internal|staging|dev|corp)\.[a-zA-Z0-9\-]+\.[a-zA-Z]+(?::\d+)?'),
         re.compile(r'https?://localhost(?::\d+)?'),
         re.compile(r'https?://127\.0\.0\.1(?::\d+)?'),
-        re.compile(r'https?://10\.\d{1,3}\.\d{1,3}\.\d{1,3}'),
-        re.compile(r'https?://192\.168\.\d{1,3}\.\d{1,3}'),
-        re.compile(r'https?://172\.(?:1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}')
+        re.compile(r'https?://10\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?'),
+        re.compile(r'https?://192\.168\.\d{1,3}\.\d{1,3}(?::\d+)?'),
+        re.compile(r'https?://172\.(?:1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(?::\d+)?')
     ]
 
     # 3. DEBUG / CONFIG ARTIFACTS
@@ -330,8 +330,8 @@ class JavaScriptSecurityModule(ScannerModule):
             if internal_hosts:
                 findings.append(self.make_finding(
                     "Internal Infrastructure References Disclosed in Client-Side Code",
-                    "Medium",
-                    "Client-side code contains references to internal hostnames or private IPs.",
+                    "Low",
+                    "Client-side code exposes references to internal or development endpoints. This may reveal internal service structure, development configuration, or network information that could assist further reconnaissance.",
                     "\\n".join(list(internal_hosts)[:5]),
                     confidence="Medium",
                     category="information_exposure",

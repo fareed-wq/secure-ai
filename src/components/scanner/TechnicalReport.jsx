@@ -302,7 +302,7 @@ const TechnicalReport = ({ reportData }) => {
                                         {finding.evidence && finding.evidence !== "N/A" && (
                                           <div>
                                             <div className="flex items-center justify-between mb-2">
-                                              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Raw Evidence / Payload</div>
+                                              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Raw Evidence</div>
                                               <button onClick={() => copyToClipboard(typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence))} className="text-slate-500 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors">
                                                 <Copy className="w-3 h-3" /> Copy
                                               </button>
