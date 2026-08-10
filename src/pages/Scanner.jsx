@@ -294,7 +294,7 @@ function Scanner() {
                     className="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none"
                   />
                   <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 shrink-0">
-                    Scan <ArrowRight className="w-4 h-4" />
+                    Run Scan <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
 
