@@ -95,8 +95,9 @@ class AdvancedCookieModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Session Cookie Missing Secure Flag",
                             "Medium",
-                            "A likely session/authentication cookie lacks the 'Secure' flag.",
+                            "A cookie used to keep users logged in is missing the 'Secure' setting.",
                             masked_cookie,
+                            impact="Hackers intercepting network traffic on public Wi-Fi could steal this cookie and hijack user accounts.",
                             remediation="Add the 'Secure' attribute to ensure the cookie is only transmitted over HTTPS.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies",
@@ -106,8 +107,9 @@ class AdvancedCookieModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Session Cookie Missing HttpOnly Flag",
                             "Medium",
-                            "A likely session/authentication cookie lacks the 'HttpOnly' flag.",
+                            "A cookie used to keep users logged in is missing the 'HttpOnly' setting.",
                             masked_cookie,
+                            impact="Malicious scripts on your website could easily steal this cookie and take over user accounts.",
                             remediation="Add the 'HttpOnly' attribute to prevent client-side script access.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies",
@@ -118,8 +120,9 @@ class AdvancedCookieModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Session Cookie Missing SameSite Attribute",
                             "Low",
-                            "A likely session cookie has no SameSite attribute, relying on default browser behavior.",
+                            "A login cookie is missing the 'SameSite' rule, which tells the browser when to send it.",
                             masked_cookie,
+                            impact="Attackers could trick your users into performing unwanted actions on your website from another malicious site.",
                             remediation="Explicitly set SameSite=Lax or SameSite=Strict.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies",
@@ -129,8 +132,9 @@ class AdvancedCookieModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Session Cookie Uses SameSite=None Without Secure",
                             "Medium",
-                            "A likely session cookie specifies SameSite=None but lacks the Secure flag, which is invalid in modern browsers.",
+                            "A login cookie is configured to be sent everywhere but is missing the required 'Secure' safety rule.",
                             masked_cookie,
+                            impact="Modern browsers will reject this cookie, which may break your login system, and it leaves the cookie vulnerable to theft.",
                             remediation="Add the Secure flag when using SameSite=None.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies",
@@ -142,8 +146,9 @@ class AdvancedCookieModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Broad Session Cookie Domain Scope",
                             "Low",
-                            "A likely session cookie has a broad Domain attribute scope, potentially exposing it to subdomains.",
+                            "A login cookie is allowed to be sent to all subdomains of your website.",
                             f"Domain={domain_val} on cookie {cookie_name}",
+                            impact="If one of your subdomains is hacked, the attacker could steal this cookie and gain access to the main website.",
                             remediation="Scope session cookies tightly to the exact host.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies",
@@ -165,8 +170,9 @@ class AdvancedCookieModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Invalid __Host- Cookie Prefix Configuration",
                             "Medium",
-                            "A cookie using the __Host- prefix does not meet security requirements (must have Secure, Path=/, and no Domain).",
+                            "A cookie trying to use the secure '__Host-' naming rule is missing required safety settings.",
                             masked_cookie,
+                            impact="The browser will reject this cookie because it doesn't follow strict security rules, potentially breaking parts of your website.",
                             remediation="Ensure the cookie sets Secure, Path=/, and omits the Domain attribute.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies"
@@ -176,8 +182,9 @@ class AdvancedCookieModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Invalid __Secure- Cookie Prefix Configuration",
                             "Medium",
-                            "A cookie using the __Secure- prefix lacks the Secure flag.",
+                            "A cookie trying to use the secure '__Secure-' naming rule is missing the 'Secure' flag.",
                             masked_cookie,
+                            impact="The browser will reject this cookie because it is not securely encrypted, which could break features on your site.",
                             remediation="Ensure the cookie sets the Secure attribute.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies"
@@ -204,6 +211,7 @@ class AdvancedCookieModule(ScannerModule):
                     overall_sev,
                     " ".join(problems),
                     f"Cookies affected: {', '.join(all_unsecured)}",
+                    impact="While not used for logins, these unsecured cookies could still be stolen to track users or steal less sensitive information.",
                     remediation="Consider adding HttpOnly, Secure, and SameSite flags to all cookies.",
                     owasp="A05: Security Misconfiguration",
                     category="session_cookies"
@@ -227,8 +235,9 @@ class HTTPSRedirectModule(ScannerModule):
                 findings.append(self.make_finding(
                     "HTTPS Redirection Configured",
                     "Passed",
-                    "HTTP traffic is correctly redirected to HTTPS.",
+                    "Your website correctly forces visitors to use a secure HTTPS connection.",
                     f"Final Target: {resp.url}",
+                    impact="This protects your visitors from having their data intercepted by hackers on public Wi-Fi networks.",
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"
                 ))
@@ -236,8 +245,9 @@ class HTTPSRedirectModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Missing HTTPS Redirection",
                     "High",
-                    "The server accepts cleartext HTTP connections without redirecting to HTTPS.",
+                    "Your website allows visitors to connect using an unencrypted connection (HTTP) without forcing them to a secure one (HTTPS).",
                     f"Final URL: {resp.url}",
+                    impact="Hackers on the same network as your visitors can easily intercept passwords, personal data, and login sessions.",
                     remediation="Configure the server to redirect all port 80 traffic to 443 (HTTPS).",
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"
@@ -295,8 +305,9 @@ class SecurityHeadersModule(ScannerModule):
             findings.append(self.make_finding(
                 "Missing Strict-Transport-Security (HSTS)",
                 "High",
-                "The HTTP Strict-Transport-Security response header is missing, leaving the application vulnerable to SSL-stripping attacks.",
+                "Your website is missing a security rule (HSTS) that forces browsers to only use secure connections.",
                 "Header not found in response",
+                impact="Attackers can downgrade a visitor's secure connection to an insecure one and steal sensitive information like passwords.",
                 remediation="Enable HTTP Strict Transport Security (HSTS) with a long max-age directive and includeSubDomains flag.",
                 owasp="A05: Security Misconfiguration",
                 category="encryption_tls"
@@ -306,8 +317,9 @@ class SecurityHeadersModule(ScannerModule):
                 findings.append(self.make_finding(
                     "HSTS Policy Disabled",
                     "High",
-                    "The HTTP Strict-Transport-Security (HSTS) header is present but explicitly sets max-age=0, disabling HSTS protection.",
+                    "Your website has a security rule (HSTS) for forcing secure connections, but it is currently turned off.",
                     hsts,
+                    impact="Visitors are not protected from connection downgrade attacks, allowing hackers to potentially steal their sensitive data.",
                     remediation="Increase the max-age directive to at least 15552000 (180 days).",
                     owasp="A05: Security Misconfiguration",
                     category="encryption_tls",
@@ -320,8 +332,9 @@ class SecurityHeadersModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Weak HSTS max-age Configuration",
                             "Low",
-                            "The HSTS max-age is set to less than 180 days.",
+                            "Your website's security rule for forcing secure connections (HSTS) is set to expire too quickly.",
                             hsts,
+                            impact="If a user does not visit your site frequently, hackers might still be able to trick them into using an insecure connection and steal data.",
                             remediation="Increase the max-age directive to at least 15552000 (180 days).",
                             owasp="A05: Security Misconfiguration",
                             category="encryption_tls",
@@ -331,8 +344,9 @@ class SecurityHeadersModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Strict-Transport-Security Configured",
                             "Passed",
-                            "HSTS is present and appropriately configured.",
+                            "Your website is correctly using HSTS to force visitors to use secure connections.",
                             hsts,
+                            impact="Your visitors are protected from connection downgrade attacks.",
                             owasp="A02: Cryptographic Failures",
                             category="encryption_tls"
                         ))
@@ -345,8 +359,9 @@ class SecurityHeadersModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Missing Content-Security-Policy (CSP)",
                     "High",
-                    "The HTTP Content-Security-Policy (CSP) response header is missing, leaving the application vulnerable to Cross-Site Scripting (XSS) and data injection attacks.",
+                    "Your website does not have a Content Security Policy (CSP), which acts as a bouncer to block malicious scripts.",
                     "Header not found in response",
+                    impact="Hackers could inject malicious code into your website to steal your users' information or take over their accounts.",
                     remediation="Configure your web server to issue strict Content-Security-Policy HTTP headers to restrict script execution sources to trusted domains.",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
@@ -395,6 +410,7 @@ class SecurityHeadersModule(ScannerModule):
                         sev,
                         problem_desc,
                         csp,
+                        impact="Hackers could bypass your weak security policy and inject malicious code into your website to steal user data.",
                         remediation="Remove unsafe-inline/unsafe-eval, avoid wildcard/data/blob script sources, and strictly define object-src 'none' and base-uri 'self'.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
@@ -404,8 +420,9 @@ class SecurityHeadersModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Content-Security-Policy Configured",
                         "Passed",
-                        "CSP is present and strict.",
+                        "Your website has a strong Content Security Policy (CSP) in place.",
                         csp,
+                        impact="Your website is well-protected against malicious script injection attacks.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))
@@ -414,8 +431,9 @@ class SecurityHeadersModule(ScannerModule):
             findings.append(self.make_finding(
                 "Missing X-Permitted-Cross-Domain-Policies",
                 "Informational",
-                "The X-Permitted-Cross-Domain-Policies header is missing.",
+                "Your website is missing a rule that tells old technologies like Flash or PDF readers what they are allowed to load.",
                 "Header not found in response",
+                impact="Although rare today, outdated plugins could be tricked into stealing data from your website.",
                 remediation="Set the X-Permitted-Cross-Domain-Policies header to 'none' to prevent Flash/PDF cross-domain data loading.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
@@ -425,8 +443,9 @@ class SecurityHeadersModule(ScannerModule):
             findings.append(self.make_finding(
                 "Missing X-DNS-Prefetch-Control",
                 "Informational",
-                "The X-DNS-Prefetch-Control header is missing.",
+                "Your website is missing a rule that stops browsers from guessing what external links your visitors might click on.",
                 "Header not found in response",
+                impact="This could slightly leak visitors' browsing habits to external network monitors, though the risk is very low.",
                 remediation="Set X-DNS-Prefetch-Control: off to prevent browsers from performing DNS lookups for external links on the page.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
@@ -436,8 +455,9 @@ class SecurityHeadersModule(ScannerModule):
             findings.append(self.make_finding(
                 "Missing X-Frame-Options",
                 "Medium",
-                "The X-Frame-Options header is missing, leaving the application vulnerable to clickjacking attacks.",
+                "Your website is missing a rule that prevents it from being embedded inside a hidden frame on another website.",
                 "Header not found in response",
+                impact="Attackers could trick your visitors into clicking hidden buttons on your website, like accidentally deleting their account or making a purchase.",
                 remediation="Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
@@ -447,8 +467,9 @@ class SecurityHeadersModule(ScannerModule):
             findings.append(self.make_finding(
                 "Missing X-Content-Type-Options",
                 "Low",
-                "The X-Content-Type-Options header is missing, which allows browsers to perform MIME-sniffing.",
+                "Your website is missing a rule that stops browsers from guessing what kind of file they are downloading.",
                 "Header not found in response",
+                impact="Hackers could upload a malicious script disguised as an image, and the browser might run it, compromising the user's computer.",
                 remediation="Set X-Content-Type-Options: nosniff to prevent browsers from MIME-sniffing the response.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
@@ -459,8 +480,9 @@ class SecurityHeadersModule(ScannerModule):
             findings.append(self.make_finding(
                 "Missing Referrer-Policy",
                 "Low",
-                "The Referrer-Policy header is missing, which allows leaking the referring URL.",
+                "Your website is missing a rule that controls how much of your web addresses are shared when visitors click on external links.",
                 "Header not found in response",
+                impact="Sensitive information hidden in your website's web addresses (like secret password reset tokens) could be accidentally leaked to other websites.",
                 remediation="Set Referrer-Policy to 'strict-origin-when-cross-origin' or 'no-referrer' to control URL leakage.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
@@ -470,8 +492,9 @@ class SecurityHeadersModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Unsafe Referrer Policy Configured",
                     "Low",
-                    "The Referrer-Policy is set to 'unsafe-url', which forces the browser to leak the full URL (including query parameters) to all destinations.",
+                    "Your website is explicitly configured to share your full web addresses whenever visitors click external links.",
                     referrer,
+                    impact="Sensitive information hidden in your website's web addresses (like secret password reset tokens) will be leaked to other websites.",
                     remediation="Change the Referrer-Policy to 'strict-origin-when-cross-origin' or 'no-referrer'.",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers",
@@ -481,8 +504,9 @@ class SecurityHeadersModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Referrer-Policy Configured",
                     "Passed",
-                    "Referrer-Policy is present.",
+                    "Your website correctly controls what web address information is shared when visitors click external links.",
                     referrer,
+                    impact="Sensitive information in your web addresses is protected from being leaked to other websites.",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
@@ -502,9 +526,9 @@ class SecurityHeadersModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Missing Subresource Integrity (SRI) on CDN Assets",
                     "Low",
-                    "Third-party JavaScript or CSS resources are loaded from external CDNs without cryptographic integrity hashes.",
+                    "Your website loads files from other services without checking if they have been secretly altered.",
                     "\n".join(missing_sri),
-                    impact="If an external CDN is compromised, attackers can tamper with the hosted script files to inject malicious code into your website.",
+                    impact="If the external service gets hacked, attackers could alter the files to secretly inject malicious code directly into your website.",
                     remediation="Add integrity='sha384-...' and crossorigin='anonymous' attributes to all external CDN script tags.",
                     owasp="A05: Security Misconfiguration",
                                 category="http_headers"
@@ -532,9 +556,9 @@ class SecurityHeadersModule(ScannerModule):
             findings.append(self.make_finding(
                 "No Web Application Firewall (WAF) / Rate-Limiting Headers Detected",
                 "Informational",
-                "The target application does not expose active WAF or rate-limiting response headers.",
+                "We could not detect a Web Application Firewall (WAF) or speed limit (rate-limiting) protecting your website.",
                 "WAF/CDN headers absent",
-                impact="Leaves public endpoints and login portals more susceptible to automated brute-force, credential stuffing, or Layer 7 DoS attacks.",
+                impact="Your website is more vulnerable to automated attacks, such as hackers guessing passwords very quickly or crashing your site by flooding it with traffic.",
                 owasp="A05: Security Misconfiguration",
                                 category="http_headers"
             ))
@@ -542,8 +566,9 @@ class SecurityHeadersModule(ScannerModule):
             findings.append(self.make_finding(
                 "Web Application Firewall (WAF) Active",
                 "Passed",
-                "WAF or CDN headers were detected.",
+                "A Web Application Firewall (WAF) or protective network layer was detected on your website.",
                 "\n".join(evidence_headers),
+                impact="Your website has an active layer of defense against automated hacker tools and floods of bad traffic.",
                 owasp="A05: Security Misconfiguration",
                                 category="http_headers"
             ))
@@ -567,8 +592,9 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Missing COOP Header",
                     "Informational",
-                    "The Cross-Origin-Opener-Policy header is missing.",
+                    "Your website is missing the Cross-Origin-Opener-Policy (COOP) security rule.",
                     "Header not found in response",
+                    impact="Malicious websites that open your site in a pop-up might be able to spy on what your users are doing.",
                     remediation="Set Cross-Origin-Opener-Policy: same-origin to isolate your browsing context from cross-origin popups.",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
@@ -577,8 +603,9 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Missing COEP Header",
                     "Informational",
-                    "The Cross-Origin-Embedder-Policy header is missing.",
+                    "Your website is missing the Cross-Origin-Embedder-Policy (COEP) security rule.",
                     "Header not found in response",
+                    impact="Your website might accidentally load malicious files from other sites, putting your visitors at risk.",
                     remediation="Set Cross-Origin-Embedder-Policy: require-corp to prevent loading cross-origin resources without explicit permission.",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
@@ -587,8 +614,9 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Missing CORP Header",
                     "Informational",
-                    "The Cross-Origin-Resource-Policy header is missing.",
+                    "Your website is missing the Cross-Origin-Resource-Policy (CORP) security rule.",
                     "Header not found in response",
+                    impact="Other malicious websites could embed your private images or resources and try to steal information from your logged-in users.",
                     remediation="Set Cross-Origin-Resource-Policy: same-origin to prevent other sites from embedding your resources.",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"

@@ -29,8 +29,9 @@ class SubdomainProbingModule(ScannerModule):
                     findings.append(self.make_finding(
                         f"Active Subdomain Found: {sub}.{domain}",
                         "Informational",
-                        f"Probed subdomain responded with status {resp.status_code}.",
+                        "We discovered an active subdomain related to your website.",
                         sub_url,
+                        impact="Unused or forgotten subdomains often have weaker security and can provide an easy back door for hackers.",
                         owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                     ))
@@ -71,8 +72,9 @@ class SubdomainTakeoverModule(ScannerModule):
                 findings.append(self.make_finding(
                     "No Subdomain Takeover Risk Detected",
                     "Passed",
-                    "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
+                    "We checked your domain records and found no abandoned cloud resources.",
                     f"[-] DNS & CNAME Audit\n[!] Target: {hostname} -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records.",
+                    impact="Your domains are properly managed, preventing hackers from hijacking them to host malicious content.",
                     owasp="A05: Security Misconfiguration",
                     category="domain_email"
                 ))
@@ -97,8 +99,9 @@ class SubdomainTakeoverModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Subdomain Takeover Vulnerability (Dangling CNAME)",
                         "High",
-                        f"Domain points via CNAME to an abandoned '{vulnerable_provider}' resource that can be claimed by an attacker.",
+                        f"Your domain is pointing to a cloud service (like {vulnerable_provider}) that has been abandoned or deleted.",
                         f"CNAME Target: {cname_target}",
+                        impact="A hacker can claim this abandoned address and set up a fake website under your official domain to scam your users.",
                         confidence="Medium",
                         remediation="Remove the stale DNS CNAME record immediately or reclaim the resource on the third-party service.",
                         owasp="A05: Security Misconfiguration",
@@ -108,8 +111,9 @@ class SubdomainTakeoverModule(ScannerModule):
                     findings.append(self.make_finding(
                         "CNAME Alias Configured",
                         "Passed",
-                        f"Domain uses a valid CNAME target pointing to {vulnerable_provider}.",
+                        f"Your domain correctly points to an active third-party service.",
                         f"Target: {cname_target}",
+                        impact="Properly configured domain records ensure visitors are safely directed to the right place without risk of hijacking.",
                         owasp="A05: Security Misconfiguration",
                         category="domain_email"
                     ))
@@ -117,8 +121,9 @@ class SubdomainTakeoverModule(ScannerModule):
                 findings.append(self.make_finding(
                     "No Subdomain Takeover Risk Detected",
                     "Passed",
-                    "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
+                    "We checked your domain records and found no abandoned cloud resources.",
                     f"[-] DNS & CNAME Audit\n[!] Target: {hostname} -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records.",
+                    impact="Your domains are properly managed, preventing hackers from hijacking them to host malicious content.",
                     owasp="A05: Security Misconfiguration",
                     category="domain_email"
                 ))
@@ -152,8 +157,9 @@ class TLSCipherStrengthModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "Weak TLS Cipher Negotiated",
                                 "Medium",
-                                f"The server negotiated a weak cipher suite ({cipher_name}) with {bit_len}-bit encryption.",
+                                "Your server allows connections using outdated and weak encryption methods.",
                                 f"Cipher: {cipher_name} ({tls_ver})",
+                                impact="Hackers could potentially break this weak encryption to spy on sensitive data passing between your users and your website.",
                                 remediation="Disable weak ciphers (3DES, RC4) in server configuration and enforce AES-GCM or CHACHA20.",
                                 owasp="A02: Cryptographic Failures",
                                 category="encryption_tls"
@@ -162,8 +168,9 @@ class TLSCipherStrengthModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "Strong TLS Cipher Suite Enforced",
                                 "Passed",
-                                f"Server negotiated a secure cipher ({cipher_name}) with {bit_len}-bit encryption.",
+                                "Your server requires modern, strong encryption methods for all connections.",
                                 f"Cipher: {cipher_name} ({tls_ver})",
+                                impact="Your visitors' data is well protected against eavesdropping and tampering.",
                                 owasp="A02: Cryptographic Failures",
                                 category="encryption_tls"
                             ))
@@ -173,8 +180,9 @@ class TLSCipherStrengthModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Insecure or Obsolete TLS Ciphers Enforced",
                     "High",
-                    f"The server enforces deprecated legacy ciphers or protocols (e.g. RC4/3DES) that modern clients reject: {e}",
+                    "Your server forces the use of very old and broken encryption methods that modern web browsers reject.",
                     "Handshake Error",
+                    impact="Not only is your visitors' data at risk of being stolen, but many modern browsers will completely block users from accessing your site.",
                     remediation="Disable weak SSLv3/TLS1.0/1.1 protocols and legacy RC4/3DES ciphers in server configuration.",
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"
@@ -184,9 +192,9 @@ class TLSCipherStrengthModule(ScannerModule):
             findings.append(self.make_finding(
                 "Deprecated or Weak TLS Cipher Suite Detected",
                 "High",
-                f"The target server uses deprecated or weak ciphers (e.g., RC4) rejected by modern TLS clients: {e}",
+                "Your server uses highly outdated and insecure encryption methods.",
                 "legacy_weak_cipher_detected",
-                impact="Exposes encrypted traffic to passive eavesdropping and man-in-the-middle decryption.",
+                impact="Hackers can intercept and read the 'secure' traffic between your users and your website.",
                 owasp="A02: Cryptographic Failures",
                 category="encryption_tls"
             ))
@@ -215,8 +223,9 @@ class TLSCipherStrengthModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Legacy Weak TLS Ciphers Supported",
                     "Medium",
-                    "Server accepts connections configured with deprecated weak ciphers (e.g. 3DES / RC4).",
+                    "Your server still supports outdated encryption methods, even if they aren't the default.",
                     f"Server negotiated: {cipher_str}",
+                    impact="An attacker could force a user's browser to use these weak methods, allowing them to spy on their connection.",
                     remediation="Reconfigure server TLS cipher order to forbid 3DES, RC4, and EXPORT suites.",
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"
@@ -253,9 +262,9 @@ class GraphQLIntrospectionModule(ScannerModule):
                                 findings.append(self.make_finding(
                                     "Public GraphQL Introspection Enabled",
                                     "Informational",
-                                    "GraphQL endpoint is publicly accessible and accepts schema introspection queries.",
+                                    "Your database interface (GraphQL) is publicly answering questions about how it is structured.",
                                     target_url,
-                                    impact="Public schema discovery allows developers and auditors to map available backend queries and data fields.",
+                                    impact="Hackers can ask your database for a complete map of all your data fields, making it much easier to find and steal private information.",
                                     owasp="A05: Security Misconfiguration",
                                     category="information_exposure"
                                 ))
@@ -285,9 +294,9 @@ class VerboseStackTraceModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "Verbose Backend Error / Stack Trace Disclosure",
                                 "Medium",
-                                f"Target leaked verbose backend trace on error (Matched signature: {sig}).",
+                                "When your website encounters an error, it displays highly detailed technical crash reports.",
                                 target_url,
-                                impact="Exposes sensitive backend logic, database structures, or framework versions.",
+                                impact="These detailed crash reports reveal exactly how your system is built, giving attackers a blueprint for finding weaknesses.",
                                 remediation="Configure production environment to mask verbose error stack traces.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
@@ -375,8 +384,9 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
             finding = self.make_finding(
                 "Subdomains Discovered",
                 "Informational",
-                "We found publicly visible hostnames associated with this domain. These do not necessarily represent vulnerabilities, but they increase the organization's observable attack surface.",
+                "We found publicly visible addresses (subdomains) connected to your main website.",
                 evidence_str,
+                impact="Each of these addresses is another potential doorway into your network that hackers might try to break into.",
                 owasp="A05: Security Misconfiguration",
                 category="information_exposure"
             )

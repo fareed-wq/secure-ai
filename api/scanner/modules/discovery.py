@@ -36,8 +36,9 @@ class ExposedFilesModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Exposed .env Configuration File",
                         "Critical",
-                        "A .env file containing sensitive credentials or API keys is publicly accessible.",
+                        "A configuration file containing sensitive passwords and secret keys is publicly visible on your website.",
                         env_url,
+                        impact="Hackers can use these passwords to take full control of your website, access your database, and steal customer data.",
                         remediation="Restrict web server access to dotfiles or move .env outside the web root immediately.",
                         owasp="A05: Security Misconfiguration",
                         category="information_exposure",
@@ -53,8 +54,9 @@ class ExposedFilesModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Exposed .git Repository",
                     "High",
-                    "The Git source code repository is publicly exposed, allowing source code downloading.",
+                    "A folder containing the entire blueprint and source code of your website is publicly accessible.",
                     git_url,
+                    impact="Anyone can download your website's exact source code, making it easy for hackers to find hidden flaws and bypass your security.",
                     remediation="Configure the web server to block access to the /.git directory.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure",
@@ -71,8 +73,9 @@ class ExposedFilesModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Exposed phpinfo() File",
                         "Medium",
-                        "A phpinfo() page is publicly exposed, revealing server configuration and PHP environment variables.",
+                        "A test file revealing technical details about your web server is left public.",
                         phpinfo_url,
+                        impact="Hackers can use this detailed technical information to identify outdated software and plan a highly targeted attack against your website.",
                         remediation="Remove or restrict access to the phpinfo.php file.",
                         owasp="A05: Security Misconfiguration",
                         category="information_exposure",
@@ -99,9 +102,9 @@ class ExposedFilesModule(ScannerModule):
                             return self.make_finding(
                                 f"Directory Indexing Enabled ({path})",
                                 "Medium",
-                                "Web server is configured to display raw directory file listings when an index page is missing.",
+                                "Your website allows anyone to see a raw list of all the files and folders stored in this directory.",
                                 target_url,
-                                impact="Allows unauthenticated users to browse and download internal media uploads, unlinked assets, and temporary server files.",
+                                impact="Hackers can browse these folders like a file manager to find hidden files, backups, and sensitive documents that were not meant to be public.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
@@ -133,9 +136,9 @@ class ExposedFilesModule(ScannerModule):
                             return self.make_finding(
                                 f"Exposed Application Log File ({path})",
                                 "High",
-                                "Publicly accessible application log file discovered at {path}.",
+                                f"A system log file recording background activity for your website is publicly readable at {path}.",
                                 target_url,
-                                impact="Log files frequently expose unhandled stack traces, database query parameters, internal file paths, user emails, and API session tokens.",
+                                impact="These logs often contain sensitive user information, error messages, and secret tokens that hackers can use to bypass security.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
@@ -172,9 +175,9 @@ class ExposedFilesModule(ScannerModule):
                             return self.make_finding(
                                 f"Exposed Site / Database Backup Dump ({path})",
                                 "Critical",
-                                f"A publicly downloadable database or source code backup dump was found at {path}.",
+                                f"A complete backup of your website or database is publicly available for anyone to download at {path}.",
                                 target_url,
-                                impact="Grants unauthenticated attackers immediate access to the full application database, hashed user passwords, internal tables, and raw source code.",
+                                impact="Hackers can instantly download all your customer data, passwords, and private files, leading to a massive data breach.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
@@ -201,9 +204,9 @@ class ExposedFilesModule(ScannerModule):
                             return self.make_finding(
                                 f"Exposed Environment File ({path})",
                                 "Critical",
-                                f"A publicly accessible .env file was found at {path}.",
+                                f"A configuration file containing sensitive passwords and secret keys is publicly visible at {path}.",
                                 target_url,
-                                impact="Grants unauthenticated attackers immediate access to the application's configuration secrets, database credentials, and API keys.",
+                                impact="Hackers can use these passwords to take full control of your website, access your database, and steal customer data.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
@@ -227,8 +230,9 @@ class ExposedFilesModule(ScannerModule):
                             return self.make_finding(
                                 "Administrative Interface Exposed",
                                 "Low",
-                                "An administrative login panel or interface was found publicly accessible.",
+                                "A private admin login page for managing your website is open to the public.",
                                 target_url,
+                                impact="Hackers can attempt to guess passwords or exploit vulnerabilities on this login page to take over your website.",
                                 confidence="Medium",
                                 owasp="A01: Broken Access Control",
                                 category="api_surface"
@@ -259,8 +263,9 @@ class InformationDisclosureModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Verbose Server Banner",
                     "Low",
-                    "Server header leaks exact version numbers.",
+                    "Your web server publicly announces its exact software name and version.",
                     server,
+                    impact="Hackers can easily look up the exact version of your server to find known security flaws and launch a targeted attack against your website.",
                     remediation="Configure server to only return generic names (e.g., 'nginx').",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
@@ -314,8 +319,9 @@ class RobotsTxtModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Internal Paths Disclosed in Robots.txt",
                         "Low",
-                        "The robots.txt file discloses sensitive or internal application paths.",
+                        "Your website's search engine configuration file reveals hidden internal folders.",
                         "\\n".join(interesting_paths[:10]),
+                        impact="Hackers can read this file to discover secret administrative or development areas of your website that were supposed to be hidden.",
                         owasp="A05: Security Misconfiguration",
                         category="information_exposure"
                     ))
@@ -324,8 +330,9 @@ class RobotsTxtModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Privileged / Administrative Surface Discovered",
                         "Informational",
-                        "Administrative or privileged application paths were discovered via robots.txt.",
+                        "Your website publicly lists the addresses of administrative login pages or control panels.",
                         "\\n".join(privileged_paths[:10]),
+                        impact="Hackers can easily find where to launch attacks to try and guess passwords and take control of your website.",
                         confidence="High",
                         owasp="A01: Broken Access Control",
                         category="api_surface"
@@ -334,8 +341,9 @@ class RobotsTxtModule(ScannerModule):
                 findings.append(self.make_finding(
                     "robots.txt Found",
                     "Informational",
-                    f"Found robots.txt with {lines} lines.",
+                    "Your website provides instructions for search engines.",
                     target,
+                    impact="This is normal and helps search engines know what parts of your site to index.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
                 ))
@@ -343,8 +351,9 @@ class RobotsTxtModule(ScannerModule):
                 findings.append(self.make_finding(
                     "robots.txt Missing",
                     "Informational",
-                    "No robots.txt found.",
+                    "Your website does not provide instructions for search engines.",
                     target,
+                    impact="Search engines might index parts of your website you didn't intend to be public, or they might not index your site efficiently.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
                 ))
@@ -374,8 +383,9 @@ class SitemapModule(ScannerModule):
                 findings.append(self.make_finding(
                     "sitemap.xml Found",
                     "Informational",
-                    "Found XML sitemap.",
+                    "A map of your website's pages was found.",
                     target,
+                    impact="This is a standard file that helps search engines discover all the public pages on your website.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
                 ))
@@ -383,8 +393,9 @@ class SitemapModule(ScannerModule):
                 findings.append(self.make_finding(
                     "sitemap.xml Missing",
                     "Informational",
-                    "No sitemap.xml found.",
+                    "Your website is missing a map of its pages.",
                     target,
+                    impact="Search engines might have a harder time discovering and ranking all the public pages on your website.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
                 ))
@@ -414,8 +425,9 @@ class SecurityTxtModule(ScannerModule):
                 findings.append(self.make_finding(
                     "security.txt Found",
                     "Passed",
-                    "Organization has published security.txt.",
+                    "Your website publishes a standard security contact file.",
                     target,
+                    impact="This is an excellent practice that allows security researchers to safely report vulnerabilities to you before hackers find them.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
                 ))
@@ -423,8 +435,9 @@ class SecurityTxtModule(ScannerModule):
                 findings.append(self.make_finding(
                     "security.txt Missing",
                     "Informational",
-                    "No standard security.txt found.",
+                    "Your website does not have a standard security contact file.",
                     target,
+                    impact="Friendly security researchers may have a hard time contacting you if they find a vulnerability, leaving you at risk.",
                     remediation="Publish a security.txt file at /.well-known/security.txt.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
@@ -459,8 +472,9 @@ class OpenApiModule(ScannerModule):
                             local_findings.append(self.make_finding(
                                 "Public OpenAPI / Swagger Specification Exposed",
                                 "Informational",
-                                "A public API documentation specification was discovered.",
+                                "Your website publicly exposes technical documentation about its inner workings and data connections.",
                                 target,
+                                impact="Hackers can use this documentation as a blueprint to understand exactly how your website works and find ways to attack it.",
                                 confidence="High",
                                 category="information_exposure",
                                 owasp="A05: Security Misconfiguration"
@@ -488,8 +502,9 @@ class OpenApiModule(ScannerModule):
                                 local_findings.append(self.make_finding(
                                     "API Authorization Scheme Disclosed",
                                     "Informational",
-                                    "The API specification explicitly declares its security/authorization scheme.",
+                                    "Your website publicly reveals how it handles security logins and authentication methods.",
                                     f"Authorization scheme(s): {', '.join(list(schemes_found)[:5])}",
+                                    impact="Hackers can use this information to focus their attacks on your specific security mechanisms.",
                                     confidence="High",
                                     category="authentication",
                                     owasp="A05: Security Misconfiguration"
@@ -522,8 +537,9 @@ class OpenApiModule(ScannerModule):
                                 local_findings.append(self.make_finding(
                                     "Privileged API Routes Publicly Documented",
                                     "Informational",
-                                    "Sensitive or administrative API routes were discovered in the public documentation.",
+                                    "Your website publicly documents secret administrative connections and data channels.",
                                     "\\n".join(list(privileged_routes)[:5]),
+                                    impact="Hackers can use these details to try to bypass security and access sensitive administrative functions.",
                                     confidence="High",
                                     category="api_surface",
                                     owasp="A01: Broken Access Control"
@@ -533,8 +549,9 @@ class OpenApiModule(ScannerModule):
                                 local_findings.append(self.make_finding(
                                     "Potentially Unprotected Privileged API Operation",
                                     "Medium",
-                                    "This is an OpenAPI documentation-level indicator and does not confirm that the live endpoint is actually unauthenticated. Privileged operations lack a documented security requirement.",
+                                    "Your website's documentation suggests that some sensitive administrative functions might not require a password.",
                                     "\\n".join(list(unprotected_privileged)[:5]),
+                                    impact="If true, anyone could perform administrative actions on your website without needing to log in.",
                                     confidence="Medium",
                                     category="authentication",
                                     owasp="A01: Broken Access Control"
@@ -544,8 +561,9 @@ class OpenApiModule(ScannerModule):
                                 local_findings.append(self.make_finding(
                                     "Versioned API Surface Discovered",
                                     "Informational",
-                                    "Versioned API endpoints were identified in the specification.",
+                                    "Your website publicly reveals the version numbers of its internal data connections.",
                                     f"Versions observed: {', '.join(api_versions)}",
+                                    impact="Hackers can check if you are using outdated versions and target older, potentially vulnerable features of your website.",
                                     confidence="High",
                                     category="api_surface",
                                     owasp="A00: Informational"
@@ -586,8 +604,9 @@ class GraphqlIdeModule(ScannerModule):
                         return self.make_finding(
                             "Interactive GraphQL Developer IDE Exposed",
                             "Informational",
-                            "An interactive GraphQL developer UI is publicly accessible.",
+                            "A developer tool used to test data connections is left publicly accessible on your live website.",
                             target,
+                            impact="Hackers can use this interactive tool to easily explore and extract hidden data from your database.",
                             confidence="High",
                             category="information_exposure",
                             owasp="A05: Security Misconfiguration"
@@ -630,8 +649,9 @@ class ActuatorModule(ScannerModule):
                                 return self.make_finding(
                                     "Sensitive Spring Boot Actuator Config Exposed",
                                     "High",
-                                    "Sensitive actuator endpoint (/actuator/env) is publicly accessible, leaking configuration.",
+                                    "Detailed configuration settings for your website's framework are publicly accessible.",
                                     target,
+                                    impact="Hackers can read these settings to uncover secret passwords, database credentials, and internal network details.",
                                     confidence="High",
                                     category="information_exposure",
                                     owasp="A05: Security Misconfiguration",
@@ -641,8 +661,9 @@ class ActuatorModule(ScannerModule):
                                 return self.make_finding(
                                     "Spring Boot Actuator Endpoint Exposed",
                                     "Informational",
-                                    "Spring Boot Actuator health or root endpoint is publicly accessible.",
+                                    "Diagnostic tools for your website's framework are publicly accessible.",
                                     target,
+                                    impact="Hackers can use these tools to monitor your server's health and gather intelligence to plan an attack.",
                                     confidence="High",
                                     category="information_exposure",
                                     owasp="A05: Security Misconfiguration"
@@ -683,8 +704,9 @@ class XmlRpcModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Legacy XML-RPC Endpoint Exposed",
                     "Low",
-                    "An active XML-RPC endpoint is publicly accessible.",
+                    "An outdated remote access feature is enabled on your website.",
                     target,
+                    impact="Hackers often use this feature to launch massive automated attacks to guess passwords and bring down your website.",
                     confidence="High",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration",

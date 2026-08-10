@@ -95,8 +95,9 @@ class InfrastructureIntelligenceModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "Certificate SANs Reveal Additional Hostnames",
                                 "Informational",
-                                "Certificate visibility expands observable attack surface and does NOT itself indicate a vulnerability.",
+                                "Your website's security certificate publicly lists other website addresses connected to your organization.",
                                 evidence,
+                                impact="This is not a security flaw, but it gives outsiders a view of your web properties, which could help them find less protected sites to target.",
                                 confidence="High",
                                 category="information_exposure",
                                 owasp="A00: Informational"
@@ -129,8 +130,9 @@ class InfrastructureIntelligenceModule(ScannerModule):
                     findings.append(self.make_finding(
                         "DNS Infrastructure Provider Identified",
                         "Informational",
-                        "Passively identified the DNS nameserver provider.",
+                        "We identified which company manages the domain name system (DNS) for your website.",
                         evidence_str,
+                        impact="This is not a security flaw. Knowing your DNS provider is public information, but it helps map your infrastructure.",
                         confidence="High",
                         category="technology_detection",
                         owasp="A00: Informational"
@@ -159,8 +161,9 @@ class InfrastructureIntelligenceModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Mail Infrastructure Identified",
                         "Informational",
-                        "Passively identified the mail infrastructure provider from MX records.",
+                        "We identified which company handles the email delivery for your domain.",
                         evidence_str,
+                        impact="This is not a security flaw. Your mail provider is public information, but it helps understand your email setup.",
                         confidence="High",
                         category="technology_detection",
                         owasp="A00: Informational"
@@ -189,8 +192,9 @@ class InfrastructureIntelligenceModule(ScannerModule):
             findings.append(self.make_finding(
                 "Cloud / Hosting Infrastructure Identified",
                 "Informational",
-                "Passively identified cloud or hosting provider infrastructure.",
+                "We identified which cloud or hosting company runs the servers behind your website.",
                 evidence,
+                impact="This is not a security flaw, but knowing your hosting provider helps map your infrastructure and could inform targeted attacks.",
                 confidence="High",
                 category="technology_detection",
                 owasp="A00: Informational"
@@ -215,8 +219,9 @@ class InfrastructureIntelligenceModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "Dangling Cloud Resource Reference Detected",
                                 "Medium",
-                                "Passive validation indicates that the referenced cloud resource may no longer be configured. This scanner does not attempt resource registration or takeover.",
+                                "Your domain is pointing to a cloud service that no longer exists or has been deleted.",
                                 f"Resource: {cand} returned {status} with signature '{sig['body']}'",
+                                impact="A hacker could register this abandoned cloud address and set up a malicious website under your official domain name to trick your users.",
                                 confidence="Medium",
                                 remediation="Remove the dangling CNAME or DNS record pointing to the unprovisioned resource.",
                                 category="misconfiguration",

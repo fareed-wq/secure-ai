@@ -76,7 +76,7 @@ class TestPhase18Accuracy(unittest.TestCase):
             
             self.assertIsNotNone(finding)
             self.assertEqual(finding["severity"], "Low")
-            self.assertIn("administrative login panel", finding["description"])
+            self.assertIn("admin login page", finding["description"])
         finally:
             api.scanner.modules.discovery.safe_request = old_safe_request
 

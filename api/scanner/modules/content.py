@@ -75,8 +75,9 @@ class MixedContentModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Mixed Content Detected",
                     "Medium",
-                    f"Found {sample_count} resource(s) loaded over insecure HTTP on an HTTPS page.",
+                    f"Your secure webpage is loading {sample_count} file(s) over an insecure connection.",
                     f"Examples: {samples}",
+                    impact="Hackers can intercept these insecure files to steal sensitive user data or secretly alter the appearance and behavior of your website.",
                     remediation="Update all resource links (scripts, styles, images) to use relative paths or HTTPS URLs.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
@@ -86,8 +87,9 @@ class MixedContentModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Insecure Form Action (HTTP)",
                     "High",
-                    "An HTML form on this HTTPS page submits data to an unencrypted HTTP endpoint.",
+                    "A form on your secure website is sending user information over an unencrypted connection.",
                     f"Form action: {', '.join(parser.insecure_forms[:2])}",
+                    impact="Any information submitted through this form, such as passwords or personal details, can be easily intercepted and read by hackers.",
                     remediation="Ensure all form 'action' attributes use relative paths or explicit 'https://' URLs.",
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"
@@ -97,8 +99,9 @@ class MixedContentModule(ScannerModule):
                 findings.append(self.make_finding(
                     "No Mixed Content Detected",
                     "Passed",
-                    "All front-end resources and form actions are safely served over HTTPS.",
+                    "All parts of your website are safely using secure connections.",
                     "Clean HTML subresources",
+                    impact="Your visitors are protected from eavesdropping and tampering when loading resources and submitting forms on your page.",
                     owasp="A05: Security Misconfiguration",
                     category="encryption_tls"
                 ))

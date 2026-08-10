@@ -63,7 +63,7 @@ class TestPhase22Reporting(unittest.TestCase):
         self.assertIn("26 unique subdomains discovered", evidence)
         
         # 6. Simple report output is non-technical.
-        self.assertEqual(finding["description"], "We found publicly visible hostnames associated with this domain. These do not necessarily represent vulnerabilities, but they increase the organization's observable attack surface.")
+        self.assertEqual(finding["description"], "We found publicly visible addresses (subdomains) connected to your main website.")
         
         # 7. Technical report contains CT/source context.
         # Verified by presence in the metadata output

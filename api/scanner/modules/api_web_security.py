@@ -47,12 +47,13 @@ class ApiWebSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "HTTP to HTTPS Redirect Security Issue",
                         "Medium",
-                        "The application downgraded a secure HTTPS request to an insecure HTTP endpoint.",
-                        f"From: {first_url} To: {final_url}",
+                        description="Your website sends visitors from a secure connection (HTTPS) back to an unencrypted one (HTTP).",
+                        evidence=f"From: {first_url} To: {final_url}",
                         confidence="High",
                         remediation="Ensure all redirects maintain or upgrade to HTTPS.",
                         category="encryption_tls",
-                        owasp="A02: Cryptographic Failures"
+                        owasp="A02: Cryptographic Failures",
+                        impact="Hackers can intercept this unencrypted traffic to steal sensitive user data like passwords or personal information."
                     ))
                 
                 # Excessive redirect chain
@@ -61,12 +62,13 @@ class ApiWebSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Excessive HTTP Redirect Chain Detected",
                         "Low",
-                        "The application uses an excessive number of redirects, which can impact performance and security.",
-                        chain[:180],
+                        description="Your website sends visitors through too many redirects before they reach their destination.",
+                        evidence=chain[:180],
                         confidence="High",
                         remediation="Minimize redirect hops to a single redirect where possible.",
                         category="misconfiguration",
-                        owasp="A05: Security Misconfiguration"
+                        owasp="A05: Security Misconfiguration",
+                        impact="This makes your website load slowly and can make it easier for attackers to hide malicious links from your users."
                     ))
                     
                 # Cross-domain redirect
@@ -85,12 +87,13 @@ class ApiWebSecurityModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "Unexpected Cross-Domain Redirect Detected",
                                 "Medium",
-                                "The application redirects users to a completely different domain.",
-                                f"Redirected to: {final_domain}",
+                                description="Your website redirects users to a completely different and potentially untrusted website.",
+                                evidence=f"Redirected to: {final_domain}",
                                 confidence="Medium",
                                 remediation="Ensure cross-domain redirects only point to trusted external services.",
                                 category="misconfiguration",
-                                owasp="A05: Security Misconfiguration"
+                                owasp="A05: Security Misconfiguration",
+                                impact="Attackers could exploit this to trick your users into visiting a fake website to steal their login details."
                             ))
 
             # 3. HTTP Method Posture
@@ -100,12 +103,13 @@ class ApiWebSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "TRACE HTTP Method Advertised",
                     "Low",
-                    "The TRACE HTTP method is explicitly advertised in the response headers.",
-                    f"Allow: {allow} | ACAM: {acam}"[:180],
+                    description="Your web server is set up to allow a troubleshooting feature called the TRACE method.",
+                    evidence=f"Allow: {allow} | ACAM: {acam}"[:180],
                     confidence="High",
                     remediation="Disable TRACE method to prevent Cross-Site Tracing (XST).",
                     category="misconfiguration",
-                    owasp="A05: Security Misconfiguration"
+                    owasp="A05: Security Misconfiguration",
+                    impact="Hackers can sometimes use this feature to bypass security controls and steal user session cookies."
                 ))
 
             # 4. API Content-Type Mismatch
@@ -128,12 +132,13 @@ class ApiWebSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "API Content-Type Mismatch Detected",
                         "Low",
-                        "The response body is valid JSON, but the Content-Type header incorrectly advertises text/html or text/plain.",
-                        f"Content-Type: {content_type}",
+                        description="Your website sends data in one format but incorrectly tells the browser it is a different format.",
+                        evidence=f"Content-Type: {content_type}",
                         confidence="Medium",
                         remediation="Ensure API endpoints return application/json Content-Type.",
                         category="http_headers",
-                        owasp="A05: Security Misconfiguration"
+                        owasp="A05: Security Misconfiguration",
+                        impact="This confusion can sometimes be tricked by hackers into running malicious scripts on your website."
                     ))
 
             # 5. API Cache Security
@@ -145,12 +150,13 @@ class ApiWebSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Sensitive API Response May Be Publicly Cacheable",
                         "Medium",
-                        "A potentially sensitive API response explicitly permits public caching.",
-                        f"Cache-Control: {cache_control}",
+                        description="Your website allows sensitive user data to be saved on public servers or shared networks.",
+                        evidence=f"Cache-Control: {cache_control}",
                         confidence="Medium",
                         remediation="Set Cache-Control to 'no-store, no-cache, must-revalidate' for sensitive data.",
                         category="http_headers",
-                        owasp="A05: Security Misconfiguration"
+                        owasp="A05: Security Misconfiguration",
+                        impact="Other people on the same network or public computers could view your users' private information."
                     ))
 
             # 6. API Error Information Disclosure
@@ -162,12 +168,13 @@ class ApiWebSecurityModule(ScannerModule):
                         findings.append(self.make_finding(
                             "API Error Information Disclosure",
                             "Medium",
-                            f"The application disclosed verbose error information ({name}).",
-                            snippet[:180],
+                            description=f"Your website shows detailed technical error messages ({name}) to regular users.",
+                            evidence=snippet[:180],
                             confidence="Medium",
                             remediation="Configure the application to display generic error messages in production.",
                             category="information_exposure",
-                            owasp="A05: Security Misconfiguration"
+                            owasp="A05: Security Misconfiguration",
+                            impact="Hackers can read these error messages to understand how your website is built and find weak spots to attack."
                         ))
                         break
 
@@ -179,21 +186,23 @@ class ApiWebSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "WebSocket Endpoint Discovered",
                         "Informational",
-                        "WebSocket endpoints were discovered passively in the page content.",
-                        "\\n".join(list(ws_matches)[:3]),
+                        description="We noticed your website uses WebSockets to send data back and forth.",
+                        evidence="\\n".join(list(ws_matches)[:3]),
                         confidence="High",
                         category="information_exposure",
-                        owasp="A00: Informational"
+                        owasp="A00: Informational",
+                        impact="If not properly secured, hackers might be able to intercept or send fake messages through this real-time connection."
                     ))
                 elif "new WebSocket(" in body or 'WebSocket("' in body or "WebSocket('" in body:
                     findings.append(self.make_finding(
                         "WebSocket Endpoint Discovered",
                         "Informational",
-                        "WebSocket invocation pattern discovered passively in the page content.",
-                        "new WebSocket(...) observed",
+                        description="We noticed your website uses WebSockets to communicate in real-time.",
+                        evidence="new WebSocket(...) observed",
                         confidence="High",
                         category="information_exposure",
-                        owasp="A00: Informational"
+                        owasp="A00: Informational",
+                        impact="Without proper security checks, hackers could manipulate this connection to steal data or attack your site."
                     ))
 
                 # API Versions
@@ -202,11 +211,12 @@ class ApiWebSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "API Version Disclosed",
                         "Informational",
-                        "API versioning information was passively discovered in the page content.",
-                        "\\n".join(list(ver_matches)[:5]),
+                        description="Your website publicly shows which exact version of its data interface (API) it is using.",
+                        evidence="\\n".join(list(ver_matches)[:5]),
                         confidence="High",
                         category="information_exposure",
-                        owasp="A00: Informational"
+                        owasp="A00: Informational",
+                        impact="Hackers can look up this exact version to find known security flaws and use them against your website."
                     ))
 
                 # Auth Portals
@@ -215,11 +225,12 @@ class ApiWebSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Authentication / Administrative Portal Discovered",
                         "Informational",
-                        "Administrative or authentication portals were passively discovered.",
-                        "\\n".join(list(auth_matches)[:5]),
+                        description="We found a login or admin page that is publicly visible on your website.",
+                        evidence="\\n".join(list(auth_matches)[:5]),
                         confidence="High",
                         category="information_exposure",
-                        owasp="A00: Informational"
+                        owasp="A00: Informational",
+                        impact="If left unprotected or hidden weakly, hackers can try to guess passwords and gain control over your website."
                     ))
 
                 # GraphQL refs
@@ -228,11 +239,12 @@ class ApiWebSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "GraphQL Endpoint Reference Discovered",
                         "Informational",
-                        "GraphQL endpoint references were passively discovered.",
-                        "\\n".join(list(gql_matches)[:3]),
+                        description="Your website uses a data system called GraphQL and its access points are publicly visible.",
+                        evidence="\\n".join(list(gql_matches)[:3]),
                         confidence="Medium",
                         category="information_exposure",
-                        owasp="A00: Informational"
+                        owasp="A00: Informational",
+                        impact="Hackers often target these systems to pull large amounts of sensitive data if they aren't fully locked down."
                     ))
 
                 # API Docs
@@ -241,11 +253,12 @@ class ApiWebSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "API Documentation Reference Discovered",
                         "Informational",
-                        "API documentation endpoints were passively discovered.",
-                        "\\n".join(list(doc_matches)[:5]),
+                        description="Your website leaves its internal instruction manual (API documentation) out in the open.",
+                        evidence="\\n".join(list(doc_matches)[:5]),
                         confidence="High",
                         category="information_exposure",
-                        owasp="A00: Informational"
+                        owasp="A00: Informational",
+                        impact="This gives hackers a complete map of how your website works, making it much easier for them to plan an attack."
                     ))
                     
         except requests.exceptions.RequestException:
@@ -268,11 +281,12 @@ class ApiWebSecurityModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "OpenID Connect Configuration Discovered",
                                 "Informational",
-                                "An OpenID Connect (OIDC) configuration file was safely observed.",
-                                f"Observed fields: {', '.join(found_fields)}",
+                                description="Your website publicly shares its login system configuration file.",
+                                evidence=f"Observed fields: {', '.join(found_fields)}",
                                 confidence="High",
                                 category="information_exposure",
-                                owasp="A00: Informational"
+                                owasp="A00: Informational",
+                                impact="While normally safe, any misconfiguration here could help hackers figure out how to bypass your login system."
                             ))
                     except Exception:
                         pass

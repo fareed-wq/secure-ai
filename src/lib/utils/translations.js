@@ -3,24 +3,22 @@ import { TRANSLATIONS } from '../../config/translations';
 export const getTranslation = (finding) => {
   const technicalName = finding.name;
 
+  let baseTranslation = {
+    name: technicalName,
+    category: "Website Trust"
+  };
+
   if (TRANSLATIONS[technicalName]) {
-    return TRANSLATIONS[technicalName];
-  }
-  
-  if (technicalName.startsWith("Unsecured Cookie")) {
-    return {
-      name: technicalName,
-      problem: finding.description,
-      why: "If a malicious script runs on your site, it can steal these cookies and hijack active user logins or sessions.",
-      category: "Session Security"
-    };
+    baseTranslation = { ...baseTranslation, ...TRANSLATIONS[technicalName] };
+  } else if (technicalName.startsWith("Unsecured Cookie")) {
+    baseTranslation.category = "Session Security";
   }
 
+  // Always use the backend's description and impact for problem and why.
   return {
-    name: technicalName,
+    ...baseTranslation,
     problem: finding.description || "A recommended security configuration is missing or partially configured on your web server.",
-    why: finding.impact && finding.impact !== "N/A" ? finding.impact : "Resolving this configuration aligns your site with industry baseline security standards.",
-    category: "Website Trust"
+    why: finding.impact && finding.impact !== "N/A" ? finding.impact : "Resolving this configuration aligns your site with industry baseline security standards."
   };
 };
 

@@ -47,21 +47,23 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "HTTP Authentication Scheme Disclosed",
                     "Informational",
-                    "The server disclosed an explicit HTTP authentication scheme.",
-                    www_auth,
+                    description="Your server publicly announces the exact method it uses to verify user logins.",
+                    evidence=www_auth,
                     owasp="A07: Identification and Authentication Failures",
-                    category="authentication"
+                    category="authentication",
+                    impact="This information helps hackers understand how to target your login systems more effectively."
                 ))
                 if "basic" in www_auth.lower() and url.startswith("http://"):
                     findings.append(self.make_finding(
                         "Basic Authentication Advertised Over HTTP",
                         "High",
-                        "The server advertises Basic authentication over an unencrypted HTTP connection.",
-                        www_auth,
+                        description="Your website asks for user logins over an insecure, unencrypted connection.",
+                        evidence=www_auth,
                         remediation="Enforce HTTPS for all authentication portals.",
                         owasp="A02: Cryptographic Failures",
                         category="authentication",
-                        confidence="High"
+                        confidence="High",
+                        impact="Anyone on the same network can easily steal user passwords as they are being sent to your website."
                     ))
 
             # Cache & Auth Response Posture
@@ -88,12 +90,13 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Authentication Response May Be Publicly Cacheable",
                         severity,
-                        "A page containing authentication or session indicators lacks strict cache prevention directives.",
-                        f"Cache-Control: {cache_control}" if cache_control else "No Cache-Control header",
+                        description="Your website allows sensitive login pages to be saved and stored on public networks.",
+                        evidence=f"Cache-Control: {cache_control}" if cache_control else "No Cache-Control header",
                         remediation="Set Cache-Control: no-store, max-age=0 on sensitive pages.",
                         owasp="A05: Security Misconfiguration",
                         category="authentication",
-                        confidence="Medium"
+                        confidence="Medium",
+                        impact="Other people using the same computer or network might be able to view your users' personal accounts or login details."
                     ))
 
             # Session Management Technology
@@ -106,11 +109,12 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Session Technology Fingerprinted",
                     "Informational",
-                    "A specific session management framework was identified via cookies.",
-                    f"Technologies: {', '.join(found_session_techs)}",
+                    description="Your website publicly reveals the specific software it uses to keep users logged in.",
+                    evidence=f"Technologies: {', '.join(found_session_techs)}",
                     owasp="A05: Security Misconfiguration",
                     category="session_cookies",
-                    confidence="High"
+                    confidence="High",
+                    impact="Hackers can use this information to search for specific flaws in that software and launch targeted attacks."
                 ))
 
             # HTML Parsing
@@ -123,11 +127,12 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Password Recovery Interface Detected",
                             "Informational",
-                            "References to password reset or account recovery were identified.",
-                            f"Matched reference: {rec}",
+                            description="We found a password reset or account recovery page on your website.",
+                            evidence=f"Matched reference: {rec}",
                             owasp="A07: Identification and Authentication Failures",
                             category="authentication",
-                            confidence="High"
+                            confidence="High",
+                            impact="These pages are frequent targets for hackers trying to break into user accounts, so they must be heavily protected."
                         ))
                         break # One finding is enough
                         
@@ -148,11 +153,12 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Authentication Technology Detected",
                         "Informational",
-                        "Third-party authentication or identity provider technologies were detected.",
-                        f"Technologies: {', '.join(found_auth_techs)}",
+                        description="Your website shows that it uses external third-party services to handle user logins.",
+                        evidence=f"Technologies: {', '.join(found_auth_techs)}",
                         owasp="A07: Identification and Authentication Failures",
                         category="authentication",
-                        confidence="Medium"
+                        confidence="Medium",
+                        impact="If these external services have security flaws or are misconfigured, hackers might be able to bypass your login process."
                     ))
 
                 # Forms Analysis
@@ -176,11 +182,12 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Authentication Interface Detected",
                             "Informational",
-                            "A password authentication form was detected.",
-                            f"Action: {action_truncated}, Method: {method}",
+                            description="We found a page where users are asked to enter their passwords.",
+                            evidence=f"Action: {action_truncated}, Method: {method}",
                             owasp="A07: Identification and Authentication Failures",
                             category="authentication",
-                            confidence="High"
+                            confidence="High",
+                            impact="This is the front door to your users' accounts and is a primary target for hackers trying to break in."
                         ))
                         
                         # Password Form Over HTTP
@@ -188,12 +195,13 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "Password Form Submits Over HTTP",
                                 "High",
-                                "The password form explicitly submits credentials over an unencrypted HTTP connection.",
-                                f"Target Action: {action}",
+                                description="Your website sends user passwords across the internet without any encryption.",
+                                evidence=f"Target Action: {action}",
                                 remediation="Ensure all authentication forms submit strictly to HTTPS origins.",
                                 owasp="A02: Cryptographic Failures",
                                 category="authentication",
-                                confidence="High"
+                                confidence="High",
+                                impact="Anyone watching the network can read the passwords in plain text and steal user accounts."
                             ))
                             
                         # External Authentication Action
@@ -203,11 +211,12 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                 findings.append(self.make_finding(
                                     "Authentication Form Uses External Origin",
                                     "Informational",
-                                    "The authentication form submits data to a different domain origin.",
-                                    f"External Target: {action_domain}",
+                                    description="Your website's login form sends user passwords to a completely different website.",
+                                    evidence=f"External Target: {action_domain}",
                                     owasp="A07: Identification and Authentication Failures",
                                     category="authentication",
-                                    confidence="High"
+                                    confidence="High",
+                                    impact="If this other website is compromised or untrusted, hackers could easily steal all of your users' passwords."
                                 ))
                                 
                         # Password Autocomplete Policy
@@ -217,10 +226,11 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                     findings.append(self.make_finding(
                                         "Password Autocomplete Policy Detected",
                                         "Informational",
-                                        "A password input explicitly disables autocomplete.",
-                                        "autocomplete='off' present on password field.",
+                                        description="Your website explicitly prevents web browsers from saving user passwords.",
+                                        evidence="autocomplete='off' present on password field.",
                                         owasp="A05: Security Misconfiguration",
-                                        category="authentication"
+                                        category="authentication",
+                                        impact="This makes it harder for users to use strong, complex passwords saved in password managers, leading them to choose weaker passwords."
                                     ))
 
                     # CSRF Posture (Passive Only)
@@ -237,23 +247,25 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "Potential Missing CSRF Protection",
                                 "Medium",
-                                "A state-changing form was detected without obvious hidden CSRF protection tokens. (Passive inference only)",
-                                "No apparent CSRF token was observed in the analyzed form.",
+                                description="Your website has forms that change account settings but appear to lack hidden security tokens.",
+                                evidence="No apparent CSRF token was observed in the analyzed form.",
                                 remediation="Ensure all state-changing endpoints are protected by anti-CSRF tokens.",
                                 owasp="A01: Broken Access Control",
                                 category="authentication",
-                                confidence="Low"
+                                confidence="Low",
+                                impact="Hackers could trick your users into clicking a malicious link that changes their account settings or password without their permission."
                             ))
 
                 if privileged_surface_links:
                     findings.append(self.make_finding(
                         "Privileged / Administrative Surface Discovered",
                         "Informational",
-                        "Administrative or privileged application paths were discovered via HTML links or form actions.",
-                        "\\n".join(list(privileged_surface_links)[:10]),
+                        description="We found hidden links to administrator or restricted areas of your website.",
+                        evidence="\\n".join(list(privileged_surface_links)[:10]),
                         confidence="Medium",
                         owasp="A01: Broken Access Control",
-                        category="api_surface"
+                        category="api_surface",
+                        impact="Hackers look for these hidden areas to find ways to take complete control over your website."
                     ))
 
         except Exception:

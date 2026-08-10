@@ -297,8 +297,9 @@ class JavaScriptSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Exposed Frontend Environment & Debug Configuration",
                         "Medium",
-                        "The application exposes sensitive frontend configuration or debug environment details.",
+                        "Your website's code reveals internal setup details that are normally hidden.",
                         "Configuration object found in HTML source with debug/staging indicators.",
+                        impact="Hackers can use this behind-the-scenes information to better understand your website and plan an attack.",
                         confidence="Medium",
                         category="information_exposure",
                         owasp="A05: Security Misconfiguration"
@@ -309,8 +310,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Hardcoded Third-Party Secret Key Exposed in JS Bundle",
                     "High",
-                    "Strong third-party secret credentials were found hardcoded in JavaScript bundles.",
+                    "A highly sensitive password or secret key for another service was found left inside your website's code.",
                     "\\n".join(list(secrets_found)[:5]),
+                    impact="Attackers can steal this key to access your accounts, steal data, or run up charges on services you use.",
                     confidence="High",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
@@ -320,8 +322,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Client-Side API Key Detected",
                     "Informational",
-                    "Lightweight JS surface probe detected public client-side keys (e.g., Firebase/Google Maps). Verify domain referrer restrictions are active on cloud console.",
+                    "A public key used to connect to external services (like Google Maps) is visible in your website's code.",
                     "\\n".join(list(info_secrets_found)[:5]),
+                    impact="While this key is meant to be public, if it isn't properly restricted, others could use it on their own websites and run up your bill.",
                     remediation="Ensure public API keys have HTTP Referrer restrictions configured.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
@@ -331,8 +334,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Internal Infrastructure References Disclosed in Client-Side Code",
                     "Low",
-                    "Client-side code exposes references to internal or development endpoints. This may reveal internal service structure, development configuration, or network information that could assist further reconnaissance.",
+                    "Your website's code accidentally mentions private servers or internal test addresses.",
                     "\\n".join(list(internal_hosts)[:5]),
+                    impact="This gives attackers clues about how your private network is set up, which helps them find weaker targets.",
                     confidence="Medium",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
@@ -342,8 +346,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Client-Side Development Artifacts Detected",
                     "Low",
-                    "Development or debug artifacts are present in production client-side code.",
+                    "Leftover testing or debugging code was found on your live website.",
                     "\\n".join(list(debug_artifacts)[:5]),
+                    impact="This extra code can reveal details about how your website was built, giving hackers hints on where to look for weaknesses.",
                     confidence="Medium",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
@@ -353,8 +358,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Client-Side Framework Detected",
                     "Informational",
-                    "Passive observation detected client-side framework usage.",
+                    "We can easily see which tools and frameworks were used to build your website.",
                     ", ".join(frameworks),
+                    impact="Knowing the exact tools you use allows hackers to search for specific flaws related to those tools.",
                     confidence="High",
                     category="technology_detection",
                     owasp="A00: Informational"
@@ -364,8 +370,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Outdated Client-Side JavaScript Library Detected",
                     "Informational",
-                    "Explicit version strings indicate the presence of JavaScript libraries.",
+                    "Your website is using older versions of some software libraries.",
                     ", ".join(outdated_libs),
+                    impact="Older software often contains known security flaws that hackers can easily exploit to compromise your site.",
                     confidence="Medium",
                     category="technology_detection",
                     owasp="A06: Vulnerable and Outdated Components"
@@ -380,8 +387,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Client-Side API Endpoints Discovered",
                     "Informational",
-                    "Reconnaissance extracted potential API routes from JavaScript bundles.",
+                    "Your website's code contains a list of direct paths (API endpoints) to your backend system.",
                     evidence,
+                    impact="This provides a complete map of your application for attackers to explore and find hidden vulnerabilities.",
                     confidence="High",
                     category="api_surface",
                     owasp="A00: Informational"
@@ -391,8 +399,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Sequential Object Identifiers Detected in API Routes (IDOR Risk)",
                     "Medium",
-                    "Sequential identifiers can increase IDOR risk, but the presence of sequential IDs alone does not prove broken access control.",
+                    "Your website appears to use simple, predictable numbers (like 1, 2, 3) to identify users or records.",
                     "\\n".join(list(seq_id_routes)[:3]),
+                    impact="If permissions aren't perfectly configured, hackers can easily guess the numbers to view other people's private information.",
                     confidence="Low",
                     category="api_surface",
                     owasp="A01: Broken Access Control"
@@ -402,8 +411,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Sensitive Client-Side Configuration Reference Detected",
                     "Medium",
-                    "Potential credentials or sensitive configuration keys were found in client-side code.",
+                    "We found sensitive configuration details, like passwords or secret keys, written directly into your website's code.",
                     "\\n".join(list(dangerous_config)[:5]),
+                    impact="Anyone visiting your website can read these secrets and potentially use them to hack into your systems.",
                     remediation="Never bundle production passwords or secrets into client-side code.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
@@ -413,8 +423,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "JavaScript Source Maps Exposed (.map)",
                     "Medium",
-                    "Source maps may expose original source structure, source paths, comments, and potentially embedded source content.",
+                    "Special files used by developers to debug code are publicly accessible on your live website.",
                     "\\n".join(source_maps[:3]),
+                    impact="This allows anyone to read your original, uncompressed source code, making it much easier for hackers to find hidden flaws.",
                     confidence="High",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
@@ -424,8 +435,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Privileged Client-Side Authorization Logic Disclosed",
                     "Informational",
-                    "Client-side authorization logic is observable and may reveal application role/permission architecture. (Note: This does NOT prove server-side bypass).",
+                    "The code that checks if a user is an admin or has special permissions is visible in your public website files.",
                     "\\n".join(list(auth_logic_found)[:5]),
+                    impact="Hackers can study this code to understand how your security works and try to trick the system into giving them admin access.",
                     owasp="A01: Broken Access Control",
                     category="authentication",
                     confidence="Medium"
@@ -435,8 +447,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Authorization Roles / Permissions Disclosed",
                     "Informational",
-                    "Structured role or permission configurations were observed in the JavaScript bundle.",
+                    "The list of user roles and permissions (like 'admin' or 'editor') is exposed in your website's code.",
                     "\\n".join(list(role_models_found)[:5]),
+                    impact="This helps attackers understand exactly what permissions exist, giving them a target list of roles to try and steal.",
                     owasp="A01: Broken Access Control",
                     category="authentication",
                     confidence="High"
@@ -446,8 +459,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Privileged API Surface Discovered in Client-Side Code",
                     "Informational",
-                    "References to privileged or administrative API routes were discovered in the client-side code.",
+                    "Paths to restricted administrative areas were found in the public code of your website.",
                     "\\n".join(list(privileged_apis)[:5]),
+                    impact="Attackers can use these paths to find your private admin login pages or try to access restricted functions directly.",
                     owasp="A01: Broken Access Control",
                     category="api_surface",
                     confidence="High"
@@ -457,8 +471,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Versioned API Surface Discovered",
                     "Informational",
-                    "Versioned API endpoints were identified.",
+                    "Your website reveals the exact version number of the backend services it communicates with.",
                     f"Versions observed: {', '.join(api_versions)}",
+                    impact="Knowing the exact version helps hackers quickly look up known weaknesses for that specific system.",
                     owasp="A00: Informational",
                     category="api_surface",
                     confidence="High"

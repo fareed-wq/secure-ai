@@ -27,7 +27,7 @@ class DNSCAAModule(ScannerModule):
                     findings.append(self.make_finding(
                         "CAA Records Configured",
                         "Passed",
-                        "Certificate Authority Authorization (CAA) DNS records restrict which CAs can issue certificates.",
+                        "Your domain has rules that control exactly which security companies are allowed to issue SSL certificates for your website.",
                         ", ".join(caa_issuers),
                         owasp="A02: Cryptographic Failures",
                         category="domain_email"
@@ -36,8 +36,9 @@ class DNSCAAModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Missing CAA Record",
                         "Low",
-                        "No CAA DNS records found. Any valid Certificate Authority can issue SSL certificates for this domain.",
+                        "Your domain does not have rules to limit which companies can issue security certificates for your website.",
                         "No CAA record observed for the target domain",
+                        impact="A hacker could trick any certificate company into issuing a fake certificate for your site, allowing them to spy on your visitors.",
                         confidence="High",
                         remediation="Add CAA records in DNS specifying authorized CAs (e.g., 'issue letsencrypt.org').",
                         owasp="A02: Cryptographic Failures",
@@ -56,7 +57,7 @@ class DNSCAAModule(ScannerModule):
                     findings.append(self.make_finding(
                         "DNSSEC Security Enabled",
                         "Passed",
-                        "Domain Name System Security Extensions (DNSSEC) is enabled.",
+                        "Your domain has advanced security protections enabled to prevent hackers from tampering with your website's internet address.",
                         "DS record found",
                         owasp="A05: Security Misconfiguration",
                         category="dns_security"
@@ -65,9 +66,9 @@ class DNSCAAModule(ScannerModule):
                     findings.append(self.make_finding(
                         "DNSSEC Not Enabled for Domain",
                         "Informational",
-                        "Domain Name System Security Extensions (DNSSEC) records are not published for this domain.",
+                        "Your domain does not have advanced security protections to verify its internet address.",
                         "DNSSEC validation records not observed",
-                        impact="The domain is more vulnerable to DNS spoofing, cache poisoning, and BGP hijacking attacks.",
+                        impact="Hackers might be able to redirect your visitors to a fake copy of your website to steal their passwords or payment info.",
                         owasp="A05: Security Misconfiguration",
                         category="dns_security"
                     ))
@@ -85,7 +86,7 @@ class DNSCAAModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Wildcard DNS Record Detected",
                         "Informational",
-                        "Wildcard DNS records may cause arbitrary subdomains to resolve to the same infrastructure. This is an attack-surface observation and does not by itself indicate a vulnerability.",
+                        "Your domain is set up so that any random subdomain (like anything.yourwebsite.com) points to your server.",
                         "Randomized subdomain successfully resolved to an IP",
                         confidence="Medium",
                         owasp="A00: Informational",
@@ -122,8 +123,9 @@ class DNSEmailSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Multiple SPF Records Detected",
                         "Medium",
-                        "Multiple SPF records found. This breaks SPF validation and exposes the domain to spoofing.",
+                        "We found conflicting email rules for your domain, which makes the rules invalid.",
                         "\\n".join(spf_records[:3]),
+                        impact="Hackers can easily send fake emails that look exactly like they came from you, potentially scamming your customers.",
                         confidence="High",
                         remediation="Consolidate multiple SPF records into a single valid TXT record.",
                         owasp="A05: Security Misconfiguration",
@@ -135,8 +137,9 @@ class DNSEmailSecurityModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Overly Permissive SPF Record",
                             "High",
-                            "SPF record explicitly allows any IP address to spoof emails for this domain (+all).",
+                            "Your email security rules explicitly allow absolutely anyone to send emails on your behalf.",
                             data_str,
+                            impact="Scammers can easily forge emails from your domain to trick your customers and damage your reputation.",
                             confidence="High",
                             remediation="Change '+all' to '~all' or '-all' in your SPF TXT record.",
                             owasp="A05: Security Misconfiguration",
@@ -146,7 +149,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         findings.append(self.make_finding(
                             "SPF Record Configured",
                             "Passed",
-                            "Sender Policy Framework (SPF) record is validly configured.",
+                            "Your email security rules are properly set up to help prevent spoofing.",
                             data_str,
                             confidence="High",
                             owasp="A05: Security Misconfiguration",
@@ -157,8 +160,9 @@ class DNSEmailSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Missing SPF Record",
                         "Medium",
-                        "No SPF TXT record found. The domain is exposed to email spoofing and phishing attacks.",
+                        "Your domain lacks basic email security rules that verify who is allowed to send emails on your behalf.",
                         "TXT record absent for v=spf1.",
+                        impact="Criminals can easily send fraudulent emails that look like they are coming from your company.",
                         confidence="High",
                         remediation="Publish a valid SPF TXT record (e.g., 'v=spf1 include:_spf.google.com ~all').",
                         owasp="A05: Security Misconfiguration",
@@ -183,8 +187,9 @@ class DNSEmailSecurityModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "DMARC Monitoring-Only Policy",
                                 "Informational",
-                                "DMARC policy is set to 'none', which monitors but does not block spoofed emails.",
+                                "Your advanced email security policy is currently in 'monitoring mode' and will not actually block fake emails.",
                                 d_str,
+                                impact="While you can see who is trying to spoof your emails, those fake emails will still reach your customers' inboxes.",
                                 confidence="High",
                                 remediation="Consider upgrading DMARC policy from 'p=none' to 'p=quarantine' or 'p=reject'.",
                                 owasp="A05: Security Misconfiguration",
@@ -194,7 +199,7 @@ class DNSEmailSecurityModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "Strong DMARC Policy Configured",
                                 "Passed",
-                                "DMARC record is enforced with quarantine or reject policy.",
+                                "Your domain has strict rules that actively block unauthorized senders from spoofing your emails.",
                                 d_str,
                                 confidence="High",
                                 owasp="A05: Security Misconfiguration",
@@ -206,8 +211,9 @@ class DNSEmailSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Missing DMARC Policy",
                         "Medium",
-                        f"No DMARC record found at _dmarc.{domain}. Increases domain impersonation risk.",
+                        f"Your domain is missing advanced email security rules (DMARC) that tell email providers what to do with fake emails.",
                         "_dmarc TXT record absent.",
+                        impact="Email providers won't know how to handle forged emails pretending to be you, increasing the chance your customers get scammed.",
                         confidence="High",
                         remediation=f"Publish a DMARC TXT record at _dmarc.{domain} with a valid enforcement policy.",
                         owasp="A05: Security Misconfiguration",
@@ -228,7 +234,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         findings.append(self.make_finding(
                             "MTA-STS Mail Transport Security Configured",
                             "Passed",
-                            "MTA-STS policy is configured to enforce TLS for email transport.",
+                            "Your domain ensures that all emails are securely encrypted while traveling across the internet.",
                             rec.get("data", ""),
                             confidence="High",
                             owasp="A05: Security Misconfiguration",
@@ -239,7 +245,7 @@ class DNSEmailSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Missing MTA-STS Record",
                         "Informational",
-                        "No MTA-STS DNS record found.",
+                        "Your domain does not explicitly force emails to be encrypted when traveling across the internet.",
                         "DNS record not found",
                         confidence="High",
                         owasp="A05: Security Misconfiguration",
@@ -261,7 +267,7 @@ class DNSEmailSecurityModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "DKIM Record Observed",
                                 "Informational",
-                                f"A DKIM record was successfully observed using a known selector ({selector}).",
+                                f"We found digital signatures (DKIM) configured, which helps prove your emails are genuinely from you.",
                                 rec.get("data", "")[:180],
                                 confidence="High",
                                 owasp="A05: Security Misconfiguration",

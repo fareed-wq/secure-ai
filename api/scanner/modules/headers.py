@@ -30,8 +30,9 @@ class TechFingerprintModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Server Version Information Disclosed",
                         "Low",
-                        "Server headers explicitly disclose technology versions.",
+                        "Your web server publicly announces its exact software name and version.",
                         "\\n".join(exposed_tech),
+                        impact="Hackers can easily look up the exact version of your server to find known security flaws and launch a targeted attack against your website.",
                         confidence="High",
                         remediation="Configure server to return generic names and omit version numbers.",
                         owasp="A05: Security Misconfiguration",
@@ -41,8 +42,9 @@ class TechFingerprintModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Server Header Exposed",
                         "Informational",
-                        "The server software or backend technology is explicitly declared.",
+                        "Your web server publicly announces the software it is running.",
                         "\\n".join(exposed_tech),
+                        impact="Hackers can use this information to better understand your systems and plan potential attacks.",
                         remediation="Configure server to return generic names or remove headers.",
                         owasp="A05: Security Misconfiguration",
                         category="information_exposure"
@@ -70,8 +72,9 @@ class CORSModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Insecure CORS Policy (Wildcard with Credentials)",
                         "High",
-                        "The API passively responded with a wildcard CORS policy (*) AND allows credentials. This is a severe misconfiguration (though modern browsers block it, some older clients or misconfigured proxies may not).",
+                        "Your website is set up to allow any other website on the internet to read your users' private data.",
                         f"Access-Control-Allow-Origin: *\\nAccess-Control-Allow-Credentials: true",
+                        impact="Malicious websites visited by your users can silently extract private data directly from your server while the user is logged in.",
                         confidence="High",
                         remediation="Restrict CORS to specific trusted origins and remove credentials flag if not needed.",
                         owasp="A05: Security Misconfiguration",
@@ -81,8 +84,9 @@ class CORSModule(ScannerModule):
                     findings.append(self.make_finding(
                         "CORS Enabled (Wildcard)",
                         "Informational",
-                        "The API passively responded with a wildcard CORS policy (*). This allows any origin to read responses, but blocks credentials.",
+                        "Your website allows any other website on the internet to read its public responses.",
                         "Access-Control-Allow-Origin: *",
+                        impact="If this part of your website contains sensitive data, any other website can access it.",
                         confidence="Medium",
                         remediation="Restrict CORS to specific trusted origins if the endpoint handles sensitive data.",
                         owasp="A05: Security Misconfiguration",
@@ -93,8 +97,9 @@ class CORSModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Insecure CORS Policy (Arbitrary Origin Reflection with Credentials)",
                         "High",
-                        "The API reflects arbitrary Origin headers in its Access-Control-Allow-Origin response AND allows credentials. This allows any malicious site to read authenticated API responses.",
+                        "Your website blindly trusts any other website that asks for access to your users' private data.",
                         f"Access-Control-Allow-Origin: {acao}\\nAccess-Control-Allow-Credentials: true",
+                        impact="A hacker could build a malicious website that forces your users' browsers to extract and steal their private information from your site.",
                         confidence="High",
                         remediation="Validate the Origin header against a strict whitelist of trusted domains before echoing it back.",
                         owasp="A05: Security Misconfiguration",
@@ -104,8 +109,9 @@ class CORSModule(ScannerModule):
                     findings.append(self.make_finding(
                         "CORS Enabled (Arbitrary Origin Reflection)",
                         "Medium",
-                        "The API reflects arbitrary Origin headers. This allows any origin to read responses, but credentials are NOT allowed.",
+                        "Your website automatically grants data-reading access to any website that asks for it.",
                         f"Access-Control-Allow-Origin: {acao}",
+                        impact="If your website provides sensitive information, hackers could easily access it from their own malicious sites.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))
@@ -113,7 +119,7 @@ class CORSModule(ScannerModule):
                 findings.append(self.make_finding(
                     "CORS Enabled",
                     "Informational",
-                    "Cross-Origin Resource Sharing is enabled for a specific origin.",
+                    "Your website is specifically configured to share data with another trusted website.",
                     f"Access-Control-Allow-Origin: {acao}",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
@@ -127,7 +133,7 @@ class CORSModule(ScannerModule):
             findings.append(self.make_finding(
                 "Strict CORS Policy Enforced",
                 "Passed",
-                "CORS headers are omitted or strictly configured.",
+                "Your website safely restricts other websites from reading its data.",
                 "No open Access-Control-Allow-Origin header detected.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
@@ -152,8 +158,9 @@ class PermissionsPolicyModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Missing Permissions-Policy",
                         "Low",
-                        "The Permissions-Policy header is missing, allowing web pages to access browser feature APIs unconditionally.",
+                        "Your website is missing rules that stop it from using sensitive browser features like the camera, microphone, or location.",
                         "Header not found in response",
+                        impact="If your website gets hacked, the attackers could secretly turn on the visitors' cameras or track their location.",
                         remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
@@ -162,7 +169,7 @@ class PermissionsPolicyModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Permissions-Policy Configured",
                     "Passed",
-                    "Permissions-Policy header is active.",
+                    "Your website has clear rules that restrict the use of sensitive browser features.",
                     headers["Permissions-Policy"][:100],
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"

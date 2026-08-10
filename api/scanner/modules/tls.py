@@ -26,10 +26,11 @@ class EnhancedTLSModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Valid SSL/TLS Certificate",
                         "Passed",
-                        "The server presents a valid TLS certificate.",
+                        "Your website uses a valid digital certificate to prove its identity and secure the connection.",
                         f"Version: {version}",
                         owasp="A02: Cryptographic Failures",
-                        category="encryption_tls"
+                        category="encryption_tls",
+                        impact="This ensures visitors that they are on the genuine website and keeps their data safe from eavesdroppers."
                     ))
 
                     subject = dict(x[0] for x in cert.get("subject", []))
@@ -38,11 +39,12 @@ class EnhancedTLSModule(ScannerModule):
                         findings.append(self.make_finding(
                             "Wildcard Certificate in Use",
                             "Informational",
-                            "Wildcard certificates carry broader risk if compromised.",
+                            "Your website uses a 'wildcard' certificate that covers multiple subdomains at once.",
                             f"CN: {cn}",
                             remediation="Consider using specific SANs instead of wildcards.",
                             owasp="A02: Cryptographic Failures",
-                            category="encryption_tls"
+                            category="encryption_tls",
+                            impact="If a hacker manages to steal this certificate, they can create fake secure pages for any of your subdomains, putting your entire brand at risk."
                         ))
 
                     not_after = cert.get("notAfter")
@@ -58,21 +60,23 @@ class EnhancedTLSModule(ScannerModule):
                             findings.append(self.make_finding(
                                 "Certificate Expiring Soon",
                                 "Medium",
-                                f"Certificate expires in {days_left} days.",
+                                f"Your website's digital security certificate is about to expire in {days_left} days.",
                                 not_after,
                                 remediation="Renew the TLS certificate immediately.",
                                 owasp="A02: Cryptographic Failures",
-                                category="encryption_tls"
+                                category="encryption_tls",
+                                impact="If your certificate expires, web browsers will display a scary security warning to your visitors, blocking them from accessing your site and damaging your reputation."
                             ))
         except Exception as e:
             findings.append(self.make_finding(
                 "SSL/TLS Connection Failure",
                 "High",
-                "Failed to establish a secure TLS connection.",
+                "Your website failed to establish a secure, encrypted connection.",
                 str(e),
                 remediation="Ensure the server supports standard TLS protocols.",
                 owasp="A02: Cryptographic Failures",
-                category="encryption_tls"
+                category="encryption_tls",
+                impact="Visitors cannot securely connect to your website, meaning their data could be easily intercepted and web browsers may warn them away."
             ))
 
         # Legacy TLS Probe
@@ -93,20 +97,22 @@ class EnhancedTLSModule(ScannerModule):
             findings.append(self.make_finding(
                 "Deprecated TLS 1.0/1.1 Supported",
                 "Medium",
-                "The server allows connections using deprecated TLS 1.0 or 1.1 protocols.",
+                "Your website allows connections using outdated security protocols (TLS 1.0 or 1.1).",
                 "Server accepted connection via TLS 1.0/1.1",
                 remediation="Disable TLS 1.0 and TLS 1.1 on the server.",
                 owasp="A05: Security Misconfiguration",
-                category="encryption_tls"
+                category="encryption_tls",
+                impact="These old connection methods have known flaws. Hackers could potentially break the encryption and steal sensitive data like passwords or credit card numbers from your visitors."
             ))
         else:
             findings.append(self.make_finding(
                 "Legacy TLS Protocols Disabled",
                 "Passed",
-                "Server correctly rejects TLS 1.0/1.1 connections.",
+                "Your website correctly rejects outdated and insecure connection methods.",
                 "TLS 1.2+ Only",
                 owasp="A02: Cryptographic Failures",
-                category="encryption_tls"
+                category="encryption_tls",
+                impact="This protects your visitors by ensuring they only connect using modern, strong security standards."
             ))
 
         return findings
