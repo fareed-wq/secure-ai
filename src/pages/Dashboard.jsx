@@ -57,7 +57,7 @@ const Dashboard = () => {
   const activeTargets = new Set(scans.map(s => s.target_url)).size;
   
   const criticalIssues = scans.reduce((acc, scan) => {
-    const findings = scan.data?.findings || [];
+    const findings = scan.report_data?.findings || [];
     return acc + findings.filter(f => f.severity === 'Critical').length;
   }, 0);
   
