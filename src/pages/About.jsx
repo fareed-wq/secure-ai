@@ -1,5 +1,6 @@
 import React from 'react';
 import { Shield, Lock, Users, Zap, Globe, Code2, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const About = () => {
   return (
@@ -35,9 +36,9 @@ const About = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-slate-900/50 border border-slate-800 p-8 rounded-2xl">
-            <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center mb-6">
-              <Zap className="w-6 h-6 text-indigo-400" />
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-indigo-500/5">
+            <div className="w-10 h-10 rounded-lg border border-indigo-500/30 bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-4">
+              <Zap className="w-5 h-5" />
             </div>
             <h3 className="text-xl font-bold text-white mb-3">Lightning Fast</h3>
             <p className="text-slate-400 leading-relaxed">
@@ -45,9 +46,9 @@ const About = () => {
             </p>
           </div>
 
-          <div className="bg-slate-900/50 border border-slate-800 p-8 rounded-2xl">
-            <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-6">
-              <Lock className="w-6 h-6 text-emerald-400" />
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-indigo-500/5">
+            <div className="w-10 h-10 rounded-lg border border-indigo-500/30 bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-4">
+              <Lock className="w-5 h-5" />
             </div>
             <h3 className="text-xl font-bold text-white mb-3">Privacy First</h3>
             <p className="text-slate-400 leading-relaxed">
@@ -55,9 +56,9 @@ const About = () => {
             </p>
           </div>
 
-          <div className="bg-slate-900/50 border border-slate-800 p-8 rounded-2xl">
-            <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6">
-              <Users className="w-6 h-6 text-blue-400" />
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-indigo-500/5">
+            <div className="w-10 h-10 rounded-lg border border-indigo-500/30 bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-4">
+              <Users className="w-5 h-5" />
             </div>
             <h3 className="text-xl font-bold text-white mb-3">Actionable Clarity</h3>
             <p className="text-slate-400 leading-relaxed">
@@ -74,7 +75,7 @@ const About = () => {
             <h2 className="text-3xl font-bold text-white mb-6">Built by engineers, for the modern web.</h2>
             <div className="space-y-4 text-slate-400 leading-relaxed">
               <p>
-                Secure AI was born out of frustration. Traditional security scanners are either too expensive, 
+                URLScanOnline was born out of frustration. Traditional security scanners are either too expensive, 
                 too difficult to configure, or spit out 300-page PDF reports that nobody actually reads.
               </p>
               <p>
@@ -83,27 +84,69 @@ const About = () => {
               </p>
             </div>
           </div>
-          <div className="md:w-1/2 bg-slate-950 flex items-center justify-center p-12 border-l border-slate-800">
-            <div className="grid grid-cols-2 gap-8 text-center">
-              <div>
-                <div className="text-4xl font-black text-white mb-2">5M+</div>
-                <div className="text-sm text-slate-500 font-medium uppercase tracking-wider">URLs Scanned</div>
+          <div className="md:w-1/2 bg-slate-950 flex items-center justify-center p-8 md:p-12 border-l border-slate-800">
+            <div className="grid grid-cols-2 gap-4 w-full">
+              
+              <div className="rounded-xl border border-slate-800/80 bg-slate-900/60 p-5 flex flex-col justify-center items-center text-center transition-all hover:border-slate-700">
+                <div className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 font-mono">
+                  5M+
+                </div>
+                <div className="text-xs uppercase tracking-wider text-slate-400 font-mono mt-1">
+                  URLs Scanned
+                </div>
               </div>
-              <div>
-                <div className="text-4xl font-black text-white mb-2">99.9%</div>
-                <div className="text-sm text-slate-500 font-medium uppercase tracking-wider">Uptime</div>
+
+              <div className="rounded-xl border border-slate-800/80 bg-slate-900/60 p-5 flex flex-col justify-center items-center text-center transition-all hover:border-slate-700">
+                <div className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 font-mono">
+                  99.9%
+                </div>
+                <div className="text-xs uppercase tracking-wider text-slate-400 font-mono mt-1">
+                  Uptime
+                </div>
               </div>
-              <div>
-                <div className="text-4xl font-black text-white mb-2">24/7</div>
-                <div className="text-sm text-slate-500 font-medium uppercase tracking-wider">Monitoring</div>
+
+              <div className="rounded-xl border border-slate-800/80 bg-slate-900/60 p-5 flex flex-col justify-center items-center text-center transition-all hover:border-slate-700">
+                <div className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 font-mono">
+                  24/7
+                </div>
+                <div className="text-xs uppercase tracking-wider text-slate-400 font-mono mt-1">
+                  Monitoring
+                </div>
               </div>
-              <div>
-                <div className="text-4xl font-black text-white mb-2">Zero</div>
-                <div className="text-sm text-slate-500 font-medium uppercase tracking-wider">Intrusive Payloads</div>
+
+              <div className="rounded-xl border border-slate-800/80 bg-slate-900/60 p-5 flex flex-col justify-center items-center text-center transition-all hover:border-slate-700">
+                <div className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-indigo-400 font-mono">
+                  Zero
+                </div>
+                <div className="text-xs uppercase tracking-wider text-slate-400 font-mono mt-1">
+                  Intrusive Payloads
+                </div>
               </div>
+
             </div>
           </div>
         </div>
+
+        {/* Bottom Call To Action Banner */}
+        <div className="mt-16 rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/40 via-slate-900/80 to-slate-900/40 p-8 sm:p-12 text-center relative overflow-hidden">
+          <div className="relative z-10 max-w-2xl mx-auto space-y-4">
+            <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              Ready to test your website's security posture?
+            </h3>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Run a comprehensive, non-intrusive audit in seconds. Zero installation or setup required.
+            </p>
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
+              <Link className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all" to="/scan">
+                Start Free Scan
+              </Link>
+              <Link className="rounded-xl border border-slate-700 bg-slate-900/80 px-6 py-3 text-sm font-semibold text-slate-300 hover:text-white hover:border-slate-600 transition-all" to="/services">
+                Explore Services
+              </Link>
+            </div>
+          </div>
+        </div>
+
       </section>
       
       {/* Footer / Connect */}
