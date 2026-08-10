@@ -113,23 +113,28 @@ class InfrastructureIntelligenceModule(ScannerModule):
             ns_url = f"https://dns.google/resolve?name={domain}&type=NS"
             resp = safe_request("GET", ns_url, session=session, timeout=(1.5, 2.5))
             if resp and resp.status_code == 200:
-                identified_ns_providers = set()
+                ns_by_provider = {}
                 for rec in resp.json().get("Answer", []):
                     ns = rec.get("data", "").lower().rstrip('.')
                     for provider, patterns in self.DNS_PROVIDERS.items():
                         if any(re.search(p, ns) for p in patterns):
-                            if provider not in identified_ns_providers:
-                                identified_ns_providers.add(provider)
-                                findings.append(self.make_finding(
-                                    "DNS Infrastructure Provider Identified",
-                                    "Informational",
-                                    "Passively identified the DNS nameserver provider.",
-                                    f"Provider: {provider} (NS: {ns})",
-                                    confidence="High",
-                                    category="technology_detection",
-                                    owasp="A00: Informational"
-                                ))
+                            if provider not in ns_by_provider:
+                                ns_by_provider[provider] = []
+                            if ns not in ns_by_provider[provider]:
+                                ns_by_provider[provider].append(ns)
                             break
+                for provider, records in ns_by_provider.items():
+                    evidence_lines = [f"Provider: {provider}"] + [f"- {r}" for r in records]
+                    evidence_str = "\\n".join(evidence_lines)
+                    findings.append(self.make_finding(
+                        "DNS Infrastructure Provider Identified",
+                        "Informational",
+                        "Passively identified the DNS nameserver provider.",
+                        evidence_str,
+                        confidence="High",
+                        category="technology_detection",
+                        owasp="A00: Informational"
+                    ))
         except Exception:
             pass
 
@@ -138,23 +143,28 @@ class InfrastructureIntelligenceModule(ScannerModule):
             mx_url = f"https://dns.google/resolve?name={domain}&type=MX"
             resp = safe_request("GET", mx_url, session=session, timeout=(1.5, 2.5))
             if resp and resp.status_code == 200:
-                identified_mx_providers = set()
+                mx_by_provider = {}
                 for rec in resp.json().get("Answer", []):
                     mx = rec.get("data", "").lower().rstrip('.')
                     for provider, patterns in self.MAIL_PROVIDERS.items():
                         if any(re.search(p, mx) for p in patterns):
-                            if provider not in identified_mx_providers:
-                                identified_mx_providers.add(provider)
-                                findings.append(self.make_finding(
-                                    "Mail Infrastructure Identified",
-                                    "Informational",
-                                    "Passively identified the mail infrastructure provider from MX records.",
-                                    f"Provider: {provider} (MX: {mx})",
-                                    confidence="High",
-                                    category="technology_detection",
-                                    owasp="A00: Informational"
-                                ))
+                            if provider not in mx_by_provider:
+                                mx_by_provider[provider] = []
+                            if mx not in mx_by_provider[provider]:
+                                mx_by_provider[provider].append(mx)
                             break
+                for provider, records in mx_by_provider.items():
+                    evidence_lines = [f"Provider: {provider}"] + [f"- {r}" for r in records]
+                    evidence_str = "\\n".join(evidence_lines)
+                    findings.append(self.make_finding(
+                        "Mail Infrastructure Identified",
+                        "Informational",
+                        "Passively identified the mail infrastructure provider from MX records.",
+                        evidence_str,
+                        confidence="High",
+                        category="technology_detection",
+                        owasp="A00: Informational"
+                    ))
         except Exception:
             pass
 
