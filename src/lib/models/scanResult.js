@@ -73,5 +73,25 @@ export const normalizeScanResult = (rawData) => {
     normalized.target_url = rawData.url;
   }
 
+  // 1. METADATA CONSOLIDATION
+  normalized.metadata = {
+    ...(rawData.metadata || {})
+  };
+
+  normalized.metadata.ip_address = normalized.metadata.ip_address || rawData.ip_address;
+  normalized.metadata.location_or_cdn = normalized.metadata.location_or_cdn || rawData.location_or_cdn;
+  normalized.metadata.server_header = normalized.metadata.server_header || rawData.server_header;
+  normalized.metadata.ssl_issuer = normalized.metadata.ssl_issuer || rawData.ssl_issuer;
+  normalized.metadata.ssl_days_left = normalized.metadata.ssl_days_left || rawData.ssl_days_left;
+
+  // 2 & 3. FINDING CATEGORY & MODULE DEFAULTS
+  if (Array.isArray(rawData.findings)) {
+    normalized.findings = rawData.findings.map(finding => ({
+      ...finding,
+      category: finding.category || "HTTP_HEADERS",
+      module: finding.module || "SecurityHeaders"
+    }));
+  }
+
   return normalized;
 };

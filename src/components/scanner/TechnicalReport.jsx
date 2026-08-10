@@ -79,10 +79,10 @@ const TechnicalReport = ({ reportData }) => {
                 IP ADDRESS & LOCATION
               </div>
               <div className="text-sm sm:text-base font-bold text-slate-100 font-mono break-all mt-2">
-                {reportData?.metadata?.ip_address || reportData?.ip_address || 'N/A'}
+                {reportData?.metadata?.ip_address || 'N/A'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
-                {reportData?.metadata?.location_or_cdn || reportData?.location_or_cdn || 'CDN / Cloud'}
+                {reportData?.metadata?.location_or_cdn || 'CDN / Cloud'}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
@@ -114,10 +114,10 @@ const TechnicalReport = ({ reportData }) => {
                 {reportData?.metadata?.http_status || '200 OK'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
-                {(reportData?.metadata?.server_header || reportData?.server_header) 
-                  ? (String(reportData?.metadata?.server_header || reportData?.server_header).startsWith("Server:") 
-                     ? (reportData?.metadata?.server_header || reportData?.server_header) 
-                     : `Server: ${reportData?.metadata?.server_header || reportData?.server_header}`)
+                {(reportData?.metadata?.server_header) 
+                  ? (String(reportData?.metadata?.server_header).startsWith("Server:") 
+                     ? (reportData?.metadata?.server_header) 
+                     : `Server: ${reportData?.metadata?.server_header}`)
                   : 'Server: Hidden'
                 }
               </div>
@@ -143,16 +143,16 @@ const TechnicalReport = ({ reportData }) => {
               </div>
               <div 
                 className="text-sm sm:text-base font-bold text-slate-100 font-mono break-all mt-2 cursor-help"
-                title={reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}
+                title={reportData?.metadata?.ssl_issuer || 'Valid SSL'}
               >
-                {reportData?.metadata?.ssl_issuer || reportData?.ssl_issuer || 'Valid SSL'}
+                {reportData?.metadata?.ssl_issuer || 'Valid SSL'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
                 {reportData?.metadata?.tls_version || 'TLS'} · <span className={`ml-1 ${
                   reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
                   reportData?.metadata?.ssl_days_left_int <= 30 ? "text-amber-400 font-semibold" :
                   "text-emerald-400 font-semibold"
-                }`}>{reportData?.metadata?.ssl_days_left || reportData?.ssl_days_left || 'Active'}</span>
+                }`}>{reportData?.metadata?.ssl_days_left || 'Active'}</span>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
@@ -359,11 +359,11 @@ const TechnicalReport = ({ reportData }) => {
                                           <div className="space-y-3 mt-auto pt-4 border-t border-slate-800/80">
                                             <div className="flex justify-between items-center text-xs">
                                               <span className="text-slate-500">Category</span>
-                                              <span className="font-mono text-slate-300 uppercase">{finding.category || 'HTTP_HEADERS'}</span>
+                                              <span className="font-mono text-slate-300 uppercase">{finding.category}</span>
                                             </div>
                                             <div className="flex justify-between items-center text-xs">
                                               <span className="text-slate-500">Scanner Module</span>
-                                              <span className="font-mono text-slate-300">{finding.module || 'SecurityHeaders'}</span>
+                                              <span className="font-mono text-slate-300">{finding.module}</span>
                                             </div>
                                             {finding.cvss && (
                                               <div className="flex items-center justify-between text-xs text-slate-400">
