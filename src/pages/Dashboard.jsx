@@ -3,7 +3,7 @@ import { ShieldCheck, Activity, Target, AlertTriangle, Loader2, CheckCircle2, Ch
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -159,7 +159,7 @@ const Dashboard = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="timestamp" stroke="#64748b" />
+                  <XAxis dataKey="timestamp" padding={{ left: 25, right: 25 }} stroke="#64748b" tick={{ fontSize: 11, fill: '#64748b' }} />
                   <YAxis domain={[0, 100]} stroke="#64748b" />
                   <Tooltip content={<CustomTooltip />} />
                   <Area 
@@ -178,8 +178,11 @@ const Dashboard = () => {
 
           {/* Recent Scans List */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
-            <div className="p-6 border-b border-slate-800">
+            <div className="flex items-center justify-between p-6 border-b border-slate-800">
               <h2 className="text-lg font-semibold text-white">Recent Scans</h2>
+              <Link className="text-xs font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors" to="/scan-history">
+                View Scan History →
+              </Link>
             </div>
             
             {scans.length > 0 ? (
