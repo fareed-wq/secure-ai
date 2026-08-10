@@ -94,7 +94,7 @@ function Scanner() {
   };
 
   const handlePdfExport = () => {
-    generatePdf(reportRef.current, url);
+    generatePdf();
   };
 
   return (

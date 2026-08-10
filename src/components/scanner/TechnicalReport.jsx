@@ -367,7 +367,7 @@ const TechnicalReport = ({ reportData }) => {
                                             </div>
                                             {finding.cvss && (
                                               <div className="flex items-center justify-between text-xs text-slate-400">
-                                                <span>CVSS v3.1 Score:</span>
+                                                <span>CVSS v3.1 (Severity Default):</span>
                                                 <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold">{finding.cvss}</span>
                                               </div>
                                             )}

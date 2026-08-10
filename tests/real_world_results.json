@@ -1,0 +1,3072 @@
+[
+  {
+    "url": "https://example.com",
+    "score": 52,
+    "severity_counts": {
+      "Critical": 0,
+      "High": 3,
+      "Medium": 2,
+      "Low": 4,
+      "Informational": 10,
+      "Passed": 13
+    },
+    "category_scores": {
+      "encryption_tls": 60,
+      "http_headers": 60,
+      "domain_email": 95,
+      "session_cookies": 100,
+      "information_exposure": 100
+    },
+    "owasp_coverage": [
+      "A02: Cryptographic Failures",
+      "A05: Security Misconfiguration",
+      "A01: Broken Access Control"
+    ],
+    "target_surface": {
+      "waf_server": "Cloudflare WAF / CDN",
+      "waf_status": "200 OK (657ms)",
+      "performance": "High Latency",
+      "frontend_stack": "Standard Web Stack",
+      "frontend_subtext": "HTML5 / JavaScript Application",
+      "frontend_pill": "VERIFIED STACK",
+      "api_surface": "No Public Spec Exposed",
+      "api_subtext": "GraphQL / OpenAPI Clean",
+      "api_pill": "CLEAN SURFACE",
+      "js_health": "Clean Build",
+      "js_subtext": "0 .map Leaks Detected",
+      "js_pill": "0 LEAKS DETECTED"
+    },
+    "technical_compliance": {
+      "pci_dss_4_0": {
+        "status": "Action Required",
+        "failed_controls": [
+          "4.1.2 (Encrypt Management Sessions)",
+          "6.4.1 (Public Web Application Protection)",
+          "6.4.3 (Manage Payment Page Scripts)"
+        ],
+        "passed_controls": [
+          "5.4.1 (Anti-Phishing & Email Structure)"
+        ]
+      },
+      "nist_sp_800_53": {
+        "status": "Action Required",
+        "failed_controls": [
+          "SC-13 (Cryptographic Protection)",
+          "SC-28 (Protection of Information at Rest/Transit)"
+        ],
+        "passed_controls": [
+          "SC-8 (Transmission Confidentiality)",
+          "SI-8 (Spam & Phishing Protection)"
+        ]
+      },
+      "iso_27001": {
+        "status": "Action Required",
+        "failed_controls": [
+          "A.8.12 (Data Leakage Prevention)",
+          "A.8.20 (Network Security)",
+          "A.8.24 (Use of Cryptography)",
+          "A.8.28 (Secure Coding)"
+        ],
+        "passed_controls": [
+          "A.8.19 (Information Security in Systems)"
+        ]
+      }
+    },
+    "findings": [
+      {
+        "name": "Missing HTTPS Redirection",
+        "severity": "High",
+        "category": "encryption_tls",
+        "description": "The server accepts cleartext HTTP connections without redirecting to HTTPS.",
+        "evidence": {
+          "raw": "Final URL: http://example.com/"
+        },
+        "confidence": "High",
+        "remediation": "Configure the server to redirect all port 80 traffic to 443 (HTTPS).",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "HTTPSRedirect",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Valid SSL/TLS Certificate",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "The server presents a valid TLS certificate.",
+        "evidence": {
+          "raw": "Version: TLSv1.3"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+          "nist": "SC-8 (Transmission Confidentiality)",
+          "iso27001": "A.8.24 (Use of Cryptography)"
+        },
+        "module": "EnhancedTLS",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Legacy TLS Protocols Disabled",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "Server correctly rejects TLS 1.0/1.1 connections.",
+        "evidence": {
+          "raw": "TLS 1.2+ Only"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "EnhancedTLS",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Server Header Exposed",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "The server software and version might be exposed.",
+        "evidence": {
+          "raw": "cloudflare"
+        },
+        "confidence": "High",
+        "remediation": "Configure server to return generic names.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "TechFingerprint",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "sitemap.xml Missing",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "No sitemap.xml found.",
+        "evidence": {
+          "raw": "https://example.com/sitemap.xml"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SitemapXml",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Mixed Content Detected",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "All front-end resources and form actions are safely served over HTTPS.",
+        "evidence": {
+          "raw": "Clean HTML subresources"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "MixedContent",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Permissions-Policy",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The Permissions-Policy header is missing, allowing web pages to access browser feature APIs unconditionally.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply recommended server configuration headers and verify compliance against baseline security standards.",
+        "remediation_snippets": {
+          "nginx": "add_header Permissions-Policy \"camera=(), microphone=(), geolocation=()\" always;",
+          "apache": "Header always set Permissions-Policy \"camera=(), microphone=(), geolocation=()\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"Permissions-Policy\", \"value\": \"camera=(), microphone=(), geolocation=()\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Permissions-Policy\" to \"camera=(), microphone=(), geolocation=()\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "PermissionsPolicy",
+        "impact": "Allows third-party scripts to access sensitive browser features like the camera, microphone, or geolocation.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Secrets Found in Main JS Bundles",
+        "severity": "Passed",
+        "category": "information_exposure",
+        "description": "Lightweight JS surface probe completed on primary bundles; no exposed credentials, unflagged keys, or source maps detected.",
+        "evidence": {
+          "raw": "Scanned 0 primary bundle(s)"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "JSBundleSecrets",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing CAA Record",
+        "severity": "Low",
+        "category": "domain_email",
+        "description": "No CAA DNS records found. Any valid Certificate Authority can issue SSL certificates for this domain.",
+        "evidence": {
+          "raw": "CAA DNS record absent."
+        },
+        "confidence": "High",
+        "remediation": "Add CAA records in DNS specifying authorized CAs (e.g., 'issue letsencrypt.org').",
+        "remediation_snippets": {
+          "dns_record": "Type: CAA | Name: @ | Value: 0 issue \"letsencrypt.org\"",
+          "note": "Publish CAA DNS records restricting SSL issuance to specific Certificate Authorities."
+        },
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+          "nist": "SC-13 (Cryptographic Protection)",
+          "iso27001": "A.8.24 (Use of Cryptography)"
+        },
+        "module": "DNSCAA",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "DNSSEC Security Enabled",
+        "severity": "Passed",
+        "category": "dns_security",
+        "description": "Domain Name System Security Extensions (DNSSEC) is enabled.",
+        "evidence": {
+          "raw": "DS record found"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "DNSCAA",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Strict CORS Policy Enforced",
+        "severity": "Passed",
+        "category": "http_headers",
+        "description": "CORS headers are omitted or strictly configured.",
+        "evidence": {
+          "raw": "No open Access-Control-Allow-Origin header detected."
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "CORS",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Strict-Transport-Security (HSTS)",
+        "severity": "High",
+        "category": "encryption_tls",
+        "description": "The HTTP Strict-Transport-Security response header is missing, leaving the application vulnerable to SSL-stripping attacks.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Enable HTTP Strict Transport Security (HSTS) with a long max-age directive and includeSubDomains flag.",
+        "remediation_snippets": {
+          "nginx": "add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\" always;",
+          "apache": "Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\"",
+          "vercel": "{\n  \"headers\": [{\n    \"source\": \"/(.*)\",\n    \"headers\": [{ \"key\": \"Strict-Transport-Security\", \"value\": \"max-age=31536000; includeSubDomains; preload\" }]\n  }]\n}",
+          "cloudflare": "Rules -> Transform Rules -> Modify Response Header -> Set \"Strict-Transport-Security\" to \"max-age=31536000; includeSubDomains; preload\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "nist": "SC-28 (Protection of Information at Rest/Transit)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Allows attackers to downgrade HTTPS connections to unencrypted HTTP via man-in-the-middle SSL stripping attacks.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Content-Security-Policy (CSP)",
+        "severity": "High",
+        "category": "http_headers",
+        "description": "The HTTP Content-Security-Policy (CSP) response header is missing, leaving the application vulnerable to Cross-Site Scripting (XSS) and data injection attacks.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Configure your web server to issue strict Content-Security-Policy HTTP headers to restrict script execution sources to trusted domains.",
+        "remediation_snippets": {
+          "nginx": "add_header Content-Security-Policy \"default-src 'self'; script-src 'self'; object-src 'none';\" always;",
+          "apache": "Header always set Content-Security-Policy \"default-src 'self'; script-src 'self'; object-src 'none';\"",
+          "vercel": "{\n  \"headers\": [{\n    \"source\": \"/(.*)\",\n    \"headers\": [{ \"key\": \"Content-Security-Policy\", \"value\": \"default-src 'self';\" }]\n  }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Content-Security-Policy\" to \"default-src 'self';\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
+          "nist": "SC-28 (Protection of Information at Rest/Transit)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Permissive directives like 'unsafe-inline' or 'unsafe-eval' weaken browser defenses, leaving your site vulnerable to Cross-Site Scripting (XSS) and data theft.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Permitted-Cross-Domain-Policies",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The X-Permitted-Cross-Domain-Policies header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-DNS-Prefetch-Control",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The X-DNS-Prefetch-Control header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Frame-Options",
+        "severity": "Medium",
+        "category": "http_headers",
+        "description": "The X-Frame-Options header is missing, leaving the application vulnerable to clickjacking attacks.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header X-Frame-Options \"DENY\" always;",
+          "apache": "Header always set X-Frame-Options \"DENY\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"X-Frame-Options\", \"value\": \"DENY\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"X-Frame-Options\" to \"DENY\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Permits attackers to embed the site in an iframe, leading to Clickjacking and unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Content-Type-Options",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The X-Content-Type-Options header is missing, which allows browsers to perform MIME-sniffing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header X-Content-Type-Options \"nosniff\" always;",
+          "apache": "Header always set X-Content-Type-Options \"nosniff\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"X-Content-Type-Options\", \"value\": \"nosniff\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"X-Content-Type-Options\" to \"nosniff\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.28 (Secure Coding)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Enables MIME-sniffing attacks where malicious files are executed as scripts.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Referrer-Policy",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The Referrer-Policy header is missing, which allows leaking the referring URL.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header Referrer-Policy \"strict-origin-when-cross-origin\" always;",
+          "apache": "Header always set Referrer-Policy \"strict-origin-when-cross-origin\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"Referrer-Policy\", \"value\": \"strict-origin-when-cross-origin\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Referrer-Policy\" to \"strict-origin-when-cross-origin\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "nist": "SC-13 (Cryptographic Protection)",
+          "iso27001": "A.8.12 (Data Leakage Prevention)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Leaks sensitive URLs and tokens in the Referer header to external domains.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Web Application Firewall (WAF) Active",
+        "severity": "Passed",
+        "category": "http_headers",
+        "description": "WAF or CDN headers were detected.",
+        "evidence": {
+          "raw": "Server: cloudflare\nCF-RAY: a28eba92fff19291-FRA"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "security.txt Missing",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "No standard security.txt found.",
+        "evidence": {
+          "raw": "https://example.com/.well-known/security.txt"
+        },
+        "confidence": "High",
+        "remediation": "Publish a security.txt file at /.well-known/security.txt.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityTxt",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "robots.txt Missing",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "No robots.txt found.",
+        "evidence": {
+          "raw": "https://example.com/robots.txt"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "RobotsTxt",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing COOP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Opener-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing COEP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Embedder-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing CORP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Resource-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Exposed Admin or API Endpoints",
+        "severity": "Passed",
+        "category": "information_exposure",
+        "description": "Targeted surface probe completed on primary high-risk endpoints (/admin, /swagger.json); no exposed administrative interfaces or API specifications were detected.",
+        "evidence": {
+          "raw": "Non-intrusive check on primary paths (/admin, /swagger.json) with SPA catch-all validation"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A01: Broken Access Control",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SensitivePaths",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "SPF Record Configured",
+        "severity": "Passed",
+        "category": "domain_email",
+        "description": "Sender Policy Framework (SPF) record is validly configured.",
+        "evidence": {
+          "raw": "v=spf1 -all"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "5.4.1 (Anti-Phishing & Email Structure)",
+          "nist": "SI-8 (Spam & Phishing Protection)",
+          "iso27001": "A.8.19 (Information Security in Systems)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Strong DMARC Policy Configured",
+        "severity": "Passed",
+        "category": "domain_email",
+        "description": "DMARC record is enforced with quarantine or reject policy.",
+        "evidence": {
+          "raw": "v=DMARC1;p=reject;sp=reject;adkim=s;aspf=s"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "5.4.1 (Anti-Phishing & Spoofing)",
+          "nist": "SI-8 (Spam & Phishing Protection)",
+          "iso27001": "A.8.19 (Information Security in Systems)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing MTA-STS Record",
+        "severity": "Informational",
+        "category": "domain_email",
+        "description": "No MTA-STS DNS record found.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Strong TLS Cipher Suite Enforced",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "Server negotiated a secure cipher (TLS_AES_256_GCM_SHA384) with 256-bit encryption.",
+        "evidence": {
+          "raw": "Cipher: TLS_AES_256_GCM_SHA384 (TLSv1.3)"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "TLSCipherStrength",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Legacy Weak TLS Ciphers Supported",
+        "severity": "Medium",
+        "category": "encryption_tls",
+        "description": "Server accepts connections configured with deprecated weak ciphers (e.g. 3DES / RC4).",
+        "evidence": {
+          "raw": "Handshake accepted weak cipher list"
+        },
+        "confidence": "High",
+        "remediation": "Reconfigure server TLS cipher order to forbid 3DES, RC4, and EXPORT suites.",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "TLSCipherStrength",
+        "impact": "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Subdomain Takeover Risk Detected",
+        "severity": "Passed",
+        "category": "domain_email",
+        "description": "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
+        "evidence": {
+          "raw": "[-] DNS & CNAME Audit\n[!] Target: example.com -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records."
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SubdomainTakeover",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Modern Protocol Supported (HTTP/2 or HTTP/3)",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "The server uses modern, performant HTTP protocols.",
+        "evidence": "HTTP/2 or HTTP/3 detected",
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "N/A",
+          "nist": "N/A",
+          "iso27001": "N/A"
+        },
+        "module": "Network",
+        "impact": "N/A",
+        "cvss": null
+      }
+    ],
+    "metadata": {
+      "ip_address": "172.66.147.243",
+      "location_or_cdn": "Canada (Cloudflare, Inc.)",
+      "server_header": "cloudflare",
+      "http_status": "200 OK (657ms)",
+      "ssl_issuer": "Cloudflare TLS Issuing ECC CA 3",
+      "ssl_days_left": "78 Days Left",
+      "ssl_days_left_int": 78,
+      "ssl_badge": "VALID CERTIFICATE",
+      "tls_version": "TLSv1.3",
+      "waf_cdn_detection": "Cloudflare WAF / CDN",
+      "performance_rating": "High Latency",
+      "ipv6_supported": false,
+      "http_protocol": "HTTP/2",
+      "http2_supported": true,
+      "http3_supported": false,
+      "https_enforced": "HTTPS Enforced",
+      "clean_redirect": "Direct Secure",
+      "whois": {
+        "registrar": "RESERVED-Internet Assigned Numbers Authority",
+        "creation_date": "1995-08-14",
+        "expiration_date": "2026-08-13",
+        "age": "31 Years Old"
+      }
+    },
+    "potential_issues_count": 9,
+    "executive_summary": "Scan completed. Detected 3 high-priority issues resulting in a score of 52/100.",
+    "disclaimer": "Passive scan only. Modular engine execution.",
+    "_duration": 15.460340976715088
+  },
+  {
+    "url": "https://api.github.com",
+    "score": 52,
+    "severity_counts": {
+      "Critical": 0,
+      "High": 2,
+      "Medium": 5,
+      "Low": 4,
+      "Informational": 12,
+      "Passed": 6
+    },
+    "category_scores": {
+      "encryption_tls": 75,
+      "http_headers": 50,
+      "domain_email": 75,
+      "session_cookies": 100,
+      "information_exposure": 100
+    },
+    "owasp_coverage": [
+      "A02: Cryptographic Failures",
+      "A05: Security Misconfiguration",
+      "A01: Broken Access Control"
+    ],
+    "target_surface": {
+      "waf_server": "Direct Origin",
+      "waf_status": "200 OK (918ms)",
+      "performance": "High Latency",
+      "frontend_stack": "Standard Web Stack",
+      "frontend_subtext": "HTML5 / JavaScript Application",
+      "frontend_pill": "VERIFIED STACK",
+      "api_surface": "No Public Spec Exposed",
+      "api_subtext": "GraphQL / OpenAPI Clean",
+      "api_pill": "CLEAN SURFACE",
+      "js_health": "Clean Build",
+      "js_subtext": "0 .map Leaks Detected",
+      "js_pill": "0 LEAKS DETECTED"
+    },
+    "technical_compliance": {
+      "pci_dss_4_0": {
+        "status": "Action Required",
+        "failed_controls": [
+          "4.1.2 (Encrypt Management Sessions)",
+          "5.4.1 (Anti-Phishing & Email Structure)",
+          "6.4.1 (Public Web Application Protection)",
+          "6.4.3 (Manage Payment Page Scripts)"
+        ],
+        "passed_controls": []
+      },
+      "nist_sp_800_53": {
+        "status": "Action Required",
+        "failed_controls": [
+          "SC-13 (Cryptographic Protection)",
+          "SC-28 (Protection of Information at Rest/Transit)",
+          "SI-8 (Spam & Phishing Protection)"
+        ],
+        "passed_controls": [
+          "SC-8 (Transmission Confidentiality)"
+        ]
+      },
+      "iso_27001": {
+        "status": "Action Required",
+        "failed_controls": [
+          "A.8.12 (Data Leakage Prevention)",
+          "A.8.19 (Information Security in Systems)",
+          "A.8.20 (Network Security)",
+          "A.8.24 (Use of Cryptography)",
+          "A.8.28 (Secure Coding)"
+        ],
+        "passed_controls": []
+      }
+    },
+    "findings": [
+      {
+        "name": "Valid SSL/TLS Certificate",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "The server presents a valid TLS certificate.",
+        "evidence": {
+          "raw": "Version: TLSv1.3"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+          "nist": "SC-8 (Transmission Confidentiality)",
+          "iso27001": "A.8.24 (Use of Cryptography)"
+        },
+        "module": "EnhancedTLS",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Wildcard Certificate in Use",
+        "severity": "Informational",
+        "category": "encryption_tls",
+        "description": "Wildcard certificates carry broader risk if compromised.",
+        "evidence": {
+          "raw": "CN: *.github.com"
+        },
+        "confidence": "High",
+        "remediation": "Consider using specific SANs instead of wildcards.",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "EnhancedTLS",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Legacy TLS Protocols Disabled",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "Server correctly rejects TLS 1.0/1.1 connections.",
+        "evidence": {
+          "raw": "TLS 1.2+ Only"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "EnhancedTLS",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Potential CORS Misconfiguration",
+        "severity": "Medium",
+        "category": "http_headers",
+        "description": "The API passively responded with a wildcard CORS policy (*). This allows any origin to read responses, though browsers block credentialed wildcard requests. Passive detection cannot confirm dynamic reflection.",
+        "evidence": {
+          "raw": "Access-Control-Allow-Origin: *"
+        },
+        "confidence": "High",
+        "remediation": "Restrict CORS to specific trusted origins if the endpoint handles sensitive authenticated data.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "CORS",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing COOP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Opener-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing COEP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Embedder-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing CORP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Resource-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Permissions-Policy",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The Permissions-Policy header is missing, allowing web pages to access browser feature APIs unconditionally.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply recommended server configuration headers and verify compliance against baseline security standards.",
+        "remediation_snippets": {
+          "nginx": "add_header Permissions-Policy \"camera=(), microphone=(), geolocation=()\" always;",
+          "apache": "Header always set Permissions-Policy \"camera=(), microphone=(), geolocation=()\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"Permissions-Policy\", \"value\": \"camera=(), microphone=(), geolocation=()\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Permissions-Policy\" to \"camera=(), microphone=(), geolocation=()\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "PermissionsPolicy",
+        "impact": "Allows third-party scripts to access sensitive browser features like the camera, microphone, or geolocation.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "robots.txt Missing",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "No robots.txt found.",
+        "evidence": {
+          "raw": "https://api.github.com/robots.txt"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "RobotsTxt",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "security.txt Missing",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "No standard security.txt found.",
+        "evidence": {
+          "raw": "https://api.github.com/.well-known/security.txt"
+        },
+        "confidence": "High",
+        "remediation": "Publish a security.txt file at /.well-known/security.txt.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityTxt",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "sitemap.xml Missing",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "No sitemap.xml found.",
+        "evidence": {
+          "raw": "https://api.github.com/sitemap.xml"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SitemapXml",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing CAA Record",
+        "severity": "Low",
+        "category": "domain_email",
+        "description": "No CAA DNS records found. Any valid Certificate Authority can issue SSL certificates for this domain.",
+        "evidence": {
+          "raw": "CAA DNS record absent."
+        },
+        "confidence": "High",
+        "remediation": "Add CAA records in DNS specifying authorized CAs (e.g., 'issue letsencrypt.org').",
+        "remediation_snippets": {
+          "dns_record": "Type: CAA | Name: @ | Value: 0 issue \"letsencrypt.org\"",
+          "note": "Publish CAA DNS records restricting SSL issuance to specific Certificate Authorities."
+        },
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+          "nist": "SC-13 (Cryptographic Protection)",
+          "iso27001": "A.8.24 (Use of Cryptography)"
+        },
+        "module": "DNSCAA",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "DNSSEC Not Enabled for Domain",
+        "severity": "Informational",
+        "category": "dns_security",
+        "description": "Domain Name System Security Extensions (DNSSEC) records are not published for this domain.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "DNSCAA",
+        "impact": "The domain is more vulnerable to DNS spoofing, cache poisoning, and BGP hijacking attacks.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Exposed Admin or API Endpoints",
+        "severity": "Passed",
+        "category": "information_exposure",
+        "description": "Targeted surface probe completed on primary high-risk endpoints (/admin, /swagger.json); no exposed administrative interfaces or API specifications were detected.",
+        "evidence": {
+          "raw": "Non-intrusive check on primary paths (/admin, /swagger.json) with SPA catch-all validation"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A01: Broken Access Control",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SensitivePaths",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Strict-Transport-Security (HSTS)",
+        "severity": "High",
+        "category": "encryption_tls",
+        "description": "The HTTP Strict-Transport-Security response header is missing, leaving the application vulnerable to SSL-stripping attacks.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Enable HTTP Strict Transport Security (HSTS) with a long max-age directive and includeSubDomains flag.",
+        "remediation_snippets": {
+          "nginx": "add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\" always;",
+          "apache": "Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\"",
+          "vercel": "{\n  \"headers\": [{\n    \"source\": \"/(.*)\",\n    \"headers\": [{ \"key\": \"Strict-Transport-Security\", \"value\": \"max-age=31536000; includeSubDomains; preload\" }]\n  }]\n}",
+          "cloudflare": "Rules -> Transform Rules -> Modify Response Header -> Set \"Strict-Transport-Security\" to \"max-age=31536000; includeSubDomains; preload\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "nist": "SC-28 (Protection of Information at Rest/Transit)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Allows attackers to downgrade HTTPS connections to unencrypted HTTP via man-in-the-middle SSL stripping attacks.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Content-Security-Policy (CSP)",
+        "severity": "High",
+        "category": "http_headers",
+        "description": "The HTTP Content-Security-Policy (CSP) response header is missing, leaving the application vulnerable to Cross-Site Scripting (XSS) and data injection attacks.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Configure your web server to issue strict Content-Security-Policy HTTP headers to restrict script execution sources to trusted domains.",
+        "remediation_snippets": {
+          "nginx": "add_header Content-Security-Policy \"default-src 'self'; script-src 'self'; object-src 'none';\" always;",
+          "apache": "Header always set Content-Security-Policy \"default-src 'self'; script-src 'self'; object-src 'none';\"",
+          "vercel": "{\n  \"headers\": [{\n    \"source\": \"/(.*)\",\n    \"headers\": [{ \"key\": \"Content-Security-Policy\", \"value\": \"default-src 'self';\" }]\n  }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Content-Security-Policy\" to \"default-src 'self';\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
+          "nist": "SC-28 (Protection of Information at Rest/Transit)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Permissive directives like 'unsafe-inline' or 'unsafe-eval' weaken browser defenses, leaving your site vulnerable to Cross-Site Scripting (XSS) and data theft.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Permitted-Cross-Domain-Policies",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The X-Permitted-Cross-Domain-Policies header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-DNS-Prefetch-Control",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The X-DNS-Prefetch-Control header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Frame-Options",
+        "severity": "Medium",
+        "category": "http_headers",
+        "description": "The X-Frame-Options header is missing, leaving the application vulnerable to clickjacking attacks.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header X-Frame-Options \"DENY\" always;",
+          "apache": "Header always set X-Frame-Options \"DENY\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"X-Frame-Options\", \"value\": \"DENY\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"X-Frame-Options\" to \"DENY\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Permits attackers to embed the site in an iframe, leading to Clickjacking and unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Content-Type-Options",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The X-Content-Type-Options header is missing, which allows browsers to perform MIME-sniffing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header X-Content-Type-Options \"nosniff\" always;",
+          "apache": "Header always set X-Content-Type-Options \"nosniff\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"X-Content-Type-Options\", \"value\": \"nosniff\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"X-Content-Type-Options\" to \"nosniff\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.28 (Secure Coding)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Enables MIME-sniffing attacks where malicious files are executed as scripts.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Referrer-Policy",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The Referrer-Policy header is missing, which allows leaking the referring URL.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header Referrer-Policy \"strict-origin-when-cross-origin\" always;",
+          "apache": "Header always set Referrer-Policy \"strict-origin-when-cross-origin\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"Referrer-Policy\", \"value\": \"strict-origin-when-cross-origin\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Referrer-Policy\" to \"strict-origin-when-cross-origin\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "nist": "SC-13 (Cryptographic Protection)",
+          "iso27001": "A.8.12 (Data Leakage Prevention)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Leaks sensitive URLs and tokens in the Referer header to external domains.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Web Application Firewall (WAF) / Rate-Limiting Headers Detected",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The target application does not expose active WAF or rate-limiting response headers.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Leaves public endpoints and login portals more susceptible to automated brute-force, credential stuffing, or Layer 7 DoS attacks.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Strong TLS Cipher Suite Enforced",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "Server negotiated a secure cipher (TLS_AES_128_GCM_SHA256) with 128-bit encryption.",
+        "evidence": {
+          "raw": "Cipher: TLS_AES_128_GCM_SHA256 (TLSv1.3)"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "TLSCipherStrength",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Legacy Weak TLS Ciphers Supported",
+        "severity": "Medium",
+        "category": "encryption_tls",
+        "description": "Server accepts connections configured with deprecated weak ciphers (e.g. 3DES / RC4).",
+        "evidence": {
+          "raw": "Handshake accepted weak cipher list"
+        },
+        "confidence": "High",
+        "remediation": "Reconfigure server TLS cipher order to forbid 3DES, RC4, and EXPORT suites.",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "TLSCipherStrength",
+        "impact": "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing SPF Record",
+        "severity": "Medium",
+        "category": "domain_email",
+        "description": "No SPF TXT record found. The domain is exposed to email spoofing and phishing attacks.",
+        "evidence": {
+          "raw": "TXT record absent."
+        },
+        "confidence": "High",
+        "remediation": "Publish a valid SPF TXT record (e.g., 'v=spf1 include:_spf.google.com ~all').",
+        "remediation_snippets": {
+          "dns_record": "Type: TXT | Name: @ | Value: v=spf1 include:_spf.google.com ~all",
+          "note": "Publish an SPF TXT record at your domain root authorizing valid mail servers."
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "5.4.1 (Anti-Phishing & Email Structure)",
+          "nist": "SI-8 (Spam & Phishing Protection)",
+          "iso27001": "A.8.19 (Information Security in Systems)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "Allows attackers to easily spoof emails from your domain for phishing campaigns.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing DMARC Policy",
+        "severity": "Medium",
+        "category": "domain_email",
+        "description": "No DMARC record found at _dmarc.api.github.com. Increases domain impersonation risk.",
+        "evidence": {
+          "raw": "_dmarc TXT record absent."
+        },
+        "confidence": "High",
+        "remediation": "Publish a DMARC TXT record at _dmarc.api.github.com with a valid enforcement policy.",
+        "remediation_snippets": {
+          "dns_record": "Type: TXT | Name: _dmarc | Value: v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@yourdomain.com",
+          "note": "Publish a DMARC TXT record at _dmarc.yourdomain.com with enforcement policy."
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "5.4.1 (Anti-Phishing & Spoofing)",
+          "nist": "SI-8 (Spam & Phishing Protection)",
+          "iso27001": "A.8.19 (Information Security in Systems)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "Prevents enforcement of SPF/DKIM, allowing spoofed emails to reach users' inboxes.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing MTA-STS Record",
+        "severity": "Informational",
+        "category": "domain_email",
+        "description": "No MTA-STS DNS record found.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Subdomain Takeover Risk Detected",
+        "severity": "Passed",
+        "category": "domain_email",
+        "description": "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
+        "evidence": {
+          "raw": "[-] DNS & CNAME Audit\n[!] Target: api.github.com -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records."
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SubdomainTakeover",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Modern Protocol Supported (HTTP/2 or HTTP/3)",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "The server uses modern, performant HTTP protocols.",
+        "evidence": "HTTP/2 or HTTP/3 detected",
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "N/A",
+          "nist": "N/A",
+          "iso27001": "N/A"
+        },
+        "module": "Network",
+        "impact": "N/A",
+        "cvss": null
+      }
+    ],
+    "metadata": {
+      "ip_address": "20.233.83.146",
+      "location_or_cdn": "United Arab Emirates (Microsoft Azure Cloud (uaenorth))",
+      "server_header": "github.com",
+      "http_status": "200 OK (918ms)",
+      "ssl_issuer": "Sectigo Public Server Authentication CA DV E36",
+      "ssl_days_left": "50 Days Left",
+      "ssl_days_left_int": 50,
+      "ssl_badge": "VALID CERTIFICATE",
+      "tls_version": "TLSv1.3",
+      "waf_cdn_detection": "Direct Origin",
+      "performance_rating": "High Latency",
+      "ipv6_supported": false,
+      "http_protocol": "HTTP/2",
+      "http2_supported": true,
+      "http3_supported": false,
+      "https_enforced": "HTTPS Enforced",
+      "clean_redirect": "Direct Secure",
+      "whois": {
+        "registrar": "MarkMonitor, Inc.",
+        "creation_date": "2007-10-09",
+        "expiration_date": "2026-10-09",
+        "age": "18 Years Old"
+      }
+    },
+    "potential_issues_count": 11,
+    "executive_summary": "Scan completed. Detected 2 high-priority issues resulting in a score of 52/100.",
+    "disclaimer": "Passive scan only. Modular engine execution.",
+    "_duration": 11.427237749099731
+  },
+  {
+    "url": "https://httpbin.org",
+    "score": 69,
+    "severity_counts": {
+      "Critical": 0,
+      "High": 2,
+      "Medium": 1,
+      "Low": 3,
+      "Informational": 11,
+      "Passed": 9
+    },
+    "category_scores": {
+      "encryption_tls": 85,
+      "http_headers": 60,
+      "domain_email": 100,
+      "session_cookies": 100,
+      "information_exposure": 100
+    },
+    "owasp_coverage": [
+      "A02: Cryptographic Failures",
+      "A05: Security Misconfiguration",
+      "A01: Broken Access Control"
+    ],
+    "target_surface": {
+      "waf_server": "AWS CloudFront",
+      "waf_status": "Connection Timeout",
+      "performance": "REQUEST TIMEOUT",
+      "frontend_stack": "Standard Web Stack",
+      "frontend_subtext": "HTML5 / JavaScript Application",
+      "frontend_pill": "VERIFIED STACK",
+      "api_surface": "No Public Spec Exposed",
+      "api_subtext": "GraphQL / OpenAPI Clean",
+      "api_pill": "CLEAN SURFACE",
+      "js_health": "Clean Build",
+      "js_subtext": "0 .map Leaks Detected",
+      "js_pill": "0 LEAKS DETECTED"
+    },
+    "technical_compliance": {
+      "pci_dss_4_0": {
+        "status": "Action Required",
+        "failed_controls": [
+          "6.4.1 (Public Web Application Protection)",
+          "6.4.3 (Manage Payment Page Scripts)"
+        ],
+        "passed_controls": [
+          "4.1.2 (Encrypt Management Sessions)",
+          "5.4.1 (Anti-Phishing & Email Structure)"
+        ]
+      },
+      "nist_sp_800_53": {
+        "status": "Action Required",
+        "failed_controls": [
+          "SC-13 (Cryptographic Protection)",
+          "SC-28 (Protection of Information at Rest/Transit)"
+        ],
+        "passed_controls": [
+          "SC-8 (Transmission Confidentiality)",
+          "SI-8 (Spam & Phishing Protection)"
+        ]
+      },
+      "iso_27001": {
+        "status": "Action Required",
+        "failed_controls": [
+          "A.8.12 (Data Leakage Prevention)",
+          "A.8.20 (Network Security)",
+          "A.8.28 (Secure Coding)"
+        ],
+        "passed_controls": [
+          "A.8.19 (Information Security in Systems)",
+          "A.8.24 (Use of Cryptography)"
+        ]
+      }
+    },
+    "findings": [
+      {
+        "name": "Valid SSL/TLS Certificate",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "The server presents a valid TLS certificate.",
+        "evidence": {
+          "raw": "Version: TLSv1.2"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+          "nist": "SC-8 (Transmission Confidentiality)",
+          "iso27001": "A.8.24 (Use of Cryptography)"
+        },
+        "module": "EnhancedTLS",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Legacy TLS Protocols Disabled",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "Server correctly rejects TLS 1.0/1.1 connections.",
+        "evidence": {
+          "raw": "TLS 1.2+ Only"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "EnhancedTLS",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "CAA Records Configured",
+        "severity": "Passed",
+        "category": "domain_email",
+        "description": "Certificate Authority Authorization (CAA) DNS records restrict which CAs can issue certificates.",
+        "evidence": {
+          "raw": "0 issue \"letsencrypt.org\", 0 issuewild \"amazon.com\", 0 iodef \"mailto:security@postman.com\", 0 issue \"amazon.com\""
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+          "nist": "SC-13 (Cryptographic Protection)",
+          "iso27001": "A.8.24 (Use of Cryptography)"
+        },
+        "module": "DNSCAA",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "DNSSEC Not Enabled for Domain",
+        "severity": "Informational",
+        "category": "dns_security",
+        "description": "Domain Name System Security Extensions (DNSSEC) records are not published for this domain.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "DNSCAA",
+        "impact": "The domain is more vulnerable to DNS spoofing, cache poisoning, and BGP hijacking attacks.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "SPF Record Configured",
+        "severity": "Passed",
+        "category": "domain_email",
+        "description": "Sender Policy Framework (SPF) record is validly configured.",
+        "evidence": {
+          "raw": "v=spf1 include:%{i}._ip.%{h}._ehlo.%{d}._spf.vali.email ~all"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "5.4.1 (Anti-Phishing & Email Structure)",
+          "nist": "SI-8 (Spam & Phishing Protection)",
+          "iso27001": "A.8.19 (Information Security in Systems)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Strong DMARC Policy Configured",
+        "severity": "Passed",
+        "category": "domain_email",
+        "description": "DMARC record is enforced with quarantine or reject policy.",
+        "evidence": {
+          "raw": "v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc_agg@vali.email"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "5.4.1 (Anti-Phishing & Spoofing)",
+          "nist": "SI-8 (Spam & Phishing Protection)",
+          "iso27001": "A.8.19 (Information Security in Systems)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing MTA-STS Record",
+        "severity": "Informational",
+        "category": "domain_email",
+        "description": "No MTA-STS DNS record found.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Subdomain Takeover Risk Detected",
+        "severity": "Passed",
+        "category": "domain_email",
+        "description": "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
+        "evidence": {
+          "raw": "[-] DNS & CNAME Audit\n[!] Target: httpbin.org -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records."
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SubdomainTakeover",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "security.txt Missing",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "No standard security.txt found.",
+        "evidence": {
+          "raw": "https://httpbin.org/.well-known/security.txt"
+        },
+        "confidence": "High",
+        "remediation": "Publish a security.txt file at /.well-known/security.txt.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityTxt",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Strict CORS Policy Enforced",
+        "severity": "Passed",
+        "category": "http_headers",
+        "description": "CORS headers are omitted or strictly configured.",
+        "evidence": {
+          "raw": "No open Access-Control-Allow-Origin header detected."
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "CORS",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "sitemap.xml Missing",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "No sitemap.xml found.",
+        "evidence": {
+          "raw": "https://httpbin.org/sitemap.xml"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SitemapXml",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "robots.txt Missing",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "No robots.txt found.",
+        "evidence": {
+          "raw": "https://httpbin.org/robots.txt"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "RobotsTxt",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Permissions-Policy",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The Permissions-Policy header is missing, allowing web pages to access browser feature APIs unconditionally.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply recommended server configuration headers and verify compliance against baseline security standards.",
+        "remediation_snippets": {
+          "nginx": "add_header Permissions-Policy \"camera=(), microphone=(), geolocation=()\" always;",
+          "apache": "Header always set Permissions-Policy \"camera=(), microphone=(), geolocation=()\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"Permissions-Policy\", \"value\": \"camera=(), microphone=(), geolocation=()\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Permissions-Policy\" to \"camera=(), microphone=(), geolocation=()\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "PermissionsPolicy",
+        "impact": "Allows third-party scripts to access sensitive browser features like the camera, microphone, or geolocation.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Strict-Transport-Security (HSTS)",
+        "severity": "High",
+        "category": "encryption_tls",
+        "description": "The HTTP Strict-Transport-Security response header is missing, leaving the application vulnerable to SSL-stripping attacks.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Enable HTTP Strict Transport Security (HSTS) with a long max-age directive and includeSubDomains flag.",
+        "remediation_snippets": {
+          "nginx": "add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\" always;",
+          "apache": "Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\"",
+          "vercel": "{\n  \"headers\": [{\n    \"source\": \"/(.*)\",\n    \"headers\": [{ \"key\": \"Strict-Transport-Security\", \"value\": \"max-age=31536000; includeSubDomains; preload\" }]\n  }]\n}",
+          "cloudflare": "Rules -> Transform Rules -> Modify Response Header -> Set \"Strict-Transport-Security\" to \"max-age=31536000; includeSubDomains; preload\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "nist": "SC-28 (Protection of Information at Rest/Transit)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Allows attackers to downgrade HTTPS connections to unencrypted HTTP via man-in-the-middle SSL stripping attacks.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Content-Security-Policy (CSP)",
+        "severity": "High",
+        "category": "http_headers",
+        "description": "The HTTP Content-Security-Policy (CSP) response header is missing, leaving the application vulnerable to Cross-Site Scripting (XSS) and data injection attacks.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Configure your web server to issue strict Content-Security-Policy HTTP headers to restrict script execution sources to trusted domains.",
+        "remediation_snippets": {
+          "nginx": "add_header Content-Security-Policy \"default-src 'self'; script-src 'self'; object-src 'none';\" always;",
+          "apache": "Header always set Content-Security-Policy \"default-src 'self'; script-src 'self'; object-src 'none';\"",
+          "vercel": "{\n  \"headers\": [{\n    \"source\": \"/(.*)\",\n    \"headers\": [{ \"key\": \"Content-Security-Policy\", \"value\": \"default-src 'self';\" }]\n  }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Content-Security-Policy\" to \"default-src 'self';\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
+          "nist": "SC-28 (Protection of Information at Rest/Transit)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Permissive directives like 'unsafe-inline' or 'unsafe-eval' weaken browser defenses, leaving your site vulnerable to Cross-Site Scripting (XSS) and data theft.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Permitted-Cross-Domain-Policies",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The X-Permitted-Cross-Domain-Policies header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-DNS-Prefetch-Control",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The X-DNS-Prefetch-Control header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Frame-Options",
+        "severity": "Medium",
+        "category": "http_headers",
+        "description": "The X-Frame-Options header is missing, leaving the application vulnerable to clickjacking attacks.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header X-Frame-Options \"DENY\" always;",
+          "apache": "Header always set X-Frame-Options \"DENY\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"X-Frame-Options\", \"value\": \"DENY\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"X-Frame-Options\" to \"DENY\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Permits attackers to embed the site in an iframe, leading to Clickjacking and unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Content-Type-Options",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The X-Content-Type-Options header is missing, which allows browsers to perform MIME-sniffing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header X-Content-Type-Options \"nosniff\" always;",
+          "apache": "Header always set X-Content-Type-Options \"nosniff\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"X-Content-Type-Options\", \"value\": \"nosniff\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"X-Content-Type-Options\" to \"nosniff\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.28 (Secure Coding)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Enables MIME-sniffing attacks where malicious files are executed as scripts.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Referrer-Policy",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The Referrer-Policy header is missing, which allows leaking the referring URL.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header Referrer-Policy \"strict-origin-when-cross-origin\" always;",
+          "apache": "Header always set Referrer-Policy \"strict-origin-when-cross-origin\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"Referrer-Policy\", \"value\": \"strict-origin-when-cross-origin\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Referrer-Policy\" to \"strict-origin-when-cross-origin\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "nist": "SC-13 (Cryptographic Protection)",
+          "iso27001": "A.8.12 (Data Leakage Prevention)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Leaks sensitive URLs and tokens in the Referer header to external domains.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Web Application Firewall (WAF) / Rate-Limiting Headers Detected",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The target application does not expose active WAF or rate-limiting response headers.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Leaves public endpoints and login portals more susceptible to automated brute-force, credential stuffing, or Layer 7 DoS attacks.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Exposed Admin or API Endpoints",
+        "severity": "Passed",
+        "category": "information_exposure",
+        "description": "Targeted surface probe completed on primary high-risk endpoints (/admin, /swagger.json); no exposed administrative interfaces or API specifications were detected.",
+        "evidence": {
+          "raw": "Non-intrusive check on primary paths (/admin, /swagger.json) with SPA catch-all validation"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A01: Broken Access Control",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SensitivePaths",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing COOP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Opener-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing COEP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Embedder-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing CORP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Resource-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Strong TLS Cipher Suite Enforced",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "Server negotiated a secure cipher (ECDHE-RSA-AES128-GCM-SHA256) with 128-bit encryption.",
+        "evidence": {
+          "raw": "Cipher: ECDHE-RSA-AES128-GCM-SHA256 (TLSv1.2)"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "TLSCipherStrength",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      }
+    ],
+    "metadata": {
+      "ip_address": "100.58.6.74",
+      "location_or_cdn": "United States (AWS EC2 (us-east-1))",
+      "server_header": "Undisclosed (Hardened)",
+      "http_status": "Connection Timeout",
+      "ssl_issuer": "Amazon RSA 2048 M01",
+      "ssl_days_left": "145 Days Left",
+      "ssl_days_left_int": 145,
+      "ssl_badge": "VALID CERTIFICATE",
+      "tls_version": "TLSv1.2",
+      "waf_cdn_detection": "AWS CloudFront",
+      "performance_rating": "REQUEST TIMEOUT",
+      "ipv6_supported": false,
+      "http_protocol": "HTTP/1.1",
+      "http2_supported": false,
+      "http3_supported": false,
+      "https_enforced": "HTTPS Enforced",
+      "clean_redirect": "HTTPS ACTIVE (PROBE TIMED OUT)",
+      "whois": {
+        "registrar": "Amazon Registrar, Inc.",
+        "creation_date": "2011-06-12",
+        "expiration_date": "2027-06-12",
+        "age": "15 Years Old"
+      }
+    },
+    "potential_issues_count": 6,
+    "executive_summary": "Scan completed. Detected 2 high-priority issues resulting in a score of 69/100.",
+    "disclaimer": "Passive scan only. Modular engine execution.",
+    "_duration": 14.515752792358398
+  },
+  {
+    "url": "https://reactjs.org",
+    "score": 64,
+    "severity_counts": {
+      "Critical": 0,
+      "High": 1,
+      "Medium": 4,
+      "Low": 3,
+      "Informational": 11,
+      "Passed": 13
+    },
+    "category_scores": {
+      "encryption_tls": 90,
+      "http_headers": 50,
+      "domain_email": 90,
+      "session_cookies": 100,
+      "information_exposure": 100
+    },
+    "owasp_coverage": [
+      "A02: Cryptographic Failures",
+      "A05: Security Misconfiguration",
+      "A01: Broken Access Control"
+    ],
+    "target_surface": {
+      "waf_server": "Direct Origin",
+      "waf_status": "200 OK (474ms)",
+      "performance": "Average Latency",
+      "frontend_stack": "Next.js App",
+      "frontend_subtext": "Verified Modern Stack",
+      "frontend_pill": "VERIFIED STACK",
+      "api_surface": "No Public Spec Exposed",
+      "api_subtext": "GraphQL / OpenAPI Clean",
+      "api_pill": "CLEAN SURFACE",
+      "js_health": "Clean Build",
+      "js_subtext": "0 .map Leaks Detected",
+      "js_pill": "0 LEAKS DETECTED"
+    },
+    "technical_compliance": {
+      "pci_dss_4_0": {
+        "status": "Action Required",
+        "failed_controls": [
+          "5.4.1 (Anti-Phishing & Spoofing)",
+          "6.4.1 (Public Web Application Protection)",
+          "6.4.3 (Manage Payment Page Scripts)"
+        ],
+        "passed_controls": [
+          "4.1.2 (Encrypt Management Sessions)"
+        ]
+      },
+      "nist_sp_800_53": {
+        "status": "Action Required",
+        "failed_controls": [
+          "SC-13 (Cryptographic Protection)",
+          "SC-28 (Protection of Information at Rest/Transit)",
+          "SI-8 (Spam & Phishing Protection)"
+        ],
+        "passed_controls": [
+          "SC-8 (Transmission Confidentiality)"
+        ]
+      },
+      "iso_27001": {
+        "status": "Action Required",
+        "failed_controls": [
+          "A.8.12 (Data Leakage Prevention)",
+          "A.8.19 (Information Security in Systems)",
+          "A.8.20 (Network Security)",
+          "A.8.28 (Secure Coding)"
+        ],
+        "passed_controls": [
+          "A.8.24 (Use of Cryptography)"
+        ]
+      }
+    },
+    "findings": [
+      {
+        "name": "Valid SSL/TLS Certificate",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "The server presents a valid TLS certificate.",
+        "evidence": {
+          "raw": "Version: TLSv1.3"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+          "nist": "SC-8 (Transmission Confidentiality)",
+          "iso27001": "A.8.24 (Use of Cryptography)"
+        },
+        "module": "EnhancedTLS",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Legacy TLS Protocols Disabled",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "Server correctly rejects TLS 1.0/1.1 connections.",
+        "evidence": {
+          "raw": "TLS 1.2+ Only"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "EnhancedTLS",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "CAA Records Configured",
+        "severity": "Passed",
+        "category": "domain_email",
+        "description": "Certificate Authority Authorization (CAA) DNS records restrict which CAs can issue certificates.",
+        "evidence": {
+          "raw": "0 issuewild \"pki.goog; cansignhttpexchanges=yes\", 0 issue \"ssl.com\", 0 issuewild \"letsencrypt.org\", 0 issuewild \"comodoca.com\", 0 issuewild \"ssl.com\", 0 issue \"pki.goog; cansignhtt"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+          "nist": "SC-13 (Cryptographic Protection)",
+          "iso27001": "A.8.24 (Use of Cryptography)"
+        },
+        "module": "DNSCAA",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "DNSSEC Not Enabled for Domain",
+        "severity": "Informational",
+        "category": "dns_security",
+        "description": "Domain Name System Security Extensions (DNSSEC) records are not published for this domain.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "DNSCAA",
+        "impact": "The domain is more vulnerable to DNS spoofing, cache poisoning, and BGP hijacking attacks.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "SPF Record Configured",
+        "severity": "Passed",
+        "category": "domain_email",
+        "description": "Sender Policy Framework (SPF) record is validly configured.",
+        "evidence": {
+          "raw": "v=spf1 include:spf.mandrillapp.com include:sparkpostmail.com ~all"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "5.4.1 (Anti-Phishing & Email Structure)",
+          "nist": "SI-8 (Spam & Phishing Protection)",
+          "iso27001": "A.8.19 (Information Security in Systems)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing DMARC Policy",
+        "severity": "Medium",
+        "category": "domain_email",
+        "description": "No DMARC record found at _dmarc.reactjs.org. Increases domain impersonation risk.",
+        "evidence": {
+          "raw": "_dmarc TXT record absent."
+        },
+        "confidence": "High",
+        "remediation": "Publish a DMARC TXT record at _dmarc.reactjs.org with a valid enforcement policy.",
+        "remediation_snippets": {
+          "dns_record": "Type: TXT | Name: _dmarc | Value: v=DMARC1; p=quarantine; rua=mailto:dmarc-reports@yourdomain.com",
+          "note": "Publish a DMARC TXT record at _dmarc.yourdomain.com with enforcement policy."
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "5.4.1 (Anti-Phishing & Spoofing)",
+          "nist": "SI-8 (Spam & Phishing Protection)",
+          "iso27001": "A.8.19 (Information Security in Systems)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "Prevents enforcement of SPF/DKIM, allowing spoofed emails to reach users' inboxes.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing MTA-STS Record",
+        "severity": "Informational",
+        "category": "domain_email",
+        "description": "No MTA-STS DNS record found.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "DNSEmailSecurity",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Subdomain Takeover Risk Detected",
+        "severity": "Passed",
+        "category": "domain_email",
+        "description": "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
+        "evidence": {
+          "raw": "[-] DNS & CNAME Audit\n[!] Target: reactjs.org -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records."
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SubdomainTakeover",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Permissions-Policy",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The Permissions-Policy header is missing, allowing web pages to access browser feature APIs unconditionally.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply recommended server configuration headers and verify compliance against baseline security standards.",
+        "remediation_snippets": {
+          "nginx": "add_header Permissions-Policy \"camera=(), microphone=(), geolocation=()\" always;",
+          "apache": "Header always set Permissions-Policy \"camera=(), microphone=(), geolocation=()\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"Permissions-Policy\", \"value\": \"camera=(), microphone=(), geolocation=()\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Permissions-Policy\" to \"camera=(), microphone=(), geolocation=()\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "PermissionsPolicy",
+        "impact": "Allows third-party scripts to access sensitive browser features like the camera, microphone, or geolocation.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Server Header Exposed",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "The server software and version might be exposed.",
+        "evidence": {
+          "raw": "Vercel"
+        },
+        "confidence": "High",
+        "remediation": "Configure server to return generic names.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "TechFingerprint",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Potential CORS Misconfiguration",
+        "severity": "Medium",
+        "category": "http_headers",
+        "description": "The API passively responded with a wildcard CORS policy (*). This allows any origin to read responses, though browsers block credentialed wildcard requests. Passive detection cannot confirm dynamic reflection.",
+        "evidence": {
+          "raw": "Access-Control-Allow-Origin: *"
+        },
+        "confidence": "High",
+        "remediation": "Restrict CORS to specific trusted origins if the endpoint handles sensitive authenticated data.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "CORS",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "security.txt Missing",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "No standard security.txt found.",
+        "evidence": {
+          "raw": "https://reactjs.org/.well-known/security.txt"
+        },
+        "confidence": "High",
+        "remediation": "Publish a security.txt file at /.well-known/security.txt.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityTxt",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing COOP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Opener-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing COEP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Embedder-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing CORP Header",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The Cross-Origin-Resource-Policy header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "AdvancedSecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "HTTPS Redirection Configured",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "HTTP traffic is correctly redirected to HTTPS.",
+        "evidence": {
+          "raw": "Final Target: https://react.dev/"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "4.1.2 (Encrypt Management Sessions)",
+          "nist": "SC-8 (Transmission Confidentiality)",
+          "iso27001": "A.8.24 (Use of Cryptography)"
+        },
+        "module": "HTTPSRedirect",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Strict-Transport-Security Configured",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "HSTS is present.",
+        "evidence": {
+          "raw": "max-age=63072000"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "nist": "SC-28 (Protection of Information at Rest/Transit)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Content-Security-Policy (CSP)",
+        "severity": "High",
+        "category": "http_headers",
+        "description": "The HTTP Content-Security-Policy (CSP) response header is missing, leaving the application vulnerable to Cross-Site Scripting (XSS) and data injection attacks.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Configure your web server to issue strict Content-Security-Policy HTTP headers to restrict script execution sources to trusted domains.",
+        "remediation_snippets": {
+          "nginx": "add_header Content-Security-Policy \"default-src 'self'; script-src 'self'; object-src 'none';\" always;",
+          "apache": "Header always set Content-Security-Policy \"default-src 'self'; script-src 'self'; object-src 'none';\"",
+          "vercel": "{\n  \"headers\": [{\n    \"source\": \"/(.*)\",\n    \"headers\": [{ \"key\": \"Content-Security-Policy\", \"value\": \"default-src 'self';\" }]\n  }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Content-Security-Policy\" to \"default-src 'self';\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
+          "nist": "SC-28 (Protection of Information at Rest/Transit)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Permissive directives like 'unsafe-inline' or 'unsafe-eval' weaken browser defenses, leaving your site vulnerable to Cross-Site Scripting (XSS) and data theft.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Permitted-Cross-Domain-Policies",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The X-Permitted-Cross-Domain-Policies header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-DNS-Prefetch-Control",
+        "severity": "Informational",
+        "category": "http_headers",
+        "description": "The X-DNS-Prefetch-Control header is missing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Frame-Options",
+        "severity": "Medium",
+        "category": "http_headers",
+        "description": "The X-Frame-Options header is missing, leaving the application vulnerable to clickjacking attacks.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header X-Frame-Options \"DENY\" always;",
+          "apache": "Header always set X-Frame-Options \"DENY\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"X-Frame-Options\", \"value\": \"DENY\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"X-Frame-Options\" to \"DENY\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Permits attackers to embed the site in an iframe, leading to Clickjacking and unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing X-Content-Type-Options",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The X-Content-Type-Options header is missing, which allows browsers to perform MIME-sniffing.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header X-Content-Type-Options \"nosniff\" always;",
+          "apache": "Header always set X-Content-Type-Options \"nosniff\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"X-Content-Type-Options\", \"value\": \"nosniff\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"X-Content-Type-Options\" to \"nosniff\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.28 (Secure Coding)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Enables MIME-sniffing attacks where malicious files are executed as scripts.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Missing Referrer-Policy",
+        "severity": "Low",
+        "category": "http_headers",
+        "description": "The Referrer-Policy header is missing, which allows leaking the referring URL.",
+        "evidence": {
+          "raw": ""
+        },
+        "confidence": "High",
+        "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+        "remediation_snippets": {
+          "nginx": "add_header Referrer-Policy \"strict-origin-when-cross-origin\" always;",
+          "apache": "Header always set Referrer-Policy \"strict-origin-when-cross-origin\"",
+          "vercel": "{\n  \"headers\": [{ \"source\": \"/(.*)\", \"headers\": [{ \"key\": \"Referrer-Policy\", \"value\": \"strict-origin-when-cross-origin\" }] }]\n}",
+          "cloudflare": "Rules -> Modify Response Header -> Set \"Referrer-Policy\" to \"strict-origin-when-cross-origin\""
+        },
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "nist": "SC-13 (Cryptographic Protection)",
+          "iso27001": "A.8.12 (Data Leakage Prevention)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "Leaks sensitive URLs and tokens in the Referer header to external domains.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Web Application Firewall (WAF) Active",
+        "severity": "Passed",
+        "category": "http_headers",
+        "description": "WAF or CDN headers were detected.",
+        "evidence": {
+          "raw": "Server: Vercel"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SecurityHeaders",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Exposed Admin or API Endpoints",
+        "severity": "Passed",
+        "category": "information_exposure",
+        "description": "Targeted surface probe completed on primary high-risk endpoints (/admin, /swagger.json); no exposed administrative interfaces or API specifications were detected.",
+        "evidence": {
+          "raw": "Non-intrusive check on primary paths (/admin, /swagger.json) with SPA catch-all validation"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A01: Broken Access Control",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SensitivePaths",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Strong TLS Cipher Suite Enforced",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "Server negotiated a secure cipher (TLS_AES_128_GCM_SHA256) with 128-bit encryption.",
+        "evidence": {
+          "raw": "Cipher: TLS_AES_128_GCM_SHA256 (TLSv1.3)"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "TLSCipherStrength",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Legacy Weak TLS Ciphers Supported",
+        "severity": "Medium",
+        "category": "encryption_tls",
+        "description": "Server accepts connections configured with deprecated weak ciphers (e.g. 3DES / RC4).",
+        "evidence": {
+          "raw": "Handshake accepted weak cipher list"
+        },
+        "confidence": "High",
+        "remediation": "Reconfigure server TLS cipher order to forbid 3DES, RC4, and EXPORT suites.",
+        "remediation_snippets": {},
+        "owasp": "A02: Cryptographic Failures",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "TLSCipherStrength",
+        "impact": "Deprecated ciphers allow attackers performing Man-in-the-Middle (MitM) network eavesdropping to decrypt confidential user traffic.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Mixed Content Detected",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "All front-end resources and form actions are safely served over HTTPS.",
+        "evidence": {
+          "raw": "Clean HTML subresources"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "MixedContent",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "robots.txt Found",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "Found robots.txt with 2 lines.",
+        "evidence": {
+          "raw": "https://reactjs.org/robots.txt"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "RobotsTxt",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "sitemap.xml Missing",
+        "severity": "Informational",
+        "category": "information_exposure",
+        "description": "No sitemap.xml found.",
+        "evidence": {
+          "raw": "https://reactjs.org/sitemap.xml"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "SitemapXml",
+        "impact": "Potential exposure of sensitive information or risk of unauthorized actions.",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "No Secrets Found in Main JS Bundles",
+        "severity": "Passed",
+        "category": "information_exposure",
+        "description": "Lightweight JS surface probe completed on primary bundles; no exposed credentials, unflagged keys, or source maps detected.",
+        "evidence": {
+          "raw": "Scanned 3 primary bundle(s)"
+        },
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "6.4.1 (Public Web Application Protection)",
+          "iso27001": "A.8.20 (Network Security)"
+        },
+        "module": "JSBundleSecrets",
+        "impact": "N/A",
+        "cvss": null,
+        "domain": "browser_defense"
+      },
+      {
+        "name": "Modern Protocol Supported (HTTP/2 or HTTP/3)",
+        "severity": "Passed",
+        "category": "encryption_tls",
+        "description": "The server uses modern, performant HTTP protocols.",
+        "evidence": "HTTP/2 or HTTP/3 detected",
+        "confidence": "High",
+        "remediation": "N/A",
+        "remediation_snippets": {},
+        "owasp": "A05: Security Misconfiguration",
+        "compliance": {
+          "pci_dss": "N/A",
+          "nist": "N/A",
+          "iso27001": "N/A"
+        },
+        "module": "Network",
+        "impact": "N/A",
+        "cvss": null
+      }
+    ],
+    "metadata": {
+      "ip_address": "76.76.21.21",
+      "location_or_cdn": "United States (Vercel, Inc)",
+      "server_header": "Vercel",
+      "http_status": "200 OK (474ms)",
+      "ssl_issuer": "YR1",
+      "ssl_days_left": "66 Days Left",
+      "ssl_days_left_int": 66,
+      "ssl_badge": "VALID CERTIFICATE",
+      "tls_version": "TLSv1.3",
+      "waf_cdn_detection": "Direct Origin",
+      "performance_rating": "Average Latency",
+      "ipv6_supported": false,
+      "http_protocol": "HTTP/2",
+      "http2_supported": true,
+      "http3_supported": false,
+      "https_enforced": "HTTPS Enforced",
+      "clean_redirect": "Direct Secure",
+      "whois": {
+        "registrar": "Key-Systems GmbH",
+        "creation_date": "2013-05-29",
+        "expiration_date": "2028-05-29",
+        "age": "13 Years Old"
+      }
+    },
+    "potential_issues_count": 8,
+    "executive_summary": "Scan completed. Detected 1 high-priority issues resulting in a score of 64/100.",
+    "disclaimer": "Passive scan only. Modular engine execution.",
+    "_duration": 22.525546550750732
+  }
+]
