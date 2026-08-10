@@ -5,6 +5,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import WhatsAppWidget from '../WhatsAppWidget';
+import usePdfGenerator from '../hooks/usePdfGenerator';
 
 import ScanForm from '../components/scanner/ScanForm';
 import ModeSelection from '../components/scanner/ModeSelection';
@@ -28,8 +29,7 @@ function Scanner() {
   const [reportMode, setReportMode] = useState('simple'); // simple, technical
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authFeatureName, setAuthFeatureName] = useState('');
-  const [pdfModalOpen, setPdfModalOpen] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const { isGeneratingPdf, generatePdf } = usePdfGenerator();
   const reportRef = useRef(null);
 
   useEffect(() => {
@@ -93,61 +93,8 @@ function Scanner() {
     setScanState('view-report');
   };
 
-  const handlePdfExport = async () => {
-    if (!reportRef.current) return;
-    setIsGeneratingPdf(true);
-    
-    try {
-      const html2canvas = (await import('html2canvas')).default;
-      const { jsPDF } = await import('jspdf');
-      
-      const element = reportRef.current;
-      
-      // Temporarily hide elements not meant for print
-      const hideElements = element.querySelectorAll('.print\\:hidden');
-      hideElements.forEach(el => el.style.display = 'none');
-      
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#020617', // slate-950
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
-      });
-      
-      hideElements.forEach(el => el.style.display = '');
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = pdfWidth / imgWidth;
-      const totalPdfHeight = imgHeight * ratio;
-
-      let heightLeft = totalPdfHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, totalPdfHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - totalPdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, totalPdfHeight);
-        heightLeft -= pdfHeight;
-      }
-      
-      pdf.save(`SecureAI-Report-${url.replace(/^https?:\/\//, '').split('/')[0]}.pdf`);
-    } catch (error) {
-      console.error('Failed to generate PDF', error);
-      alert("There was an error generating the PDF. Please try again.");
-    } finally {
-      setIsGeneratingPdf(false);
-    }
+  const handlePdfExport = () => {
+    generatePdf(reportRef.current, url);
   };
 
   return (
