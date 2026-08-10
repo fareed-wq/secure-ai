@@ -41,6 +41,10 @@ class TestPhase40Deduplication(unittest.TestCase):
         self.assertIn("ns1.cloudflare.com", evidence)
         self.assertIn("ns2.cloudflare.com", evidence)
         self.assertIn("ns3.cloudflare.com", evidence)
+        
+        # Verify that actual newline characters are used instead of literal "\n" strings
+        self.assertIn("\n", evidence)
+        self.assertNotIn("\\n", evidence)
 
     @patch('api.scanner.modules.infrastructure.safe_request')
     def test_dns_infrastructure_distinct_providers(self, mock_safe_request):

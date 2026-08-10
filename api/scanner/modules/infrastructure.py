@@ -125,7 +125,7 @@ class InfrastructureIntelligenceModule(ScannerModule):
                             break
                 for provider, records in ns_by_provider.items():
                     evidence_lines = [f"Provider: {provider}"] + [f"- {r}" for r in records]
-                    evidence_str = "\\n".join(evidence_lines)
+                    evidence_str = "\n".join(evidence_lines)
                     findings.append(self.make_finding(
                         "DNS Infrastructure Provider Identified",
                         "Informational",
@@ -155,7 +155,7 @@ class InfrastructureIntelligenceModule(ScannerModule):
                             break
                 for provider, records in mx_by_provider.items():
                     evidence_lines = [f"Provider: {provider}"] + [f"- {r}" for r in records]
-                    evidence_str = "\\n".join(evidence_lines)
+                    evidence_str = "\n".join(evidence_lines)
                     findings.append(self.make_finding(
                         "Mail Infrastructure Identified",
                         "Informational",
