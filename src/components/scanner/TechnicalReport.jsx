@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Terminal, Clock, Server, FileCode, CheckCircle, AlertTriangle, Info, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, Layers, Check, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
+import { Terminal, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
 
 
@@ -10,7 +9,6 @@ const TechnicalReport = ({ reportData }) => {
   const [snippetTabs, setSnippetTabs] = useState({}); // { findingIndex: 'nginx' }
 
   const findings = reportData?.findings || [];
-  const score = reportData?.score ?? 0;
   
   const sortedFindings = [...findings].sort((a, b) => {
     const weights = { Critical: 6, High: 5, Medium: 4, Low: 3, Informational: 2, Passed: 1 };
@@ -38,12 +36,6 @@ const TechnicalReport = ({ reportData }) => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-  };
-
-
-
-  const handleSnippetTabChange = (findingIdx, tab) => {
-    setSnippetTabs(prev => ({ ...prev, [findingIdx]: tab }));
   };
 
   return (
@@ -245,7 +237,6 @@ const TechnicalReport = ({ reportData }) => {
                       </thead>
                       {groupFindings.map((finding) => {
                         const idx = sortedFindings.indexOf(finding);
-                        const activeTab = snippetTabs[idx] || (finding.remediation_snippets ? Object.keys(finding.remediation_snippets)[0] : null);
                         
                         return (
                           <tbody key={idx} className="finding-card divide-y divide-slate-800/50">
