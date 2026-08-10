@@ -1,11 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Activity, Target, AlertTriangle, Loader2 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { ShieldCheck, Activity, Target, AlertTriangle, Loader2, CheckCircle2, ChevronRight } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from '../lib/supabase';
+import { useNavigate } from 'react-router-dom';
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl">
+        <p className="text-white font-medium mb-1">{data.domain}</p>
+        <p className="text-slate-400 text-xs mb-2">{data.date} at {label}</p>
+        <p className="text-indigo-400 font-bold">Score: {data.score}/100</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,21 +56,32 @@ const Dashboard = () => {
   
   const activeTargets = new Set(scans.map(s => s.target_url)).size;
   
+  const criticalIssues = scans.reduce((acc, scan) => {
+    const findings = scan.data?.findings || [];
+    return acc + findings.filter(f => f.severity === 'Critical').length;
+  }, 0);
+  
   // Trend Data (last 7 scans in chronological order)
   const trendData = [...scans]
     .slice(0, 7)
     .reverse()
     .map((scan) => {
       const d = new Date(scan.created_at);
+      let domain = scan.target_url;
+      try {
+        domain = new URL(scan.target_url).hostname.replace('www.', '');
+      } catch(e) {}
+      
       return {
-        name: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        timestamp: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: d.toLocaleDateString(),
         score: scan.score,
-        fullDate: d.toLocaleDateString()
+        domain
       };
     });
     
   if (trendData.length === 0) {
-    trendData.push({ name: 'Mon', score: 0 }); // Fallback empty state
+    trendData.push({ timestamp: '12:00 AM', date: new Date().toLocaleDateString(), score: 0, domain: 'No Data' });
   }
 
   return (
@@ -101,9 +128,21 @@ const Dashboard = () => {
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Critical Issues</p>
-                <p className="text-3xl font-bold text-red-400 mt-2">0</p>
+                <p className={`text-3xl font-bold mt-2 ${criticalIssues === 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {criticalIssues}
+                </p>
               </div>
-              <div className="p-3 bg-red-500/10 rounded-lg"><AlertTriangle className="w-6 h-6 text-red-500" /></div>
+              <div className={`p-3 rounded-lg border ${
+                criticalIssues === 0 
+                ? 'bg-emerald-500/10 border-emerald-500/20' 
+                : 'bg-rose-500/10 border-rose-500/20'
+              }`}>
+                {criticalIssues === 0 ? (
+                  <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+                ) : (
+                  <AlertTriangle className="w-6 h-6 text-rose-400" />
+                )}
+              </div>
             </div>
           </div>
 
@@ -112,52 +151,78 @@ const Dashboard = () => {
             <h2 className="text-lg font-semibold text-white mb-6">Security Score Trend</h2>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendData}>
+                <AreaChart data={trendData}>
+                  <defs>
+                    <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="name" stroke="#64748b" />
+                  <XAxis dataKey="timestamp" stroke="#64748b" />
                   <YAxis domain={[0, 100]} stroke="#64748b" />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', color: '#f8fafc' }}
-                    itemStyle={{ color: '#818cf8' }}
-                  />
-                  <Line 
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area 
                     type="monotone" 
                     dataKey="score" 
-                    stroke="#6366f1" 
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: '#6366f1', strokeWidth: 2, stroke: '#0f172a' }} 
-                    activeDot={{ r: 6 }} 
+                    stroke="#818cf8" 
+                    strokeWidth={3} 
+                    fillOpacity={1} 
+                    fill="url(#scoreGrad)" 
+                    activeDot={{ r: 6, fill: '#6366f1', strokeWidth: 2, stroke: '#0f172a' }}
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Recent Scans Stub */}
+          {/* Recent Scans List */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
             <div className="p-6 border-b border-slate-800">
               <h2 className="text-lg font-semibold text-white">Recent Scans</h2>
             </div>
             
             {scans.length > 0 ? (
-              <div className="divide-y divide-slate-800/50">
-                {scans.slice(0, 5).map((scan) => (
-                  <div key={scan.id} className="p-4 flex items-center justify-between hover:bg-slate-800/30 transition-colors">
-                    <div className="flex flex-col">
-                      <span className="text-white font-medium">{scan.target_url}</span>
-                      <span className="text-xs text-slate-500">{new Date(scan.created_at).toLocaleString()}</span>
+              <div className="p-4 space-y-3">
+                {scans.slice(0, 5).map((scan) => {
+                  let cleanDomain = scan.target_url;
+                  try {
+                    cleanDomain = new URL(scan.target_url).hostname.replace('www.', '');
+                  } catch(e) {}
+
+                  return (
+                    <div 
+                      key={scan.id} 
+                      onClick={() => navigate('/scan-history')}
+                      className="group flex items-center justify-between p-4 rounded-xl border border-slate-800/80 bg-slate-900/50 hover:bg-slate-900/90 hover:border-indigo-500/40 transition-all cursor-pointer"
+                    >
+                      <div className="flex items-center">
+                        <img 
+                          src={`https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=32`} 
+                          className="w-8 h-8 rounded-md mr-4 opacity-80 group-hover:opacity-100 transition-opacity bg-white/10" 
+                          alt="" 
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-white font-medium">{scan.target_url}</span>
+                          <span className="text-xs text-slate-500 mt-1">{new Date(scan.created_at).toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <span className={`px-2.5 py-1 rounded-md text-xs font-bold border ${
+                          scan.score >= 80 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                          scan.score >= 50 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                          'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                        }`}>
+                          {scan.score}/100
+                        </span>
+                        
+                        <span className="text-xs font-medium text-slate-400 group-hover:text-indigo-400 flex items-center gap-1 transition-colors"> 
+                          View Report <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" /> 
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        scan.score >= 80 ? 'bg-emerald-500/10 text-emerald-400' :
-                        scan.score >= 50 ? 'bg-amber-500/10 text-amber-400' :
-                        'bg-red-500/10 text-red-400'
-                      }`}>
-                        {scan.score}/100
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="p-6 text-center text-slate-500">
