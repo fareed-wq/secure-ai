@@ -13,6 +13,7 @@
  * @property {string} [impact]
  * @property {number} [cvss]
  * @property {string} [domain]
+ * @property {Object|string|null} [evidence] - Exact backend structure, do NOT mutate.
  */
 
 /**
@@ -46,14 +47,31 @@
  * @property {string} [server]
  * @property {string} [latency]
  * @property {Object} [metadata]
+ * @property {string} [url] - Alias for target_url.
+ * @property {Object} _raw - The unaltered raw backend response.
  */
 
 /**
- * Helper to ensure the data matches the expected ReportData shape conceptually.
+ * Normalizes the raw backend scan result into a stable frontend model without
+ * losing or mutating any technical data.
  * 
- * @param {Object} rawData 
- * @returns {ReportData}
+ * @param {Object} rawData - The raw JSON response from the backend.
+ * @returns {ReportData} The normalized report data with safe aliases and _raw preserved.
  */
 export const normalizeScanResult = (rawData) => {
-  return rawData; // Pass-through for now, preserves exact backend field names
+  if (!rawData) return rawData;
+
+  const normalized = {
+    ...rawData,
+    _raw: rawData
+  };
+
+  // Safely establish url / target_url aliases if one is missing.
+  if (rawData.target_url && !rawData.url) {
+    normalized.url = rawData.target_url;
+  } else if (rawData.url && !rawData.target_url) {
+    normalized.target_url = rawData.url;
+  }
+
+  return normalized;
 };

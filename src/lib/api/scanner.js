@@ -1,3 +1,5 @@
+import { normalizeScanResult } from '../models/scanResult';
+
 export const API_BASE_URL = 
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
     ? (import.meta.env.VITE_API_URL || 'http://localhost:5000') 
@@ -30,7 +32,7 @@ class ScanApiClient {
       throw new Error(data.error);
     }
     
-    return data;
+    return normalizeScanResult(data);
   }
 }
 
