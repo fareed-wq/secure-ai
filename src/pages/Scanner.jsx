@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, ArrowRight, Loader2, ShieldAlert, Lock } from 'lucide-react';
+import { Loader2, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import WhatsAppWidget from '../WhatsAppWidget';
 
+import ScanForm from '../components/scanner/ScanForm';
 import ModeSelection from '../components/scanner/ModeSelection';
 import ReportHeader from '../components/scanner/ReportHeader';
 import SimpleReport from '../components/scanner/SimpleReport';
@@ -24,13 +25,11 @@ function Scanner() {
   const [scanState, setScanState] = useState('idle'); // idle, scanning, error, mode-select, view-report
   const [reportData, setReportData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const [validationError, setValidationError] = useState('');
   const [reportMode, setReportMode] = useState('simple'); // simple, technical
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authFeatureName, setAuthFeatureName] = useState('');
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const urlInputRef = useRef(null);
   const reportRef = useRef(null);
 
   useEffect(() => {
@@ -52,25 +51,8 @@ function Scanner() {
     }
   };
 
-  const handleScan = async (e) => {
-    e.preventDefault();
-    if (!url) return;
-    
-    let parsedUrl = url.trim();
-    let cleanInput = parsedUrl.replace(/^https?:\/\//i, '').replace(/^www\./i, '');
-    const domainRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/;
-    
-    if (!domainRegex.test(cleanInput)) {
-      setValidationError("Please enter a full domain name (e.g., google.com or site.in).");
-      urlInputRef.current?.blur();
-      return;
-    }
-
-    if (!/^https?:\/\//i.test(parsedUrl)) {
-      parsedUrl = 'https://' + parsedUrl;
-      setUrl(parsedUrl);
-    }
-    
+  const handleScan = async (parsedUrl) => {
+    setUrl(parsedUrl);
     setScanState('scanning');
     setErrorMessage('');
     
@@ -198,36 +180,7 @@ function Scanner() {
         )}
       </AnimatePresence>
 
-      {/* Validation Error Popup */}
-      <AnimatePresence>
-        {validationError && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-slate-900 border border-rose-500/30 shadow-2xl shadow-rose-500/10 rounded-2xl p-6 max-w-md w-full relative"
-            >
-              <div className="flex flex-col items-center text-center">
-                <div className="bg-rose-500/10 p-3 rounded-full mb-4">
-                  <ShieldAlert className="w-8 h-8 text-rose-400" />
-                </div>
-                <h4 className="text-white font-bold text-lg mb-2">Invalid Domain Format</h4>
-                <p className="text-slate-300 text-sm mb-6">{validationError}</p>
-                <button 
-                  onClick={() => {
-                    setValidationError('');
-                    setTimeout(() => urlInputRef.current?.focus(), 100);
-                  }}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full"
-                >
-                  Got it
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
 
       {/* Dynamic Content */}
       <div className="relative z-10 max-w-7xl mx-auto pb-32 print:hidden">
@@ -257,33 +210,7 @@ function Scanner() {
               </div>
 
               {/* 3. Input Bar Container */}
-              <form onSubmit={handleScan} className="w-full max-w-2xl mt-4 flex flex-col items-center gap-3">
-                {/* Input Box with Glow focused ONLY on the box */}
-                <div className="relative w-full rounded-2xl p-1 bg-slate-900/80 border border-slate-700/60 shadow-[0_0_30px_rgba(124,58,237,0.25)] flex items-center focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 focus-within:shadow-[0_0_40px_rgba(124,58,237,0.4)] transition-all duration-300">
-                  <Search className="w-5 h-5 text-slate-400 ml-4 shrink-0 hidden sm:block" />
-                  <input
-                    ref={urlInputRef}
-                    type="text"
-                    required
-                    placeholder="example.com"
-                    value={url}
-                    onChange={(e) => {
-                      setUrl(e.target.value);
-                      if (validationError) setValidationError('');
-                    }}
-                    className="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none"
-                  />
-                  <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 shrink-0">
-                    Run Scan <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* 4. Trust Badge Outside the Glow Box (Crisp Contrast) */}
-                <div className="flex items-center justify-center flex-wrap gap-1 text-center text-xs text-slate-400 mt-2 font-medium px-2">
-                  <span className="text-indigo-400">🔒</span>
-                  <span><strong className="text-slate-300">100% Safe & Non-Intrusive</strong> • No invasive payloads, exploits, or database risks.</span>
-                </div>
-              </form>
+              <ScanForm onScan={handleScan} />
 
               <div className="flex justify-center text-sm text-slate-400 mt-8 font-medium">
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
