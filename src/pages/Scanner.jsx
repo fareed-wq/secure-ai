@@ -15,11 +15,7 @@ import SafetyComparison from '../components/scanner/SafetyComparison';
 import BottomTicker from '../components/scanner/BottomTicker';
 import TechnicalReport from '../components/scanner/TechnicalReport';
 
-// Force relative paths in production so it hits the Vercel Serverless functions directly
-export const API_BASE_URL = 
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-    ? (import.meta.env.VITE_API_URL || 'http://localhost:5000') 
-    : '';
+import { scanApi } from '../lib/api/scanner';
 
 function Scanner() {
   const { user } = useAuth();
@@ -79,23 +75,7 @@ function Scanner() {
     setErrorMessage('');
     
     try {
-      const minWait = new Promise(resolve => setTimeout(resolve, 6000));
-      const fetchPromise = fetch(`${API_BASE_URL}/api/scan`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: parsedUrl }),
-      });
-      
-      const [response] = await Promise.all([fetchPromise, minWait]);
-      const data = await response.json();
-      
-      if (data.error) {
-        setErrorMessage(data.error);
-        setScanState('error');
-        return;
-      }
+      const data = await scanApi.runScan(parsedUrl);
       
       setReportData(data);
       setScanState('mode-select'); // Go to mode selection first

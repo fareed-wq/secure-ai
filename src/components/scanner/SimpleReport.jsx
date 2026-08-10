@@ -1,57 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check, Shield, Layers, Code2, Box, Mail } from 'lucide-react';
-import { TRANSLATIONS } from '../../config/translations';
-
-
-// --- TRANSLATION LAYER ---
-// Maps technical backend findings to plain-English business language
-// TRANSLATIONS imported from src/config/translations.js
-
-const getTranslation = (finding) => {
-  const technicalName = finding.name;
-
-  if (TRANSLATIONS[technicalName]) {
-    return TRANSLATIONS[technicalName];
-  }
-  
-  if (technicalName.startsWith("Unsecured Cookie")) {
-    return {
-      name: technicalName,
-      problem: finding.description,
-      why: "If a malicious script runs on your site, it can steal these cookies and hijack active user logins or sessions.",
-      category: "Session Security"
-    };
-  }
-
-  return {
-    name: technicalName,
-    problem: finding.description || "A recommended security configuration is missing or partially configured on your web server.",
-    why: finding.impact && finding.impact !== "N/A" ? finding.impact : "Resolving this configuration aligns your site with industry baseline security standards.",
-    category: "Website Trust"
-  };
-};
-
-const getBusinessRisk = (severity) => {
-  const risks = {
-    'Critical': { label: 'Critical Business Risk', badge: 'bg-red-700 text-white px-3.5 py-1.5 rounded-md text-base font-bold tracking-wide inline-block shadow-sm', container: 'bg-red-950/40 border border-red-500/50 rounded-xl p-4 shadow-sm', text: 'text-red-100 text-sm mt-3 font-medium block', desc: 'Immediate risk of data breach, financial loss, or severe disruption.' },
-    'High': { label: 'High Business Risk', badge: 'bg-rose-600 text-white px-3.5 py-1.5 rounded-md text-base font-bold tracking-wide inline-block shadow-sm', container: 'bg-rose-950/40 border border-rose-500/50 rounded-xl p-4 shadow-sm', text: 'text-rose-100 text-sm mt-3 font-medium block', desc: 'Significant risk of unauthorized access or reputational damage.' },
-    'Medium': { label: 'Moderate Business Risk', badge: 'bg-amber-500 text-black px-3.5 py-1.5 rounded-md text-base font-bold tracking-wide inline-block shadow-sm', container: 'bg-amber-950/40 border border-amber-500/50 rounded-xl p-4 shadow-sm', text: 'text-amber-100 text-sm mt-3 font-medium block', desc: 'Operational risk that could be exploited if combined with other flaws.' },
-    'Low': { label: 'Minimal Business Risk', badge: 'bg-yellow-400 text-black px-3.5 py-1.5 rounded-md text-base font-bold tracking-wide inline-block shadow-sm', container: 'bg-yellow-950/30 border border-yellow-500/40 rounded-xl p-4 shadow-sm', text: 'text-yellow-100 text-sm mt-3 font-medium block', desc: 'Minor risk, mostly missing recommended security best practices.' },
-    'Informational': { label: 'Observation', badge: 'bg-blue-600 text-white px-3.5 py-1.5 rounded-md text-base font-bold tracking-wide inline-block shadow-sm', container: 'bg-blue-950/40 border border-blue-500/50 rounded-xl p-4 shadow-sm', text: 'text-blue-100 text-sm mt-3 font-medium block', desc: 'Technical details that are not directly exploitable.' },
-  };
-  return risks[severity] || risks['Informational'];
-};
-
-const getEffort = (severity) => {
-  const effort = {
-    'Critical': 'Emergency (Hours)',
-    'High': 'High Priority (Days)',
-    'Medium': 'Scheduled (Weeks)',
-    'Low': 'Routine Backlog',
-  };
-  return effort[severity] || 'Minimal';
-};
+import FindingCard from './FindingCard';
+import ScoreDisplay from './ScoreDisplay';
 
 const SimpleReport = ({ reportData }) => {
   const getCategoryIcon = (category) => {
@@ -133,36 +84,7 @@ const SimpleReport = ({ reportData }) => {
           </div>
         </div>
 
-        <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-xl flex flex-col items-center justify-center text-center">
-          <div className="relative">
-            <svg className="w-40 h-40 transform -rotate-90">
-              <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-800" />
-              {!isWafBlocked && (
-                <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent"
-                  strokeDasharray={2 * Math.PI * 70}
-                  strokeDashoffset={2 * Math.PI * 70 * (1 - score / 100)}
-                  className={score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-red-500'}
-                  strokeLinecap="round"
-                />
-              )}
-              {isWafBlocked && (
-                <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent"
-                  strokeDasharray="8 6"
-                  className="text-slate-600"
-                />
-              )}
-            </svg>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-              <span className="text-5xl font-black text-white">{isWafBlocked ? 'N/A' : score}</span>
-            </div>
-          </div>
-          <div className="mt-6">
-            <div className="text-sm font-bold uppercase tracking-widest text-slate-400">Risk Meter</div>
-            <div className={`text-2xl font-black mt-1 ${isWafBlocked ? 'text-slate-400' : score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400'}`}>
-              {isWafBlocked ? 'Blocked' : score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 50 ? 'Fair' : 'Poor'}
-            </div>
-          </div>
-        </div>
+        <ScoreDisplay score={score} isWafBlocked={isWafBlocked} />
       </div>
 
       {/* 1.5. Target Surface Breakdown */}
@@ -384,56 +306,9 @@ const SimpleReport = ({ reportData }) => {
           </div>
           
           <div className="grid gap-6">
-            {topPriorities.map((issue, idx) => {
-              const trans = getTranslation(issue);
-              const risk = getBusinessRisk(issue.severity);
-              
-              return (
-                <div key={idx} className={`finding-card border-y border-r border-slate-800 rounded-3xl p-8 flex flex-col md:flex-row gap-8 items-start shadow-xl ${
-                  issue.severity === 'Critical' || issue.severity === 'High' ? 'border-l-4 border-l-red-500 bg-red-950/10' :
-                  issue.severity === 'Medium' ? 'border-l-4 border-l-amber-500 bg-amber-950/10' :
-                  'border-l-4 border-l-slate-600 bg-slate-900/40'
-                }`}>
-                  
-                  <div className="flex-1 space-y-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-10 h-10 rounded-full bg-slate-800/80 text-white font-bold text-xl flex items-center justify-center shrink-0">{idx + 1}</div>
-                      <h4 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                        {trans.name}
-                      </h4>
-                    </div>
-                    
-                    <div className="space-y-3 mt-3">
-                      <span className="text-lg font-bold text-slate-100 block mb-1">The Problem:</span>
-                      <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.problem}</span>
-                      <span className="text-lg font-bold text-slate-100 block mb-1">Why it matters:</span>
-                      <span className="text-lg text-slate-300 leading-relaxed block">{trans.why}</span>
-                    </div>
-
-
-                  </div>
-
-                  <div className="w-full md:w-80">
-                    <div className={`${risk.container} w-full md:w-80`}>
-                      <div className="mb-1">
-                        <span className={risk.badge}>{risk.label}</span>
-                      </div>
-                      <div className={risk.text}>{risk.desc}</div>
-                    </div>
-                    
-                    <div className="bg-slate-900/80 border border-indigo-500/30 rounded-xl p-4 mt-3 shadow-sm w-full md:w-80">
-                      <div className="text-xs font-mono font-bold text-indigo-400 tracking-wider uppercase flex items-center gap-1.5">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Estimated Effort
-                      </div>
-                      <div className="text-base font-bold text-white mt-1 block">{getEffort(issue.severity)}</div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {topPriorities.map((issue, idx) => (
+              <FindingCard key={idx} issue={issue} idx={idx} />
+            ))}
           </div>
         </div>
       )}
