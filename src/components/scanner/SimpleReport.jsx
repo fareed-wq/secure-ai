@@ -84,7 +84,12 @@ const SimpleReport = ({ reportData }) => {
           </div>
         </div>
 
-        <ScoreDisplay score={score} isWafBlocked={isWafBlocked} />
+        <ScoreDisplay 
+          score={score} 
+          isWafBlocked={isWafBlocked} 
+          penalties={reportData?.penalties}
+          severityCounts={reportData?.severity_counts}
+        />
       </div>
 
       {/* 1.5. Target Surface Breakdown */}
@@ -298,48 +303,63 @@ const SimpleReport = ({ reportData }) => {
       </div>
 
       {/* 3. Action Checklist (Top Priorities) */}
-      {topPriorities.length > 0 && (
+      {issues.length > 0 && (
         <div className="space-y-6">
           <div className="flex flex-col">
-            <h3 className="font-black text-2xl text-white">Top Priorities ({topPriorities.length})</h3>
+            <h3 className="font-black text-2xl text-white uppercase tracking-wider text-amber-400">Your Top Priorities</h3>
             <p className="text-slate-400 mt-1">Review these business risks with your IT provider or web developer.</p>
           </div>
           
           <div className="grid gap-6">
-            {topPriorities.map((issue, idx) => (
+            {issues.slice(0, 3).map((issue, idx) => (
               <FindingCard key={idx} issue={issue} idx={idx} />
             ))}
           </div>
         </div>
       )}
 
-      {/* 4. Security Strengths */}
-      {passed.length > 0 && (
-        <div className="bg-emerald-950/20 border border-emerald-900/50 p-8 rounded-3xl mt-12">
-          <div className="flex items-center gap-4 mb-8">
-            <div>
-              <h3 className="font-black text-2xl text-white flex items-center">
-                Security Strengths
-                <span className="ml-3 px-3 py-1 text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full">
-                  {passed.length} Passed
-                </span>
-              </h3>
-              <p className="text-emerald-200/70 mt-1">What your website is already doing correctly.</p>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {passed.map((item, i) => (
-              <div key={i} className="bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur-md border border-emerald-500/20 hover:border-emerald-500/40 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-emerald-500/5 rounded-xl p-3.5 flex items-center gap-3">
-                <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 shrink-0">
-                  <Check className="w-4 h-4" />
-                </div>
-                <span className="text-sm font-semibold text-slate-200 leading-snug">{item.name}</span>
+      {/* 4. Security Strengths (Selective Passed Checks) */}
+      <div className="bg-emerald-950/20 border border-emerald-900/50 p-8 rounded-3xl mt-12">
+        <div className="flex flex-col mb-6">
+          <h3 className="font-black text-2xl text-white">Security Checks</h3>
+          <p className="text-emerald-200/70 mt-1">Summary of your website's security tests.</p>
+        </div>
+        
+        <div className="flex flex-col md:flex-row gap-8 mb-6">
+          <div className="flex-1 space-y-3">
+            {passed.slice(0, 5).map((item, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Check className="w-5 h-5 text-emerald-400" />
+                <span className="text-slate-200 font-medium">{item.name}</span>
               </div>
             ))}
           </div>
+          <div className="flex flex-col justify-center space-y-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+            <div className="text-emerald-400 font-bold text-lg">{passed.length} checks passed</div>
+            <div className="text-rose-400 font-bold text-lg">{issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length} high-risk issues found</div>
+            <div className="text-amber-400 font-bold text-lg">{issues.filter(i => i.severity === 'Medium' || i.severity === 'Low').length} recommendations</div>
+          </div>
         </div>
-      )}
+
+        {passed.length > 5 && (
+          <div className="mt-4">
+            <details className="group">
+              <summary className="flex items-center gap-2 cursor-pointer text-emerald-400 font-medium hover:text-emerald-300 transition-colors list-none">
+                <span className="group-open:hidden">View all passed checks ▼</span>
+                <span className="hidden group-open:inline">Hide passed checks ▲</span>
+              </summary>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4 pt-4 border-t border-emerald-900/30">
+                {passed.map((item, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                    <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span className="truncate">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            </details>
+          </div>
+        )}
+      </div>
 
       {/* 5. Final Recommendation */}
       <div className="text-center mt-12 py-12 border-t border-slate-800">

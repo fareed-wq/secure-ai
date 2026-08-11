@@ -299,6 +299,13 @@ const TechnicalReport = ({ reportData }) => {
                                           </div>
                                         )}
 
+                                        {finding.confidence && finding.confidence !== "N/A" && (
+                                          <div>
+                                            <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Confidence Score</div>
+                                            <div className="text-indigo-400 font-bold mb-4">{finding.confidence}</div>
+                                          </div>
+                                        )}
+
                                         {finding.evidence && finding.evidence !== "N/A" && (
                                           <div>
                                             <div className="flex items-center justify-between mb-2">

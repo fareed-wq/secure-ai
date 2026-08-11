@@ -277,6 +277,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     return {
         "url": url,
         "score": score,
+        "penalties": penalties,
         "severity_counts": severity_counts,
         "category_scores": category_scores,
         "owasp_coverage": list(owasp_categories),

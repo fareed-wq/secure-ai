@@ -23,6 +23,12 @@ const FindingCard = ({ issue, idx }) => {
         </div>
         
         <div className="space-y-3 mt-3">
+          {issue.confidence && issue.confidence !== 'N/A' && (
+            <div className="flex items-center gap-2 bg-slate-800/50 w-fit px-3 py-1.5 rounded-lg border border-slate-700/50 mb-4">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Confidence:</span>
+              <span className="text-sm font-bold text-indigo-400">{issue.confidence}</span>
+            </div>
+          )}
           <span className="text-lg font-bold text-slate-100 block mb-1">The Problem:</span>
           <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.problem}</span>
           <span className="text-lg font-bold text-slate-100 block mb-1">Why it matters:</span>
