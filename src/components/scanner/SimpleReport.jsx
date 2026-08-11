@@ -86,9 +86,11 @@ const SimpleReport = ({ reportData }) => {
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 w-full">
-            <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex flex-col justify-center h-full min-h-[90px]">
-              <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Issues Found</div>
-              <div className="text-2xl font-black text-white mt-1 mb-2">{issues.length}</div>
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
+              <div>
+                <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Issues Found</div>
+                <div className="text-4xl font-extrabold tracking-tight mt-2 block text-white">{issues.length}</div>
+              </div>
               <div className="border-t border-slate-800/80 pt-2.5 mt-3 flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${highRiskCount > 0 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${highRiskCount > 0 ? 'bg-rose-400 animate-pulse' : 'bg-slate-600'}`}></span>
@@ -104,10 +106,12 @@ const SimpleReport = ({ reportData }) => {
                 </span>
               </div>
             </div>
-            <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex flex-col justify-center h-full min-h-[90px]">
-              <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Passed Checks</div>
-              <div className="text-2xl font-black text-emerald-400 mt-1">{passed.length}</div>
-              <div className="text-[11px] font-mono text-emerald-400/80 mt-3 pt-2 border-t border-slate-800/80 flex items-center gap-1">
+            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
+              <div>
+                <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Passed Checks</div>
+                <div className="text-4xl font-extrabold tracking-tight mt-2 block text-emerald-400">{passed.length}</div>
+              </div>
+              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center gap-1.5 text-xs font-mono font-medium text-emerald-400/90">
                 <span>✓</span>
                 {passed.length} Audits Verified Clean
               </div>
