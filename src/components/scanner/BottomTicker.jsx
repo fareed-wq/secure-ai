@@ -21,7 +21,7 @@ const BottomTicker = () => {
         transition={{
           repeat: Infinity,
           ease: "linear",
-          duration: 25,
+          duration: 15,
         }}
       >
         {QUOTES.map((quote, idx) => (
