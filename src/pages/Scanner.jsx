@@ -205,22 +205,53 @@ function Scanner() {
           )}
 
           {/* 3. ERROR STATE */}
-          {scanState === 'error' && (
-            <motion.div
-              key="error"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-red-900/20 border border-red-800 backdrop-blur-xl shadow-2xl text-center"
-            >
-              <ShieldAlert className="w-20 h-20 text-red-500 mx-auto mb-6" />
-              <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Incomplete</h2>
-              <p className="text-red-200 mb-8">{errorMessage}</p>
-              <button onClick={resetScan} className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl transition-all">
-                Run Another Scan
-              </button>
-            </motion.div>
-          )}
+          {scanState === 'error' && (() => {
+            const isTlsError = errorMessage && (
+              errorMessage.includes('SSLError') || 
+              errorMessage.includes('SSL:') || 
+              errorMessage.includes('TLSV1_ALERT') ||
+              errorMessage.includes('certificate verify failed') ||
+              errorMessage.includes('CERTIFICATE_VERIFY_FAILED')
+            );
+
+            return (
+              <motion.div
+                key="error"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+                className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-red-900/20 border border-red-800 backdrop-blur-xl shadow-2xl text-center"
+              >
+                <ShieldAlert className="w-20 h-20 text-red-500 mx-auto mb-6" />
+                
+                {isTlsError ? (
+                  <>
+                    <h2 className="text-2xl font-bold text-red-400 mb-4 uppercase tracking-wider">SCAN INCOMPLETE</h2>
+                    <p className="text-red-200 mb-4 font-medium">
+                      We couldn't establish a secure HTTPS connection with the target website.<br/>
+                      The target server terminated the TLS connection before the scan could begin.
+                    </p>
+                    <p className="text-red-300/80 mb-6 text-sm">
+                      No security score was generated because the website could not be reached securely.
+                    </p>
+                    <details className="text-left mb-8 bg-red-950/50 p-4 rounded-lg border border-red-900/50">
+                      <summary className="text-xs text-red-400/80 cursor-pointer hover:text-red-300 font-mono">View Technical Details</summary>
+                      <pre className="mt-3 text-xs text-red-300 whitespace-pre-wrap font-mono break-all overflow-x-auto">{errorMessage}</pre>
+                    </details>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Incomplete</h2>
+                    <p className="text-red-200 mb-8">{errorMessage}</p>
+                  </>
+                )}
+
+                <button onClick={resetScan} className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl transition-all">
+                  Run Another Scan
+                </button>
+              </motion.div>
+            );
+          })()}
 
           {/* 4. MODE SELECTION STATE */}
           {scanState === 'mode-select' && (
