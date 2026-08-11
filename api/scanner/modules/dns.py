@@ -46,6 +46,14 @@ class DNSCAAModule(ScannerModule):
                     ))
         except Exception as e:
             logger.error(f"DNSCAAModule failed: {e}")
+            findings.append(self.make_finding(
+                "CAA Record Verification Inconclusive",
+                "Inconclusive",
+                "We could not verify your domain's CAA records due to a network timeout with the DNS resolver.",
+                "DNS resolution timed out or failed.",
+                owasp="A00: Informational",
+                category="domain_email"
+            ))
 
         # DNSSEC Check
         try:
@@ -72,8 +80,15 @@ class DNSCAAModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="dns_security"
                     ))
-        except Exception:
-            pass
+        except Exception as e:
+            findings.append(self.make_finding(
+                "DNSSEC Verification Inconclusive",
+                "Inconclusive",
+                "We could not verify your domain's DNSSEC status due to a network timeout with the DNS resolver.",
+                "DNS resolution timed out or failed.",
+                owasp="A00: Informational",
+                category="dns_security"
+            ))
 
         # Wildcard DNS Detection (Informational)
         try:
@@ -170,6 +185,14 @@ class DNSEmailSecurityModule(ScannerModule):
                     ))
         except Exception as e:
             logger.error(f"DNSEmailSecurityModule SPF failed: {e}")
+            findings.append(self.make_finding(
+                "SPF Record Verification Inconclusive",
+                "Inconclusive",
+                "We could not verify your domain's SPF records due to a network timeout with the DNS resolver.",
+                "DNS resolution timed out or failed.",
+                owasp="A00: Informational",
+                category="domain_email"
+            ))
 
         # DMARC
         try:
@@ -221,6 +244,14 @@ class DNSEmailSecurityModule(ScannerModule):
                     ))
         except Exception as e:
             logger.error(f"DNSEmailSecurityModule DMARC failed: {e}")
+            findings.append(self.make_finding(
+                "DMARC Policy Verification Inconclusive",
+                "Inconclusive",
+                "We could not verify your domain's DMARC policy due to a network timeout with the DNS resolver.",
+                "DNS resolution timed out or failed.",
+                owasp="A00: Informational",
+                category="domain_email"
+            ))
 
         # MTA-STS Check
         try:

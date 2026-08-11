@@ -20,6 +20,9 @@ const SimpleReport = ({ reportData }) => {
   });
 
   const topPriorities = issues.slice(0, 5); // Max 5 items
+  const highRiskCount = issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length;
+  const mediumRiskCount = issues.filter(i => i.severity === 'Medium').length;
+  const lowRiskCount = issues.filter(i => i.severity === 'Low').length;
   const score = reportData?.score ?? 0;
   
   // Check if this is a WAF-blocked scan (only 1 finding and it's the WAF finding)
@@ -65,25 +68,40 @@ const SimpleReport = ({ reportData }) => {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8" id="report-content">
       
       {/* 1. Executive Summary & Score */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 text-white p-6 lg:p-8 rounded-3xl shadow-xl flex flex-col justify-between h-full">
+        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 text-white p-6 lg:p-8 rounded-3xl shadow-xl flex flex-col h-fit">
           <div>
             <h2 className="text-2xl font-black mb-4">Executive Summary</h2>
             <p className="text-xl text-slate-300 leading-relaxed">
               {healthSummary}
             </p>
+            {highRiskCount > 0 && (
+              <div className="my-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse flex-shrink-0" />
+                <p className="text-xs text-rose-200">
+                  <strong>Priority Focus:</strong> Resolve {highRiskCount} High-risk finding(s) to optimize overall security posture.
+                </p>
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-auto pt-6 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 w-full">
             <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex flex-col justify-center h-full min-h-[90px]">
               <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Issues Found</div>
               <div className="text-2xl font-black text-white mt-1 mb-2">{issues.length}</div>
-              <div className="flex items-center gap-2 text-xs font-semibold">
-                <span className="text-rose-400">High {issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length}</span>
-                <span className="text-slate-500">•</span>
-                <span className="text-amber-400">Medium {issues.filter(i => i.severity === 'Medium').length}</span>
-                <span className="text-slate-500">•</span>
-                <span className="text-slate-400">Low {issues.filter(i => i.severity === 'Low').length}</span>
+              <div className="border-t border-slate-800/80 pt-2.5 mt-3 flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${highRiskCount > 0 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${highRiskCount > 0 ? 'bg-rose-400 animate-pulse' : 'bg-slate-600'}`}></span>
+                  High {highRiskCount}
+                </span>
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${mediumRiskCount > 0 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${mediumRiskCount > 0 ? 'bg-amber-400' : 'bg-slate-600'}`}></span>
+                  Medium {mediumRiskCount}
+                </span>
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${lowRiskCount > 0 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${lowRiskCount > 0 ? 'bg-indigo-400' : 'bg-slate-600'}`}></span>
+                  Low {lowRiskCount}
+                </span>
               </div>
             </div>
             <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex flex-col justify-center h-full min-h-[90px]">

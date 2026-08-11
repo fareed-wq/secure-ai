@@ -106,10 +106,12 @@ class TestPhase21SubdomainDiscovery(unittest.TestCase):
 
     def test_exceptions_graceful(self):
         findings = self._run_with_exception(requests.exceptions.Timeout("Timeout!"))
-        self.assertEqual(len(findings), 0)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]["name"], "Subdomain Discovery Inconclusive")
         
         findings = self._run_with_exception(ValueError("Invalid JSON"))
-        self.assertEqual(len(findings), 0)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]["name"], "Subdomain Discovery Inconclusive")
 
     def test_is_registered(self):
         module_names = [type(m).__name__ for m in REGISTERED_MODULES]

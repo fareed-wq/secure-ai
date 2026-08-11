@@ -336,7 +336,14 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
                                 discovered_subdomains.add(clean_name)
         except Exception as e:
             logger.debug(f"PassiveSubdomainDiscoveryModule error: {e}")
-            pass
+            findings.append(self.make_finding(
+                "Subdomain Discovery Inconclusive",
+                "Inconclusive",
+                "We could not verify your domain's certificate transparency logs due to a network timeout with an external service.",
+                "crt.sh connection timed out or failed.",
+                owasp="A00: Informational",
+                category="information_exposure"
+            ))
 
         if discovered_subdomains:
             sub_list = sorted(list(discovered_subdomains))
