@@ -46,273 +46,273 @@ export const TRANSLATIONS = {
     name: "Insecure Connection Fallback",
     category: "Encryption",
     impact: "High",
-    problem: "The scanner checked if your website strictly requires all visitors to use a secure connection and found this requirement is missing.",
-    why: "If a customer types your web address without \"https\", they may connect over an unencrypted channel. This increases the risk that someone on the same network could read their data."
+    problem: "The scanner checked if your website strictly forces secure connections and found this rule is missing.",
+    why: "Without this, visitors might accidentally connect insecurely, allowing eavesdroppers to read their private data."
   },
   "Missing Strict-Transport-Security (HSTS)": {
     name: "Missing Forced Encryption (HSTS)",
     category: "Encryption",
     impact: "High",
-    problem: "The scanner checked if your website strictly requires all visitors to use a secure connection and found this requirement is missing.",
-    why: "If a customer types your web address without \"https\", they may connect over an unencrypted channel. This increases the risk that someone on the same network could read their data."
+    problem: "The scanner checked if your website strictly forces secure connections and found this rule is missing.",
+    why: "Without this, visitors might accidentally connect insecurely, allowing eavesdroppers to read their private data."
   },
   "Missing Content-Security-Policy (CSP)": {
     name: "Weak Data Injection Guard (CSP)",
     category: "Browser Protection",
     impact: "High",
-    problem: "The scanner checked your website's rules for loading programs and found it does not have strict policies to block unauthorized scripts from running.",
-    why: "Without strict rules, there is an increased risk that malicious code could be sneaked onto your web pages, which could potentially be used to view or steal visitor information."
+    problem: "The scanner found your website lacks strict policies to block unauthorized scripts from running.",
+    why: "Hackers could sneak malicious code onto your web pages to view or steal visitor information."
   },
   "Weak Content-Security-Policy (CSP)": {
     name: "Weak Data Injection Guard (CSP)",
     category: "Browser Protection",
     impact: "Medium",
-    problem: "The scanner checked your website's rules for loading programs and found they are too permissive.",
-    why: "Relaxed rules increase the risk that malicious code could be allowed to run on your web pages, which could potentially be used to view or steal visitor information."
+    problem: "The scanner checked your website's rules for loading scripts and found them to be too permissive.",
+    why: "Loose rules increase the risk of malicious code running and stealing private visitor information."
   },
   "Missing X-Frame-Options": {
     name: "Missing Clickjacking Protection (X-Frame-Options)",
     category: "Browser Protection",
     impact: "Medium",
-    problem: "The scanner verified whether your website has rules preventing other websites from embedding your pages inside hidden frames, and found these rules are missing.",
-    why: "Without this protection, another website could secretly place your web pages behind invisible buttons. This may trick visitors into interacting with your site without realizing it."
+    problem: "The scanner found your website lacks rules stopping others from embedding your pages inside hidden frames.",
+    why: "Another site could place your pages behind invisible buttons to trick visitors into unwanted actions."
   },
   "Missing X-Frame-Options Header": {
     name: "Missing Clickjacking Protection (X-Frame-Options)",
     category: "Browser Protection",
     impact: "Medium",
-    problem: "The scanner verified whether your website has rules preventing other websites from embedding your pages inside hidden frames, and found these rules are missing.",
-    why: "Without this protection, another website could secretly place your web pages behind invisible buttons. This may trick visitors into interacting with your site without realizing it."
+    problem: "The scanner found your website lacks rules stopping others from embedding your pages inside hidden frames.",
+    why: "Another site could place your pages behind invisible buttons to trick visitors into unwanted actions."
   },
   "Missing X-Content-Type-Options": {
     name: "Missing Malicious File Guard (nosniff)",
     category: "Browser Protection",
     impact: "Low",
-    problem: "The scanner detected that your server does not explicitly tell web browsers to strictly trust the file types it sends.",
-    why: "If the browser tries to guess a file's format, it may accidentally run a harmful program disguised as a normal image or document."
+    problem: "The scanner detected your server doesn't tell browsers to strictly trust the file types it sends.",
+    why: "Browsers might misidentify files, accidentally running harmful programs disguised as normal images or documents."
   },
   "Missing Referrer-Policy": {
     name: "Missing External Link Privacy (Referrer-Policy)",
     category: "Privacy Protection",
     impact: "Low",
-    problem: "The scanner found that your website does not control what details are shared when visitors click a link leading to an outside website.",
-    why: "Sensitive details or private page addresses could unintentionally be shared with external tracking companies or other websites when users leave your site."
+    problem: "The scanner found your website shares excessive details when visitors click links to outside websites.",
+    why: "Private page addresses or sensitive details could be unintentionally leaked to external tracking companies."
   },
   "Missing Permissions-Policy": {
     name: "Unrestricted Browser Capabilities (Permissions-Policy)",
     category: "Privacy Protection",
     impact: "Low",
-    problem: "The scanner noted that your website does not set strict rules about who can request access to a visitor's device features, like their camera or location.",
-    why: "If your site loads third-party tools or ads, those tools could potentially request access to the visitor's device features without your direct oversight."
+    problem: "The scanner noted your website doesn't restrict external tools from requesting device camera or location access.",
+    why: "Third-party ads or widgets could potentially ask for a visitor's device features without your oversight."
   },
   "Missing Cross-Origin-Opener-Policy": {
     name: "Missing Cross-Window Isolation (COOP)",
     category: "Browser Protection",
     impact: "Informational",
-    problem: "The scanner found that your website shares its working memory space with external links that open in new tabs.",
-    why: "If a user clicks a link on your site that opens a malicious page in a new tab, that malicious page could potentially monitor what the user is doing on your website."
+    problem: "The scanner found your website shares its working memory with external links opening in new tabs.",
+    why: "A malicious page opened from a link on your site could potentially monitor user activity."
   },
   "Missing Cross-Origin-Embedder-Policy": {
     name: "Missing Cross-Origin Resource Isolation (COEP)",
     category: "Browser Protection",
     impact: "Informational",
-    problem: "The scanner checked your media sharing rules and found that your website loads external files without requiring strict permission checks.",
-    why: "This prevents modern web browsers from isolating your website's data, which may leave user information exposed to advanced data leaks."
+    problem: "The scanner found your website loads external files without requiring strict permission safety checks.",
+    why: "This prevents web browsers from isolating your site's memory, potentially exposing user data to leaks."
   },
   "Missing Cross-Origin-Resource-Policy": {
     name: "Unprotected Cross-Origin Assets (CORP)",
     category: "Privacy Protection",
     impact: "Informational",
-    problem: "The scanner found that your web server does not explicitly restrict which external websites are allowed to display your site's images and files.",
-    why: "Other websites could potentially display your private media or files directly on their own pages without your authorization."
+    problem: "The scanner found your server doesn't restrict external websites from displaying your site's images directly.",
+    why: "Other websites could potentially display your private media or files directly without authorization."
   },
   "Missing SPF Record": {
     name: "Missing Email Anti-Spoofing (SPF)",
     category: "Email Trust",
     impact: "Medium",
-    problem: "The scanner checked your domain records and found you do not have an official list of approved email senders for your company.",
-    why: "Without this list, it is easier for unauthorized people to send fake emails that look like they came from your company, which increases the risk of scams targeting your customers."
+    problem: "The scanner checked your domain and found you lack an official list of approved email senders.",
+    why: "Scammers can easily forge emails claiming to be your company, targeting your customers with scams."
   },
   "Missing DMARC Policy": {
     name: "Inactive Email Phishing Defense (DMARC)",
     category: "Email Trust",
     impact: "Medium",
-    problem: "The scanner detected that your domain does not instruct email providers on what to do if they receive fake emails pretending to be from you.",
-    why: "Email providers may still deliver fake emails claiming to be your business to your customers' inboxes instead of automatically blocking them."
+    problem: "The scanner detected your domain doesn't instruct email providers to block fake emails impersonating you.",
+    why: "Email providers might deliver forged emails pretending to be your business to customers' inboxes."
   },
   "Weak DMARC Policy (p=none)": {
     name: "Inactive Email Phishing Defense (DMARC)",
     category: "Email Trust",
     impact: "Informational",
-    problem: "The scanner found that your domain's email verification is set to 'monitoring only' mode.",
-    why: "While monitoring is helpful, email providers will still deliver fake emails claiming to be your business to your customers' inboxes instead of blocking them."
+    problem: "The scanner found your domain's email verification is currently set to a 'monitoring only' mode.",
+    why: "While helpful, email providers will still deliver forged emails claiming to be your business."
   },
   "Missing DNS CAA Record": {
     name: "Missing Certificate Authority Lock (CAA)",
     category: "Domain Trust",
     impact: "Low",
-    problem: "The scanner found that your domain name lacks a digital lock that controls which security companies are allowed to issue trust certificates for your website.",
-    why: "An unauthorized person could potentially trick a random security company into issuing a valid certificate for your website, which may help them create a convincing fake version of your business."
+    problem: "The scanner found your domain lacks controls over which security companies can issue your certificates.",
+    why: "Attackers could trick random security companies into issuing valid certificates for convincing fake websites."
   },
   "Missing security.txt": {
     name: "Missing Vulnerability Disclosure Contact (security.txt)",
     category: "Website Trust",
     impact: "Informational",
-    problem: "The scanner looked for a standard security contact file on your website but could not find one.",
-    why: "If a friendly researcher discovers a flaw in your website, they may not have an official, clear way to privately report it to your team."
+    problem: "The scanner looked for a standard security contact file on your website but found nothing.",
+    why: "Friendly researchers discovering a flaw may not have a clear way to privately report it."
   },
   "Missing HttpOnly Flag on Cookie": {
     name: "Unsecured Session Cookie (HttpOnly)",
     category: "Session Security",
     impact: "Medium",
-    problem: "The scanner found that the digital ID badges (cookies) your website gives to users are not locked away from browser scripts.",
-    why: "If harmful code is ever sneaked onto your website, it could potentially read these digital ID badges and access your customers' accounts."
+    problem: "The scanner found your website's digital ID cookies are not locked away from browser scripts.",
+    why: "If malicious code sneaks onto your site, it could read these cookies and access accounts."
   },
   "Missing Secure Flag on Cookie": {
     name: "Unencrypted Cookie Transmission (Secure Flag)",
     category: "Session Security",
     impact: "Medium",
-    problem: "The scanner detected that the digital ID badges (cookies) used to recognize users could be sent over unencrypted connections.",
-    why: "If a user connects to a public network, their digital ID badge could potentially be intercepted and misused."
+    problem: "The scanner detected digital ID cookies could be sent over unencrypted internet connections.",
+    why: "On a public network, a user's digital ID badge could be intercepted and misused by attackers."
   },
   "Missing SameSite Attribute on Cookie": {
     name: "Unprotected Cross-Site Cookie (SameSite)",
     category: "Session Security",
     impact: "Low",
-    problem: "The scanner found that your website does not restrict its digital ID badges (cookies) from being used by other websites.",
-    why: "If a logged-in customer visits a malicious website, that site could potentially send commands to your website on the customer's behalf without their knowledge."
+    problem: "The scanner found your website doesn't restrict its digital ID cookies from being used externally.",
+    why: "A malicious website could potentially send commands to your website on a customer's behalf."
   },
   "Exposed Server Header": {
     name: "Exposed Web Server Technology",
     category: "Privacy Protection",
     impact: "Informational",
-    problem: "The scanner received technical responses from your server that openly advertise the exact brand and version of the software running your website.",
-    why: "Revealing your exact software version gives outsiders a convenient blueprint of your systems, making it easier for them to look up known weaknesses for that specific software."
+    problem: "The scanner received technical responses openly advertising the exact software running your website.",
+    why: "Revealing specific software versions makes it easier for outsiders to look up known weaknesses."
   },
   "Exposed X-Powered-By Header": {
     name: "Exposed Web Server Technology",
     category: "Privacy Protection",
     impact: "Informational",
-    problem: "The scanner received technical responses from your server that openly advertise the exact underlying technology running your website.",
-    why: "Revealing your exact software version gives outsiders a convenient blueprint of your systems, making it easier for them to look up known weaknesses for that specific software."
+    problem: "The scanner received technical responses openly advertising the exact underlying technology running your website.",
+    why: "Revealing specific software versions makes it easier for outsiders to look up known weaknesses."
   },
   "X-Powered-By Header Exposed": {
     name: "X-Powered-By Header Exposed",
     category: "Privacy Protection",
     impact: "Informational",
-    problem: "The scanner received technical responses from your server that openly advertise the exact underlying technology running your website.",
-    why: "Revealing your exact software version gives outsiders a convenient blueprint of your systems, making it easier for them to look up known weaknesses for that specific software."
+    problem: "The scanner received technical responses openly advertising the exact underlying technology running your website.",
+    why: "Revealing specific software versions makes it easier for outsiders to look up known weaknesses."
   },
   "Missing Automatic HTTPS Forwarding": {
     name: "Missing Automatic HTTPS Forwarding",
     category: "Encryption",
     impact: "High",
-    problem: "The scanner tried to visit the unsecure version of your website and found that it does not automatically redirect to the secure version.",
-    why: "Visitors might end up browsing your site over an unencrypted connection. Any information they submit could potentially be intercepted by someone on the same network."
+    problem: "The scanner tried visiting the unsecure version of your website and found it doesn't automatically redirect.",
+    why: "Visitors browsing over an unencrypted connection could have their sensitive information intercepted over public networks."
   },
   "Wildcard SSL Certificate": {
     name: "Broad Subdomain Certificate Scope",
     category: "Encryption",
     impact: "Informational",
-    problem: "The scanner found that your website uses a single master security key that is valid for every possible sub-section of your domain.",
-    why: "While convenient, if one minor section of your company's network is compromised, that master key could potentially be used to intercept secure traffic across your entire business."
+    problem: "The scanner found your website uses a single master security key valid for every subdomain.",
+    why: "If one minor section is compromised, that master key could intercept secure traffic across the business."
   },
   "Directory Listing Enabled": {
     name: "Exposed Website Files",
     category: "Privacy Protection",
     impact: "High",
-    problem: "The scanner found a folder on your web server that openly lists all the files inside it to the public.",
-    why: "Anyone can casually browse through your server's files. They may discover private backup files, business documents, or internal code that was not meant to be public."
+    problem: "The scanner found a folder on your web server that openly lists its files publicly.",
+    why: "Anyone could discover private backup files, business documents, or internal code meant to remain private."
   },
   "Wildcard CORS Policy": {
     name: "Permissive CORS Policy",
     category: "Session Security",
     impact: "High",
-    problem: "The scanner checked your data-sharing rules and found that your website openly allows any other website on the internet to read your data.",
-    why: "If your website holds private customer data, malicious websites may be able to ask for that data on behalf of a logged-in user, which increases the risk of a privacy breach."
+    problem: "The scanner found your website openly allows any other website to read your visitor data.",
+    why: "Malicious websites could ask for private data on behalf of a logged-in user, causing privacy breaches."
   },
   "Weak TLS Cipher Negotiated": {
     name: "Weak TLS Cipher",
     category: "Encryption",
     impact: "Medium",
-    problem: "The scanner tested your server's connection rules and found that it accepts outdated, weak encryption methods.",
-    why: "Modern computers can often decipher these older encryption methods. If the connection is intercepted, the data may no longer be secure."
+    problem: "The scanner tested your server's connection rules and found it accepts outdated, weak encryption methods.",
+    why: "Modern computers can easily decipher these old methods. Intercepted connections may no longer be secure."
   },
   "Insecure or Obsolete TLS Ciphers Enforced": {
     name: "Obsolete TLS Ciphers Enforced",
     category: "Encryption",
     impact: "High",
-    problem: "The scanner found that your server actively prioritizes obsolete encryption methods instead of modern, secure ones.",
-    why: "By favoring older encryption methods, your customers' data may be inadequately protected during transit, increasing the risk of interception."
+    problem: "The scanner found your server actively prioritizes obsolete encryption methods over modern, secure ones.",
+    why: "Favoring old encryption leaves your customers' data inadequately protected during transit, increasing interception risks."
   },
   "Legacy Weak TLS Ciphers Supported": {
     name: "Legacy Weak TLS Ciphers Supported",
     category: "Encryption",
     impact: "Medium",
-    problem: "The scanner found that your server still supports deprecated weak encryption methods for older devices.",
-    why: "Keeping old encryption methods enabled increases the risk that modern attackers could decipher the information being sent between your website and your visitors."
+    problem: "The scanner found your server still supports deprecated, weak encryption methods for older devices.",
+    why: "Keeping old encryption enabled increases the risk that modern attackers could decipher your visitors' information."
   },
   "Missing HTTPS Redirection": {
     name: "Missing HTTPS Redirection",
     category: "Encryption",
     impact: "High",
-    problem: "The scanner tried to visit the unsecure version of your website and found that it does not automatically redirect to the secure version.",
-    why: "Visitors might end up browsing your site over an unencrypted connection. Any information they submit could potentially be intercepted by someone on the same network."
+    problem: "The scanner tried visiting the unsecure version of your website and found it doesn't automatically redirect.",
+    why: "Visitors browsing over an unencrypted connection could have their sensitive information intercepted over public networks."
   },
   "SSL/TLS Connection Failure": {
     name: "SSL/TLS Connection Failure",
     category: "Encryption",
     impact: "High",
-    problem: "The scanner attempted to securely connect to your website but the connection failed, usually because the security certificate is expired or improperly installed.",
-    why: "Web browsers may display a warning screen to your visitors telling them your site is not secure. This can impact customer trust and prevent them from reaching your site."
+    problem: "The scanner failed to securely connect to your website, likely due to an expired certificate.",
+    why: "Browsers may display severe warning screens, destroying customer trust and preventing access to your site."
   },
   "Open Port Detected": {
     name: "Unexpected Port Open",
     category: "Network Services",
     impact: "Informational",
-    problem: "The scanner discovered an unexpected digital door (port) open on your server facing the public internet.",
-    why: "Every open door is a potential entry point into your systems. Having unnecessary open doors increases the attack surface of your server."
+    problem: "The scanner discovered an unexpected digital door (port) open on your server facing the internet.",
+    why: "Every open door is a potential entry point, increasing the overall attack surface of your server."
   },
   "SMTP Service Exposed": {
     name: "Mail Server Exposed",
     category: "Network Services",
     impact: "Informational",
-    problem: "The scanner found that the service your server uses to process emails is directly accessible to the public internet.",
-    why: "Exposed email servers are frequently targeted by automated tools. This increases the risk that your server could be misused to send spam or accessed without authorization."
+    problem: "The scanner found your server's email processing service is directly accessible to the public internet.",
+    why: "Exposed email servers are heavily targeted by automated tools to send spam or gain unauthorized access."
   },
   "FTP Service Exposed": {
     name: "Unencrypted File Transfer (FTP)",
     category: "Network Services",
     impact: "Informational",
-    problem: "The scanner discovered an unencrypted file transfer service running publicly on your server.",
-    why: "This service sends files and passwords without encryption. Anyone monitoring the network could potentially see your login credentials and gain access to your website's files."
+    problem: "The scanner discovered an unencrypted file transfer service running publicly on your web server.",
+    why: "This service sends passwords without encryption, allowing network snoops to easily steal your login credentials."
   },
   "SSH Service Exposed": {
     name: "Remote Management Exposed (SSH)",
     category: "Network Services",
     impact: "Informational",
-    problem: "The scanner found that the remote management portal for your server is visible to the entire internet.",
-    why: "Automated tools frequently attempt to guess passwords on exposed management portals. If they guess correctly, they could gain unauthorized control over your server."
+    problem: "The scanner found the remote management portal for your server is visible to the internet.",
+    why: "Automated tools frequently attempt to guess passwords here to gain unauthorized control over your server."
   },
   "Telnet Service Exposed": {
     name: "Obsolete Remote Access (Telnet)",
     category: "Network Services",
     impact: "Informational",
-    problem: "The scanner detected an outdated, unencrypted remote access service running on your server.",
-    why: "This service does not use encryption. Passwords and commands sent over this connection could be intercepted by someone monitoring the network."
+    problem: "The scanner detected an outdated, entirely unencrypted remote access service running on your web server.",
+    why: "Passwords and commands sent over this connection can easily be intercepted by anyone monitoring the network."
   },
   "Database Service Exposed": {
     name: "Database Directly Exposed",
     category: "Network Services",
     impact: "Informational",
-    problem: "The scanner found that your business database is directly exposed to the public internet.",
-    why: "Databases hold sensitive information and should typically only communicate with your web server. Exposing them to the internet increases the risk of unauthorized access or data theft."
+    problem: "The scanner found your business database is directly exposed to the entire public internet.",
+    why: "Exposing databases to the internet severely increases the risk of unauthorized access or data theft."
   },
   "HTTP Service Exposed": {
     name: "Unencrypted Web Port (HTTP)",
     category: "Network Services",
     impact: "Informational",
-    problem: "The scanner detected an unencrypted web service running on your server.",
-    why: "If this service doesn't immediately redirect visitors to a secure connection, any customer who happens to use it may be sending their data unprotected over the network."
+    problem: "The scanner detected a completely unencrypted web service port running directly on your main server.",
+    why: "Any customer using this port without redirection sends their data completely unprotected over the network."
   }
 };
