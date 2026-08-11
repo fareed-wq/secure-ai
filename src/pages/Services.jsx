@@ -218,7 +218,7 @@ const Services = () => {
                               {service.impact || 'High'}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-400 leading-relaxed my-3 line-clamp-3">
+                          <p className="text-xs text-slate-400 leading-relaxed my-3">
                             {service.why}
                           </p>
                         </div>
@@ -227,7 +227,7 @@ const Services = () => {
                           <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider block mb-1">
                             Scanner Inspection:
                           </span>
-                          <p className="text-[11px] text-slate-300 font-mono line-clamp-2">
+                          <p className="text-[11px] text-slate-300 font-mono">
                             {service.problem}
                           </p>
                         </div>
