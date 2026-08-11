@@ -77,7 +77,7 @@ const SimpleReport = ({ reportData }) => {
               {healthSummary}
             </p>
             {highRiskCount > 0 && (
-              <div className="my-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 flex items-center gap-3">
+              <div className="rounded-xl border border-rose-500/30 border-l-4 border-l-rose-500 bg-rose-500/10 p-3.5 flex items-center gap-3 my-4">
                 <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse flex-shrink-0" />
                 <p className="text-xs text-rose-200">
                   <strong>Priority Focus:</strong> Resolve {highRiskCount} High-risk finding(s) to optimize overall security posture.
@@ -107,6 +107,10 @@ const SimpleReport = ({ reportData }) => {
             <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex flex-col justify-center h-full min-h-[90px]">
               <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Passed Checks</div>
               <div className="text-2xl font-black text-emerald-400 mt-1">{passed.length}</div>
+              <div className="text-[11px] font-mono text-emerald-400/80 mt-3 pt-2 border-t border-slate-800/80 flex items-center gap-1">
+                <span>✓</span>
+                {passed.length} Audits Verified Clean
+              </div>
             </div>
           </div>
         </div>
