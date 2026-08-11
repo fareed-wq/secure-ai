@@ -2,14 +2,14 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 const QUOTES = [
-  "Paste your link below to catch hidden security flaws before they break your site.",
-  "Catch hidden website risks before they cause problems.",
-  "Enter your domain to uncover hidden security risks automatically.",
-  "Get a simple, easy-to-read safety report for your website instantly.",
-  "Paste your link below to catch hidden security flaws before they break your site.",
-  "Catch hidden website risks before they cause problems.",
-  "Enter your domain to uncover hidden security risks automatically.",
-  "Get a simple, easy-to-read safety report for your website instantly."
+  "Scan your website for security risks",
+  "Find weaknesses before attackers do",
+  "Check your security in seconds",
+  "Get clear, actionable recommendations",
+  "Scan your website for security risks",
+  "Find weaknesses before attackers do",
+  "Check your security in seconds",
+  "Get clear, actionable recommendations"
 ];
 
 const BottomTicker = () => {

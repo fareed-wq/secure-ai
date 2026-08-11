@@ -80,13 +80,13 @@ const ScanForm = ({ onScan }) => {
             className="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none"
           />
           <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 shrink-0">
-            Run Scan <ArrowRight className="w-4 h-4" />
+            Scan <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
         <div className="flex items-center justify-center flex-wrap gap-1 text-center text-xs text-slate-400 mt-2 font-medium px-2">
           <span className="text-indigo-400">🔒</span>
-          <span><strong className="text-slate-300">100% Safe & Non-Intrusive</strong> • No invasive payloads, exploits, or database risks.</span>
+          <span><strong className="text-slate-300">100% Non-Intrusive</strong> • No invasive payloads, exploits, or database modifications.</span>
         </div>
       </form>
     </>
