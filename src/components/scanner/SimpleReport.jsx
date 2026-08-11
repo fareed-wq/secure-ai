@@ -19,7 +19,7 @@ const SimpleReport = ({ reportData }) => {
     return (w[b.severity] || 0) - (w[a.severity] || 0);
   });
 
-  const topPriorities = issues.slice(0, 5); // Max 5 items
+  const topPriorities = issues.slice(0, 3); // Max 3 items
   const highRiskCount = issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length;
   const mediumRiskCount = issues.filter(i => i.severity === 'Medium').length;
   const lowRiskCount = issues.filter(i => i.severity === 'Low').length;
@@ -334,16 +334,52 @@ const SimpleReport = ({ reportData }) => {
       </div>
 
       {/* 3. Action Checklist (Top Priorities) */}
+      {topPriorities.length > 0 && (
+        <div className="bg-amber-950/20 border border-amber-900/50 p-6 md:p-8 rounded-3xl mt-12 mb-12">
+          <details className="group">
+            <summary className="flex items-center gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <div className="bg-amber-500/20 p-2.5 md:p-3 rounded-xl text-amber-400 shrink-0">
+                <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-black text-lg md:text-xl text-white uppercase tracking-wider text-amber-400">
+                  Your Top Priorities
+                </h3>
+                <p className="text-amber-400/80 text-xs md:text-sm mt-0.5 group-open:hidden">
+                  🔴 {topPriorities.length} priority items identified. [ View Top Priorities ▾ ]
+                </p>
+                <p className="text-amber-400/80 text-xs md:text-sm mt-0.5 hidden group-open:block">
+                  Hide Top Priorities
+                </p>
+              </div>
+              <div className="text-amber-500 bg-amber-500/10 p-2 rounded-full group-open:rotate-180 transition-transform">
+                <ChevronDown size={20} />
+              </div>
+            </summary>
+            
+            <div className="mt-6 pt-6 border-t border-amber-900/30">
+              <p className="text-slate-400 mb-6">Review these business risks with your IT provider or web developer.</p>
+              <div className="grid gap-6">
+                {topPriorities.map((issue, idx) => (
+                  <FindingCard key={`priority-${idx}`} issue={issue} idx={idx} />
+                ))}
+              </div>
+            </div>
+          </details>
+        </div>
+      )}
+
+      {/* 3.5 All Detected Findings */}
       {issues.length > 0 && (
-        <div className="space-y-6">
+        <div className="space-y-6 mt-12">
           <div className="flex flex-col">
-            <h3 className="font-black text-2xl text-white uppercase tracking-wider text-amber-400">Your Top Priorities</h3>
-            <p className="text-slate-400 mt-1">Review these business risks with your IT provider or web developer.</p>
+            <h3 className="font-black text-2xl text-white uppercase tracking-wider text-slate-200">All Detected Findings</h3>
+            <p className="text-slate-400 mt-1">A complete list of all identified security issues.</p>
           </div>
           
           <div className="grid gap-6">
-            {issues.slice(0, 3).map((issue, idx) => (
-              <FindingCard key={idx} issue={issue} idx={idx} />
+            {issues.map((issue, idx) => (
+              <FindingCard key={`finding-${idx}`} issue={issue} idx={idx} />
             ))}
           </div>
         </div>
