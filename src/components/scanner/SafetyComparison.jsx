@@ -8,7 +8,7 @@ const SafetyComparison = () => {
         <h2 className="text-2xl md:text-3xl font-bold text-slate-200 flex flex-wrap items-center justify-center gap-2 md:gap-3">
           <span className="text-3xl">🌟</span> Safe for Live Production Environments
         </h2>
-        <p className="text-slate-400 mt-2 font-medium">100% zero-impact scanning. No slowdowns, no downtime, no risks.</p>
+        <p className="text-slate-400 mt-2 font-medium">Passive, non-intrusive scanning designed to minimize impact on your live website.</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto text-left">
@@ -32,7 +32,7 @@ const SafetyComparison = () => {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-slate-200">Production Safe</span>
-                <span className="text-sm text-slate-400">Zero Risk to uptime</span>
+                <span className="text-sm text-slate-400">Designed for live websites</span>
               </div>
             </li>
             <li className="flex items-start gap-3">
@@ -40,8 +40,8 @@ const SafetyComparison = () => {
                 <Check size={16} strokeWidth={3} />
               </div>
               <div>
-                <span className="block text-sm font-semibold text-slate-200">Database Integrity</span>
-                <span className="text-sm text-slate-400">Read-Only Header/DNS Probes</span>
+                <span className="block text-sm font-semibold text-slate-200">Data Safety</span>
+                <span className="text-sm text-slate-400">Read-only security checks</span>
               </div>
             </li>
             <li className="flex items-start gap-3">
@@ -50,7 +50,7 @@ const SafetyComparison = () => {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-slate-200">WAF & Firewall</span>
-                <span className="text-sm text-slate-400">Non-Disruptive Traffic</span>
+                <span className="text-sm text-slate-400">Non-intrusive traffic patterns</span>
               </div>
             </li>
             <li className="flex items-start gap-3">
@@ -59,7 +59,7 @@ const SafetyComparison = () => {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-slate-200">Audit Speed</span>
-                <span className="text-sm text-slate-400">⚡ Sub-5 Seconds</span>
+                <span className="text-sm text-slate-400">⚡ Fast automated scanning</span>
               </div>
             </li>
           </ul>
@@ -85,7 +85,7 @@ const SafetyComparison = () => {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-slate-400">Production Safe</span>
-                <span className="text-sm text-slate-400">High Downtime Risk</span>
+                <span className="text-sm text-slate-400">May affect live systems</span>
               </div>
             </li>
             <li className="flex items-start gap-3">
@@ -93,8 +93,8 @@ const SafetyComparison = () => {
                 <X size={16} strokeWidth={3} />
               </div>
               <div>
-                <span className="block text-sm font-semibold text-slate-400">Database Integrity</span>
-                <span className="text-sm text-slate-400">Risk of Data Corruption (SQLi)</span>
+                <span className="block text-sm font-semibold text-slate-400">Data Safety</span>
+                <span className="text-sm text-slate-400">Can modify or interact with data</span>
               </div>
             </li>
             <li className="flex items-start gap-3">
@@ -103,7 +103,7 @@ const SafetyComparison = () => {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-slate-400">WAF & Firewall</span>
-                <span className="text-sm text-slate-400">Triggers IP Bans / Alerts</span>
+                <span className="text-sm text-slate-400">May trigger security alerts or blocks</span>
               </div>
             </li>
             <li className="flex items-start gap-3">
@@ -112,7 +112,7 @@ const SafetyComparison = () => {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-slate-400">Audit Speed</span>
-                <span className="text-sm text-slate-400">⏳ Hours to Days</span>
+                <span className="text-sm text-slate-400">⏳ Often takes hours to days</span>
               </div>
             </li>
           </ul>
