@@ -6,7 +6,9 @@ const SafetyComparison = () => {
     <div className="w-full mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
       <div className="text-center mb-8">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-200 flex flex-wrap items-center justify-center gap-2 md:gap-3">
-          <ShieldCheck className="w-8 h-8 text-indigo-400" strokeWidth={2} /> Safe for Live Production Environments
+          <div className="w-8 h-8 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center text-emerald-400 flex-shrink-0">
+            <ShieldCheck size={20} strokeWidth={2.5} />
+          </div> Safe for Live Production Environments
         </h2>
         <p className="text-slate-400 mt-2 font-medium">Passive, non-intrusive scanning designed to minimize impact on your live website.</p>
       </div>
