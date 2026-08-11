@@ -51,25 +51,29 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
           <div className="space-y-2 text-sm">
             {highCount > 0 && (
               <div className="flex justify-between text-rose-400">
-                <span>{highCount} High-risk issues</span>
+                <span>{highCount} High-risk {highCount === 1 ? 'issue' : 'issues'}</span>
                 <span>-{highDeduction}</span>
               </div>
             )}
             {medCount > 0 && (
               <div className="flex justify-between text-amber-400">
-                <span>{medCount} Medium-risk issues</span>
+                <span>{medCount} Medium-risk {medCount === 1 ? 'issue' : 'issues'}</span>
                 <span>-{medDeduction}</span>
               </div>
             )}
             {lowCount > 0 && (
               <div className="flex justify-between text-slate-400">
-                <span>{lowCount} Low-risk issues</span>
+                <span>{lowCount} Low-risk {lowCount === 1 ? 'issue' : 'issues'}</span>
                 <span>-{lowDeduction}</span>
               </div>
             )}
-            <div className="border-t border-slate-800 my-2 pt-2 flex justify-between font-bold text-white">
+            <div className="border-t border-slate-800 my-2 pt-2 flex justify-between font-semibold text-slate-300">
+              <span>Total deductions</span>
+              <span>-{highDeduction + medDeduction + lowDeduction}</span>
+            </div>
+            <div className="mt-3 pt-3 flex justify-between items-center font-black text-white text-base">
               <span>Final Score</span>
-              <span>{score}</span>
+              <span className="text-xl">{score}<span className="text-sm text-slate-400 font-normal">/100</span></span>
             </div>
           </div>
         </div>

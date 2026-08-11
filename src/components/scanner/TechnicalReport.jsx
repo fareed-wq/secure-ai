@@ -300,10 +300,30 @@ const TechnicalReport = ({ reportData }) => {
                                         )}
 
                                         {finding.confidence && finding.confidence !== "N/A" && (
-                                          <div>
-                                            <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Confidence Score</div>
-                                            <div className="text-indigo-400 font-bold mb-4">{finding.confidence}</div>
-                                          </div>
+                                          (() => {
+                                            const lowerConf = finding.confidence.toString().toLowerCase();
+                                            let level = 'medium';
+                                            if (lowerConf.includes('high')) level = 'high';
+                                            else if (lowerConf.includes('low')) level = 'low';
+                                            else if (lowerConf.includes('%')) {
+                                              const num = parseInt(lowerConf.replace(/[^0-9]/g, ''), 10);
+                                              if (!isNaN(num)) {
+                                                if (num >= 80) level = 'high';
+                                                else if (num <= 40) level = 'low';
+                                              }
+                                            }
+                                            
+                                            let colorClass = 'text-amber-300';
+                                            if (level === 'high') colorClass = 'text-emerald-400';
+                                            else if (level === 'low') colorClass = 'text-slate-400';
+
+                                            return (
+                                              <div>
+                                                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Confidence Score</div>
+                                                <div className={`${colorClass} font-bold mb-4`}>{finding.confidence}</div>
+                                              </div>
+                                            );
+                                          })()
                                         )}
 
                                         {finding.evidence && finding.evidence !== "N/A" && (

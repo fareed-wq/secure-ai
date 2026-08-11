@@ -7,6 +7,31 @@ const FindingCard = ({ issue, idx }) => {
   const risk = getBusinessRisk(issue.severity);
   const effort = getEffort(issue.severity);
 
+  const getConfidenceStyles = (conf) => {
+    if (!conf) return '';
+    const lowerConf = conf.toString().toLowerCase();
+    
+    let level = 'medium';
+    if (lowerConf.includes('high')) {
+      level = 'high';
+    } else if (lowerConf.includes('low')) {
+      level = 'low';
+    } else if (lowerConf.includes('%')) {
+      const num = parseInt(lowerConf.replace(/[^0-9]/g, ''), 10);
+      if (!isNaN(num)) {
+        if (num >= 80) level = 'high';
+        else if (num <= 40) level = 'low';
+      }
+    }
+
+    if (level === 'high') {
+      return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
+    } else if (level === 'low') {
+      return 'text-slate-400 bg-slate-500/10 border-slate-500/30';
+    }
+    return 'text-amber-200/80 bg-amber-500/10 border-amber-500/20';
+  };
+
   return (
     <div className={`finding-card border-y border-r border-slate-800 rounded-3xl p-8 flex flex-col md:flex-row gap-8 items-start shadow-xl ${
       issue.severity === 'Critical' || issue.severity === 'High' ? 'border-l-4 border-l-red-500 bg-red-950/10' :
@@ -24,9 +49,9 @@ const FindingCard = ({ issue, idx }) => {
         
         <div className="space-y-3 mt-3">
           {issue.confidence && issue.confidence !== 'N/A' && (
-            <div className="flex items-center gap-2 bg-slate-800/50 w-fit px-3 py-1.5 rounded-lg border border-slate-700/50 mb-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Confidence:</span>
-              <span className="text-sm font-bold text-indigo-400">{issue.confidence}</span>
+            <div className={`flex items-center gap-2 w-fit px-3 py-1.5 rounded-lg border mb-4 ${getConfidenceStyles(issue.confidence)}`}>
+              <span className="text-xs font-bold uppercase tracking-wider opacity-80">Confidence:</span>
+              <span className="text-sm font-bold">{issue.confidence}</span>
             </div>
           )}
           <span className="text-lg font-bold text-slate-100 block mb-1">The Problem:</span>
