@@ -69,11 +69,11 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
         <div className={`flex items-center gap-2.5 px-4 py-2.5 bg-slate-900/90 border rounded-xl backdrop-blur-md shadow-lg ${
           isWafBlocked
             ? 'border-slate-500/30'
-            : score >= 90 
-              ? 'border-emerald-500/30' 
-              : score >= 70
-                ? 'border-amber-500/30'
-                : 'border-red-500/30'
+            : score >= 90 ? 'border-emerald-500/30' 
+            : score >= 80 ? 'border-teal-500/30'
+            : score >= 70 ? 'border-amber-500/30'
+            : score >= 60 ? 'border-orange-500/30'
+            : 'border-rose-500/30'
         }`}>
           <div className="flex flex-col text-right">
             <span className="text-[10px] font-bold font-mono tracking-wider text-slate-400 uppercase">SCORE</span>
@@ -81,7 +81,10 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
               <span className="text-xl font-extrabold font-mono leading-none text-slate-400">N/A</span>
             ) : (
               <span className={`text-xl font-extrabold font-mono leading-none ${
-                 score >= 90 ? 'text-emerald-400' : score >= 70 ? 'text-amber-400' : 'text-red-400'
+                 score >= 90 ? 'text-emerald-400' :
+                 score >= 80 ? 'text-teal-400' :
+                 score >= 70 ? 'text-amber-400' :
+                 score >= 60 ? 'text-orange-400' : 'text-rose-400'
               }`}>{score}<span className="text-sm font-normal text-slate-400">/100</span></span>
             )}
           </div>

@@ -38,10 +38,12 @@ const SimpleReport = ({ reportData }) => {
     healthSummary = "Your website demonstrates a strong security posture. Addressing the few remaining recommendations below will achieve a perfect score.";
   } else if (score >= 80) {
     healthSummary = "Your website is well-secured overall. Addressing the few minor recommendations below will further harden your posture.";
-  } else if (score >= 50) {
+  } else if (score >= 70) {
+    healthSummary = "Your website has some security risks that need improvement. Addressing the recommendations below is advised.";
+  } else if (score >= 60) {
     healthSummary = "Your website has moderate security risks. Addressing the top priorities below is highly recommended.";
   } else {
-    healthSummary = "Your website faces significant security risks. Resolving the top priorities below is strongly recommended to protect your users.";
+    healthSummary = "Your website faces critical security risks. Resolving the top priorities below is strongly recommended to protect your users.";
   }
 
   // Calculate domain-based health from backend findings

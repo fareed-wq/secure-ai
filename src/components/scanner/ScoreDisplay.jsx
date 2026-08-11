@@ -24,7 +24,12 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
               <circle cx="80" cy="80" r="70" stroke="currentColor" strokeWidth="12" fill="transparent"
                 strokeDasharray={2 * Math.PI * 70}
                 strokeDashoffset={2 * Math.PI * 70 * (1 - score / 100)}
-                className={score >= 80 ? 'text-emerald-500' : score >= 60 ? 'text-amber-500' : 'text-red-500'}
+                className={
+                  score >= 90 ? 'text-emerald-500' :
+                  score >= 80 ? 'text-teal-500' :
+                  score >= 70 ? 'text-amber-500' :
+                  score >= 60 ? 'text-orange-500' : 'text-rose-500'
+                }
                 strokeLinecap="round"
               />
             )}
@@ -41,8 +46,14 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
         </div>
         <div className="mt-6">
           <div className="text-sm font-bold uppercase tracking-widest text-slate-400">Risk Meter</div>
-          <div className={`text-2xl font-black mt-1 ${isWafBlocked ? 'text-slate-400' : score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-400' : 'text-red-400'}`}>
-            {isWafBlocked ? 'Blocked' : score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 50 ? 'Fair' : 'Poor'}
+          <div className={`text-2xl font-black mt-1 ${
+            isWafBlocked ? 'text-slate-400' : 
+            score >= 90 ? 'text-emerald-400' : 
+            score >= 80 ? 'text-teal-400' : 
+            score >= 70 ? 'text-amber-400' : 
+            score >= 60 ? 'text-orange-400' : 'text-rose-400'
+          }`}>
+            {isWafBlocked ? 'Blocked' : score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 70 ? 'Needs Improvement' : score >= 60 ? 'Weak' : 'Critical'}
           </div>
         </div>
       </div>
