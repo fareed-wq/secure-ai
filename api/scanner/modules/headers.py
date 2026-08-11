@@ -50,6 +50,8 @@ class TechFingerprintModule(ScannerModule):
                         category="information_exposure"
                     ))
                     
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            pass
         except Exception as e:
             import logging
             logging.getLogger(__name__).debug("TechFingerprintModule failed: %s", e)
@@ -125,6 +127,8 @@ class CORSModule(ScannerModule):
                     category="http_headers"
                 ))
         
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            pass
         except Exception as e:
             import logging
             logging.getLogger(__name__).debug("CORSModule failed: %s", e)
@@ -174,6 +178,8 @@ class PermissionsPolicyModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            pass
         except Exception:
             pass
         return findings

@@ -192,7 +192,7 @@ def safe_request(
             cached_result = session._request_cache[cache_key]
             if isinstance(cached_result, Exception):
                 logger.error(f"safe_request cached error for {url}: {cached_result}")
-                return None
+                raise cached_result
             return cached_result
 
     kwargs["allow_redirects"] = False
@@ -203,81 +203,82 @@ def safe_request(
     req_kwargs["stream"] = True
 
     try:
-        for _ in range(max_redirects + 1):
-            parsed = urlparse(current_url)
-            hostname = parsed.hostname
-            scheme = parsed.scheme.lower()
-            
-            if scheme not in ("http", "https"):
-                raise requests.exceptions.RequestException(f"Unsupported scheme: {scheme}")
+        for attempt in range(2):
+            current_url = url
+            try:
+                for _ in range(max_redirects + 1):
+                    parsed = urlparse(current_url)
+                    hostname = parsed.hostname
+                    scheme = parsed.scheme.lower()
+                    
+                    if scheme not in ("http", "https"):
+                        raise requests.exceptions.RequestException(f"Unsupported scheme: {scheme}")
 
-            # The actual DNS resolution and SSRF check is now strictly enforced 
-            # at the raw socket level via SafeHTTPAdapter, preventing TOCTOU.
-            # We preserve this top-level check as a fast-fail optimization.
-            if not is_public_hostname(hostname, session=session):
-                raise requests.exceptions.RequestException(
-                    f"SSRF Protection blocked request to non-public host: {hostname}"
-                )
+                    if not is_public_hostname(hostname, session=session):
+                        raise requests.exceptions.RequestException(
+                            f"SSRF Protection blocked request to non-public host: {hostname}"
+                        )
 
-            resp = session.request(method, current_url, timeout=timeout, **req_kwargs)
+                    resp = session.request(method, current_url, timeout=timeout, **req_kwargs)
 
-            # Merge headers from all redirect hops
-            if hasattr(resp, 'headers') and resp.headers:
-                accumulated_headers.update(resp.headers)
+                    if hasattr(resp, 'headers') and resp.headers:
+                        accumulated_headers.update(resp.headers)
 
-            if resp.is_redirect or resp.status_code in (301, 302, 303, 307, 308):
-                location = resp.headers.get("Location")
-                if not location:
-                    break
-                current_url = urljoin(current_url, location)
-            else:
-                break
-
-        if resp is not None:
-            resp.all_headers = accumulated_headers
-            
-            # Enforce 5MB global read limit
-            orig_iter_content = resp.iter_content
-            def bounded_iter_content(chunk_size=1, decode_unicode=False):
-                bytes_read = 0
-                for chunk in orig_iter_content(chunk_size=chunk_size, decode_unicode=decode_unicode):
-                    if chunk:
-                        chunk_len = len(chunk)
-                        if bytes_read + chunk_len > 5 * 1024 * 1024:
-                            allowed = (5 * 1024 * 1024) - bytes_read
-                            if allowed > 0:
-                                yield chunk[:allowed]
-                            resp.close()
+                    if resp.is_redirect or resp.status_code in (301, 302, 303, 307, 308):
+                        location = resp.headers.get("Location")
+                        if not location:
                             break
-                        bytes_read += chunk_len
-                        yield chunk
+                        current_url = urljoin(current_url, location)
+                    else:
+                        break
 
-            resp.iter_content = bounded_iter_content
-            
-            if not kwargs.get("stream", False):
-                # Skip reading if this is a poorly mocked test response (no raw socket)
-                if not getattr(resp, '_content_consumed', False) and getattr(resp, 'raw', None) is None:
-                    pass
-                else:
-                    chunks = []
-                    try:
-                        for chunk in resp.iter_content(chunk_size=8192):
-                            chunks.append(chunk)
-                    finally:
-                        if getattr(resp, 'raw', None) is not None:
-                            resp.close()
-                    resp._content = b"".join(chunks)
-                    resp._content_consumed = True
-            
-        if is_cacheable and hasattr(session, "_request_cache"):
-            session._request_cache[cache_key] = resp
-            
-        return resp
-    except Exception as e:
-        logger.error(f"safe_request error for {url}: {e}")
-        if is_cacheable and hasattr(session, "_request_cache"):
-            session._request_cache[cache_key] = e
-        return resp
+                if resp is not None:
+                    resp.all_headers = accumulated_headers
+                    
+                    orig_iter_content = resp.iter_content
+                    def bounded_iter_content(chunk_size=1, decode_unicode=False):
+                        bytes_read = 0
+                        for chunk in orig_iter_content(chunk_size=chunk_size, decode_unicode=decode_unicode):
+                            if chunk:
+                                chunk_len = len(chunk)
+                                if bytes_read + chunk_len > 5 * 1024 * 1024:
+                                    allowed = (5 * 1024 * 1024) - bytes_read
+                                    if allowed > 0:
+                                        yield chunk[:allowed]
+                                    resp.close()
+                                    break
+                                bytes_read += chunk_len
+                                yield chunk
+
+                    resp.iter_content = bounded_iter_content
+                    
+                    if not kwargs.get("stream", False):
+                        if not getattr(resp, '_content_consumed', False) and getattr(resp, 'raw', None) is None:
+                            pass
+                        else:
+                            chunks = []
+                            try:
+                                for chunk in resp.iter_content(chunk_size=8192):
+                                    chunks.append(chunk)
+                            finally:
+                                if getattr(resp, 'raw', None) is not None:
+                                    resp.close()
+                            resp._content = b"".join(chunks)
+                            resp._content_consumed = True
+                    
+                if is_cacheable and hasattr(session, "_request_cache"):
+                    session._request_cache[cache_key] = resp
+                    
+                return resp
+            except Exception as e:
+                if attempt == 0:
+                    import time
+                    time.sleep(0.5)
+                    continue
+                logger.error(f"safe_request error for {url}: {e}")
+                if is_cacheable and hasattr(session, "_request_cache"):
+                    session._request_cache[cache_key] = e
+                raise e
     finally:
         if own_session and session:
             session.close()

@@ -131,12 +131,6 @@ class TestPhase33CoverageAccuracy(unittest.TestCase):
         resp.headers = {}
         resp.url = "https://example.com"
         
-        # We need a proper get_header_safe mock, or just rely on the base class one
-        findings = mod.run("https://example.com", "example.com", MagicMock())
-        
-        # In reality the run() method takes resp from a self.safe_request or passed in?
-        # Actually it calls get_header_safe on the passed in response? Wait, no, it makes a safe_request itself.
-        
         with patch('api.scanner.modules.http_security.safe_request', return_value=resp):
             findings = mod.run("https://example.com", "example.com", MagicMock())
             

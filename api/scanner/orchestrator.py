@@ -66,7 +66,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         metadata = get_metadata(hostname, initial_resp, url)
 
         scan_start = _time.monotonic()
-        SCAN_BUDGET_SECONDS = 25  # Global time budget for all modules
+        SCAN_BUDGET_SECONDS = 45  # Global time budget for all modules
 
         pool = ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE)
         futures = {pool.submit(mod.run, url, hostname, session): mod for mod in active_modules}

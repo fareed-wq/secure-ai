@@ -52,11 +52,11 @@ class TestPhase35SecurityHardening(unittest.TestCase):
     # --- Redirect and Scheme Safety Tests ---
 
     def test_unsupported_scheme_rejected(self):
-        resp = safe_request("GET", "file:///etc/passwd", session=self.session)
-        self.assertIsNone(resp)
+        with self.assertRaises(requests.exceptions.RequestException):
+            safe_request("GET", "file:///etc/passwd", session=self.session)
         
-        resp = safe_request("GET", "gopher://127.0.0.1:11211", session=self.session)
-        self.assertIsNone(resp)
+        with self.assertRaises(requests.exceptions.RequestException):
+            safe_request("GET", "gopher://127.0.0.1:11211", session=self.session)
 
     @patch('requests.Session.request')
     @patch('socket.getaddrinfo')
@@ -74,10 +74,9 @@ class TestPhase35SecurityHardening(unittest.TestCase):
         mock_resp.headers = {"Location": "http://private.test/admin"}
         mock_request.return_value = mock_resp
 
-        # safe_request catches the exception during redirect and returns the last valid response (the 302)
-        resp = safe_request("GET", "http://public.test", session=self.session)
-        self.assertIsNotNone(resp)
-        self.assertEqual(resp.status_code, 302)
+        # safe_request raises exception on redirect to private IP
+        with self.assertRaises(requests.exceptions.RequestException):
+            safe_request("GET", "http://public.test", session=self.session)
 
     @patch('requests.Session.request')
     @patch('socket.getaddrinfo')
@@ -90,10 +89,9 @@ class TestPhase35SecurityHardening(unittest.TestCase):
         mock_resp.headers = {"Location": "file:///etc/passwd"}
         mock_request.return_value = mock_resp
 
-        # safe_request catches the exception during redirect and returns the last valid response
-        resp = safe_request("GET", "http://public.test", session=self.session)
-        self.assertIsNotNone(resp)
-        self.assertEqual(resp.status_code, 302)
+        # safe_request raises exception on redirect to unsupported scheme
+        with self.assertRaises(requests.exceptions.RequestException):
+            safe_request("GET", "http://public.test", session=self.session)
 
     # --- Response Size Limitation Tests ---
 

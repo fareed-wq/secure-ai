@@ -102,6 +102,8 @@ class InfrastructureIntelligenceModule(ScannerModule):
                                 category="information_exposure",
                                 owasp="A00: Informational"
                             ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            pass
         except Exception as e:
             logger.debug(f"Infrastructure SAN extraction failed: {e}")
 
@@ -137,6 +139,8 @@ class InfrastructureIntelligenceModule(ScannerModule):
                         category="technology_detection",
                         owasp="A00: Informational"
                     ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            pass
         except Exception:
             pass
 
@@ -168,6 +172,8 @@ class InfrastructureIntelligenceModule(ScannerModule):
                         category="technology_detection",
                         owasp="A00: Informational"
                     ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            pass
         except Exception:
             pass
 
@@ -183,6 +189,8 @@ class InfrastructureIntelligenceModule(ScannerModule):
                         for provider, patterns in self.CLOUD_PROVIDERS.items():
                             if any(re.search(p, c) for p in patterns):
                                 cloud_fingerprints.add((provider, c))
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+                pass
             except Exception:
                 pass
                 
@@ -228,6 +236,8 @@ class InfrastructureIntelligenceModule(ScannerModule):
                                 owasp="A05: Security Misconfiguration"
                             ))
                             break
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+                pass
             except Exception:
                 pass
 

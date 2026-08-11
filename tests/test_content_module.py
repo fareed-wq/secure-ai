@@ -16,7 +16,7 @@ class Test(unittest.TestCase):
         resp.text = text
         resp.headers = headers or {}
         # mock iter_content for streaming
-        resp.iter_content = lambda chunk_size: [text.encode('utf-8')]
+        resp.iter_content = lambda chunk_size=1, **kwargs: [text.encode('utf-8')]
         return resp
 
     @patch('api.scanner.modules.javascript_security.safe_request')

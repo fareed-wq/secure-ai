@@ -155,7 +155,7 @@ class TestScannerModules(unittest.TestCase):
         mock_get.side_effect = requests.exceptions.Timeout("Connection timed out")
         module = SecurityHeadersModule()
         findings = module.run(self.url, self.hostname, self.session)
-        self.assertGreaterEqual(len(findings), 8)
+        self.assertEqual(len(findings), 0)
 
     @patch('requests.Session.request')
     def test_redirect_loop_handling(self, mock_get):

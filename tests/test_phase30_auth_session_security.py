@@ -143,6 +143,15 @@ class TestPhase30AuthSessionSecurity(unittest.TestCase):
         names = [f['name'] for f in findings]
         self.assertNotIn("Potential Missing CSRF Protection", names)
 
+    @patch('api.scanner.modules.auth_session_security.safe_request')
+    def test_csrf_get_form_ignored(self, mock_safe_req):
+        mock_safe_req.return_value = self._mock_response(
+            text='<form action="/search" name="f" method="GET"><input type="text" name="q"><a href="/advanced_search?authuser=0">Advanced Search</a></form>'
+        )
+        findings = self.auth_mod.run("https://example.com", "example.com", self.session)
+        names = [f['name'] for f in findings]
+        self.assertNotIn("Potential Missing CSRF Protection", names)
+
     @patch('api.scanner.modules.http_security.safe_request')
     def test_csp_wildcard(self, mock_safe_req):
         mock_safe_req.return_value = self._mock_response(

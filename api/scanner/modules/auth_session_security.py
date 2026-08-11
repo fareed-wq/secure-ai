@@ -24,7 +24,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
 
     def is_auth_related(self, text: str) -> bool:
         lower_text = text.lower()
-        return any(k in lower_text for k in self.AUTH_KEYWORDS)
+        return any(re.search(r'\b' + re.escape(k) + r'\b', lower_text) for k in self.AUTH_KEYWORDS)
         
     def extract_forms(self, html: str) -> List[str]:
         return self.FORM_PATTERN.findall(html)
@@ -234,7 +234,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                     ))
 
                     # CSRF Posture (Passive Only)
-                    is_state_changing = method in ['POST', 'PUT', 'DELETE'] or is_password_form or self.is_auth_related(form)
+                    is_state_changing = method in ['POST', 'PUT', 'PATCH', 'DELETE']
                     if is_state_changing:
                         has_csrf = False
                         for inp in inputs:
@@ -268,6 +268,20 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         impact="Hackers look for these hidden areas to find ways to take complete control over your website."
                     ))
 
-        except Exception:
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            # Safely skip on network failures to avoid false positives and noise
             pass
+        except Exception as e:
+            logger.error(f"AuthSessionSecurityModule global error: {e}")
+            findings.append(self.make_finding(
+                "Authentication/Session Security Check Inconclusive",
+                "Inconclusive",
+                f"The scanner could not complete this check because the target connection failed: {e}",
+                "Network request failed",
+                confidence="High",
+                owasp="A00: N/A",
+                category="authentication",
+                impact="Unable to assess due to connection failure."
+            ))
+            
         return findings

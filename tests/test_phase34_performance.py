@@ -63,14 +63,14 @@ class TestPhase34Performance(unittest.TestCase):
 
         session.request = mocked_request
 
-        resp1 = safe_request("GET", "http://example.com/timeout", session=session)
-        self.assertIsNone(resp1)
-        self.assertEqual(call_count, 1)
+        with self.assertRaises(requests.exceptions.ReadTimeout):
+            safe_request("GET", "http://example.com/timeout", session=session)
+        self.assertEqual(call_count, 2)
 
-        # Second request should immediately return None from cache, without hitting request
-        resp2 = safe_request("GET", "http://example.com/timeout", session=session)
-        self.assertIsNone(resp2)
-        self.assertEqual(call_count, 1)
+        # Second request should immediately raise exception from cache, without hitting request
+        with self.assertRaises(requests.exceptions.ReadTimeout):
+            safe_request("GET", "http://example.com/timeout", session=session)
+        self.assertEqual(call_count, 2)
 
 if __name__ == '__main__':
     unittest.main()

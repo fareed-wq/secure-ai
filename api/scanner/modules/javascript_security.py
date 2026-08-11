@@ -479,6 +479,9 @@ class JavaScriptSecurityModule(ScannerModule):
                     confidence="High"
                 ))
 
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            # Safely skip on network failures to avoid false positives and noise
+            pass
         except Exception as e:
             logger.debug("JavaScriptSecurityModule failed: %s", e)
             

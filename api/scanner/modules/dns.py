@@ -15,6 +15,7 @@ class DNSCAAModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         domain = hostname[4:] if hostname.startswith("www.") else hostname
+        network_failure = False
 
         try:
             caa_url = f"https://dns.google/resolve?name={domain}&type=CAA"
@@ -44,6 +45,8 @@ class DNSCAAModule(ScannerModule):
                         owasp="A02: Cryptographic Failures",
                         category="domain_email"
                     ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            network_failure = True
         except Exception as e:
             logger.error(f"DNSCAAModule failed: {e}")
             findings.append(self.make_finding(
@@ -80,6 +83,8 @@ class DNSCAAModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="dns_security"
                     ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            network_failure = True
         except Exception as e:
             findings.append(self.make_finding(
                 "DNSSEC Verification Inconclusive",
@@ -107,8 +112,20 @@ class DNSCAAModule(ScannerModule):
                         owasp="A00: Informational",
                         category="dns_security"
                     ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            pass
         except Exception:
             pass
+
+        if network_failure:
+            findings.append(self.make_finding(
+                "DNS Security Verification Inconclusive",
+                "Inconclusive",
+                "We could not verify your domain's DNS-based security records due to a network timeout with the DNS resolver.",
+                "DNS resolution timed out or failed.",
+                owasp="A00: Informational",
+                category="dns_security"
+            ))
 
         return findings
 
@@ -120,6 +137,7 @@ class DNSEmailSecurityModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         domain = hostname[4:] if hostname.startswith("www.") else hostname
+        network_failure = False
 
         # SPF
         try:
@@ -183,6 +201,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="domain_email"
                     ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            network_failure = True
         except Exception as e:
             logger.error(f"DNSEmailSecurityModule SPF failed: {e}")
             findings.append(self.make_finding(
@@ -242,6 +262,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="domain_email"
                     ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            network_failure = True
         except Exception as e:
             logger.error(f"DNSEmailSecurityModule DMARC failed: {e}")
             findings.append(self.make_finding(
@@ -282,6 +304,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="domain_email"
                     ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            pass
         except Exception:
             pass
 
@@ -308,7 +332,19 @@ class DNSEmailSecurityModule(ScannerModule):
                             break
                 if dkim_found:
                     break
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            pass
         except Exception:
             pass
+
+        if network_failure:
+            findings.append(self.make_finding(
+                "Email Security DNS Verification Inconclusive",
+                "Inconclusive",
+                "We could not verify your domain's email security records (like SPF or DMARC) due to a network timeout with the DNS resolver.",
+                "DNS resolution timed out or failed.",
+                owasp="A00: Informational",
+                category="domain_email"
+            ))
 
         return findings

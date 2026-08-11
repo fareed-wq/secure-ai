@@ -265,35 +265,12 @@ class SecurityHeadersModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
-        except requests.exceptions.Timeout as e:
-            findings.append(self.make_finding(
-                "HTTP Request Failed (Timeout)",
-                "High",
-                "Connection timed out while fetching HTTP headers.",
-                str(e),
-                owasp="A05: Security Misconfiguration",
-                                category="http_headers"
-            ))
-            return findings
-        except requests.exceptions.ConnectionError as e:
-            findings.append(self.make_finding(
-                "HTTP Request Failed (Connection Error)",
-                "High",
-                "Connection refused or DNS failure while fetching HTTP headers.",
-                str(e),
-                owasp="A05: Security Misconfiguration",
-                                category="http_headers"
-            ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            # Safely skip on network failures to avoid false positives and noise
+            # (as requested: Request failed -> safely skipped -> 0 penalty)
             return findings
         except Exception as e:
-            findings.append(self.make_finding(
-                "HTTP Request Failed",
-                "High",
-                "Failed to fetch HTTP headers.",
-                str(e),
-                owasp="A05: Security Misconfiguration",
-                                category="http_headers"
-            ))
+            logger.error("SecurityHeadersModule unexpected error: %s", e, exc_info=True)
             return findings
 
         content_type = self.get_header_safe(resp, "Content-Type", "").lower()
@@ -621,6 +598,19 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
-        except Exception:
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            # Safely skip on network failures to avoid false positives and noise
             pass
+        except Exception as e:
+            findings.append(self.make_finding(
+                "HTTP Security Check Inconclusive",
+                "Inconclusive",
+                f"The scanner could not complete this check because the target connection failed: {e}",
+                "Network request failed",
+                confidence="High",
+                owasp="A00: N/A",
+                category="http_headers",
+                impact="Unable to assess due to connection failure."
+            ))
+            
         return findings
