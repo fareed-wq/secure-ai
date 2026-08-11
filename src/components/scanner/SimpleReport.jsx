@@ -111,9 +111,11 @@ const SimpleReport = ({ reportData }) => {
                 <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Passed Checks</div>
                 <div className="text-4xl font-extrabold tracking-tight mt-2 block text-emerald-400">{passed.length}</div>
               </div>
-              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center gap-1.5 text-xs font-mono font-medium text-emerald-400/90">
-                <span>✓</span>
-                {passed.length} Audits Verified Clean
+              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
+                <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></span>
+                  ✓ {passed.length} Audits Clean
+                </span>
               </div>
             </div>
           </div>
