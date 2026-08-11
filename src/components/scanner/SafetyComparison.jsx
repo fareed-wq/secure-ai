@@ -1,12 +1,12 @@
 import React from 'react';
-import { ShieldCheck, AlertOctagon, Check, X } from 'lucide-react';
+import { ShieldCheck, AlertOctagon, Check, X, Shield } from 'lucide-react';
 
 const SafetyComparison = () => {
   return (
     <div className="w-full mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
       <div className="text-center mb-8">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-200 flex flex-wrap items-center justify-center gap-2 md:gap-3">
-          <span className="text-3xl">🌟</span> Safe for Live Production Environments
+          <Shield className="w-5 h-5 text-indigo-500/70" strokeWidth={1.5} /> Safe for Live Production Environments
         </h2>
         <p className="text-slate-400 mt-2 font-medium">Passive, non-intrusive scanning designed to minimize impact on your live website.</p>
       </div>
