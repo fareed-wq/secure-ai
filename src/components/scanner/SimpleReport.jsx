@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check, Shield, Layers, Code2, Box, Mail } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check, Shield, Layers, Code2, Box, Mail, ChevronDown } from 'lucide-react';
 import FindingCard from './FindingCard';
 import ScoreDisplay from './ScoreDisplay';
 
@@ -318,48 +318,40 @@ const SimpleReport = ({ reportData }) => {
         </div>
       )}
 
-      {/* 4. Security Strengths (Selective Passed Checks) */}
-      <div className="bg-emerald-950/20 border border-emerald-900/50 p-8 rounded-3xl mt-12">
-        <div className="flex flex-col mb-6">
-          <h3 className="font-black text-2xl text-white">Security Checks</h3>
-          <p className="text-emerald-200/70 mt-1">Summary of your website's security tests.</p>
-        </div>
-        
-        <div className="flex flex-col md:flex-row gap-8 mb-6">
-          <div className="flex-1 space-y-3">
-            {passed.slice(0, 5).map((item, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Check className="w-5 h-5 text-emerald-400" />
-                <span className="text-slate-200 font-medium">{item.name}</span>
+      {/* 4. Security Strengths (Passed Checks) */}
+      {passed.length > 0 && (
+        <div className="bg-emerald-950/20 border border-emerald-900/50 p-6 md:p-8 rounded-3xl mt-12">
+          <details className="group">
+            <summary className="flex items-center gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+              <div className="bg-emerald-500/20 p-2.5 md:p-3 rounded-xl text-emerald-400 shrink-0">
+                <Check className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
               </div>
-            ))}
-          </div>
-          <div className="flex flex-col justify-center space-y-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
-            <div className="text-emerald-400 font-bold text-lg">{passed.length} checks passed</div>
-            <div className="text-rose-400 font-bold text-lg">{issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length} high-risk issues found</div>
-            <div className="text-amber-400 font-bold text-lg">{issues.filter(i => i.severity === 'Medium' || i.severity === 'Low').length} recommendations</div>
-          </div>
-        </div>
-
-        {passed.length > 5 && (
-          <div className="mt-4">
-            <details className="group">
-              <summary className="flex items-center gap-2 cursor-pointer text-emerald-400 font-medium hover:text-emerald-300 transition-colors list-none">
-                <span className="group-open:hidden">View all passed checks ▼</span>
-                <span className="hidden group-open:inline">Hide passed checks ▲</span>
-              </summary>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4 pt-4 border-t border-emerald-900/30">
+              <div className="flex-1">
+                <h3 className="font-black text-lg md:text-xl text-white flex items-center gap-2">
+                  {passed.length} security checks passed
+                </h3>
+                <p className="text-emerald-400/80 text-xs md:text-sm mt-0.5 group-open:hidden">View passed checks</p>
+                <p className="text-emerald-400/80 text-xs md:text-sm mt-0.5 hidden group-open:block">Hide passed checks</p>
+              </div>
+              <div className="text-emerald-500 bg-emerald-500/10 p-2 rounded-full group-open:rotate-180 transition-transform">
+                <ChevronDown size={20} />
+              </div>
+            </summary>
+            
+            <div className="mt-6 pt-6 border-t border-emerald-900/30">
+              <h4 className="text-emerald-400 font-bold mb-4 uppercase tracking-wider text-xs md:text-sm">Passed Security Checks</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {passed.map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm text-slate-300">
-                    <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span className="truncate">{item.name}</span>
+                  <div key={i} className="flex items-start gap-3 bg-slate-900/40 p-3 rounded-lg border border-emerald-900/20">
+                    <Check className="w-4 h-4 md:w-5 md:h-5 text-emerald-500 shrink-0 mt-0.5" />
+                    <span className="text-slate-300 text-sm font-medium leading-snug">{item.name}</span>
                   </div>
                 ))}
               </div>
-            </details>
-          </div>
-        )}
-      </div>
+            </div>
+          </details>
+        </div>
+      )}
 
       {/* 5. Final Recommendation */}
       <div className="text-center mt-12 py-12 border-t border-slate-800">
