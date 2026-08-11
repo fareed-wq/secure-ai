@@ -95,11 +95,11 @@ const Services = () => {
           </div>
           
           <h1 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
-            Comprehensive Security Posture Audits
+            Security Audits
           </h1>
           <p className="text-lg text-slate-400 mb-10 max-w-2xl">
-            Our automated engine continuously checks your infrastructure against industry standards. 
-            Below are the exact security checks and verifications our scanner performs.
+            Our automated scanner checks your website and infrastructure for common security risks. 
+            Below are the security checks our scanner performs.
           </p>
           
           <div className="relative max-w-xl mb-6">
