@@ -73,9 +73,16 @@ const SimpleReport = ({ reportData }) => {
             {healthSummary}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mt-4">
-            <div className="bg-slate-800/50 border border-slate-700/50 p-4 rounded-xl flex flex-col justify-center">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Issues Found</div>
-              <div className="text-2xl font-black text-white mt-1">{issues.length}</div>
+            <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl flex flex-col justify-center">
+              <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Issues Found</div>
+              <div className="text-2xl font-black text-white mt-1 mb-2">{issues.length}</div>
+              <div className="flex items-center gap-2 text-xs font-semibold">
+                <span className="text-rose-400">High {issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length}</span>
+                <span className="text-slate-500">•</span>
+                <span className="text-amber-400">Medium {issues.filter(i => i.severity === 'Medium').length}</span>
+                <span className="text-slate-500">•</span>
+                <span className="text-slate-400">Low {issues.filter(i => i.severity === 'Low').length}</span>
+              </div>
             </div>
             <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex flex-col justify-center">
               <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Passed Checks</div>
