@@ -24,6 +24,18 @@
 }
 
 /* ==========================================
+   GLOBAL LIGHT THEME (INVERT)
+   ========================================== */
+html.light-theme {
+  filter: invert(1) hue-rotate(180deg);
+  background-color: white;
+}
+html.light-theme img,
+html.light-theme video {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* ==========================================
    DEDICATED PRINT LAYOUT
    ========================================== */
 @page {

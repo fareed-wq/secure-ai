@@ -17,7 +17,9 @@ import {
   LogOut,
   LayoutDashboard,
   Activity,
-  X
+  X,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -27,6 +29,19 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
   const { signOut, user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [isLightMode, setIsLightMode] = useState(() => {
+    return localStorage.getItem('theme') === 'light';
+  });
+
+  React.useEffect(() => {
+    if (isLightMode) {
+      document.documentElement.classList.add('light-theme');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+      localStorage.setItem('theme', 'dark');
+    }
+  }, [isLightMode]);
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={18} /> },
@@ -161,6 +176,19 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
 
       {/* 4. FOOTER */}
       <div className="p-3 flex flex-col gap-2 border-t border-slate-800/80">
+        <button
+          onClick={() => setIsLightMode(!isLightMode)}
+          className={`flex items-center transition-all duration-200 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 ${
+            isCollapsed ? 'justify-center w-full px-0' : 'justify-start gap-3 w-full'
+          }`}
+          title={isLightMode ? "Switch to Dark Mode" : "Switch to Light Mode"}
+        >
+          <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
+            {isLightMode ? <Moon size={18} /> : <Sun size={18} />}
+          </div>
+          {!isCollapsed && <span className="text-sm font-medium truncate">{isLightMode ? "Dark Mode" : "Light Mode"}</span>}
+        </button>
+
         <div
           className={`flex items-center transition-all duration-200 ${
             isCollapsed 
