@@ -53,7 +53,7 @@ const Register = () => {
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-slate-200">
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
         <ShieldCheck className="w-16 h-16 text-emerald-500 mb-4" />
-        <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-white">
+        <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-slate-50">
           Create an account
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400">
@@ -85,7 +85,7 @@ const Register = () => {
                   required
                   value={formData.fullName}
                   onChange={handleChange}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="John Doe"
                 />
               </div>
@@ -102,7 +102,7 @@ const Register = () => {
                   name="company"
                   value={formData.company}
                   onChange={handleChange}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="Acme Corp"
                 />
               </div>
@@ -120,7 +120,7 @@ const Register = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="you@example.com"
                 />
               </div>
@@ -138,7 +138,7 @@ const Register = () => {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="••••••••"
                 />
               </div>

@@ -24,13 +24,13 @@ const Settings = () => {
   return (
     <div className="max-w-4xl space-y-6 text-slate-200">
       <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Account Settings</h1>
+        <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Account Settings</h1>
         <p className="text-slate-400 mt-1">Manage your profile and platform preferences.</p>
       </div>
 
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
         <div className="p-6 border-b border-slate-800">
-          <h2 className="text-lg font-semibold text-white">Profile Information</h2>
+          <h2 className="text-lg font-semibold text-slate-50">Profile Information</h2>
         </div>
         
         <div className="p-6">
@@ -46,7 +46,7 @@ const Settings = () => {
                     type="text"
                     value={formData.fullName}
                     onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                    className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   />
                 </div>
               </div>
@@ -61,7 +61,7 @@ const Settings = () => {
                     type="text"
                     value={formData.company}
                     onChange={(e) => setFormData({...formData, company: e.target.value})}
-                    className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   />
                 </div>
               </div>

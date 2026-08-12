@@ -37,7 +37,7 @@ const Login = () => {
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-slate-200">
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
         <ShieldCheck className="w-16 h-16 text-indigo-500 mb-4" />
-        <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-white">
+        <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-slate-50">
           Sign in to your account
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400">
@@ -70,7 +70,7 @@ const Login = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white placeholder-slate-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 placeholder-slate-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   placeholder="you@example.com"
                 />
               </div>
@@ -89,7 +89,7 @@ const Login = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white placeholder-slate-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 placeholder-slate-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   placeholder="••••••••"
                 />
               </div>

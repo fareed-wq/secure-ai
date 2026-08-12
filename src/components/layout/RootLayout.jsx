@@ -15,7 +15,7 @@ const RootLayout = () => {
         <div className="md:hidden flex items-center p-4 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-30">
           <button 
             onClick={() => setIsMobileOpen(true)}
-            className="p-2 -ml-2 text-slate-400 hover:text-white transition-colors"
+            className="p-2 -ml-2 text-slate-400 hover:text-slate-50 transition-colors"
           >
             <Menu size={24} />
           </button>

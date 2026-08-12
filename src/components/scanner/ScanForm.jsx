@@ -47,7 +47,7 @@ const ScanForm = ({ onScan }) => {
                 <div className="bg-rose-500/10 p-3 rounded-full mb-4">
                   <ShieldAlert className="w-8 h-8 text-rose-400" />
                 </div>
-                <h4 className="text-white font-bold text-lg mb-2">Invalid Domain Format</h4>
+                <h4 className="text-slate-50 font-bold text-lg mb-2">Invalid Domain Format</h4>
                 <p className="text-slate-300 text-sm mb-6">{validationError}</p>
                 <button 
                   onClick={() => {

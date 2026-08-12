@@ -41,8 +41,8 @@ const FindingCard = ({ issue, idx }) => {
       
       <div className="flex-1 space-y-4">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-full bg-slate-800/80 text-white font-bold text-xl flex items-center justify-center shrink-0">{idx + 1}</div>
-          <h4 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+          <div className="w-10 h-10 rounded-full bg-slate-800/80 text-slate-50 font-bold text-xl flex items-center justify-center shrink-0">{idx + 1}</div>
+          <h4 className="text-2xl font-bold text-slate-50 tracking-tight flex items-center gap-2">
             {trans.name}
           </h4>
         </div>
@@ -78,7 +78,7 @@ const FindingCard = ({ issue, idx }) => {
             </svg>
             Estimated Effort
           </div>
-          <div className="text-base font-bold text-white mt-1 block">{effort}</div>
+          <div className="text-base font-bold text-slate-50 mt-1 block">{effort}</div>
         </div>
       </div>
     </div>

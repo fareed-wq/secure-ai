@@ -39,7 +39,7 @@ export const RemediationSnippetBox = ({ findingName }) => {
             className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
               activeTab === index
                 ? 'bg-slate-700 text-cyan-400'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-50'
             }`}
           >
             {item.platform}

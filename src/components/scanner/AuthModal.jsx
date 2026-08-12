@@ -26,7 +26,7 @@ const AuthModal = ({ isOpen, onClose, featureName }) => {
             
             <button 
               onClick={onClose}
-              className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors"
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-50 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -35,7 +35,7 @@ const AuthModal = ({ isOpen, onClose, featureName }) => {
               <ShieldCheck className="w-16 h-16 text-indigo-500 mx-auto" />
               
               <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-white">Create a free account</h3>
+                <h3 className="text-2xl font-bold text-slate-50">Create a free account</h3>
                 <p className="text-slate-300">
                   You need an account to {featureName || 'access this feature'}. It takes less than 30 seconds.
                 </p>
@@ -50,7 +50,7 @@ const AuthModal = ({ isOpen, onClose, featureName }) => {
                 </Link>
                 <Link 
                   to="/login"
-                  className="block w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition-all"
+                  className="block w-full py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-xl font-medium transition-all"
                 >
                   Sign in
                 </Link>

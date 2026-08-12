@@ -17,7 +17,7 @@ import About from './pages/About';
 
 const PlaceholderPage = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
-    <h2 className="text-2xl font-bold text-white mb-2">{title}</h2>
+    <h2 className="text-2xl font-bold text-slate-50 mb-2">{title}</h2>
     <p>This page is under construction.</p>
   </div>
 );

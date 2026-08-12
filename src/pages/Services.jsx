@@ -94,7 +94,7 @@ const Services = () => {
             ⚡ {totalAuditCount} Active Audits across {categoryCount} Security Domains
           </div>
           
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-black text-slate-50 mb-6 tracking-tight">
             Security Audits
           </h1>
           <p className="text-lg text-slate-400 mb-10 max-w-2xl">
@@ -109,7 +109,7 @@ const Services = () => {
             <input
               type="text"
               placeholder="Search checks, e.g. 'Cookie', 'Encryption', 'DNS'..."
-              className="w-full bg-slate-950/50 border border-slate-700/50 text-white placeholder-slate-500 rounded-xl pl-11 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+              className="w-full bg-slate-950/50 border border-slate-700/50 text-slate-50 placeholder-slate-500 rounded-xl pl-11 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -122,7 +122,7 @@ const Services = () => {
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 activeCategory === 'all' 
                   ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' 
-                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                  : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-50 hover:border-slate-700'
               }`}
             >
               All Audits ({totalAuditCount})
@@ -134,7 +134,7 @@ const Services = () => {
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   activeCategory === cat 
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' 
-                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700'
+                    : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-50 hover:border-slate-700'
                 }`}
               >
                 {CATEGORY_METADATA[cat]?.title || cat} ({categoryCounts[cat]})
@@ -154,7 +154,7 @@ const Services = () => {
           <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-6">
             <Search className="w-8 h-8 text-slate-500" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">No matching security checks found</h3>
+          <h3 className="text-xl font-bold text-slate-50 mb-2">No matching security checks found</h3>
           <p className="text-slate-400 max-w-md mb-8">
             We couldn't find any audits matching "{searchTerm}" in the selected category. Try adjusting your search terms.
           </p>
@@ -194,7 +194,7 @@ const Services = () => {
                         <CategoryIcon className="w-5 h-5 text-indigo-400" />
                       </div>
                       <div>
-                        <h2 className="text-xl font-bold text-white tracking-tight">{meta.title}</h2>
+                        <h2 className="text-xl font-bold text-slate-50 tracking-tight">{meta.title}</h2>
                       </div>
                     </div>
                     <div className="px-3 py-1 rounded bg-slate-800/50 text-[10px] font-mono text-slate-400 uppercase tracking-widest">
@@ -211,7 +211,7 @@ const Services = () => {
                       >
                         <div>
                           <div className="flex items-start justify-between mb-3">
-                            <h3 className="text-base font-semibold text-white tracking-tight group-hover:text-indigo-200 transition-colors">
+                            <h3 className="text-base font-semibold text-slate-50 tracking-tight group-hover:text-indigo-200 transition-colors">
                               {service.name}
                             </h3>
                             <span className={`shrink-0 ml-3 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${getImpactStyles(service.impact)}`}>

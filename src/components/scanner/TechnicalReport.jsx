@@ -31,7 +31,7 @@ const TechnicalReport = ({ reportData }) => {
       'Informational': 'bg-blue-600 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm',
       'Passed': 'bg-emerald-500 text-black font-bold px-2.5 py-1 rounded text-xs shadow-sm'
     };
-    return <span className={`uppercase tracking-widest ${styles[severity] || 'bg-slate-700 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm'}`}>{severity}</span>;
+    return <span className={`uppercase tracking-widest ${styles[severity] || 'bg-slate-700 text-slate-50 font-bold px-2.5 py-1 rounded text-xs shadow-sm'}`}>{severity}</span>;
   };
 
   const copyToClipboard = (text) => {
@@ -45,7 +45,7 @@ const TechnicalReport = ({ reportData }) => {
           body, html, #report-content { background: white !important; color: #0f172a !important; }
           * { border-color: #e2e8f0 !important; }
           .bg-\\[\\#0D1117\\], .bg-slate-900, .bg-slate-900\\/50, .bg-slate-800 { background: white !important; box-shadow: none !important; }
-          .text-white, .text-slate-200, .text-slate-300 { color: #0f172a !important; }
+          .text-slate-50, .text-slate-200, .text-slate-300 { color: #0f172a !important; }
           .text-slate-400, .text-slate-500 { color: #475569 !important; }
           .shadow-2xl, .shadow-xl, .shadow-inner { box-shadow: none !important; }
           .text-indigo-400 { color: #4338ca !important; }
@@ -195,7 +195,7 @@ const TechnicalReport = ({ reportData }) => {
 
 
       {/* 3. Tab Switcher: Vulnerabilities vs Compliance */}
-      <div className="flex bg-[#0D1117] border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-xl print:hidden">
+      <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-xl print:hidden">
         <button
           onClick={() => setActiveView('vulnerabilities')}
           className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'vulnerabilities' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
@@ -219,10 +219,10 @@ const TechnicalReport = ({ reportData }) => {
               if (groupFindings.length === 0) return null;
 
               return (
-                <div key={group.key} className="report-section bg-[#0D1117] border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+                <div key={group.key} className="report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
                   <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
                     {group.icon}
-                    <h3 className="font-bold text-white text-lg">{group.label}</h3>
+                    <h3 className="font-bold text-slate-50 text-lg">{group.label}</h3>
                   </div>
                   
                   <div className="w-full overflow-x-auto">
@@ -258,7 +258,7 @@ const TechnicalReport = ({ reportData }) => {
                               )}
                             </td>
                             <td className="px-6 py-4 text-right print:hidden align-top">
-                              <button className="text-slate-500 hover:text-white transition-colors">
+                              <button className="text-slate-500 hover:text-slate-50 transition-colors">
                                 {expandedRow === idx ? <ChevronUp className="w-5 h-5 inline" /> : <ChevronDown className="w-5 h-5 inline" />}
                               </button>
                             </td>
@@ -280,7 +280,7 @@ const TechnicalReport = ({ reportData }) => {
                               <tr className="print:hidden">
                                 <td colSpan={5} className="p-0 border-b-2 border-indigo-500/50">
                                   <div 
-                                    className="bg-[#0a0d12] overflow-hidden transition-all duration-300"
+                                    className="bg-slate-950 overflow-hidden transition-all duration-300"
                                   >
                                     <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
                                       
@@ -421,10 +421,10 @@ const TechnicalReport = ({ reportData }) => {
         {activeView === 'compliance' && reportData?.technical_compliance && (
           <div className="w-full max-w-full overflow-hidden">
             <div className="report-section grid grid-cols-1 gap-6">
-            <div className="bg-[#0D1117] border border-slate-800 rounded-xl p-6 shadow-2xl">
+            <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <ShieldAlert className="w-5 h-5 text-indigo-400" />
-                <h3 className="font-bold text-white text-lg">Technical Compliance Readiness</h3>
+                <h3 className="font-bold text-slate-50 text-lg">Technical Compliance Readiness</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
@@ -518,7 +518,7 @@ const TechnicalReport = ({ reportData }) => {
 
       {/* 5. Final Recommendation */}
       <div className="text-center mt-12 py-12 border-t border-slate-800">
-        <h3 className="text-2xl font-black text-white mb-4">Ready to improve your score?</h3>
+        <h3 className="text-2xl font-black text-slate-50 mb-4">Ready to improve your score?</h3>
         <p className="text-slate-400 text-lg max-w-2xl mx-auto">
           Interested in advanced testing? Let's chat on WhatsApp!
         </p>

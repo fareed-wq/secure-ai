@@ -11,7 +11,7 @@ const ModeSelection = ({ onSelectMode }) => {
       className="max-w-5xl mx-auto space-y-12 mt-12"
     >
       <div className="text-center space-y-4">
-        <h2 className="text-4xl font-extrabold text-white tracking-tight">Scan Complete</h2>
+        <h2 className="text-4xl font-extrabold text-slate-50 tracking-tight">Scan Complete</h2>
         <p className="text-lg text-slate-400 max-w-2xl mx-auto">
           We've successfully analyzed your security posture. How would you like to view the results?
           You can toggle between these modes at any time.
@@ -36,7 +36,7 @@ const ModeSelection = ({ onSelectMode }) => {
                 <PieChart className="w-10 h-10 text-emerald-400" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-white">Simple Report</h3>
+                <h3 className="text-2xl font-bold text-slate-50">Simple Report</h3>
                 <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
                   <Clock className="w-4 h-4" /> 3 min read
                 </div>
@@ -76,7 +76,7 @@ const ModeSelection = ({ onSelectMode }) => {
                 <Terminal className="w-10 h-10 text-blue-400" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-white">Technical Report</h3>
+                <h3 className="text-2xl font-bold text-slate-50">Technical Report</h3>
                 <div className="flex items-center gap-2 text-sm text-slate-400 mt-1">
                   <Clock className="w-4 h-4" /> 10+ min read
                 </div>

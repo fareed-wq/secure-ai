@@ -71,7 +71,7 @@ const SimpleReport = ({ reportData }) => {
       {/* 1. Executive Summary & Score */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 text-white p-6 lg:p-8 rounded-3xl shadow-xl flex flex-col h-fit">
+        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 text-slate-50 p-6 lg:p-8 rounded-3xl shadow-xl flex flex-col h-fit">
           <div>
             <h2 className="text-2xl font-black mb-4">Executive Summary</h2>
             <p className="text-xl text-slate-300 leading-relaxed">
@@ -90,7 +90,7 @@ const SimpleReport = ({ reportData }) => {
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
               <div>
                 <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Issues Found</div>
-                <div className="text-4xl font-extrabold tracking-tight mt-2 block text-white">{issues.length}</div>
+                <div className="text-4xl font-extrabold tracking-tight mt-2 block text-slate-50">{issues.length}</div>
               </div>
               <div className="border-t border-slate-800/80 pt-2.5 mt-3 flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${highRiskCount > 0 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
@@ -293,7 +293,7 @@ const SimpleReport = ({ reportData }) => {
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
                 </span>
               </div>
-              <h2 className="text-lg font-semibold tracking-tight text-white">Target Surface Breakdown</h2>
+              <h2 className="text-lg font-semibold tracking-tight text-slate-50">Target Surface Breakdown</h2>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {surfaceCards.map((card, idx) => {
@@ -305,7 +305,7 @@ const SimpleReport = ({ reportData }) => {
                         <Icon className={`w-3.5 h-3.5 shrink-0 ${card.iconColor}`} />
                         {card.title}
                       </div>
-                      <div className="text-base sm:text-lg font-bold text-white mt-2">
+                      <div className="text-base sm:text-lg font-bold text-slate-50 mt-2">
                         {card.value}
                       </div>
                       <div className="text-xs text-slate-400 mt-1">
@@ -327,7 +327,7 @@ const SimpleReport = ({ reportData }) => {
 
       {/* 2. Security Health Bars */}
       <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl">
-        <h3 className="text-xl font-bold text-white mb-6">Website Health Summary</h3>
+        <h3 className="text-xl font-bold text-slate-50 mb-6">Website Health Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
           {healthMetrics.map((metric, i) => {
             const MetricIcon = metric.icon;
@@ -370,7 +370,7 @@ const SimpleReport = ({ reportData }) => {
                 <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
               </div>
               <div className="flex-1">
-                <h3 className="font-black text-lg md:text-xl text-white uppercase tracking-wider text-amber-400">
+                <h3 className="font-black text-lg md:text-xl text-slate-50 uppercase tracking-wider text-amber-400">
                   Your Top Priorities
                 </h3>
                 <p className="text-amber-400/80 text-xs md:text-sm mt-0.5 group-open:hidden">
@@ -401,7 +401,7 @@ const SimpleReport = ({ reportData }) => {
       {issues.length > 0 && (
         <div className="space-y-6 mt-12">
           <div className="flex flex-col">
-            <h3 className="font-black text-2xl text-white uppercase tracking-wider text-slate-200">All Detected Findings</h3>
+            <h3 className="font-black text-2xl text-slate-50 uppercase tracking-wider text-slate-200">All Detected Findings</h3>
             <p className="text-slate-400 mt-1">A complete list of all identified security issues.</p>
           </div>
           
@@ -422,7 +422,7 @@ const SimpleReport = ({ reportData }) => {
                 <Check className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
               </div>
               <div className="flex-1">
-                <h3 className="font-black text-lg md:text-xl text-white flex items-center gap-2">
+                <h3 className="font-black text-lg md:text-xl text-slate-50 flex items-center gap-2">
                   {passed.length} security checks passed
                 </h3>
                 <p className="text-emerald-400/80 text-xs md:text-sm mt-0.5 group-open:hidden">View passed checks</p>
@@ -450,7 +450,7 @@ const SimpleReport = ({ reportData }) => {
 
       {/* 5. Final Recommendation */}
       <div className="text-center mt-12 py-12 border-t border-slate-800">
-        <h3 className="text-2xl font-black text-white mb-4">Ready to improve your score?</h3>
+        <h3 className="text-2xl font-black text-slate-50 mb-4">Ready to improve your score?</h3>
         <p className="text-slate-400 text-lg max-w-2xl mx-auto">
           Interested in advanced testing? Let's chat on WhatsApp!
         </p>

@@ -41,7 +41,7 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
             )}
           </svg>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-            <span className="text-5xl font-black text-white">{isWafBlocked ? 'N/A' : score}</span>
+            <span className="text-5xl font-black text-slate-50">{isWafBlocked ? 'N/A' : score}</span>
           </div>
         </div>
         <div className="mt-6">
@@ -98,7 +98,7 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
                       <span>Total deductions</span>
                       <span>-{highDeduction + medDeduction + lowDeduction}</span>
                     </div>
-                    <div className="mt-3 pt-3 flex justify-between items-center font-black text-white text-base">
+                    <div className="mt-3 pt-3 flex justify-between items-center font-black text-slate-50 text-base">
                       <span>Final Score</span>
                       <span className="text-xl">{score}<span className="text-sm text-slate-400 font-normal">/100</span></span>
                     </div>

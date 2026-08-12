@@ -10,7 +10,7 @@ const CustomTooltip = ({ active, payload, label }) => {
     const data = payload[0].payload;
     return (
       <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl">
-        <p className="text-white font-medium mb-1">{data.domain}</p>
+        <p className="text-slate-50 font-medium mb-1">{data.domain}</p>
         <p className="text-slate-400 text-xs mb-2">{data.date} at {label}</p>
         <p className="text-indigo-400 font-bold">Score: {data.score}/100</p>
       </div>
@@ -88,7 +88,7 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Overview</h1>
+          <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Overview</h1>
           <p className="text-slate-400 mt-1">Welcome back, {user?.user_metadata?.full_name || user?.email || 'Demo User'}</p>
         </div>
       </div>
@@ -148,7 +148,7 @@ const Dashboard = () => {
 
           {/* Charts Section */}
           <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
-            <h2 className="text-lg font-semibold text-white mb-6">Security Score Trend</h2>
+            <h2 className="text-lg font-semibold text-slate-50 mb-6">Security Score Trend</h2>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={trendData}>
@@ -179,7 +179,7 @@ const Dashboard = () => {
           {/* Recent Scans List */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-800">
-              <h2 className="text-lg font-semibold text-white">Recent Scans</h2>
+              <h2 className="text-lg font-semibold text-slate-50">Recent Scans</h2>
               <Link className="text-xs font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors" to="/scan-history">
                 View Scan History →
               </Link>
@@ -206,7 +206,7 @@ const Dashboard = () => {
                           alt="" 
                         />
                         <div className="flex flex-col">
-                          <span className="text-white font-medium">{scan.target_url}</span>
+                          <span className="text-slate-50 font-medium">{scan.target_url}</span>
                           <span className="text-xs text-slate-500 mt-1">{new Date(scan.created_at).toLocaleString()}</span>
                         </div>
                       </div>

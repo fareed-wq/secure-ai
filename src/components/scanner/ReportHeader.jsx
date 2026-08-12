@@ -8,7 +8,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
     <div className="sticky top-6 z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
       {/* Left: Info */}
       <div className="flex-1">
-        <h2 className="text-2xl font-bold mb-1 text-white">Live Security Posture Report</h2>
+        <h2 className="text-2xl font-bold mb-1 text-slate-50">Live Security Posture Report</h2>
         <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
           <span className="flex items-center gap-2"><Globe className="w-4 h-4"/> {url}</span>
           <span className="opacity-50">•</span>
@@ -46,21 +46,21 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
           <button 
             onClick={onExportPdf}
             title="Export PDF"
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-700"
+            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
           >
             <Download className="w-4 h-4" />
           </button>
           <button 
             onClick={() => onRequireAuth('save reports to your dashboard')}
             title="Save to Dashboard"
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-700"
+            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
           >
             <Bookmark className="w-4 h-4" />
           </button>
           <button 
             onClick={() => onRequireAuth('share public links')}
             title="Share Public Link"
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors border border-slate-700"
+            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
           >
             <Share2 className="w-4 h-4" />
           </button>

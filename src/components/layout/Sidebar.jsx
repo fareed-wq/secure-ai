@@ -125,8 +125,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               to={item.href}
               className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium transition-colors ${
                 isActive 
-                  ? 'bg-slate-800/80 text-white' 
-                  : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
+                  ? 'bg-slate-800/80 text-slate-50' 
+                  : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-50'
               }`}
               title={isCollapsed ? item.label : undefined}
             >
@@ -142,7 +142,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         <div className="relative">
           <button
             onClick={() => setShowMore(!showMore)}
-            className="w-full flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-white transition-colors"
+            className="w-full flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-50 transition-colors"
             title={isCollapsed ? "More" : undefined}
           >
             <div className="text-slate-500"><MoreHorizontal size={18} /></div>
@@ -157,8 +157,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                   to={item.href}
                   className={`flex items-center gap-2 p-1.5 rounded-md text-sm transition-colors ${
                     location.pathname === item.href 
-                      ? 'bg-slate-800/80 text-white font-medium' 
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                      ? 'bg-slate-800/80 text-slate-50 font-medium' 
+                      : 'text-slate-400 hover:text-slate-50 hover:bg-slate-800/50'
                   }`}
                 >
                   <div className={location.pathname === item.href ? "text-indigo-400" : "text-slate-500"}>
@@ -178,7 +178,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       <div className="p-3 flex flex-col gap-2 border-t border-slate-800/80">
         <div
           className={`flex items-center transition-all duration-200 p-2 rounded-lg ${
-            isCollapsed ? 'justify-center w-full px-0' : 'justify-between w-full'
+            isCollapsed ? 'justify-center w-full px-0' : 'justify-start gap-4 w-full'
           }`}
         >
           {!isCollapsed && (
@@ -241,7 +241,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           user ? (
             <button
               onClick={async () => { await signOut(); navigate('/login'); }}
-              className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/50 transition-colors text-sm font-medium"
+              className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-slate-400 hover:text-slate-50 hover:bg-slate-900/50 transition-colors text-sm font-medium"
             >
               <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
                 <LogOut size={16} />
@@ -265,7 +265,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           user ? (
             <button
               onClick={async () => { await signOut(); navigate('/login'); }}
-              className="w-full flex justify-center px-2.5 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900/50 transition-colors"
+              className="w-full flex justify-center px-2.5 py-2 rounded-lg text-slate-400 hover:text-slate-50 hover:bg-slate-900/50 transition-colors"
               title="Sign Out"
             >
               <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">

@@ -126,7 +126,7 @@ function Scanner() {
           >
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 flex flex-col items-center max-w-sm w-full mx-4 text-center">
               <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Generating PDF</h3>
+              <h3 className="text-xl font-bold text-slate-50 mb-2">Generating PDF</h3>
               <p className="text-slate-400">Please wait while we prepare your report...</p>
             </div>
           </motion.div>
@@ -246,7 +246,7 @@ function Scanner() {
                   </>
                 )}
 
-                <button onClick={resetScan} className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl transition-all">
+                <button onClick={resetScan} className="bg-slate-800 hover:bg-slate-700 text-slate-50 px-6 py-3 rounded-xl transition-all">
                   Run Another Scan
                 </button>
               </motion.div>
@@ -287,7 +287,7 @@ function Scanner() {
               </ErrorBoundary>
 
               <div className="mt-12 flex justify-center">
-                <button onClick={resetScan} className="text-slate-400 hover:text-white transition-colors underline underline-offset-4">
+                <button onClick={resetScan} className="text-slate-400 hover:text-slate-50 transition-colors underline underline-offset-4">
                   Run another scan
                 </button>
               </div>
