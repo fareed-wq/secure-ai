@@ -53,7 +53,12 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
             score >= 70 ? 'text-amber-400' : 
             score >= 60 ? 'text-orange-400' : 'text-rose-400'
           }`}>
-            {isWafBlocked ? 'Blocked' : score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 70 ? 'Needs Improvement' : score >= 60 ? 'Weak' : 'Critical'}
+            {isWafBlocked ? 'Scan Incomplete' : score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 70 ? 'Needs Improvement' : score >= 60 ? 'Weak' : 'Critical'}
+          </div>
+          <div className="text-xs text-slate-500 mt-3 max-w-[200px] mx-auto leading-relaxed">
+            {isWafBlocked 
+              ? "Scan did not complete fully. Showing partial findings. No overall score is assigned." 
+              : "Score is based only on verified security findings."}
           </div>
         </div>
       </div>

@@ -14,7 +14,9 @@ const SimpleReport = ({ reportData }) => {
 
   const findings = reportData?.findings || [];
   const passed = findings.filter(f => f.severity === 'Passed');
-  const issues = findings.filter(f => f.severity !== 'Passed' && f.severity !== 'Informational').sort((a, b) => {
+  const informational = findings.filter(f => f.severity === 'Informational');
+  const inconclusive = findings.filter(f => f.severity === 'Inconclusive');
+  const issues = findings.filter(f => f.severity !== 'Passed' && f.severity !== 'Informational' && f.severity !== 'Inconclusive').sort((a, b) => {
     const w = { Critical: 5, High: 4, Medium: 3, Low: 2 };
     return (w[b.severity] || 0) - (w[a.severity] || 0);
   });
@@ -84,7 +86,7 @@ const SimpleReport = ({ reportData }) => {
               </div>
             )}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 w-full">
             <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
               <div>
                 <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Issues Found</div>
@@ -93,7 +95,7 @@ const SimpleReport = ({ reportData }) => {
               <div className="border-t border-slate-800/80 pt-2.5 mt-3 flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${highRiskCount > 0 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${highRiskCount > 0 ? 'bg-rose-400 animate-pulse' : 'bg-slate-600'}`}></span>
-                  High {highRiskCount}
+                  🔴 High {highRiskCount}
                 </span>
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${mediumRiskCount > 0 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${mediumRiskCount > 0 ? 'bg-amber-400' : 'bg-slate-600'}`}></span>
@@ -113,7 +115,31 @@ const SimpleReport = ({ reportData }) => {
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
                   <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-400"></span>
-                  ✓ {passed.length} Audits Clean
+                  🟢 {passed.length} Audits Clean
+                </span>
+              </div>
+            </div>
+            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
+              <div>
+                <div className="text-xs font-bold text-blue-500 uppercase tracking-wider">Informational</div>
+                <div className="text-4xl font-extrabold tracking-tight mt-2 block text-blue-400">{informational.length}</div>
+              </div>
+              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
+                <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold bg-blue-500/15 text-blue-300 border-blue-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-blue-400"></span>
+                  ⚪ {informational.length} Observations
+                </span>
+              </div>
+            </div>
+            <div className="bg-slate-500/10 border border-slate-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
+              <div>
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Inconclusive</div>
+                <div className="text-4xl font-extrabold tracking-tight mt-2 block text-slate-300">{inconclusive.length}</div>
+              </div>
+              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
+                <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold bg-slate-800/40 text-slate-400 border-slate-700">
+                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-slate-500"></span>
+                  ⚠️ {inconclusive.length} Skipped Checks
                 </span>
               </div>
             </div>

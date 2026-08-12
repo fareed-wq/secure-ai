@@ -54,10 +54,26 @@ const FindingCard = ({ issue, idx }) => {
               <span className="text-sm font-bold">{issue.confidence}</span>
             </div>
           )}
-          <span className="text-lg font-bold text-slate-100 block mb-1">The Problem:</span>
+          <span className="text-lg font-bold text-slate-100 block mb-1">What was detected?</span>
           <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.problem}</span>
-          <span className="text-lg font-bold text-slate-100 block mb-1">Why it matters:</span>
-          <span className="text-lg text-slate-300 leading-relaxed block">{trans.why}</span>
+          <span className="text-lg font-bold text-slate-100 block mb-1">Why does it matter?</span>
+          <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.why}</span>
+          
+          {issue.remediation && issue.remediation !== 'N/A' && (
+            <>
+              <span className="text-lg font-bold text-slate-100 block mb-1">What should the website owner do?</span>
+              <span className="text-lg text-slate-300 leading-relaxed block">{issue.remediation}</span>
+            </>
+          )}
+
+          {issue.evidence && issue.evidence !== 'N/A' && (
+            <div className="mt-6 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
+              <span className="text-sm font-bold text-slate-400 block mb-2 uppercase tracking-wider">Technical Evidence</span>
+              <pre className="text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap font-mono">
+                {issue.evidence}
+              </pre>
+            </div>
+          )}
         </div>
       </div>
 
