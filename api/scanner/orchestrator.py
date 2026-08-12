@@ -47,7 +47,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     with get_http_session() as session:
         req_start = _time.monotonic()
         try:
-            initial_resp = safe_request("GET", url, session=session, timeout=(1.8, 2.2), verify=False, allow_redirects=True)
+            initial_resp = safe_request("GET", url, session=session, timeout=(1.8, 2.2), verify=False, allow_redirects=True, max_attempts=1)
         except requests.exceptions.Timeout as e:
             logger.error(f"Target Unreachable (Timeout) for {url}: {e}")
             f = {
