@@ -94,15 +94,12 @@ const SimpleReport = ({ reportData }) => {
               </div>
               <div className="border-t border-slate-800/80 pt-2.5 mt-3 flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${highRiskCount > 0 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${highRiskCount > 0 ? 'bg-rose-500 animate-pulse' : 'bg-slate-600'}`}></span>
                   🔴 High {highRiskCount}
                 </span>
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${mediumRiskCount > 0 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${mediumRiskCount > 0 ? 'bg-amber-500' : 'bg-slate-600'}`}></span>
                   Medium {mediumRiskCount}
                 </span>
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${lowRiskCount > 0 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${lowRiskCount > 0 ? 'bg-indigo-500' : 'bg-slate-600'}`}></span>
                   Low {lowRiskCount}
                 </span>
               </div>
@@ -114,7 +111,6 @@ const SimpleReport = ({ reportData }) => {
               </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0 bg-emerald-500"></span>
                   🟢 {passed.length} Audits Clean
                 </span>
               </div>
@@ -126,7 +122,6 @@ const SimpleReport = ({ reportData }) => {
               </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-blue-500/15 text-blue-300 border-blue-500/30">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0 bg-blue-500"></span>
                   ⚪ {informational.length} Observations
                 </span>
               </div>
@@ -138,7 +133,6 @@ const SimpleReport = ({ reportData }) => {
               </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-slate-800/40 text-slate-400 border-slate-700">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0 bg-slate-500"></span>
                   ⚠️ {inconclusive.length} Skipped Checks
                 </span>
               </div>
