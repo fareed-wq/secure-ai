@@ -3,11 +3,43 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-slate-50: 248 250 252;
+    --color-slate-100: 241 245 249;
+    --color-slate-200: 226 232 240;
+    --color-slate-300: 203 213 225;
+    --color-slate-400: 148 163 184;
+    --color-slate-500: 100 116 139;
+    --color-slate-600: 71 85 105;
+    --color-slate-700: 51 65 85;
+    --color-slate-800: 30 41 59;
+    --color-slate-900: 15 23 42;
+    --color-slate-950: 2 6 23;
+    --color-white: 255 255 255;
+    --color-black: 0 0 0;
+  }
+
+  html.light-theme {
+    --color-slate-50: 2 6 23;
+    --color-slate-100: 15 23 42;
+    --color-slate-200: 30 41 59;
+    --color-slate-300: 51 65 85;
+    --color-slate-400: 71 85 105;
+    --color-slate-500: 100 116 139;
+    --color-slate-600: 148 163 184;
+    --color-slate-700: 203 213 225;
+    --color-slate-800: 226 232 240;
+    --color-slate-900: 241 245 249;
+    --color-slate-950: 248 250 252;
+    --color-white: 15 23 42;
+    --color-black: 255 255 255;
+  }
+
   body {
     @apply bg-slate-950 text-slate-50;
   }
 
-  /* Global Dark Scrollbar */
+  /* Global Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -21,18 +53,6 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-slate-700;
   }
-}
-
-/* ==========================================
-   GLOBAL LIGHT THEME (INVERT)
-   ========================================== */
-html.light-theme {
-  filter: invert(1) hue-rotate(180deg);
-  background-color: white;
-}
-html.light-theme img,
-html.light-theme video {
-  filter: invert(1) hue-rotate(180deg);
 }
 
 /* ==========================================

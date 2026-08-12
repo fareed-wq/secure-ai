@@ -176,18 +176,35 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
 
       {/* 4. FOOTER */}
       <div className="p-3 flex flex-col gap-2 border-t border-slate-800/80">
-        <button
-          onClick={() => setIsLightMode(!isLightMode)}
-          className={`flex items-center transition-all duration-200 p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 ${
-            isCollapsed ? 'justify-center w-full px-0' : 'justify-start gap-3 w-full'
+        <div
+          className={`flex items-center transition-all duration-200 p-2 rounded-lg ${
+            isCollapsed ? 'justify-center w-full px-0' : 'justify-between w-full'
           }`}
-          title={isLightMode ? "Switch to Dark Mode" : "Switch to Light Mode"}
         >
-          <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
-            {isLightMode ? <Moon size={18} /> : <Sun size={18} />}
-          </div>
-          {!isCollapsed && <span className="text-sm font-medium truncate">{isLightMode ? "Dark Mode" : "Light Mode"}</span>}
-        </button>
+          {!isCollapsed && (
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
+                {isLightMode ? <Sun size={18} /> : <Moon size={18} />}
+              </div>
+              <span className="text-sm font-medium text-slate-400 truncate">Theme</span>
+            </div>
+          )}
+          
+          <button
+            onClick={() => setIsLightMode(!isLightMode)}
+            className={`${
+              isLightMode ? 'bg-indigo-500' : 'bg-slate-700'
+            } relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none`}
+            title={isLightMode ? "Switch to Dark Mode" : "Switch to Light Mode"}
+          >
+            <span className="sr-only">Toggle Theme</span>
+            <span
+              className={`${
+                isLightMode ? 'translate-x-6' : 'translate-x-1'
+              } inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out`}
+            />
+          </button>
+        </div>
 
         <div
           className={`flex items-center transition-all duration-200 ${
