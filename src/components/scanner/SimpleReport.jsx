@@ -93,13 +93,13 @@ const SimpleReport = ({ reportData }) => {
                 <div className="text-4xl font-extrabold tracking-tight mt-2 block text-white">{issues.length}</div>
               </div>
               <div className="border-t border-slate-800/80 pt-2.5 mt-3 flex flex-wrap items-center gap-2">
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${highRiskCount > 0 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
-                  🔴 High {highRiskCount}
+                <span className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${highRiskCount > 0 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
+                  High {highRiskCount}
                 </span>
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${mediumRiskCount > 0 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
+                <span className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${mediumRiskCount > 0 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
                   Medium {mediumRiskCount}
                 </span>
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${lowRiskCount > 0 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
+                <span className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${lowRiskCount > 0 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
                   Low {lowRiskCount}
                 </span>
               </div>
