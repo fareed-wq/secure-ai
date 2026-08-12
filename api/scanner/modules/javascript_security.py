@@ -163,19 +163,11 @@ class JavaScriptSecurityModule(ScannerModule):
             map_count = 0
             
             for js_url in script_urls:
-                js_resp = safe_request("GET", js_url, session=session, timeout=(1.5, 2.5), stream=True)
+                js_resp = safe_request("GET", js_url, session=session, timeout=(1.5, 2.5))
                 if not js_resp or js_resp.status_code != 200:
                     continue
                     
-                chunks = []
-                bytes_read = 0
-                for chunk in js_resp.iter_content(8192):
-                    bytes_read += len(chunk)
-                    chunks.append(chunk.decode('utf-8', errors='ignore'))
-                    if bytes_read >= self.MAX_READ_BYTES:
-                        break
-                        
-                js_text = "".join(chunks)
+                js_text = js_resp.text[:self.MAX_READ_BYTES] if js_resp.text else ""
                 filename = js_url.split('/')[-1].split('?')[0] or "bundle.js"
                 
                 # 1. SECRET DETECTION
@@ -267,16 +259,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 if map_url and map_count < self.MAX_MAPS:
                     map_count += 1
                     try:
-                        m_resp = safe_request("GET", map_url, session=session, timeout=(1.5, 2.5), stream=True)
+                        m_resp = safe_request("GET", map_url, session=session, timeout=(1.5, 2.5))
                         if m_resp and m_resp.status_code == 200:
-                            m_chunks = []
-                            m_bytes = 0
-                            for m_c in m_resp.iter_content(8192):
-                                m_bytes += len(m_c)
-                                m_chunks.append(m_c.decode('utf-8', errors='ignore'))
-                                if m_bytes >= self.MAX_READ_BYTES:
-                                    break
-                            m_text = "".join(m_chunks)
+                            m_text = m_resp.text[:self.MAX_READ_BYTES] if m_resp.text else ""
                             if m_text.strip().startswith("{") and ("\"version\"" in m_text or "\"sources\"" in m_text):
                                 source_maps.append(map_url)
                                 

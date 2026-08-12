@@ -64,16 +64,28 @@ class CORSModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            # Passive scan - inject a test Origin header to check for reflection
-            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5), headers={"Origin": "https://audit-test.local"})
+            headers = {"Origin": "https://audit-test.local"}
+            resp = safe_request("GET", url, headers=headers, session=session, timeout=(1.5, 2.5))
             acao = self.get_header_safe(resp, "Access-Control-Allow-Origin")
             acac = self.get_header_safe(resp, "Access-Control-Allow-Credentials").lower() == "true"
             
-            if acao == "*":
+            if acao == "https://audit-test.local" and acac:
+                findings.append(self.make_finding(
+                    "Insecure CORS Policy (Arbitrary Origin Reflection with Credentials)",
+                    "High",
+                    "Your website automatically trusts any other website that asks for data, and allows them to access users' private information.",
+                    f"Access-Control-Allow-Origin: {acao}\\nAccess-Control-Allow-Credentials: true",
+                    impact="Hackers can host a malicious website that silently steals your users' private account information or performs actions on their behalf.",
+                    confidence="High",
+                    remediation="Never dynamically reflect the Origin header. Statically define a list of trusted domains.",
+                    owasp="A05: Security Misconfiguration",
+                    category="http_headers"
+                ))
+            elif acao == "*":
                 if acac:
                     findings.append(self.make_finding(
                         "Insecure CORS Policy (Wildcard with Credentials)",
-                        "High",
+                        "Medium",
                         "Your website is set up to allow any other website on the internet to read your users' private data.",
                         f"Access-Control-Allow-Origin: *\\nAccess-Control-Allow-Credentials: true",
                         impact="Malicious websites visited by your users can silently extract private data directly from your server while the user is logged in.",
@@ -94,29 +106,6 @@ class CORSModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))
-            elif acao == "https://audit-test.local" or acao == "null":
-                if acac:
-                    findings.append(self.make_finding(
-                        "Insecure CORS Policy (Arbitrary Origin Reflection with Credentials)",
-                        "High",
-                        "Your website blindly trusts any other website that asks for access to your users' private data.",
-                        f"Access-Control-Allow-Origin: {acao}\\nAccess-Control-Allow-Credentials: true",
-                        impact="A hacker could build a malicious website that forces your users' browsers to extract and steal their private information from your site.",
-                        confidence="High",
-                        remediation="Validate the Origin header against a strict whitelist of trusted domains before echoing it back.",
-                        owasp="A05: Security Misconfiguration",
-                        category="http_headers"
-                    ))
-                else:
-                    findings.append(self.make_finding(
-                        "CORS Enabled (Arbitrary Origin Reflection)",
-                        "Medium",
-                        "Your website automatically grants data-reading access to any website that asks for it.",
-                        f"Access-Control-Allow-Origin: {acao}",
-                        impact="If your website provides sensitive information, hackers could easily access it from their own malicious sites.",
-                        owasp="A05: Security Misconfiguration",
-                        category="http_headers"
-                    ))
             elif acao:
                 findings.append(self.make_finding(
                     "CORS Enabled",
@@ -127,7 +116,7 @@ class CORSModule(ScannerModule):
                     category="http_headers"
                 ))
         
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass
         except Exception as e:
             import logging
@@ -161,7 +150,7 @@ class PermissionsPolicyModule(ScannerModule):
                 if not is_api_response:
                     findings.append(self.make_finding(
                         "Missing Permissions-Policy",
-                        "Low",
+                        "Informational",
                         "Your website is missing rules that stop it from using sensitive browser features like the camera, microphone, or location.",
                         "Header not found in response",
                         impact="If your website gets hacked, the attackers could secretly turn on the visitors' cameras or track their location.",
@@ -178,7 +167,46 @@ class PermissionsPolicyModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
+            pass
+        except Exception:
+            pass
+        return findings
+
+class CSPQualityModule(ScannerModule):
+    module_name = "CSPQuality"
+    description = "Passively analyzes Content-Security-Policy."
+
+    def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
+        findings = []
+        try:
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
+            csp = self.get_header_safe(resp, "Content-Security-Policy")
+            
+            if csp:
+                csp_lower = csp.lower()
+                weaknesses = []
+                
+                if "unsafe-inline" in csp_lower:
+                    weaknesses.append("unsafe-inline")
+                if "unsafe-eval" in csp_lower:
+                    weaknesses.append("unsafe-eval")
+                if "http:" in csp_lower:
+                    weaknesses.append("http: sources")
+                
+                if weaknesses:
+                    findings.append(self.make_finding(
+                        "Weak Content-Security-Policy",
+                        "Medium",
+                        "Your website's Content-Security-Policy allows potentially unsafe practices.",
+                        f"CSP Weaknesses: {', '.join(weaknesses)}\\n\\nFull CSP: {csp[:100]}...",
+                        impact="The CSP is too permissive, reducing its effectiveness against Cross-Site Scripting (XSS).",
+                        confidence="High",
+                        remediation="Remove unsafe-inline and unsafe-eval from your CSP if possible.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass
         except Exception:
             pass

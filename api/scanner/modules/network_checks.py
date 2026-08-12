@@ -282,29 +282,25 @@ class VerboseStackTraceModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
-        base_url = url.rstrip('/')
-        target_url = f"{base_url}/api/v1/debug_probe_404"
-        
         try:
+            base_url = f"http://{hostname}" if url.startswith("http://") else f"https://{hostname}"
+            target_url = f"{base_url}/api/v1/debug_probe_404"
             resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
-            if resp and resp.status_code in [500, 502]:
-                content_type = resp.headers.get("Content-Type", "").lower()
-                if "application/json" in content_type or "text/plain" in content_type:
-                    signatures = ["SQLSTATE[", "PostgreSQL query failed", "Django Version", "Traceback (most recent call last)", "Express error:"]
-                    text = resp.text
-                    for sig in signatures:
-                        if sig in text:
-                            findings.append(self.make_finding(
-                                "Verbose Backend Error / Stack Trace Disclosure",
-                                "Medium",
-                                "When your website encounters an error, it displays highly detailed technical crash reports.",
-                                target_url,
-                                impact="These detailed crash reports reveal exactly how your system is built, giving attackers a blueprint for finding weaknesses.",
-                                remediation="Configure production environment to mask verbose error stack traces.",
-                                owasp="A05: Security Misconfiguration",
-                                category="information_exposure"
-                            ))
-                            break
+            if resp and resp.text:
+                if "Traceback (most recent call last):" in resp.text:
+                    findings.append(self.make_finding(
+                        "Verbose Error Messages Disclosed",
+                        "Low",
+                        "Your website reveals detailed internal programming errors when something goes wrong.",
+                        "Traceback (most recent call last):",
+                        impact="Hackers can use these internal error messages to understand how your website is built and find vulnerabilities to exploit.",
+                        remediation="Configure your web framework to hide detailed error messages in production and show a generic error page instead.",
+                        owasp="A05: Security Misconfiguration",
+                        category="information_disclosure",
+                        confidence="High"
+                    ))
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
+            pass
         except Exception:
             pass
         return findings

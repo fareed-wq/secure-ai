@@ -44,30 +44,16 @@ class MixedContentModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
         try:
-            hp_resp = safe_request("HEAD", url, session=session, timeout=(1.5, 2.5))
-            if hp_resp:
-                ctype = hp_resp.headers.get("Content-Type", "")
-                if "application/json" in ctype or hostname.startswith("api."):
-                    return findings
-        except Exception as e:
-            logger.debug("MixedContentModule HEAD request failed: %s", e)
-
-        if not url.startswith("https"):
-            return findings
-
-        try:
-            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5), stream=True)
-            if not resp:
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
+            if not resp or not resp.text or not url.startswith("https"):
+                return findings
+                
+            ctype = resp.headers.get("Content-Type", "")
+            if "application/json" in ctype or hostname.startswith("api."):
                 return findings
 
             parser = SimpleHTMLResourceParser()
-            bytes_read = 0
-            for chunk in resp.iter_content(chunk_size=16384):
-                if chunk:
-                    parser.feed(chunk.decode('utf-8', errors='ignore'))
-                    bytes_read += len(chunk)
-                    if bytes_read >= 2000000:  # 2MB limit
-                        break
+            parser.feed(resp.text[:2000000])  # limit to 2MB
 
             if parser.insecure_resources:
                 sample_count = len(parser.insecure_resources)

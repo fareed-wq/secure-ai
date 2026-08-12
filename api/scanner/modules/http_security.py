@@ -443,7 +443,7 @@ class SecurityHeadersModule(ScannerModule):
         if not self.get_header_safe(resp, "X-Content-Type-Options"):
             findings.append(self.make_finding(
                 "Missing X-Content-Type-Options",
-                "Low",
+                "Informational",
                 "Your website is missing a rule that stops browsers from guessing what kind of file they are downloading.",
                 "Header not found in response",
                 impact="Hackers could upload a malicious script disguised as an image, and the browser might run it, compromising the user's computer.",
@@ -456,7 +456,7 @@ class SecurityHeadersModule(ScannerModule):
         if not referrer:
             findings.append(self.make_finding(
                 "Missing Referrer-Policy",
-                "Low",
+                "Informational",
                 "Your website is missing a rule that controls how much of your web addresses are shared when visitors click on external links.",
                 "Header not found in response",
                 impact="Sensitive information hidden in your website's web addresses (like secret password reset tokens) could be accidentally leaked to other websites.",
@@ -502,7 +502,7 @@ class SecurityHeadersModule(ScannerModule):
             if missing_sri:
                 findings.append(self.make_finding(
                     "Missing Subresource Integrity (SRI) on CDN Assets",
-                    "Low",
+                    "Informational",
                     "Your website loads files from other services without checking if they have been secretly altered.",
                     "\n".join(missing_sri),
                     impact="If the external service gets hacked, attackers could alter the files to secretly inject malicious code directly into your website.",

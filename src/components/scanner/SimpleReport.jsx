@@ -23,14 +23,11 @@ const SimpleReport = ({ reportData }) => {
   const highRiskCount = issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length;
   const mediumRiskCount = issues.filter(i => i.severity === 'Medium').length;
   const lowRiskCount = issues.filter(i => i.severity === 'Low').length;
-  const score = reportData?.score ?? 0;
-  
-  // Check if this is a WAF-blocked scan (only 1 finding and it's the WAF finding)
-  const isWafBlocked = findings.length === 1 && findings[0]?.name?.includes('WAF');
+  const score = reportData?.score;
+  const isWafBlocked = reportData?.status === 'INCOMPLETE' || (findings.length === 1 && findings[0]?.name?.includes('WAF'));
 
   let healthSummary = "";
   if (reportData?.executive_summary && isWafBlocked) {
-    // Use backend-provided summary for WAF-blocked or limited scans
     healthSummary = reportData.executive_summary;
   } else if (score === 100) {
     healthSummary = "Your website meets all baseline security best practices with zero open issues or vulnerabilities detected. Outstanding security posture!";

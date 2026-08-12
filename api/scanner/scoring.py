@@ -3,7 +3,7 @@ import requests
 from api.scanner.core import Config
 from api.scanner.data.registry import DOMAIN_MAP
 
-def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: Optional[requests.Response]) -> dict:
+def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: Optional[requests.Response], scan_incomplete: bool = False) -> dict:
     # Auto-assign security domains to findings based on their source module
     for f in all_findings:
         if not f.get("domain"):
@@ -276,7 +276,8 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
 
     return {
         "url": url,
-        "score": score,
+        "status": "INCOMPLETE" if scan_incomplete else "COMPLETED",
+        "score": None if scan_incomplete else score,
         "penalties": penalties,
         "severity_counts": severity_counts,
         "category_scores": category_scores,
@@ -302,6 +303,6 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
         "findings": all_findings,
         "metadata": metadata,
         "potential_issues_count": sum(c for k, c in severity_counts.items() if k in ["Critical", "High", "Medium", "Low"]),
-        "executive_summary": f"Scan completed. Detected {severity_counts['High'] + severity_counts['Critical']} high-priority issues resulting in a score of {score}/100.",
+        "executive_summary": "Scan did not complete fully. Showing partial findings. No overall score is assigned." if scan_incomplete else f"Scan completed. Detected {severity_counts['High'] + severity_counts['Critical']} high-priority issues resulting in a score of {score}/100.",
         "disclaimer": "Passive scan only. Modular engine execution."
     }

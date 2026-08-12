@@ -258,6 +258,8 @@ class InformationDisclosureModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
+            if not resp:
+                return findings
             server = self.get_header_safe(resp, "Server")
             if any(char.isdigit() for char in server) and ("/" in server or "-" in server):
                 findings.append(self.make_finding(
@@ -270,6 +272,41 @@ class InformationDisclosureModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
                 ))
+
+            if resp.text:
+                import re
+                # Passive IP disclosure check
+                private_ip_regex = re.compile(r'\b(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3})\b')
+                matches = private_ip_regex.findall(resp.text[:2000000])
+                if matches:
+                    unique_ips = list(set([m[0] if isinstance(m, tuple) else m for m in matches]))
+                    findings.append(self.make_finding(
+                        "Private IP Disclosure",
+                        "Low",
+                        "Your website is leaking internal network addresses.",
+                        ", ".join(unique_ips[:3]),
+                        impact="Attackers can use these internal addresses to map out your private network and launch targeted attacks.",
+                        remediation="Remove internal IP addresses from the public response.",
+                        owasp="A01: Broken Access Control",
+                        category="information_exposure"
+                    ))
+
+                # Passive Stack Trace check
+                signatures = ["SQLSTATE[", "PostgreSQL query failed", "Django Version", "Traceback (most recent call last)", "Express error:", "java.lang.NullPointerException", "at System.Web."]
+                text_lower = resp.text[:2000000].lower()
+                for sig in signatures:
+                    if sig.lower() in text_lower:
+                        findings.append(self.make_finding(
+                            "Verbose Backend Error / Stack Trace Disclosure",
+                            "Low",
+                            "Your website displays highly detailed technical crash reports or stack traces.",
+                            sig,
+                            impact="These detailed reports reveal exactly how your system is built, giving attackers a blueprint for finding weaknesses.",
+                            remediation="Configure production environment to mask verbose error stack traces.",
+                            owasp="A05: Security Misconfiguration",
+                            category="information_exposure"
+                        ))
+                        break
         except Exception as e:
             logger.debug("InformationDisclosureModule head check failed: %s", e)
         return findings

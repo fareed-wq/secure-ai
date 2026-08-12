@@ -50,11 +50,24 @@ def _get_whois_data(domain: str) -> dict:
         "expiration_date": "Unknown",
         "age": "Unknown"
     }
+    
+    def do_whois():
+        return whois.whois(domain)
+        
     try:
-        w = whois.whois(domain)
+        import concurrent.futures
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(do_whois)
+        try:
+            w = future.result(timeout=3.0)
+        except concurrent.futures.TimeoutError:
+            logger.error(f"WHOIS lookup timed out for {domain} (exceeded 3.0s limit)")
+            executor.shutdown(wait=False, cancel_futures=True)
+            return whois_data
+            
+        executor.shutdown(wait=False)
         if w.registrar:
             whois_data["registrar"] = str(w.registrar)
-
         c_date = _parse_whois_date(w.creation_date)
         if c_date:
             whois_data["creation_date"] = c_date.strftime("%Y-%m-%d")
@@ -68,6 +81,8 @@ def _get_whois_data(domain: str) -> dict:
         e_date = _parse_whois_date(w.expiration_date)
         if e_date:
             whois_data["expiration_date"] = e_date.strftime("%Y-%m-%d")
+    except concurrent.futures.TimeoutError:
+        logger.error(f"WHOIS lookup timed out for {domain} (exceeded 3.0s limit)")
     except Exception as e:
         logger.error(f"WHOIS lookup failed for {domain}: {e}")
     return whois_data

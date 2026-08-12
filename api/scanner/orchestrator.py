@@ -20,9 +20,9 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     url = canonicalize_url(url)
     hostname = urlparse(url).hostname
     if not hostname:
-        return {"url": url, "error": "Could not parse a hostname from that URL."}
+        return {"status": "failed", "url": url, "error": "Could not parse a hostname from that URL."}
     if not is_public_hostname(hostname):
-        return {"url": url, "error": "That host resolves to a private/internal address and can't be scanned."}
+        return {"status": "failed", "url": url, "error": "That host resolves to a private/internal address and can't be scanned."}
 
     if not check_liveness(hostname):
         # Target is dead or blocking us. Return an explicit failed status instead of a mock report.
@@ -47,7 +47,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     with get_http_session() as session:
         req_start = _time.monotonic()
         try:
-            initial_resp = safe_request("GET", url, session=session, timeout=(1.8, 2.2), verify=False, stream=True, allow_redirects=True)
+            initial_resp = safe_request("GET", url, session=session, timeout=(1.8, 2.2), verify=False, allow_redirects=True)
             if _time.monotonic() - req_start > 3.0:
                 raise requests.exceptions.ReadTimeout("Initial request took longer than 3.0 seconds, assuming WAF tarpit.")
         except requests.exceptions.Timeout as e:
@@ -63,13 +63,16 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                 "error": f"Failed to establish connection: {str(e)}"
             }
 
-        metadata = get_metadata(hostname, initial_resp, url)
-
         scan_start = _time.monotonic()
         SCAN_BUDGET_SECONDS = 45  # Global time budget for all modules
 
-        pool = ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE)
+        pool = ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE + 1)
+        
+        # Run metadata gathering concurrently with scanner modules
+        metadata_future = pool.submit(get_metadata, hostname, initial_resp, url)
+        
         futures = {pool.submit(mod.run, url, hostname, session): mod for mod in active_modules}
+        scan_incomplete = False
         try:
             for future in as_completed(futures, timeout=SCAN_BUDGET_SECONDS):
                 mod = futures[future]
@@ -101,6 +104,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                         "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
                     })
         except TimeoutError:
+            scan_incomplete = True
             logger.warning(f"Scan budget of {SCAN_BUDGET_SECONDS}s exceeded; collecting partial results.")
             for future, mod in futures.items():
                 if not future.done():
@@ -242,4 +246,37 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                 "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
             })
 
-    return calculate_score(url, all_findings, metadata, initial_resp)
+    # Strict Deduplication Pass
+    # (Local import of Config removed to fix UnboundLocalError)
+    deduped_findings = []
+    seen_keys = set()
+    
+    # Sort findings by severity weight descending so highest severity is kept when deduplicating
+    sorted_all = sorted(all_findings, key=lambda f: abs(Config.SEVERITY_WEIGHTS.get(f.get("severity", "Informational"), 0)), reverse=True)
+    
+    for f in sorted_all:
+        name = f.get("name", "")
+        cat = f.get("category", "")
+        ev_raw = ""
+        ev = f.get("evidence")
+        if isinstance(ev, dict):
+            ev_raw = ev.get("raw", "")
+        elif isinstance(ev, str):
+            ev_raw = ev
+            
+        # Create a unique key based on name, category, and first 100 chars of evidence (to catch same resource/issue)
+        ev_hash = str(ev_raw)[:100].strip()
+        
+        composite_key = f"{name}::{cat}::{ev_hash}"
+        
+        if composite_key not in seen_keys:
+            seen_keys.add(composite_key)
+            deduped_findings.append(f)
+
+    try:
+        metadata = metadata_future.result(timeout=2.0)
+    except Exception as e:
+        logger.error(f"Failed to resolve metadata future: {e}")
+        metadata = {}
+
+    return calculate_score(url, deduped_findings, metadata, initial_resp, scan_incomplete=scan_incomplete)

@@ -68,16 +68,7 @@ class EnhancedTLSModule(ScannerModule):
                                 impact="If your certificate expires, web browsers will display a scary security warning to your visitors, blocking them from accessing your site and damaging your reputation."
                             ))
         except Exception as e:
-            findings.append(self.make_finding(
-                "SSL/TLS Connection Failure",
-                "High",
-                "Your website failed to establish a secure, encrypted connection.",
-                str(e),
-                remediation="Ensure the server supports standard TLS protocols.",
-                owasp="A02: Cryptographic Failures",
-                category="encryption_tls",
-                impact="Visitors cannot securely connect to your website, meaning their data could be easily intercepted and web browsers may warn them away."
-            ))
+            pass
 
         # Legacy TLS Probe
         legacy_supported = False
