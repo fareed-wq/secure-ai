@@ -257,12 +257,8 @@ def safe_request(
                             pass
                         else:
                             chunks = []
-                            try:
-                                for chunk in resp.iter_content(chunk_size=8192):
-                                    chunks.append(chunk)
-                            finally:
-                                if getattr(resp, 'raw', None) is not None:
-                                    resp.close()
+                            for chunk in resp.iter_content(chunk_size=8192):
+                                chunks.append(chunk)
                             resp._content = b"".join(chunks)
                             resp._content_consumed = True
                     

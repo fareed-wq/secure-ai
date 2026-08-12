@@ -59,12 +59,6 @@ const FindingCard = ({ issue, idx }) => {
           <span className="text-lg font-bold text-slate-100 block mb-1">Why does it matter?</span>
           <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.why}</span>
           
-          {issue.remediation && issue.remediation !== 'N/A' && (
-            <>
-              <span className="text-lg font-bold text-slate-100 block mb-1">What should the website owner do?</span>
-              <span className="text-lg text-slate-300 leading-relaxed block">{issue.remediation}</span>
-            </>
-          )}
 
         </div>
       </div>

@@ -98,7 +98,7 @@ const SimpleReport = ({ reportData }) => {
                   🔴 High {highRiskCount}
                 </span>
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${mediumRiskCount > 0 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${mediumRiskCount > 0 ? 'bg-amber-400' : 'bg-slate-600'}`}></span>
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${mediumRiskCount > 0 ? 'bg-amber-500' : 'bg-slate-600'}`}></span>
                   Medium {mediumRiskCount}
                 </span>
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${lowRiskCount > 0 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>

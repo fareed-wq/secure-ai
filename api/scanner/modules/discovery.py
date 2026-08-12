@@ -124,12 +124,10 @@ class ExposedFilesModule(ScannerModule):
             def check_exposed_log(path):
                 try:
                     target_url = urljoin(base_url, path)
-                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5), stream=True)
+                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
                     if resp and resp.status_code == 200 and 'text/html' not in resp.headers.get('Content-Type', '').lower():
-                        chunk = next(resp.iter_content(1024), b'')
-                        resp.close()
                         try:
-                            chunk_text = chunk.decode('utf-8', errors='ignore')
+                            chunk_text = resp.text[:1024]
                         except Exception:
                             chunk_text = ""
                         if any(x in chunk_text for x in ['[202', '[ERROR]', '[DEBUG]', 'Stack trace:']):
@@ -158,10 +156,9 @@ class ExposedFilesModule(ScannerModule):
             def check_exposed_dump(path):
                 try:
                     target_url = urljoin(base_url, path)
-                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5), stream=True)
+                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
                     if resp and resp.status_code == 200 and 'text/html' not in resp.headers.get('Content-Type', '').lower():
-                        chunk = next(resp.iter_content(1024), b'')
-                        resp.close()
+                        chunk = resp.content[:1024]
                         is_zip = chunk.startswith(b'PK\x03\x04') or chunk.startswith(b'\x1f\x8b')
                         
                         try:
