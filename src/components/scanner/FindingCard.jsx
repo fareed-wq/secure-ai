@@ -70,7 +70,7 @@ const FindingCard = ({ issue, idx }) => {
             <div className="mt-6 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
               <span className="text-sm font-bold text-slate-400 block mb-2 uppercase tracking-wider">Technical Evidence</span>
               <pre className="text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap font-mono">
-                {issue.evidence}
+                {typeof issue.evidence === "object" ? JSON.stringify(issue.evidence, null, 2) : String(issue.evidence ?? "")}
               </pre>
             </div>
           )}
