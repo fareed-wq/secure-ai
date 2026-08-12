@@ -48,20 +48,36 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         req_start = _time.monotonic()
         try:
             initial_resp = safe_request("GET", url, session=session, timeout=(1.8, 2.2), verify=False, allow_redirects=True)
-            if _time.monotonic() - req_start > 3.0:
-                raise requests.exceptions.ReadTimeout("Initial request took longer than 3.0 seconds, assuming WAF tarpit.")
         except requests.exceptions.Timeout as e:
-            return {
-                "status": "timeout",
-                "url": url,
-                "error": f"Connection timed out: {str(e)}"
+            logger.error(f"Target Unreachable (Timeout) for {url}: {e}")
+            f = {
+                "name": "Target Unreachable",
+                "severity": "Inconclusive",
+                "category": "availability",
+                "description": f"The target website could not be reached or timed out.",
+                "evidence": {"raw": str(e)},
+                "confidence": "High",
+                "remediation": "Verify that the URL is correct and the website is online.",
+                "remediation_snippets": {},
+                "owasp": "N/A",
+                "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
             }
+            return calculate_score(url, [f], {}, None, scan_incomplete=True)
         except (requests.exceptions.RequestException, socket.timeout, Exception) as e:
-            return {
-                "status": "failed",
-                "url": url,
-                "error": f"Failed to establish connection: {str(e)}"
+            logger.error(f"Target Unreachable (Connection Error) for {url}: {e}")
+            f = {
+                "name": "Target Unreachable",
+                "severity": "Inconclusive",
+                "category": "availability",
+                "description": f"Failed to establish a reliable connection to the target.",
+                "evidence": {"raw": str(e)},
+                "confidence": "High",
+                "remediation": "Verify that the URL is correct and the website is online.",
+                "remediation_snippets": {},
+                "owasp": "N/A",
+                "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
             }
+            return calculate_score(url, [f], {}, None, scan_incomplete=True)
 
         scan_start = _time.monotonic()
         SCAN_BUDGET_SECONDS = 45  # Global time budget for all modules

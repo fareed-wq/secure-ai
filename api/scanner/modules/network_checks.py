@@ -316,7 +316,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
 
         try:
             ct_url = f"https://crt.sh/?q=%.{domain}&output=json"
-            resp = safe_request("GET", ct_url, session=session, timeout=(3.0, 5.0))
+            resp = safe_request("GET", ct_url, session=session, timeout=(1.5, 3.0), max_attempts=1)
 
             if resp and resp.status_code == 200:
                 data = resp.json()

@@ -172,6 +172,7 @@ def safe_request(
     session: Optional[requests.Session] = None,
     max_redirects: int = Config.MAX_REDIRECTS,
     timeout: float = Config.REQUEST_TIMEOUT,
+    max_attempts: int = 2,
     **kwargs
 ) -> Optional[requests.Response]:
     current_url = url
@@ -203,7 +204,7 @@ def safe_request(
     req_kwargs["stream"] = True
 
     try:
-        for attempt in range(2):
+        for attempt in range(max_attempts):
             current_url = url
             try:
                 for _ in range(max_redirects + 1):

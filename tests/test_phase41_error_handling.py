@@ -32,9 +32,11 @@ class TestPhase41ErrorHandling(unittest.TestCase):
         
         result = scan_url("https://timeout.example.com")
         
-        self.assertEqual(result.get("status"), "timeout")
-        self.assertIn("Connection timed out", result.get("error", ""))
-        self.assertNotIn("findings", result)
+        # We now return a standard result with scan_incomplete=True and an Inconclusive finding
+        self.assertEqual(result.get("status"), "INCOMPLETE")
+        self.assertEqual(len(result.get("findings", [])), 1)
+        self.assertEqual(result["findings"][0]["name"], "Target Unreachable")
+        self.assertEqual(result["findings"][0]["severity"], "Inconclusive")
 
     @patch('api.scanner.orchestrator.is_public_hostname')
     @patch('api.scanner.orchestrator.check_liveness')
@@ -43,14 +45,15 @@ class TestPhase41ErrorHandling(unittest.TestCase):
         mock_is_public.return_value = True
         mock_check_liveness.return_value = True
         
-        # When safe_request raises requests.exceptions.ConnectionError, it should return status="failed"
+        # When safe_request raises requests.exceptions.ConnectionError, it should return a friendly incomplete scan
         mock_safe_request.side_effect = requests.exceptions.ConnectionError("Connection refused")
         
         result = scan_url("https://refused.example.com")
         
-        self.assertEqual(result.get("status"), "failed")
-        self.assertIn("Failed to establish connection", result.get("error", ""))
-        self.assertNotIn("findings", result)
+        self.assertEqual(result.get("status"), "INCOMPLETE")
+        self.assertEqual(len(result.get("findings", [])), 1)
+        self.assertEqual(result["findings"][0]["name"], "Target Unreachable")
+        self.assertEqual(result["findings"][0]["severity"], "Inconclusive")
         
     @patch('api.scanner.orchestrator.is_public_hostname')
     @patch('api.scanner.orchestrator.check_liveness')
