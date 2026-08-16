@@ -14,6 +14,8 @@ import Compare from './pages/Compare';
 import Settings from './pages/Settings';
 import Services from './pages/Services';
 import About from './pages/About';
+import BlogLanding from './pages/blog/BlogLanding';
+import ArticlePage from './pages/blog/ArticlePage';
 
 const PlaceholderPage = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
@@ -33,11 +35,12 @@ const App = () => {
             <Route path="/services" element={<Services />} />
             <Route path="/about" element={<About />} />
             <Route path="/scan" element={<Scanner />} />
-            
+
             {/* New ChatGPT-Sidebar Routes */}
             <Route path="/services" element={<PlaceholderPage title="Services" />} />
             <Route path="/docs" element={<PlaceholderPage title="API Docs" />} />
-            <Route path="/blog" element={<PlaceholderPage title="Security Blog" />} />
+            <Route path="/blog" element={<BlogLanding />} />
+            <Route path="/blog/:slug" element={<ArticlePage />} />
             <Route path="/pricing" element={<PlaceholderPage title="Pricing" />} />
             <Route path="/about" element={<PlaceholderPage title="About Us" />} />
             <Route path="/trust" element={<PlaceholderPage title="Trust Policy" />} />
@@ -47,7 +50,7 @@ const App = () => {
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          
+
           {/* Protected SaaS Routes */}
           <Route element={<SaaSLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
