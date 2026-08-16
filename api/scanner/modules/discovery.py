@@ -272,9 +272,37 @@ class InformationDisclosureModule(ScannerModule):
 
             if resp.text:
                 import re
+                text_slice = resp.text[:2000000]
+                text_lower = text_slice.lower()
+                
+                # Subdomain Takeover Signatures
+                takeover_signatures = {
+                    "GitHub Pages": "there isn't a github pages site here.",
+                    "Heroku": "herokucdn.com/error-pages/no-such-app.html",
+                    "AWS S3": "<code>nosuchbucket</code>",
+                    "Fastly": "fastly error: unknown domain:",
+                    "Shopify": "sorry, this shop is currently unavailable.",
+                    "Vercel": "deployment_not_found"
+                }
+                
+                if resp.status_code in (404, 403, 500, 502, 503):
+                    for provider, sig in takeover_signatures.items():
+                        if sig in text_lower:
+                            findings.append(self.make_finding(
+                                "Potential Subdomain Takeover Signal",
+                                "Medium",
+                                "The response contains a provider-specific error signature that may indicate the hostname is still associated with an unclaimed or unavailable third-party service. This is a passive indicator only and does not confirm that the hostname can be claimed.",
+                                f"Provider: {provider}; matched signature: '{sig}'",
+                                remediation="Verify the DNS/service configuration and remove stale third-party service mappings or reclaim the associated resource through the legitimate provider account.",
+                                owasp="A05: Security Misconfiguration",
+                                category="misconfiguration",
+                                confidence="Medium"
+                            ))
+                            break
+                            
                 # Passive IP disclosure check
                 private_ip_regex = re.compile(r'\b(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3})\b')
-                matches = private_ip_regex.findall(resp.text[:2000000])
+                matches = private_ip_regex.findall(text_slice)
                 if matches:
                     unique_ips = list(set([m[0] if isinstance(m, tuple) else m for m in matches]))
                     findings.append(self.make_finding(
