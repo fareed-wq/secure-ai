@@ -82,12 +82,12 @@ const TechnicalReport = ({ reportData }) => {
                 {reportData?.metadata?.ip_address || 'N/A'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
-                {reportData?.metadata?.location_or_cdn || 'CDN / Cloud'}
+                {reportData?.metadata?.location_or_cdn || 'Unknown Location'}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
               <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis border bg-indigo-500/10 text-indigo-400 border-indigo-500/20 uppercase">
-                {reportData?.metadata?.waf_cdn_detection || 'DIRECT ORIGIN'}
+                {reportData?.metadata?.waf_cdn_detection || 'Routing Unknown'}
               </span>
               {reportData?.metadata?.whois?.age && reportData?.metadata?.whois?.age !== 'Unknown' && (
                 <span 
@@ -125,11 +125,12 @@ const TechnicalReport = ({ reportData }) => {
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
               <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${
                 reportData?.metadata?.performance_rating === 'NO HTTP RESPONSE' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
+                reportData?.metadata?.performance_rating === 'REQUEST TIMEOUT' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
                 reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 
                 reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 
-                'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                (reportData?.metadata?.performance_rating === 'High Latency' || reportData?.metadata?.performance_rating === 'SERVER ERROR' || reportData?.metadata?.performance_rating === 'CLIENT ERROR' || reportData?.metadata?.performance_rating === 'TIMEOUT') ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-slate-500/10 text-slate-400 border-slate-500/30'
               }`}>
-                {reportData?.metadata?.performance_rating || 'OPTIMAL LATENCY'}
+                {reportData?.metadata?.performance_rating || 'Latency Unknown'}
               </span>
             </div>
           </div>
@@ -152,18 +153,18 @@ const TechnicalReport = ({ reportData }) => {
                   reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
                   reportData?.metadata?.ssl_days_left_int <= 30 ? "text-amber-400 font-semibold" :
                   "text-emerald-400 font-semibold"
-                }`}>{reportData?.metadata?.ssl_days_left || 'Active'}</span>
+                }`}>{reportData?.metadata?.ssl_days_left || 'Unknown Status'}</span>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
               <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${
                 reportData?.metadata?.ssl_badge === 'EXPIRED' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
                 reportData?.metadata?.ssl_badge === 'RENEWAL IMMINENT' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
-                reportData?.metadata?.ssl_days_left_int < 0 ? 'bg-red-500/10 text-red-400 border-red-500/30' :
-                reportData?.metadata?.ssl_days_left_int <= 30 ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 
-                'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                reportData?.metadata?.ssl_badge === 'VALID CERTIFICATE (UNTRUSTED)' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                reportData?.metadata?.ssl_badge === 'VALID CERTIFICATE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                'bg-slate-500/10 text-slate-400 border-slate-500/30'
               }`}>
-                {reportData?.metadata?.ssl_badge || (reportData?.metadata?.ssl_days_left_int < 0 ? 'EXPIRED' : reportData?.metadata?.ssl_days_left_int <= 30 ? 'RENEWAL IMMINENT' : 'VALID CERTIFICATE')}
+                {reportData?.metadata?.ssl_badge || 'SSL Unknown'}
               </span>
             </div>
           </div>
@@ -183,8 +184,8 @@ const TechnicalReport = ({ reportData }) => {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${(reportData?.metadata?.clean_redirect === 'Clean 301 Redirect' || reportData?.metadata?.clean_redirect === 'Direct Secure') ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}`}>
-                {reportData?.metadata?.clean_redirect || 'DIRECT SECURE'}
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${reportData?.metadata?.clean_redirect === 'Clean 301 Redirect' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : (reportData?.metadata?.clean_redirect === 'Direct Request' || reportData?.metadata?.clean_redirect === 'Routing Unknown') ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' : 'bg-rose-500/10 text-rose-400 border-rose-500/30'}`}>
+                {reportData?.metadata?.clean_redirect || 'Routing Unknown'}
               </span>
             </div>
           </div>

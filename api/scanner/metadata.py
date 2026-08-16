@@ -102,7 +102,7 @@ def get_metadata(domain: str, response: Optional[requests.Response], original_ur
         server_header = response.headers.get("Server") or getattr(response, 'all_headers', {}).get("server")
         server = server_header if server_header else "Undisclosed (Hardened)"
     else:
-        server = "Undisclosed (Hardened)"
+        server = "Unknown Server"
 
     # 3. SSL Cert Info Extraction
     ssl_issuer = "Unknown"
@@ -197,16 +197,20 @@ def get_metadata(domain: str, response: Optional[requests.Response], original_ur
             status = "Connection Timeout"
 
     # 5. Network & Security Posture
-    waf_cdn_detection = "Direct Origin"
-    org_lower = location_or_cdn.lower()
-    if "cloudflare" in org_lower:
-        waf_cdn_detection = "Cloudflare WAF / CDN"
-    elif "amazon" in org_lower or "aws" in org_lower or (response and "x-amz-cf-id" in response.headers):
-        waf_cdn_detection = "AWS CloudFront"
-    elif "fastly" in org_lower:
-        waf_cdn_detection = "Fastly CDN"
-    elif "akamai" in org_lower:
-        waf_cdn_detection = "Akamai CDN"
+    if ip == "Unknown IP":
+        waf_cdn_detection = "Routing Unknown"
+        location_or_cdn = "Unknown Location"
+    else:
+        waf_cdn_detection = "Direct Origin"
+        org_lower = location_or_cdn.lower()
+        if "cloudflare" in org_lower:
+            waf_cdn_detection = "Cloudflare WAF / CDN"
+        elif "amazon" in org_lower or "aws" in org_lower or (response and "x-amz-cf-id" in response.headers):
+            waf_cdn_detection = "AWS CloudFront"
+        elif "fastly" in org_lower:
+            waf_cdn_detection = "Fastly CDN"
+        elif "akamai" in org_lower:
+            waf_cdn_detection = "Akamai CDN"
 
     # WAF & Timeout Override Logic
     is_403 = response is not None and response.status_code == 403
@@ -247,16 +251,16 @@ def get_metadata(domain: str, response: Optional[requests.Response], original_ur
         pass
 
     # Protocol & HTTPS Enforcement
-    http_protocol = "HTTP/1.1"
-    https_enforced = "HTTP Exposed"
-    clean_redirect = "No Auto-Redirect"
-
     if response:
+        http_protocol = "HTTP/1.1"
+        https_enforced = "HTTP Exposed"
+        clean_redirect = "No Auto-Redirect"
+
         if response.url.startswith("https"):
             https_enforced = "HTTPS Enforced"
 
         if original_url and original_url.startswith("https"):
-            clean_redirect = "Direct Secure"
+            clean_redirect = "Direct Request"
         else:
             if response.history and any(r.status_code in [301, 302, 307, 308] for r in response.history):
                 clean_redirect = "Clean 301 Redirect"
@@ -267,10 +271,14 @@ def get_metadata(domain: str, response: Optional[requests.Response], original_ur
         elif "h2=" in alt_svc or response.url.startswith("https"):
             http_protocol = "HTTP/2"
     else:
+        http_protocol = "Unknown Protocol"
+        https_enforced = "HTTPS Status Unknown"
+        clean_redirect = "Routing Unknown"
+
         # Timeout fallback for HTTPS
         if original_url and original_url.startswith("https") and ssl_success:
             https_enforced = "HTTPS Enforced"
-            clean_redirect = "HTTPS ACTIVE (PROBE TIMED OUT)"
+            clean_redirect = "Direct Request"
 
     # Protocol helper flags for scan_url Network findings
     http2_supported = http_protocol in ["HTTP/2", "HTTP/3 (QUIC)"]
