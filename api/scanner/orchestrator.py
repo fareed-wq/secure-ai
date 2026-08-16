@@ -11,18 +11,21 @@ from api.scanner.validation import canonicalize_url
 from api.scanner.metadata import check_liveness, _get_whois_data, get_metadata
 from api.scanner.fallback import get_waf_fallback_payload
 from api.scanner.scoring import calculate_score
-from api.scanner.data.registry import REGISTERED_MODULES
+from api.scanner.data.registry import REGISTERED_MODULES, PASSIVE_MODULES, ACTIVE_MODULES
 from api.scanner.modules.network_checks import SubdomainProbingModule
 
 logger = logging.getLogger(__name__)
 
-def scan_url(url: str, probe_subdomains: bool = False) -> dict:
+def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive") -> dict:
     url = canonicalize_url(url)
     hostname = urlparse(url).hostname
     if not hostname:
         return {"status": "failed", "url": url, "error": "Could not parse a hostname from that URL."}
     if not is_public_hostname(hostname):
         return {"status": "failed", "url": url, "error": "That host resolves to a private/internal address and can't be scanned."}
+
+    if scan_mode not in ("passive", "active"):
+        return {"status": "failed", "url": url, "error": f"Invalid scan_mode: '{scan_mode}'. Must be 'passive' or 'active'."}
 
     if not check_liveness(hostname):
         # Target is dead or blocking us. Return an explicit failed status instead of a mock report.
@@ -38,9 +41,13 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     scan_start = _time.monotonic()
 
     # Get active modules from registry based on profile
-    from api.scanner.data.registry import REGISTERED_MODULES
-    active_modules = [m for m in REGISTERED_MODULES if getattr(m, 'enabled', True)]
-    if probe_subdomains:
+    if scan_mode == "active":
+        modules_to_run = PASSIVE_MODULES + ACTIVE_MODULES
+    else:
+        modules_to_run = PASSIVE_MODULES
+
+    active_modules = [m for m in modules_to_run if getattr(m, 'enabled', True)]
+    if scan_mode == "active" and probe_subdomains:
         active_modules.append(SubdomainProbingModule())
 
     # Fetch initial payload safely to pass down if needed

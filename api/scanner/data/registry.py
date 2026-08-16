@@ -64,15 +64,23 @@ DOMAIN_MAP = {
     "AuthenticationSessionSecurityModule": "api_surface",
 }
 
-REGISTERED_MODULES = [
+PASSIVE_MODULES = [
+    AuthenticationSessionSecurityModule(),
+    MixedContentModule(),
+    InformationDisclosureModule(),
+    TechFingerprintModule(),
+    PermissionsPolicyModule(),
+    AdvancedCookieModule(),
+    SecurityHeadersModule(),
+    AdvancedSecurityHeadersModule(),
+]
+
+ACTIVE_MODULES = [
     GraphQLIntrospectionModule(),
     VerboseStackTraceModule(),
     ExposedFilesModule(),
     DNSCAAModule(),
     DNSEmailSecurityModule(),
-    PermissionsPolicyModule(),
-    TechFingerprintModule(),
-    InformationDisclosureModule(),
     RobotsTxtModule(),
     SitemapModule(),
     SecurityTxtModule(),
@@ -81,16 +89,13 @@ REGISTERED_MODULES = [
     ActuatorModule(),
     XmlRpcModule(),
     CORSModule(),
-    AdvancedCookieModule(),
     HTTPSRedirectModule(),
     EnhancedTLSModule(),
-    SecurityHeadersModule(),
-    AdvancedSecurityHeadersModule(),
-    MixedContentModule(),
     TLSCipherStrengthModule(),
     PassiveSubdomainDiscoveryModule(),
     JavaScriptSecurityModule(),
     InfrastructureIntelligenceModule(),
     ApiWebSecurityModule(),
-    AuthenticationSessionSecurityModule()
 ]
+
+REGISTERED_MODULES = PASSIVE_MODULES + ACTIVE_MODULES

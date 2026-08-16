@@ -94,6 +94,7 @@ def health_check() -> dict:
 class ScanRequest(BaseModel):
     url: str
     probe_subdomains: bool = False
+    scan_mode: str = "passive"
 
     @field_validator("url")
     @classmethod
@@ -135,12 +136,12 @@ class BatchScanRequest(BaseModel):
 
 # Engine Registry
 
-def scan_url(url: str, probe_subdomains: bool = False) -> dict:
+def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive") -> dict:
     """Compatibility wrapper to allow patching REGISTERED_MODULES via api.index"""
     original = orchestrator_module.REGISTERED_MODULES
     orchestrator_module.REGISTERED_MODULES = REGISTERED_MODULES
     try:
-        return _scan_url(url, probe_subdomains)
+        return _scan_url(url, probe_subdomains, scan_mode)
     finally:
         orchestrator_module.REGISTERED_MODULES = original
 
@@ -173,7 +174,7 @@ async def scan_single(req: ScanRequest, request: Request):
         )
 
     try:
-        return await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains), timeout=55.0)
+        return await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains, req.scan_mode), timeout=55.0)
     except Exception as e:
         return JSONResponse(status_code=200, content=get_waf_fallback_payload(req.url))
     finally:

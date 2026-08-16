@@ -181,7 +181,7 @@ class TestPhase35SecurityHardening(unittest.TestCase):
         # Simulate a module raising an exception with a local path
         mock_mod_run.side_effect = Exception("Failed at /usr/src/app/api/scanner/modules/network_checks.py line 42")
 
-        report = scan_url("http://example.com", probe_subdomains=True)
+        report = scan_url("http://example.com", probe_subdomains=True, scan_mode="active")
 
         # Check that the finding for the failed module masks the path
         found = False
