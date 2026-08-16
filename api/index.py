@@ -95,11 +95,20 @@ class ScanRequest(BaseModel):
     url: str
     probe_subdomains: bool = False
     scan_mode: str = "passive"
+    report_mode: str = "simple"
 
     @field_validator("url")
     @classmethod
     def _normalize(cls, v: str) -> str:
         return normalize_url(v)
+
+    @field_validator("report_mode")
+    @classmethod
+    def _validate_report_mode(cls, v: str) -> str:
+        v = v.lower()
+        if v not in ["simple", "technical"]:
+            raise ValueError("report_mode must be 'simple' or 'technical'")
+        return v
 
 
 class BatchScanRequest(BaseModel):
@@ -174,7 +183,9 @@ async def scan_single(req: ScanRequest, request: Request):
         )
 
     try:
-        return await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains, req.scan_mode), timeout=55.0)
+        result = await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains, req.scan_mode), timeout=55.0)
+        result["report_mode"] = req.report_mode
+        return result
     except Exception as e:
         return JSONResponse(status_code=200, content=get_waf_fallback_payload(req.url))
     finally:

@@ -12,7 +12,7 @@ class ScanApiClient {
    * @param {string} url - The URL to scan.
    * @returns {Promise<Object>} - The raw scan report data or throws an error.
    */
-  async runScan(url) {
+  async runScan(url, scanMode = 'passive', reportMode = 'simple') {
     const minWait = new Promise(resolve => setTimeout(resolve, 6000));
     
     const fetchPromise = fetch(`${API_BASE_URL}/api/scan`, {
@@ -20,7 +20,7 @@ class ScanApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ url, scan_mode: scanMode, report_mode: reportMode }),
     });
 
     // Wait for at least 6 seconds and for the fetch to complete

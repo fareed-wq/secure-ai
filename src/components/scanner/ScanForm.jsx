@@ -4,17 +4,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const ScanForm = ({ onScan }) => {
   const [url, setUrl] = useState('');
+  const [scanMode, setScanMode] = useState('passive');
+  const [reportMode, setReportMode] = useState('simple');
   const [validationError, setValidationError] = useState('');
   const urlInputRef = useRef(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!url) return;
-    
+
     let parsedUrl = url.trim();
     let cleanInput = parsedUrl.replace(/^https?:\/\//i, '').replace(/^www\./i, '');
     const domainRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/;
-    
+
     if (!domainRegex.test(cleanInput)) {
       setValidationError("Please enter a full domain name (e.g., google.com or site.in).");
       urlInputRef.current?.blur();
@@ -25,10 +27,10 @@ const ScanForm = ({ onScan }) => {
       parsedUrl = 'https://' + parsedUrl;
       setUrl(parsedUrl);
     }
-    
+
     setValidationError('');
     if (onScan) {
-      onScan(parsedUrl);
+      onScan(parsedUrl, scanMode, reportMode);
     }
   };
 
@@ -37,7 +39,7 @@ const ScanForm = ({ onScan }) => {
       <AnimatePresence>
         {validationError && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -49,7 +51,7 @@ const ScanForm = ({ onScan }) => {
                 </div>
                 <h4 className="text-slate-50 font-bold text-lg mb-2">Invalid Domain Format</h4>
                 <p className="text-slate-300 text-sm mb-6">{validationError}</p>
-                <button 
+                <button
                   onClick={() => {
                     setValidationError('');
                     setTimeout(() => urlInputRef.current?.focus(), 100);
@@ -82,6 +84,36 @@ const ScanForm = ({ onScan }) => {
           <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 shrink-0">
             Scan <ArrowRight className="w-4 h-4" />
           </button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 w-full mt-4 text-left">
+          <div className="flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
+            <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">Scan Type</h3>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input type="radio" name="scanMode" value="passive" checked={scanMode === 'passive'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900" />
+                <span className={`text-sm font-medium ${scanMode === 'passive' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Basic / Passive</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input type="radio" name="scanMode" value="active" checked={scanMode === 'active'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900" />
+                <span className={`text-sm font-medium ${scanMode === 'active' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Advanced / Active</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
+            <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">Report Type</h3>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input type="radio" name="reportMode" value="simple" checked={reportMode === 'simple'} onChange={(e) => setReportMode(e.target.value)} className="w-4 h-4 text-emerald-500 bg-slate-800 border-slate-600 focus:ring-emerald-500 focus:ring-offset-slate-900" />
+                <span className={`text-sm font-medium ${reportMode === 'simple' ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Simple</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input type="radio" name="reportMode" value="technical" checked={reportMode === 'technical'} onChange={(e) => setReportMode(e.target.value)} className="w-4 h-4 text-emerald-500 bg-slate-800 border-slate-600 focus:ring-emerald-500 focus:ring-offset-slate-900" />
+                <span className={`text-sm font-medium ${reportMode === 'technical' ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Technical</span>
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center justify-center flex-wrap gap-1 text-center text-xs text-slate-400 mt-2 font-medium px-2">

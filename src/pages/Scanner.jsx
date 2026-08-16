@@ -8,7 +8,7 @@ import WhatsAppWidget from '../WhatsAppWidget';
 import usePdfGenerator from '../hooks/usePdfGenerator';
 
 import ScanForm from '../components/scanner/ScanForm';
-import ModeSelection from '../components/scanner/ModeSelection';
+
 import ReportHeader from '../components/scanner/ReportHeader';
 import SimpleReport from '../components/scanner/SimpleReport';
 import AuthModal from '../components/scanner/AuthModal';
@@ -51,22 +51,23 @@ function Scanner() {
     }
   };
 
-  const handleScan = async (parsedUrl) => {
+  const handleScan = async (parsedUrl, scanMode, reportModeValue) => {
     setUrl(parsedUrl);
     setScanState('scanning');
     setErrorMessage('');
-    
+    setReportMode(reportModeValue);
+
     try {
-      const data = await scanApi.runScan(parsedUrl);
-      
+      const data = await scanApi.runScan(parsedUrl, scanMode, reportModeValue);
+
       if (data.status === 'failed' || data.status === 'timeout') {
         setErrorMessage(data.error || "Unable to complete the security scan because the target could not be reached or the connection timed out.");
         setScanState('error');
         return;
       }
-      
+
       setReportData(data);
-      setScanState('mode-select'); // Go to mode selection first
+      setScanState('view-report'); // Skip mode selection, go straight to report
 
       // Save scan to Supabase if user is logged in
       if (user) {
@@ -106,19 +107,19 @@ function Scanner() {
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-50 selection:bg-indigo-500/30">
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
-      
+
 
       {/* Auth Modal */}
-      <AuthModal 
-        isOpen={authModalOpen} 
-        onClose={() => setAuthModalOpen(false)} 
-        featureName={authFeatureName} 
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        featureName={authFeatureName}
       />
 
       {/* Loading overlay for PDF generation */}
       <AnimatePresence>
         {isGeneratingPdf && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -138,10 +139,10 @@ function Scanner() {
       {/* Dynamic Content */}
       <div className="relative z-10 max-w-7xl mx-auto pb-32 print:hidden">
         <AnimatePresence mode="wait">
-          
+
           {/* 1. IDLE STATE (Search Bar) */}
           {scanState === 'idle' && (
-            <motion.div 
+            <motion.div
               key="idle"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -168,7 +169,7 @@ function Scanner() {
               <div className="flex justify-center text-sm text-slate-400 mt-8 font-medium">
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
               </div>
-              
+
               <div className="w-full mt-12 pb-16">
                 <SafetyComparison />
               </div>
@@ -185,7 +186,7 @@ function Scanner() {
               className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-slate-900/50 border border-slate-800 backdrop-blur-xl shadow-2xl overflow-hidden relative"
             >
               <div className="absolute inset-0 bg-slate-800/[0.2] bg-[size:20px_20px]" style={{backgroundImage: 'radial-gradient(circle, #334155 1px, transparent 1px)'}}></div>
-              
+
               <div className="flex flex-col items-center justify-center space-y-8 py-12 relative z-10">
                 <div className="relative">
                   <div className="absolute inset-0 border-4 border-indigo-500/30 rounded-full blur-xl animate-pulse"></div>
@@ -193,7 +194,7 @@ function Scanner() {
                   <div className="absolute inset-0 border-2 border-purple-500/20 rounded-full animate-[spin_4s_linear_infinite_reverse] scale-150"></div>
                   <Loader2 className="w-20 h-20 text-indigo-400 animate-spin relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
                 </div>
-                
+
                 <div className="space-y-4 text-center w-full">
                   <h2 className="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-emerald-300">
                     Establishing Secure Uplink to {url}...
@@ -207,8 +208,8 @@ function Scanner() {
           {/* 3. ERROR STATE */}
           {scanState === 'error' && (() => {
             const isTlsError = errorMessage && (
-              errorMessage.includes('SSLError') || 
-              errorMessage.includes('SSL:') || 
+              errorMessage.includes('SSLError') ||
+              errorMessage.includes('SSL:') ||
               errorMessage.includes('TLSV1_ALERT') ||
               errorMessage.includes('certificate verify failed') ||
               errorMessage.includes('CERTIFICATE_VERIFY_FAILED')
@@ -223,7 +224,7 @@ function Scanner() {
                 className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-red-900/20 border border-red-800 backdrop-blur-xl shadow-2xl text-center"
               >
                 <ShieldAlert className="w-20 h-20 text-red-500 mx-auto mb-6" />
-                
+
                 {isTlsError ? (
                   <>
                     <h2 className="text-2xl font-bold text-red-400 mb-4 uppercase tracking-wider">SCAN INCOMPLETE</h2>
@@ -253,11 +254,6 @@ function Scanner() {
             );
           })()}
 
-          {/* 4. MODE SELECTION STATE */}
-          {scanState === 'mode-select' && (
-            <ModeSelection key="mode-select" onSelectMode={handleSelectMode} />
-          )}
-
           {/* 5. VIEW REPORT STATE */}
           {scanState === 'view-report' && reportData && (
             <motion.div
@@ -267,17 +263,17 @@ function Scanner() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-6xl mx-auto"
             >
-              <ReportHeader 
-                url={url} 
-                score={reportData.score} 
-                timestamp={reportData.scan_start} 
-                activeMode={reportMode} 
+              <ReportHeader
+                url={url}
+                score={reportData.score}
+                timestamp={reportData.scan_start}
+                activeMode={reportMode}
                 onToggleMode={setReportMode}
                 onExportPdf={handlePdfExport}
                 onRequireAuth={handleRequireAuth}
                 reportData={reportData}
               />
-              
+
               <ErrorBoundary>
                 {reportMode === 'simple' ? (
                   <SimpleReport reportData={reportData} />
@@ -296,7 +292,7 @@ function Scanner() {
 
         </AnimatePresence>
       </div>
-      
+
       {/* DEDICATED PRINT CONTAINER */}
       {scanState === 'view-report' && reportData && (
         <div className="hidden print:block print:w-full bg-white text-black p-8 font-sans">
@@ -316,7 +312,7 @@ function Scanner() {
               1. Executive Summary
             </h2>
             <p className="text-sm text-slate-800">
-              Scan completed for {url}. Total checks evaluated: {reportData.findings?.length || 0}. 
+              Scan completed for {url}. Total checks evaluated: {reportData.findings?.length || 0}.
               High Priority: {reportData.severity_counts?.High || 0} | Medium Priority: {reportData.severity_counts?.Medium || 0} | Low Priority: {reportData.severity_counts?.Low || 0} | Passed: {reportData.severity_counts?.Passed || 0}
             </p>
           </div>
@@ -356,7 +352,7 @@ function Scanner() {
           </div>
         </div>
       )}
-      
+
       {/* Floating Elements (e.g. WhatsApp Widget) preserved for UX */}
       <div className="print:hidden">
         <WhatsAppWidget />
