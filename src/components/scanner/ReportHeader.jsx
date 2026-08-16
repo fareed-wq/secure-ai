@@ -5,7 +5,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
   const findings = reportData?.findings || [];
   const isWafBlocked = findings.length === 1 && findings[0]?.name?.includes('WAF');
   return (
-    <div className="sticky top-6 z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
+    <div className="relative md:sticky md:top-4 z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
       {/* Left: Info */}
       <div className="flex-1">
         <h2 className="text-2xl font-bold mb-1 text-slate-50">Live Security Posture Report</h2>
