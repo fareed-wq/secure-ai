@@ -1,5 +1,6 @@
 import os
 import json
+import re
 
 articles_dir = r"d:\secure-AI\src\data\blog"
 os.makedirs(articles_dir, exist_ok=True)
@@ -11,70 +12,250 @@ articles_data = [
         "slug": "website-security-checklist",
         "category": "Website Security",
         "primaryKeyword": "website security checklist",
-        "excerpt": "A comprehensive 20-point website security checklist to protect your online business from modern vulnerabilities and data breaches.",
-        "content": """
-            <p className="mb-4">Securing a website in today's threat landscape requires a proactive approach. This comprehensive <strong>website security checklist</strong> covers 20 essential steps every website owner should take to protect their assets, data, and users.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">1. Enforce HTTPS Everywhere</h3>
-            <p className="mb-4">Ensure your website uses TLS encryption for all connections. Never transmit data over plain HTTP. Obtain a valid SSL/TLS certificate and force all traffic to use HTTPS.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">2. Configure Strong TLS Settings</h3>
-            <p className="mb-4">Disable outdated protocols like TLS 1.0 and 1.1. Support only TLS 1.2 and TLS 1.3. Use strong cipher suites that provide forward secrecy.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">3. Implement Essential Security Headers</h3>
-            <p className="mb-4">Deploy security headers such as X-Content-Type-Options, X-Frame-Options, and Referrer-Policy to instruct browsers to enforce basic security mechanisms automatically.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">4. Set up Content Security Policy (CSP)</h3>
-            <p className="mb-4">A strong CSP is your best defense against Cross-Site Scripting (XSS). Restrict the domains from which scripts, styles, and other resources can be loaded.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">5. Enable HTTP Strict Transport Security (HSTS)</h3>
-            <p className="mb-4">HSTS guarantees that browsers will only connect to your site over HTTPS, preventing downgrade attacks. Ensure the max-age directive is sufficiently long.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">6. Secure Session Cookies</h3>
-            <p className="mb-4">All session cookies must be flagged with <code>Secure</code>, <code>HttpOnly</code>, and an appropriate <code>SameSite</code> attribute to protect against interception and Cross-Site Request Forgery (CSRF).</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">7. Strengthen Authentication</h3>
-            <p className="mb-4">Enforce strong password policies, require multi-factor authentication (MFA) for administrative accounts, and securely hash passwords using algorithms like Argon2 or bcrypt.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">8. Implement Strict Access Control</h3>
-            <p className="mb-4">Enforce the principle of least privilege. Ensure that users can only access the data and features explicitly permitted by their role.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">9. Prevent Exposed Sensitive Files</h3>
-            <p className="mb-4">Verify that configuration files (like <code>.env</code>), version control directories (like <code>.git</code>), and backups are not publicly accessible on your web server.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">10. Prevent Information Disclosure</h3>
-            <p className="mb-4">Turn off detailed error messages and stack traces in production. Remove verbose server headers like <code>X-Powered-By</code> or <code>Server</code> that reveal your technology stack.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">11. Audit JavaScript and Source Maps</h3>
-            <p className="mb-4">Review client-side bundles. Ensure you are not accidentally exposing sensitive API keys, secrets, or privileged endpoints in your frontend JavaScript or source maps.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">12. Secure API Endpoints</h3>
-            <p className="mb-4">Protect all API routes with robust authentication and authorization. Do not rely on frontend obscurity; secure APIs at the backend level.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">13. Restrict CORS (Cross-Origin Resource Sharing)</h3>
-            <p className="mb-4">Do not use a wildcard (<code>*</code>) for <code>Access-Control-Allow-Origin</code> on sensitive endpoints. Only allow trusted domains to make cross-origin requests.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">14. Secure DNS and Domain Settings</h3>
-            <p className="mb-4">Implement SPF, DKIM, and DMARC to prevent email spoofing. Use DNSSEC if possible, and monitor for dangling DNS records to prevent subdomain takeovers.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">15. Maintain Regular Backups</h3>
-            <p className="mb-4">Automate backups of your database and application files. Store them securely offsite and test the restoration process periodically.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">16. Update Dependencies Regularly</h3>
-            <p className="mb-4">Outdated software is a massive risk. Use dependency scanning tools to identify and update vulnerable libraries, frameworks, and CMS plugins.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">17. Implement Security Logging</h3>
-            <p className="mb-4">Log security-relevant events like logins, password changes, access control failures, and administrative actions. Store logs securely.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">18. Set Up Active Monitoring</h3>
-            <p className="mb-4">Monitor your website for uptime, unauthorized changes, and suspicious traffic patterns. Implement alerts for abnormal administrative activity.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">19. Run Regular Vulnerability Scans</h3>
-            <p className="mb-4">Automate your security posture checks. Using tools like URLScannerOnline can help you identify missing headers, exposed files, and misconfigurations.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">20. Plan for Incident Response</h3>
-            <p className="mb-4">Have a documented plan for what to do if a breach occurs. Know who to contact, how to contain the damage, and how to communicate with users.</p>
-        """
+        "excerpt": "A practical 20-point checklist for identifying common website security weaknesses, configuration issues, and exposure risks.",
+        "content": "Securing a website in today's threat landscape requires a proactive approach. This practical <strong>website security checklist</strong> covers 20 essential steps every website owner should take to identify potential weaknesses.",
+        "sections": [
+            {
+                "id": "enforce-https",
+                "number": "01",
+                "title": "Enforce HTTPS Everywhere",
+                "content": "Ensure your website uses TLS encryption for all connections. Never transmit data over plain HTTP. Obtain a valid SSL/TLS certificate and force all traffic to use HTTPS.",
+                "listTitle": "What to check",
+                "list": [
+                    "HTTPS is enabled on all pages",
+                    "HTTP automatically redirects to HTTPS",
+                    "TLS certificate is valid and not expired"
+                ]
+            },
+            {
+                "id": "configure-tls",
+                "number": "02",
+                "title": "Configure Strong TLS Settings",
+                "content": "For modern public-facing websites, disable obsolete protocols such as TLS 1.0 and TLS 1.1 and generally prefer TLS 1.2 or TLS 1.3, subject to your compatibility requirements.",
+                "listTitle": "What to check",
+                "list": [
+                    "TLS 1.2 and TLS 1.3 are enabled",
+                    "TLS 1.0 and TLS 1.1 are disabled",
+                    "Strong cipher suites are prioritized"
+                ]
+            },
+            {
+                "id": "security-headers",
+                "number": "03",
+                "title": "Implement Essential Security Headers",
+                "content": "Deploy security headers such as X-Content-Type-Options, X-Frame-Options, and Referrer-Policy to instruct browsers to enforce basic security mechanisms automatically.",
+                "listTitle": "What to check",
+                "list": [
+                    "X-Content-Type-Options is set to nosniff",
+                    "X-Frame-Options is set to DENY or SAMEORIGIN",
+                    "Referrer-Policy is configured correctly"
+                ]
+            },
+            {
+                "id": "setup-csp",
+                "number": "04",
+                "title": "Set up Content Security Policy (CSP)",
+                "content": "A well-designed Content Security Policy can significantly reduce the impact of many XSS and content-injection scenarios, but it should complement secure application coding rather than replace it.",
+                "listTitle": "What to check",
+                "list": [
+                    "CSP header is present",
+                    "unsafe-inline is avoided if possible",
+                    "Default-src is properly restricted"
+                ]
+            },
+            {
+                "id": "enable-hsts",
+                "number": "05",
+                "title": "Enable HTTP Strict Transport Security (HSTS)",
+                "content": "HSTS guarantees that browsers will only connect to your site over HTTPS, preventing downgrade attacks. Ensure the max-age directive is sufficiently long.",
+                "listTitle": "What to check",
+                "list": [
+                    "Strict-Transport-Security header is active",
+                    "max-age is properly configured",
+                    "includeSubDomains is used when applicable"
+                ]
+            },
+            {
+                "id": "secure-cookies",
+                "number": "06",
+                "title": "Secure Session Cookies",
+                "content": "All session cookies must be flagged with Secure, HttpOnly, and an appropriate SameSite attribute to protect against interception and CSRF.",
+                "listTitle": "What to check",
+                "list": [
+                    "Secure flag is true",
+                    "HttpOnly flag is true",
+                    "SameSite attribute is Strict or Lax"
+                ]
+            },
+            {
+                "id": "strengthen-auth",
+                "number": "07",
+                "title": "Strengthen Authentication",
+                "content": "Enforce strong password policies, require multi-factor authentication (MFA) for administrative accounts, and securely hash passwords.",
+                "listTitle": "What to check",
+                "list": [
+                    "MFA is required for admins",
+                    "Passwords are hashed (e.g. bcrypt/Argon2)",
+                    "Password complexity is enforced"
+                ]
+            },
+            {
+                "id": "access-control",
+                "number": "08",
+                "title": "Implement Strict Access Control",
+                "content": "Enforce the principle of least privilege. Ensure that users can only access the data and features explicitly permitted by their role.",
+                "listTitle": "What to check",
+                "list": [
+                    "Role-based access is active",
+                    "Default deny is implemented",
+                    "Object-level authorization is checked"
+                ]
+            },
+            {
+                "id": "sensitive-files",
+                "number": "09",
+                "title": "Prevent Exposed Sensitive Files",
+                "content": "Verify that configuration files, version control directories (like .git), and backups are not publicly accessible on your web server.",
+                "listTitle": "What to check",
+                "list": [
+                    ".git directory is blocked",
+                    ".env files return 403 or 404",
+                    "Backup files (.bak, .sql) are secured"
+                ]
+            },
+            {
+                "id": "info-disclosure",
+                "number": "10",
+                "title": "Prevent Information Disclosure",
+                "content": "Turn off detailed error messages and stack traces in production. Remove verbose server headers that reveal your technology stack.",
+                "listTitle": "What to check",
+                "list": [
+                    "Server header is hidden or generic",
+                    "X-Powered-By is removed",
+                    "Stack traces are disabled in production"
+                ]
+            },
+            {
+                "id": "audit-js",
+                "number": "11",
+                "title": "Audit JavaScript and Source Maps",
+                "content": "Review client-side bundles. Ensure you are not accidentally exposing sensitive API keys, secrets, or privileged endpoints.",
+                "listTitle": "What to check",
+                "list": [
+                    "Source maps are not publicly deployed",
+                    "API keys in frontend are safe to expose",
+                    "Internal endpoints are removed"
+                ]
+            },
+            {
+                "id": "secure-apis",
+                "number": "12",
+                "title": "Secure API Endpoints",
+                "content": "Protect all API routes with robust authentication and authorization. Do not rely on frontend obscurity.",
+                "listTitle": "What to check",
+                "list": [
+                    "All API endpoints require auth",
+                    "Rate limiting is active",
+                    "Input validation is performed"
+                ]
+            },
+            {
+                "id": "restrict-cors",
+                "number": "13",
+                "title": "Restrict CORS",
+                "content": "Do not use a wildcard (*) for Access-Control-Allow-Origin on sensitive endpoints. Only allow trusted domains.",
+                "listTitle": "What to check",
+                "list": [
+                    "Wildcard CORS is avoided",
+                    "Trusted origins are explicitly defined",
+                    "Credentials are not allowed with wildcard"
+                ]
+            },
+            {
+                "id": "dns-settings",
+                "number": "14",
+                "title": "Secure DNS and Domain Settings",
+                "content": "Implement SPF, DKIM, and DMARC to prevent email spoofing. Monitor for dangling DNS records.",
+                "listTitle": "What to check",
+                "list": [
+                    "SPF records are valid",
+                    "DMARC policy is established",
+                    "No dangling subdomains exist"
+                ]
+            },
+            {
+                "id": "backups",
+                "number": "15",
+                "title": "Maintain Regular Backups",
+                "content": "Automate backups of your database and application files. Store them securely offsite and test the restoration process periodically.",
+                "listTitle": "What to check",
+                "list": [
+                    "Automated backups run successfully",
+                    "Restoration is tested",
+                    "Backups are stored offsite"
+                ]
+            },
+            {
+                "id": "update-deps",
+                "number": "16",
+                "title": "Update Dependencies Regularly",
+                "content": "Use dependency scanning tools to identify and update vulnerable libraries, frameworks, and CMS plugins.",
+                "listTitle": "What to check",
+                "list": [
+                    "Automated dependency scans are active",
+                    "Known CVEs are patched",
+                    "Obsolete packages are replaced"
+                ]
+            },
+            {
+                "id": "security-logging",
+                "number": "17",
+                "title": "Implement Security Logging",
+                "content": "Log security-relevant events like logins, password changes, access control failures, and administrative actions.",
+                "listTitle": "What to check",
+                "list": [
+                    "Auth failures are logged",
+                    "Admin actions are tracked",
+                    "Logs are stored securely"
+                ]
+            },
+            {
+                "id": "active-monitoring",
+                "number": "18",
+                "title": "Set Up Active Monitoring",
+                "content": "Monitor your website for uptime, unauthorized changes, and suspicious traffic patterns.",
+                "listTitle": "What to check",
+                "list": [
+                    "Uptime alerts are active",
+                    "Traffic anomalies trigger alerts",
+                    "Log analysis is performed"
+                ]
+            },
+            {
+                "id": "vuln-scans",
+                "number": "19",
+                "title": "Run Regular Security Scans",
+                "content": "Using tools like URLScannerOnline can help you identify missing headers, exposed files, and misconfigurations.",
+                "listTitle": "What to check",
+                "list": [
+                    "Automated scans are scheduled",
+                    "Findings are prioritized",
+                    "Remediations are tracked"
+                ]
+            },
+            {
+                "id": "incident-response",
+                "number": "20",
+                "title": "Plan for Incident Response",
+                "content": "Have a documented plan for what to do if a breach occurs. Know who to contact and how to communicate.",
+                "listTitle": "What to check",
+                "list": [
+                    "IR plan is documented",
+                    "Roles are defined",
+                    "Communication templates exist"
+                ]
+            }
+        ]
     },
     {
         "id": "2",
@@ -83,31 +264,34 @@ articles_data = [
         "category": "Website Security",
         "primaryKeyword": "how to check if a website is secure",
         "excerpt": "Learn the practical steps to evaluate a website's security posture, from basic visual checks to advanced vulnerability scanning.",
-        "content": """
-            <p className="mb-4">Understanding <strong>how to check if a website is secure</strong> is essential for site owners and visitors alike. This practical guide covers everything from basic browser indicators to comprehensive security testing.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">1. Basic Checks (Visual and Browser)</h3>
-            <p className="mb-4">The easiest way to perform an initial check is by looking at the browser's address bar. Ensure the URL begins with <code>https://</code> and has a padlock icon. This indicates the connection is encrypted via TLS. However, remember that encryption alone does not guarantee the site itself is safe from vulnerabilities or malicious intent.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">2. Passive Security Analysis</h3>
-            <p className="mb-4">Passive security analysis involves evaluating a website without sending malicious payloads or intrusive requests. This approach analyzes the primary target responses, observing headers, cookies, configuration files, and exposed client-side code.</p>
-            <p className="mb-4">Tools like URLScannerOnline's passive mode perform read-only checks to identify issues like missing security headers (e.g., CSP, HSTS), weak TLS configurations, and unintended information disclosure. It is highly production-friendly because it minimizes interaction with the target server.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">3. Active Security Testing</h3>
-            <p className="mb-4">Active testing goes deeper by sending additional, non-standard requests to application endpoints to map the attack surface. This includes directory probing, endpoint discovery, and API introspection.</p>
-            <p className="mb-4">Active testing can uncover exposed files (like <code>.env</code> or <code>.git</code>) and undocumented APIs. Because it generates more traffic and probes unexpected paths, it carries a slightly higher footprint than passive analysis.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">4. Vulnerability Scanning</h3>
-            <p className="mb-4">Automated vulnerability scanners systematically test a web application for known flaws like SQL Injection (SQLi), Cross-Site Scripting (XSS), and outdated software components. Scanning is a crucial component of continuous security but requires careful configuration to avoid disrupting live environments.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">5. Penetration Testing</h3>
-            <p className="mb-4">While automated tools cover immense ground quickly, manual penetration testing involves human experts simulating real-world attacks. Pentesters chain vulnerabilities together to breach systems and exfiltrate data, providing the deepest level of security assurance.</p>
-
-            <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 mt-6">
-                <p className="font-medium text-slate-200">Important Note:</p>
-                <p className="text-sm text-slate-400 mt-1">Explicitly, no single automated scan can prove a website is completely secure. Security is a continuous process of defense-in-depth, requiring regular audits, secure coding practices, and monitoring.</p>
-            </div>
-        """
+        "content": "Understanding <strong>how to check if a website is secure</strong> is essential for site owners and visitors alike. This practical guide covers everything from basic browser indicators to targeted security testing.",
+        "sections": [
+            {
+                "id": "basic-checks",
+                "title": "Basic Checks (Visual and Browser)",
+                "content": "The easiest way to perform an initial check is by looking at the browser's address bar. Ensure the URL begins with HTTPS. However, remember that encryption alone does not guarantee the site itself is safe from vulnerabilities or malicious intent."
+            },
+            {
+                "id": "passive-analysis",
+                "title": "Passive Security Analysis",
+                "content": "Passive security analysis involves evaluating a website without sending malicious payloads or intrusive requests. This approach analyzes the primary target responses, observing headers, cookies, configuration files, and exposed client-side code. Tools like URLScannerOnline's passive mode perform read-only checks to identify issues like missing security headers (e.g., CSP, HSTS), weak TLS configurations, and unintended information disclosure."
+            },
+            {
+                "id": "active-testing",
+                "title": "Active Security Testing",
+                "content": "Active testing goes deeper by sending additional requests to application endpoints to map the attack surface. This includes directory probing, endpoint discovery, and API introspection. Because it generates more traffic, it carries a slightly higher footprint than passive analysis."
+            },
+            {
+                "id": "vuln-scanning",
+                "title": "Vulnerability Scanning",
+                "content": "Automated vulnerability scanners systematically test a web application for known flaws like SQL Injection (SQLi) and Cross-Site Scripting (XSS). Scanning is a crucial component of continuous security."
+            },
+            {
+                "id": "pentesting",
+                "title": "Penetration Testing",
+                "content": "While automated tools cover immense ground quickly, manual penetration testing involves human experts simulating real-world attacks. Pentesters chain vulnerabilities together to breach systems and exfiltrate data."
+            }
+        ]
     },
     {
         "id": "3",
@@ -116,51 +300,59 @@ articles_data = [
         "category": "OWASP Security",
         "primaryKeyword": "OWASP Top 10",
         "excerpt": "A detailed breakdown of the current OWASP Top 10 web application security risks and how to protect your applications against them.",
-        "content": """
-            <p className="mb-4">The <strong>OWASP Top 10</strong> is the universally recognized awareness document for web application security. It represents a broad consensus about the most critical security risks to web applications.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">A01: Broken Access Control</h3>
-            <p className="mb-4">This occurs when users can act outside their intended permissions. It is currently the most serious web application risk.</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>Why it matters:</strong> Attackers can bypass access checks to modify or delete data, or access other users' accounts.</li>
-                <li><strong>Example:</strong> Changing a URL parameter from <code>user_id=123</code> to <code>user_id=124</code> to view someone else's profile (Insecure Direct Object Reference).</li>
-                <li><strong>Prevention:</strong> Enforce access controls strictly on the server side. Deny by default. Implement robust role-based access control (RBAC).</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">A02: Cryptographic Failures</h3>
-            <p className="mb-4">Previously known as Sensitive Data Exposure, this focuses on failures related to cryptography, which often lead to sensitive data leaks.</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>Why it matters:</strong> Passwords, credit cards, and personal data can be stolen if transmitted or stored in clear text.</li>
-                <li><strong>Example:</strong> Transmitting login credentials over unencrypted HTTP, or storing passwords using weak hashing algorithms like MD5.</li>
-                <li><strong>Prevention:</strong> Enforce strong HTTPS/TLS, use strong, modern hashing algorithms (Argon2, bcrypt), and never store sensitive data unnecessarily.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">A03: Injection</h3>
-            <p className="mb-4">Injection flaws occur when untrusted data is sent to an interpreter as part of a command or query. This includes SQL, NoSQL, OS command, and LDAP injection.</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>Why it matters:</strong> Attackers can execute arbitrary commands or access unauthorized data.</li>
-                <li><strong>Example:</strong> Entering <code>' OR 1=1 --</code> into a login form to bypass authentication.</li>
-                <li><strong>Prevention:</strong> Use safe APIs, prepared statements, and parameterized queries. Validate and sanitize all user input.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">A04: Insecure Design</h3>
-            <p className="mb-4">A new category focusing on risks related to design flaws. It highlights the need for threat modeling and secure design principles.</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>Why it matters:</strong> A perfectly implemented system can still be vulnerable if the underlying design is fundamentally flawed.</li>
-                <li><strong>Example:</strong> An application that uses a weak, easily guessable format for password reset tokens.</li>
-                <li><strong>Prevention:</strong> Shift left. Integrate security into the design phase. Perform threat modeling before writing code.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">A05: Security Misconfiguration</h3>
-            <p className="mb-4">This includes insecure default settings, incomplete configurations, open cloud storage, misconfigured HTTP headers, and verbose error messages.</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>Why it matters:</strong> Misconfigurations provide attackers with easy avenues to exploit a system.</li>
-                <li><strong>Example:</strong> Leaving default administrative credentials active or failing to implement proper security headers.</li>
-                <li><strong>Prevention:</strong> Automate hardening processes. Regularly audit configurations. Remove unused features and frameworks.</li>
-            </ul>
-            
-            <p className="mt-6 mb-4">Other critical risks in the Top 10 include Vulnerable and Outdated Components (A06), Identification and Authentication Failures (A07), Software and Data Integrity Failures (A08), Security Logging and Monitoring Failures (A09), and Server-Side Request Forgery (SSRF) (A10).</p>
-        """
+        "content": "The <strong>OWASP Top 10</strong> is the universally recognized awareness document for web application security. It represents a broad consensus about the most critical security risks to web applications.",
+        "sections": [
+            {
+                "id": "a01",
+                "title": "A01: Broken Access Control",
+                "content": "This occurs when users can act outside their intended permissions. It is currently the most serious web application risk.",
+                "list": [
+                    "Why it matters: Attackers can bypass access checks to modify data.",
+                    "Example: Changing a URL parameter to view someone else's profile.",
+                    "Prevention: Enforce access controls strictly on the server side."
+                ]
+            },
+            {
+                "id": "a02",
+                "title": "A02: Cryptographic Failures",
+                "content": "Previously known as Sensitive Data Exposure, this focuses on failures related to cryptography.",
+                "list": [
+                    "Why it matters: Passwords and personal data can be stolen.",
+                    "Example: Transmitting credentials over unencrypted HTTP.",
+                    "Prevention: Enforce strong HTTPS/TLS, use modern hashing."
+                ]
+            },
+            {
+                "id": "a03",
+                "title": "A03: Injection",
+                "content": "Injection flaws occur when untrusted data is sent to an interpreter as part of a command.",
+                "list": [
+                    "Why it matters: Attackers can execute arbitrary commands.",
+                    "Example: Entering SQL statements into a login form.",
+                    "Prevention: Use safe APIs and parameterized queries."
+                ]
+            },
+            {
+                "id": "a04",
+                "title": "A04: Insecure Design",
+                "content": "A new category focusing on risks related to design flaws.",
+                "list": [
+                    "Why it matters: A perfectly implemented system can still be vulnerable if the design is flawed.",
+                    "Example: Weak password reset tokens.",
+                    "Prevention: Perform threat modeling."
+                ]
+            },
+            {
+                "id": "a05",
+                "title": "A05: Security Misconfiguration",
+                "content": "This includes insecure default settings, incomplete configurations, open cloud storage, and misconfigured HTTP headers.",
+                "list": [
+                    "Why it matters: Misconfigurations provide easy avenues to exploit a system.",
+                    "Example: Leaving default administrative credentials active.",
+                    "Prevention: Automate hardening processes and audit configurations."
+                ]
+            }
+        ]
     },
     {
         "id": "4",
@@ -169,42 +361,39 @@ articles_data = [
         "category": "Security Headers",
         "primaryKeyword": "security headers",
         "excerpt": "A comprehensive guide to HTTP security headers, their purpose, and how to configure them to protect your web application.",
-        "content": """
-            <p className="mb-4"><strong>HTTP security headers</strong> are instructions sent by your web server to the user's browser. They provide an essential layer of defense by dictating how the browser should behave when interacting with your site. Here is a complete guide to configuring them correctly.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Content-Security-Policy (CSP)</h3>
-            <p className="mb-4"><strong>Purpose:</strong> Defends against Cross-Site Scripting (XSS) and data injection attacks.<br/>
-            <strong>Benefit:</strong> Strictly defines which domains are allowed to load executable scripts, stylesheets, and media.<br/>
-            <strong>Common Mistake:</strong> Using <code>'unsafe-inline'</code> or overly permissive wildcards, effectively defeating the purpose of the CSP.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Strict-Transport-Security (HSTS)</h3>
-            <p className="mb-4"><strong>Purpose:</strong> Enforces secure connections.<br/>
-            <strong>Benefit:</strong> Tells the browser to never load the site over plain HTTP, mitigating protocol downgrade attacks.<br/>
-            <strong>Implementation:</strong> Start with a short <code>max-age</code> to test, then increase it. Ensure you include the <code>includeSubDomains</code> directive if your subdomains also support HTTPS.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">X-Content-Type-Options</h3>
-            <p className="mb-4"><strong>Purpose:</strong> Prevents MIME-sniffing.<br/>
-            <strong>Benefit:</strong> Forces the browser to honor the declared <code>Content-Type</code>. If a user uploads a malicious HTML file disguised as a JPEG, the browser won't execute it.<br/>
-            <strong>Implementation:</strong> Set strictly to <code>nosniff</code>.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">X-Frame-Options</h3>
-            <p className="mb-4"><strong>Purpose:</strong> Prevents Clickjacking attacks.<br/>
-            <strong>Benefit:</strong> Stops malicious websites from embedding your site inside an invisible iframe to trick users into clicking buttons.<br/>
-            <strong>Implementation:</strong> Use <code>DENY</code> or <code>SAMEORIGIN</code>. Note that CSP's <code>frame-ancestors</code> directive is modernizing and replacing this header.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Referrer-Policy</h3>
-            <p className="mb-4"><strong>Purpose:</strong> Controls how much origin information is sent when users click links.<br/>
-            <strong>Benefit:</strong> Prevents leaking sensitive URL parameters (like password reset tokens) to external websites.<br/>
-            <strong>Implementation:</strong> <code>strict-origin-when-cross-origin</code> is the recommended modern default.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Permissions-Policy</h3>
-            <p className="mb-4"><strong>Purpose:</strong> Controls browser features and APIs.<br/>
-            <strong>Benefit:</strong> Allows you to disable APIs like the camera, microphone, or geolocation, reducing the attack surface if your site is compromised by XSS.<br/>
-            <strong>Implementation:</strong> E.g., <code>camera=(), microphone=(), geolocation=()</code> to disable them entirely.</p>
-            
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">COOP, COEP, and CORP</h3>
-            <p className="mb-4">Cross-Origin Opacity Policies protect your site against advanced browser-based side-channel attacks like Spectre. They isolate your browsing context from other origins.</p>
-        """
+        "content": "<strong>HTTP security headers</strong> are instructions sent by your web server to the user's browser. They provide an essential layer of defense by dictating how the browser should behave when interacting with your site.",
+        "sections": [
+            {
+                "id": "csp",
+                "title": "Content-Security-Policy (CSP)",
+                "content": "Defends against Cross-Site Scripting (XSS) and data injection attacks by strictly defining which domains are allowed to load scripts. Avoid using 'unsafe-inline'."
+            },
+            {
+                "id": "hsts",
+                "title": "Strict-Transport-Security (HSTS)",
+                "content": "Enforces secure connections by telling the browser to never load the site over plain HTTP. Start with a short max-age to test."
+            },
+            {
+                "id": "xcto",
+                "title": "X-Content-Type-Options",
+                "content": "Prevents MIME-sniffing. Forces the browser to honor the declared Content-Type. Set strictly to nosniff."
+            },
+            {
+                "id": "xfo",
+                "title": "X-Frame-Options",
+                "content": "Prevents Clickjacking attacks by stopping malicious websites from embedding your site. Use DENY or SAMEORIGIN."
+            },
+            {
+                "id": "rp",
+                "title": "Referrer-Policy",
+                "content": "Controls how much origin information is sent when users click links. strict-origin-when-cross-origin is the recommended modern default."
+            },
+            {
+                "id": "pp",
+                "title": "Permissions-Policy",
+                "content": "Controls browser features and APIs. Allows you to disable APIs like the camera or microphone, reducing the attack surface."
+            }
+        ]
     },
     {
         "id": "5",
@@ -213,30 +402,36 @@ articles_data = [
         "category": "Security Headers",
         "primaryKeyword": "Content Security Policy",
         "excerpt": "Learn how to build and deploy a robust Content Security Policy to protect your users from Cross-Site Scripting (XSS) attacks.",
-        "content": """
-            <p className="mb-4">A <strong>Content Security Policy (CSP)</strong> is an HTTP response header that significantly reduces the risk of Cross-Site Scripting (XSS) and data injection attacks. By explicitly defining trusted sources of content, a CSP prevents browsers from executing malicious code injected by an attacker.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">How CSP Works</h3>
-            <p className="mb-4">Without a CSP, browsers assume that all scripts delivered by a server are trusted. With a CSP, the browser checks every script, stylesheet, image, and network connection against a strict whitelist.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Key CSP Directives</h3>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>default-src:</strong> The fallback policy for most directives. Usually set to <code>'self'</code> to allow resources only from your own domain.</li>
-                <li><strong>script-src:</strong> Defines valid sources for JavaScript. To be secure, avoid using <code>'unsafe-inline'</code>. Instead, use nonces or hashes.</li>
-                <li><strong>style-src:</strong> Defines valid sources for stylesheets.</li>
-                <li><strong>img-src:</strong> Controls where images can be loaded from.</li>
-                <li><strong>connect-src:</strong> Restricts the URLs to which the browser can send data (via fetch, XHR, or WebSockets).</li>
-                <li><strong>object-src:</strong> Controls plugins like Flash or Java. Usually set to <code>'none'</code>.</li>
-                <li><strong>frame-ancestors:</strong> Specifies valid parents that may embed a page using <code>&lt;iframe&gt;</code>. This replaces the old <code>X-Frame-Options</code> header to prevent clickjacking.</li>
-                <li><strong>form-action:</strong> Restricts the URLs to which HTML forms can submit data.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Report-Only Mode</h3>
-            <p className="mb-4">Implementing a CSP on an existing site can break functionality if not tested properly. Use the <code>Content-Security-Policy-Report-Only</code> header to monitor what resources would be blocked without actually blocking them. Review the violation reports before enforcing the policy.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Common CSP Mistakes</h3>
-            <p className="mb-4">The most critical mistake is relying on overly permissive whitelists or using <code>'unsafe-inline'</code>. While it makes development easier, allowing inline scripts effectively neuters the XSS protection of the CSP. Remember, there is no one-size-fits-all CSP configuration—every web application requires a tailored policy.</p>
-        """
+        "content": "A <strong>Content Security Policy (CSP)</strong> is an HTTP response header that can significantly reduce the risk of Cross-Site Scripting (XSS) and data injection attacks.",
+        "sections": [
+            {
+                "id": "how-it-works",
+                "title": "How CSP Works",
+                "content": "Without a CSP, browsers assume that all scripts delivered by a server are trusted. With a CSP, the browser checks every script, stylesheet, and image against a strict whitelist."
+            },
+            {
+                "id": "directives",
+                "title": "Key CSP Directives",
+                "content": "Key directives you should understand:",
+                "list": [
+                    "default-src: The fallback policy for most directives.",
+                    "script-src: Defines valid sources for JavaScript.",
+                    "style-src: Defines valid sources for stylesheets.",
+                    "connect-src: Restricts the URLs to which the browser can send data.",
+                    "frame-ancestors: Specifies valid parents that may embed a page."
+                ]
+            },
+            {
+                "id": "report-only",
+                "title": "Report-Only Mode",
+                "content": "Use the Content-Security-Policy-Report-Only header to monitor what resources would be blocked without actually blocking them."
+            },
+            {
+                "id": "mistakes",
+                "title": "Common CSP Mistakes",
+                "content": "The most critical mistake is relying on overly permissive whitelists or using 'unsafe-inline'. While it makes development easier, allowing inline scripts effectively neuters the XSS protection."
+            }
+        ]
     },
     {
         "id": "6",
@@ -245,25 +440,34 @@ articles_data = [
         "category": "SSL / TLS Security",
         "primaryKeyword": "HSTS",
         "excerpt": "Understand HTTP Strict Transport Security (HSTS), how it prevents downgrade attacks, and best practices for deployment.",
-        "content": """
-            <p className="mb-4"><strong>HTTP Strict Transport Security (HSTS)</strong> is an essential security mechanism that protects websites against man-in-the-middle (MitM) attacks, specifically protocol downgrade attacks and cookie hijacking. When deployed, it tells web browsers to only interact with your application using secure HTTPS connections, never via plain HTTP.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">HTTP vs HTTPS</h3>
-            <p className="mb-4">While modern websites typically redirect HTTP traffic to HTTPS, the initial HTTP request is unencrypted. An attacker intercepting traffic on a public Wi-Fi network could intercept that initial request and prevent the redirect, keeping the victim on an insecure HTTP connection. This is called a downgrade attack.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">How HSTS Solves the Problem</h3>
-            <p className="mb-4">HSTS mitigates this by instructing the browser to remember that the site is HTTPS-only. For a specified duration, the browser will automatically upgrade all HTTP requests to HTTPS internally before any network traffic is sent.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">HSTS Directives</h3>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>max-age:</strong> The time, in seconds, that the browser should remember the HTTPS-only policy. A common value for production is <code>31536000</code> (one year).</li>
-                <li><strong>includeSubDomains:</strong> An optional directive that applies the HSTS rule to all subdomains (e.g., api.example.com, blog.example.com). Use with caution, as it will break subdomains that do not have valid SSL certificates.</li>
-                <li><strong>preload:</strong> Indicates that the domain owner consents to have their domain hardcoded into the browser's HSTS preload list, meaning browsers will use HTTPS even on the very first visit.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Deployment Considerations</h3>
-            <p className="mb-4">Rolling out HSTS should be done cautiously. Start with a very short <code>max-age</code> (e.g., 300 seconds) to ensure it doesn't break your site. Gradually increase the <code>max-age</code> as you gain confidence. Ensure all internal assets and subdomains are fully HTTPS-compliant before adding the <code>includeSubDomains</code> directive.</p>
-        """
+        "content": "<strong>HTTP Strict Transport Security (HSTS)</strong> is an essential security mechanism that protects websites against protocol downgrade attacks.",
+        "sections": [
+            {
+                "id": "http-vs-https",
+                "title": "HTTP vs HTTPS",
+                "content": "While modern websites typically redirect HTTP traffic to HTTPS, the initial HTTP request is unencrypted. An attacker could intercept that initial request."
+            },
+            {
+                "id": "how-hsts-solves",
+                "title": "How HSTS Solves the Problem",
+                "content": "HSTS mitigates this by instructing the browser to remember that the site is HTTPS-only. The browser will automatically upgrade all HTTP requests to HTTPS."
+            },
+            {
+                "id": "directives",
+                "title": "HSTS Directives",
+                "content": "Key configuration directives:",
+                "list": [
+                    "max-age: The time, in seconds, that the browser should remember the policy.",
+                    "includeSubDomains: Applies the rule to all subdomains.",
+                    "preload: Indicates consent to be hardcoded into the browser's HSTS preload list."
+                ]
+            },
+            {
+                "id": "deployment",
+                "title": "Deployment Considerations",
+                "content": "Rolling out HSTS should be done cautiously. Start with a very short max-age to ensure it doesn't break your site. Gradually increase the max-age as you gain confidence."
+            }
+        ]
     },
     {
         "id": "7",
@@ -272,21 +476,29 @@ articles_data = [
         "category": "SSL / TLS Security",
         "primaryKeyword": "TLS 1.2 vs TLS 1.3",
         "excerpt": "A technical comparison of TLS 1.2 and TLS 1.3, highlighting the security enhancements and performance benefits of modern encryption.",
-        "content": """
-            <p className="mb-4">Transport Layer Security (TLS) is the protocol responsible for providing secure, encrypted communications across the internet. Understanding the differences between <strong>TLS 1.2 vs TLS 1.3</strong> is critical for configuring secure web servers.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Security Improvements</h3>
-            <p className="mb-4">TLS 1.3 brings a massive overhaul to the protocol's security by eliminating obsolete and insecure cryptographic features. In TLS 1.2, servers could negotiate weak algorithms (like RC4, SHA-1, MD5, DES, and RSA key exchange) which are vulnerable to sophisticated attacks. TLS 1.3 strictly limits cipher suites to a handful of highly secure, authenticated encryption algorithms (like AES-GCM and ChaCha20-Poly1305) and enforces perfect forward secrecy.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Handshake and Performance Differences</h3>
-            <p className="mb-4">TLS 1.2 requires two round-trips (2-RTT) between the client and server to establish a secure connection. This adds latency, particularly over long distances or mobile networks. TLS 1.3 optimizes the handshake to require only one round-trip (1-RTT). It also supports a 0-RTT feature for resuming previous connections, drastically improving page load times for returning visitors.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Compatibility</h3>
-            <p className="mb-4">TLS 1.3 is universally supported by all modern browsers. However, some legacy systems, older APIs, and out-of-date mobile operating systems may still require TLS 1.2. The best practice for modern web servers is to enable both TLS 1.2 and TLS 1.3, while explicitly disabling TLS 1.0 and 1.1.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Cipher Suite Considerations</h3>
-            <p className="mb-4">When configuring your server, pay close attention to your cipher suite priorities. Even if TLS 1.2 is enabled for compatibility, ensure that the server prefers strong, modern ciphers and refuses to negotiate weak CBC-mode ciphers whenever possible.</p>
-        """
+        "content": "Transport Layer Security (TLS) is the protocol responsible for providing secure, encrypted communications. Understanding <strong>TLS 1.2 vs TLS 1.3</strong> is critical.",
+        "sections": [
+            {
+                "id": "security-improvements",
+                "title": "Security Improvements",
+                "content": "TLS 1.3 brings a massive overhaul to the protocol's security by eliminating obsolete and insecure cryptographic features. TLS 1.3 strictly limits cipher suites to a handful of highly secure algorithms."
+            },
+            {
+                "id": "performance",
+                "title": "Handshake and Performance",
+                "content": "TLS 1.2 requires two round-trips (2-RTT) to establish a connection. TLS 1.3 optimizes the handshake to require only one round-trip (1-RTT), drastically improving page load times."
+            },
+            {
+                "id": "compatibility",
+                "title": "Compatibility",
+                "content": "For modern public-facing websites, disable obsolete protocols such as TLS 1.0 and TLS 1.1 and generally prefer TLS 1.2 or TLS 1.3, subject to your compatibility requirements."
+            },
+            {
+                "id": "cipher-suites",
+                "title": "Cipher Suite Considerations",
+                "content": "Even if TLS 1.2 is enabled for compatibility, ensure that the server prefers strong, modern ciphers and refuses to negotiate weak CBC-mode ciphers whenever possible."
+            }
+        ]
     },
     {
         "id": "8",
@@ -295,54 +507,99 @@ articles_data = [
         "category": "API Security",
         "primaryKeyword": "API security checklist",
         "excerpt": "A comprehensive API security checklist to help developers secure endpoints, manage authentication, and prevent data breaches.",
-        "content": """
-            <p className="mb-4">APIs are the backbone of modern web and mobile applications, making them prime targets for attackers. This <strong>API security checklist</strong> provides developers with 15 critical steps to secure their architecture.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">1. Enforce Robust Authentication</h3>
-            <p className="mb-4">Do not rely on simple API keys for sensitive user data. Use modern, secure authentication mechanisms like OAuth 2.0 or OpenID Connect. Ensure JWTs (JSON Web Tokens) are signed securely and verified rigorously.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">2. Implement Strict Authorization</h3>
-            <p className="mb-4">Authentication proves who the user is; authorization proves what they can do. Enforce role-based access control (RBAC) across all sensitive endpoints.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">3. Check Object-Level Access Control (BOLA/IDOR)</h3>
-            <p className="mb-4">Ensure that a user requesting data for a specific object ID actually has permission to view or modify that exact object, preventing Broken Object Level Authorization.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">4. Validate All Input</h3>
-            <p className="mb-4">Never trust client input. Implement strict type checking, format validation, and length restrictions on all incoming request payloads and query parameters.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">5. Apply Rate Limiting and Throttling</h3>
-            <p className="mb-4">Protect your endpoints from brute-force attacks and Denial of Service (DoS) by enforcing strict rate limits per IP address and per user account.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">6. Secure CORS Policies</h3>
-            <p className="mb-4">Restrict Cross-Origin Resource Sharing (CORS). Avoid using wildcards (<code>*</code>) for the <code>Access-Control-Allow-Origin</code> header on authenticated APIs.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">7. Force TLS Everywhere</h3>
-            <p className="mb-4">Require HTTPS for all API traffic to ensure data is encrypted in transit and immune to man-in-the-middle attacks.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">8. Manage Secrets Securely</h3>
-            <p className="mb-4">Never hardcode API keys, database credentials, or secret tokens in the source code. Use secure environment variables or dedicated secret management services.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">9. Standardize Error Handling</h3>
-            <p className="mb-4">Ensure your API returns generic error messages to clients. Suppress stack traces and verbose debug information that could leak internal system details.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">10. Protect API Documentation</h3>
-            <p className="mb-4">Do not expose Swagger, OpenAPI, or GraphQL Introspection endpoints to the public internet unless specifically intended. Keep internal documentation behind authentication.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">11. Audit Sensitive Endpoints</h3>
-            <p className="mb-4">Review administrative routes, user creation endpoints, and password reset flows for potential logic flaws or bypasses.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">12. Implement Audit Logging</h3>
-            <p className="mb-4">Log authentication events, administrative actions, and significant data modifications. Ensure logs do not contain plaintext passwords or sensitive PII.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">13. Use API Versioning</h3>
-            <p className="mb-4">Enforce explicit API versioning (e.g., <code>/v1/</code>). This allows you to safely deprecate insecure endpoints and maintain backward compatibility during security upgrades.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">14. Monitor Dependencies</h3>
-            <p className="mb-4">Continuously scan your application's open-source dependencies for known CVEs and update them promptly.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">15. Automate Security Monitoring</h3>
-            <p className="mb-4">Integrate continuous monitoring and active anomaly detection to alert security teams to unusual access patterns or massive data exfiltration attempts.</p>
-        """
+        "content": "APIs are the backbone of modern web applications, making them prime targets. This <strong>API security checklist</strong> provides steps to secure their architecture.",
+        "sections": [
+            {
+                "id": "auth",
+                "number": "01",
+                "title": "Enforce Robust Authentication",
+                "content": "Do not rely on simple API keys for sensitive user data. Use modern authentication mechanisms like OAuth 2.0."
+            },
+            {
+                "id": "authz",
+                "number": "02",
+                "title": "Implement Strict Authorization",
+                "content": "Authentication proves who the user is; authorization proves what they can do. Enforce role-based access control."
+            },
+            {
+                "id": "bola",
+                "number": "03",
+                "title": "Check Object-Level Access Control",
+                "content": "Ensure that a user requesting data for a specific object ID actually has permission to view that exact object."
+            },
+            {
+                "id": "validation",
+                "number": "04",
+                "title": "Validate All Input",
+                "content": "Never trust client input. Implement strict type checking and length restrictions."
+            },
+            {
+                "id": "rate-limit",
+                "number": "05",
+                "title": "Apply Rate Limiting",
+                "content": "Protect endpoints from brute-force attacks by enforcing strict rate limits per IP."
+            },
+            {
+                "id": "cors",
+                "number": "06",
+                "title": "Secure CORS Policies",
+                "content": "Restrict Cross-Origin Resource Sharing. Avoid using wildcards (*) for authenticated APIs."
+            },
+            {
+                "id": "tls",
+                "number": "07",
+                "title": "Force TLS Everywhere",
+                "content": "Require HTTPS for all API traffic to ensure data is encrypted in transit."
+            },
+            {
+                "id": "secrets",
+                "number": "08",
+                "title": "Manage Secrets Securely",
+                "content": "Never hardcode API keys in the source code. Use secure environment variables."
+            },
+            {
+                "id": "errors",
+                "number": "09",
+                "title": "Standardize Error Handling",
+                "content": "Suppress stack traces and verbose debug information that could leak internal details."
+            },
+            {
+                "id": "docs",
+                "number": "10",
+                "title": "Protect API Documentation",
+                "content": "Do not expose Swagger or OpenAPI endpoints to the public internet unless intended."
+            },
+            {
+                "id": "audit-endpoints",
+                "number": "11",
+                "title": "Audit Sensitive Endpoints",
+                "content": "Review administrative routes and password reset flows for potential bypasses."
+            },
+            {
+                "id": "logging",
+                "number": "12",
+                "title": "Implement Audit Logging",
+                "content": "Log authentication events. Ensure logs do not contain plaintext passwords."
+            },
+            {
+                "id": "versioning",
+                "number": "13",
+                "title": "Use API Versioning",
+                "content": "Enforce explicit API versioning to safely deprecate insecure endpoints."
+            },
+            {
+                "id": "deps",
+                "number": "14",
+                "title": "Monitor Dependencies",
+                "content": "Continuously scan dependencies for known CVEs and update them."
+            },
+            {
+                "id": "monitor",
+                "number": "15",
+                "title": "Automate Security Monitoring",
+                "content": "Integrate continuous monitoring to alert teams to unusual access patterns."
+            }
+        ]
     },
     {
         "id": "9",
@@ -351,25 +608,29 @@ articles_data = [
         "category": "API Security",
         "primaryKeyword": "API security vulnerabilities",
         "excerpt": "Explore the most common API security vulnerabilities, including Broken Object Level Authorization, and learn how to prevent them.",
-        "content": """
-            <p className="mb-4">As applications become increasingly distributed, <strong>API security vulnerabilities</strong> have become the primary attack vector for modern data breaches. This guide explores the most frequent API security problems and how to architect defenses against them.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Broken Object Level Authorization (BOLA)</h3>
-            <p className="mb-4">Also known as Insecure Direct Object Reference (IDOR), BOLA is arguably the most common and devastating API vulnerability. It occurs when an API endpoint uses an ID provided by the client to access a resource without verifying that the requesting user is actually authorized to access that specific ID.</p>
-            <p className="mb-4"><strong>Prevention:</strong> Always enforce authorization checks at the object level. Before returning data, verify that the logged-in user possesses ownership or appropriate permissions for the requested record ID.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Broken Authentication</h3>
-            <p className="mb-4">It is crucial to clearly distinguish authentication (verifying who the user is) from authorization (verifying what the user can do). Flaws in authentication mechanisms allow attackers to compromise passwords, keys, or session tokens to assume other users' identities.</p>
-            <p className="mb-4"><strong>Prevention:</strong> Implement standard, battle-tested authentication flows like OAuth 2.0. Enforce strict token expiration, validate JWT signatures explicitly, and mandate multi-factor authentication (MFA) for privileged accounts.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Excessive Data Exposure</h3>
-            <p className="mb-4">APIs often return full data objects to the client application, relying on the frontend UI to filter out sensitive fields before displaying them. Attackers can simply intercept the raw API response to extract hidden sensitive information.</p>
-            <p className="mb-4"><strong>Prevention:</strong> Never rely on the client to filter data. The API backend must explicitly define and serialize only the exact fields required by the view.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Lack of Resources & Rate Limiting</h3>
-            <p className="mb-4">APIs that do not restrict the size or frequency of requests are highly susceptible to Denial of Service (DoS) and automated brute-force attacks.</p>
-            <p className="mb-4"><strong>Prevention:</strong> Implement strict rate limiting policies. Enforce maximum payload sizes and implement pagination to prevent an attacker from requesting millions of database records in a single call.</p>
-        """
+        "content": "As applications become increasingly distributed, <strong>API security vulnerabilities</strong> have become the primary attack vector. This guide explores the most frequent problems.",
+        "sections": [
+            {
+                "id": "bola",
+                "title": "Broken Object Level Authorization (BOLA)",
+                "content": "BOLA occurs when an API endpoint uses an ID provided by the client to access a resource without verifying authorization. Always enforce authorization checks at the object level."
+            },
+            {
+                "id": "auth",
+                "title": "Broken Authentication",
+                "content": "Flaws in authentication allow attackers to compromise passwords or tokens. Implement standard flows like OAuth 2.0 and validate JWT signatures explicitly."
+            },
+            {
+                "id": "exposure",
+                "title": "Excessive Data Exposure",
+                "content": "APIs often return full data objects, relying on the frontend UI to filter out sensitive fields. Never rely on the client to filter data."
+            },
+            {
+                "id": "limits",
+                "title": "Lack of Resources & Rate Limiting",
+                "content": "APIs that do not restrict request frequency are susceptible to DoS. Implement strict rate limiting policies and pagination."
+            }
+        ]
     },
     {
         "id": "10",
@@ -378,28 +639,32 @@ articles_data = [
         "category": "Security Testing",
         "primaryKeyword": "DAST vs SAST",
         "excerpt": "A detailed comparison of Dynamic Application Security Testing (DAST) and Static Application Security Testing (SAST).",
-        "content": """
-            <p className="mb-4">Integrating automated security tooling is critical for DevSecOps. Two of the most common methodologies are <strong>DAST vs SAST</strong>. Understanding the differences between Dynamic and Static Application Security Testing is vital for building a comprehensive security program.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">What is SAST?</h3>
-            <p className="mb-4">Static Application Security Testing (SAST) analyzes the application's source code, bytecode, or binary without executing the program. It looks for coding flaws, insecure function calls, and syntax that indicates a vulnerability.</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>Strengths:</strong> Can be integrated seamlessly into the developer's IDE or CI/CD pipeline. It identifies exact lines of code where vulnerabilities exist, making remediation straightforward.</li>
-                <li><strong>Limitations:</strong> Generates a high volume of false positives. It cannot detect runtime issues, environmental misconfigurations, or authentication logic flaws.</li>
-                <li><strong>Use Cases:</strong> Shift-left security, early pipeline code review.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">What is DAST?</h3>
-            <p className="mb-4">Dynamic Application Security Testing (DAST) evaluates the application from the outside in while it is running. It interacts with the web application exactly as a user or attacker would, sending requests and analyzing the HTTP responses.</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>Strengths:</strong> Highly accurate regarding exploitability. It detects real-world configuration errors, missing security headers, authentication bypasses, and server-side misconfigurations that SAST cannot see.</li>
-                <li><strong>Limitations:</strong> Cannot pinpoint the exact line of vulnerable source code. It must be run against a compiled, running application environment (staging or production).</li>
-                <li><strong>Use Cases:</strong> Pre-release staging validation, production monitoring, and continuous compliance checks.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Complementary Approaches</h3>
-            <p className="mb-4">SAST and DAST are not mutually exclusive; they are highly complementary. SAST catches coding errors early in the development lifecycle, while DAST validates the security posture of the deployed application. Passive website security analysis, such as the initial scans provided by URLScannerOnline, fits cleanly into the DAST/production monitoring category by evaluating the live HTTP configuration without requiring source code access.</p>
-        """
+        "content": "Integrating automated security tooling is critical. Understanding <strong>DAST vs SAST</strong> is vital for building a comprehensive security program.",
+        "sections": [
+            {
+                "id": "sast",
+                "title": "What is SAST?",
+                "content": "Static Application Security Testing analyzes the source code without executing the program.",
+                "list": [
+                    "Strengths: Identifies exact lines of code where vulnerabilities exist.",
+                    "Limitations: High false positives, cannot detect runtime issues."
+                ]
+            },
+            {
+                "id": "dast",
+                "title": "What is DAST?",
+                "content": "Dynamic Application Security Testing evaluates the application from the outside in while it is running.",
+                "list": [
+                    "Strengths: Accurate regarding exploitability. Detects real-world misconfigurations.",
+                    "Limitations: Cannot pinpoint exact source code lines."
+                ]
+            },
+            {
+                "id": "complementary",
+                "title": "Complementary Approaches",
+                "content": "SAST and DAST are highly complementary. SAST catches coding errors early, while DAST validates the security posture of the deployed application."
+            }
+        ]
     },
     {
         "id": "11",
@@ -407,29 +672,33 @@ articles_data = [
         "slug": "vulnerability-scanning-vs-penetration-testing",
         "category": "Security Testing",
         "primaryKeyword": "vulnerability scanning vs penetration testing",
-        "excerpt": "Learn the vital differences between automated vulnerability scanning and manual penetration testing, and when to use each approach.",
-        "content": """
-            <p className="mb-4">Many organizations confuse <strong>vulnerability scanning vs penetration testing</strong>. While both are essential components of a robust cybersecurity strategy, they serve vastly different purposes, require different resources, and yield different results.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Vulnerability Scanning</h3>
-            <p className="mb-4">A vulnerability scan is an automated security assessment performed by software. It systematically inspects networks, web applications, or infrastructure for known security flaws, missing patches, misconfigurations, and weak encryption protocols.</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>Nature:</strong> Automated, repeatable, and scalable.</li>
-                <li><strong>Goal:</strong> To identify and catalog potential weaknesses across a broad surface area rapidly.</li>
-                <li><strong>Limitations:</strong> Scanners often report false positives and cannot understand complex business logic flaws. A scan highlights the door is unlocked, but does not walk through it.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Penetration Testing</h3>
-            <p className="mb-4">A penetration test (or pentest) is a highly manual, goal-oriented exercise conducted by human security experts (ethical hackers). Pentesters actively attempt to exploit vulnerabilities to achieve a specific objective, such as breaching a database or gaining administrative control.</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>Nature:</strong> Manual, complex, and time-intensive.</li>
-                <li><strong>Goal:</strong> To demonstrate the real-world impact of a security flaw and identify complex, chained vulnerabilities that automated tools miss.</li>
-                <li><strong>Limitations:</strong> Penetration tests represent a point-in-time snapshot and are significantly more expensive than automated scans.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">The Essential Difference</h3>
-            <p className="mb-4">It is critical to state clearly that automated vulnerability scanning is not equivalent to a full penetration test. Regular automated security scanning (both passive and active) ensures your baseline security hygiene is maintained continuously. Manual penetration testing should be performed annually or after major architectural changes to dive deep into business logic.</p>
-        """
+        "excerpt": "Learn the vital differences between automated vulnerability scanning and manual penetration testing.",
+        "content": "While both are essential components, <strong>vulnerability scanning and penetration testing</strong> serve vastly different purposes.",
+        "sections": [
+            {
+                "id": "scanning",
+                "title": "Vulnerability Scanning",
+                "content": "An automated security assessment that systematically inspects applications for known security flaws.",
+                "list": [
+                    "Nature: Automated, repeatable, and scalable.",
+                    "Limitations: Cannot understand complex business logic flaws."
+                ]
+            },
+            {
+                "id": "pentesting",
+                "title": "Penetration Testing",
+                "content": "A highly manual exercise conducted by human security experts attempting to exploit vulnerabilities.",
+                "list": [
+                    "Nature: Manual, complex, and time-intensive.",
+                    "Limitations: A point-in-time snapshot and more expensive."
+                ]
+            },
+            {
+                "id": "difference",
+                "title": "The Essential Difference",
+                "content": "Automated scanning ensures baseline hygiene is maintained continuously. Penetration testing should be performed annually to dive deep into business logic."
+            }
+        ]
     },
     {
         "id": "12",
@@ -437,33 +706,41 @@ articles_data = [
         "slug": "passive-vs-active-security-testing",
         "category": "Security Testing",
         "primaryKeyword": "passive vs active security testing",
-        "excerpt": "Understand the differences between passive and active security testing to ensure your production environments remain safe during analysis.",
-        "content": """
-            <p className="mb-4">When assessing the security posture of a live web application, security teams must choose the appropriate methodology to balance thoroughness with operational safety. Understanding <strong>passive vs active security testing</strong> is critical.</p>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Passive Security Testing</h3>
-            <p className="mb-4">Passive security testing analyzes the primary target responses with minimal target interaction. It involves a read-only analysis of the web application.</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>Behavior:</strong> The scanner makes standard requests to the application and observes the responses. It does not perform endpoint fuzzing, brute force attacks, intrusive probing, or active enumeration.</li>
-                <li><strong>What it finds:</strong> Missing security headers, insecure cookie configurations, exposed tech stacks, and basic SSL/TLS configuration issues.</li>
-                <li><strong>When to use:</strong> Ideal for continuous monitoring of highly sensitive live production environments where zero disruption is mandated.</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">Active Security Testing</h3>
-            <p className="mb-4">Active security testing aggressively maps the application's attack surface by emitting additional requests, probing undocumented paths, and interacting with endpoints.</p>
-            <ul className="list-disc pl-6 mb-4 space-y-2 text-slate-300">
-                <li><strong>Behavior:</strong> Involves endpoint discovery, deeper API security testing, directory fuzzing, and executing potentially disruptive payloads to test for vulnerabilities like XSS or SQLi.</li>
-                <li><strong>What it finds:</strong> Exposed environment files, undocumented administrative APIs, misconfigured CORS reflections, and deep logic flaws.</li>
-                <li><strong>When to use:</strong> Best suited for staging environments or scheduled maintenance windows, as it has a potentially greater production impact and may trigger web application firewalls (WAFs).</li>
-            </ul>
-
-            <h3 className="text-xl font-semibold mt-6 mb-3 text-slate-100">The URLScannerOnline Architecture</h3>
-            <p className="mb-4">URLScannerOnline provides distinct capabilities tailored to both methodologies. Its Passive Mode is strictly read-only, avoiding aggressive fuzzing to ensure complete safety on live domains. Conversely, its Active Mode enables deep discovery techniques to map API routes and probe for exposed infrastructure, providing a much deeper, albeit noisier, security assessment.</p>
-        """
+        "excerpt": "Understand the differences between passive and active security testing.",
+        "content": "When assessing the security posture of a live web application, understanding <strong>passive vs active security testing</strong> is critical.",
+        "sections": [
+            {
+                "id": "passive",
+                "title": "Passive Security Testing",
+                "content": "Analyzes the primary target responses with minimal target interaction.",
+                "list": [
+                    "Behavior: Observes responses without endpoint fuzzing.",
+                    "What it finds: Missing headers, insecure cookies.",
+                    "When to use: Continuous monitoring of sensitive environments."
+                ]
+            },
+            {
+                "id": "active",
+                "title": "Active Security Testing",
+                "content": "Interacts forcefully with the target to discover vulnerabilities.",
+                "list": [
+                    "Behavior: Sends unexpected payloads and fuzzes inputs.",
+                    "What it finds: SQL injection, path traversal.",
+                    "When to use: Periodic deep assessments."
+                ]
+            },
+            {
+                "id": "approach",
+                "title": "A Blended Approach",
+                "content": "Combining both approaches provides the best coverage. Passive scans can run continuously, while active testing occurs during dedicated windows."
+            }
+        ]
     }
 ]
 
-# We need to wrap it in a js file
-js_content = "export const articles = " + json.dumps(articles_data, indent=4) + ";"
+file_content = "export const articles = " + json.dumps(articles_data, indent=4) + ";\n"
 with open(os.path.join(articles_dir, "index.js"), "w", encoding="utf-8") as f:
-    f.write(js_content)
+    f.write(file_content)
+
+with open(r"d:\secure-AI\scripts\build_articles.py", "w", encoding="utf-8") as f:
+    f.write(open(__file__).read())
