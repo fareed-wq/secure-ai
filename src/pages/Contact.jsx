@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, MessageSquare, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Mail, MessageSquare, AlertTriangle, CheckCircle2, Copy } from 'lucide-react';
 
 const Contact = () => {
   const [activeTab, setActiveTab] = useState('feedback');
@@ -49,21 +49,41 @@ const Contact = () => {
 
           {/* Direct Contact Option */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-              <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 mb-6">
+            <a
+              href="mailto:contact@urlscanonline.com"
+              className="block bg-slate-900 border border-slate-800 rounded-2xl p-6 group hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all cursor-pointer relative"
+            >
+              <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 mb-6 group-hover:bg-indigo-500/20 transition-colors">
                 <Mail className="w-6 h-6" />
               </div>
               <h2 className="text-xl font-bold text-slate-50 mb-2">Direct Email</h2>
               <p className="text-slate-400 text-sm mb-6">
-                For general questions, support, partnerships, and business inquiries.
+                General questions, support, partnerships & business inquiries
               </p>
-              <a
-                href="mailto:contact@urlscanonline.com"
-                className="inline-flex w-full items-center justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-lg transition-colors border border-slate-700"
-              >
-                contact@urlscanonline.com
-              </a>
-            </div>
+
+              <div className="flex items-center justify-between bg-slate-950 border border-slate-800 rounded-lg px-4 py-3 group-hover:border-indigo-500/30 transition-colors">
+                <span className="text-slate-200 font-medium text-sm">
+                  contact@urlscanonline.com
+                </span>
+                <button
+                  onClick={handleCopy}
+                  className="p-1.5 text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-md transition-colors relative"
+                  title="Copy email address"
+                  aria-label="Copy email address"
+                >
+                  <Copy className="w-4 h-4" />
+                  {copied && (
+                    <span className="absolute -top-8 -left-2 bg-slate-800 text-slate-200 text-xs py-1 px-2 rounded font-medium shadow-lg pointer-events-none">
+                      Copied!
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              <div className="mt-4 flex items-center text-indigo-400 font-medium text-sm group-hover:text-indigo-300 transition-colors">
+                Send Email <span className="ml-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</span>
+              </div>
+            </a>
           </div>
 
           {/* Forms Section */}
