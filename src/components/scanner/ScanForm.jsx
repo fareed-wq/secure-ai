@@ -118,7 +118,7 @@ const ScanForm = ({ onScan }) => {
 
         <div className="flex items-center justify-center flex-wrap gap-1 text-center text-xs text-slate-400 mt-2 font-medium px-2">
           <span className="text-indigo-400">🔒</span>
-          <span><strong className="text-slate-300">100% Non-Intrusive</strong> • No invasive payloads, exploits, or database modifications.</span>
+          <span><strong className="text-slate-300">Passive Mode — Non-Intrusive</strong> • Read-only security checks designed to minimize impact on live websites.</span>
         </div>
       </form>
     </>
