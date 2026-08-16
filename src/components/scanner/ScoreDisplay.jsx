@@ -41,29 +41,31 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
             )}
           </svg>
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-            <span className="text-5xl font-black text-slate-50">{isWafBlocked ? 'N/A' : score}</span>
+            <span className="text-5xl font-black text-slate-50">{isWafBlocked || score === null ? 'N/A' : score}</span>
           </div>
         </div>
         <div className="mt-6">
           <div className="text-sm font-bold uppercase tracking-widest text-slate-400">Risk Meter</div>
           <div className={`text-2xl font-black mt-1 ${
-            isWafBlocked ? 'text-slate-400' : 
+            isWafBlocked || score === null ? 'text-slate-400' : 
             score >= 90 ? 'text-emerald-400' : 
             score >= 80 ? 'text-teal-400' : 
             score >= 70 ? 'text-amber-400' : 
             score >= 60 ? 'text-orange-400' : 'text-rose-400'
           }`}>
-            {isWafBlocked ? 'Scan Incomplete' : score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 70 ? 'Needs Improvement' : score >= 60 ? 'Weak' : 'Critical'}
+            {isWafBlocked ? 'WAF Blocked' : score === null ? 'Scan Aborted' : score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 70 ? 'Needs Improvement' : score >= 60 ? 'Weak' : 'Critical'}
           </div>
           <div className="text-xs text-slate-500 mt-3 max-w-[200px] mx-auto leading-relaxed">
             {isWafBlocked 
-              ? "Scan did not complete fully. Showing partial findings. No overall score is assigned." 
+              ? "Scan blocked by WAF. No overall score is assigned." 
+              : score === null
+              ? "Scan aborted or timed out completely. No score available."
               : "Score is based only on verified security findings."}
           </div>
         </div>
       </div>
 
-      {!isWafBlocked && (
+      {!isWafBlocked && score !== null && (
         <div className="w-full max-w-sm mt-4 text-left">
           <details className="group">
             <summary className="flex items-center justify-between w-full text-xs font-medium text-slate-400 hover:text-slate-300 transition-colors cursor-pointer list-none [&::-webkit-details-marker]:hidden">

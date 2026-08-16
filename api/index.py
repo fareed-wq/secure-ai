@@ -158,7 +158,7 @@ async def scan_single(req: ScanRequest, request: Request):
             headers={"Retry-After": "60", "X-RateLimit-Limit": "10", "X-RateLimit-Remaining": "0"}
         )
     try:
-        return await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains), timeout=45.0)
+        return await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains), timeout=55.0)
     except Exception as e:
         return JSONResponse(status_code=200, content=get_waf_fallback_payload(req.url))
 

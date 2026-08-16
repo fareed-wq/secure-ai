@@ -62,7 +62,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                 "owasp": "N/A",
                 "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
             }
-            return calculate_score(url, [f], {}, None, scan_incomplete=True)
+            return calculate_score(url, [f], {}, None, scan_incomplete=True, completed_modules=0)
         except (requests.exceptions.RequestException, socket.timeout, Exception) as e:
             logger.error(f"Target Unreachable (Connection Error) for {url}: {e}")
             f = {
@@ -77,7 +77,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                 "owasp": "N/A",
                 "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
             }
-            return calculate_score(url, [f], {}, None, scan_incomplete=True)
+            return calculate_score(url, [f], {}, None, scan_incomplete=True, completed_modules=0)
 
         scan_start = _time.monotonic()
         SCAN_BUDGET_SECONDS = 45  # Global time budget for all modules
@@ -89,6 +89,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         
         futures = {pool.submit(mod.run, url, hostname, session): mod for mod in active_modules}
         scan_incomplete = False
+        completed_modules = 0
         try:
             for future in as_completed(futures, timeout=SCAN_BUDGET_SECONDS):
                 mod = futures[future]
@@ -97,6 +98,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
                 try:
                     mod_findings = future.result(timeout=min(getattr(mod, 'timeout', 8), remaining))
                     all_findings.extend(mod_findings)
+                    completed_modules += 1
                 except Exception as e:
                     logger.error(f"Module {mod.module_name} failed ({elapsed:.1f}s elapsed): {e}")
                     
@@ -295,4 +297,4 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
         logger.error(f"Failed to resolve metadata future: {e}")
         metadata = {}
 
-    return calculate_score(url, deduped_findings, metadata, initial_resp, scan_incomplete=scan_incomplete)
+    return calculate_score(url, deduped_findings, metadata, initial_resp, scan_incomplete=scan_incomplete, completed_modules=completed_modules)

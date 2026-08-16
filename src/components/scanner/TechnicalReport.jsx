@@ -109,9 +109,9 @@ const TechnicalReport = ({ reportData }) => {
               </div>
               <div 
                 className="text-sm sm:text-base font-bold text-slate-100 font-mono break-all mt-2 cursor-help"
-                title={reportData?.metadata?.http_status || '200 OK'}
+                title={reportData?.metadata?.http_status != null && reportData?.metadata?.http_status !== 0 ? reportData.metadata.http_status : 'Status Unknown'}
               >
-                {reportData?.metadata?.http_status || '200 OK'}
+                {reportData?.metadata?.http_status != null && reportData?.metadata?.http_status !== 0 ? reportData.metadata.http_status : 'Status Unknown'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
                 {(reportData?.metadata?.server_header) 
@@ -143,9 +143,9 @@ const TechnicalReport = ({ reportData }) => {
               </div>
               <div 
                 className="text-sm sm:text-base font-bold text-slate-100 font-mono break-all mt-2 cursor-help"
-                title={reportData?.metadata?.ssl_issuer || 'Valid SSL'}
+                title={reportData?.metadata?.ssl_issuer || 'Unknown Issuer'}
               >
-                {reportData?.metadata?.ssl_issuer || 'Valid SSL'}
+                {reportData?.metadata?.ssl_issuer || 'Unknown Issuer'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
                 {reportData?.metadata?.tls_version || 'TLS'} · <span className={`ml-1 ${
@@ -176,7 +176,7 @@ const TechnicalReport = ({ reportData }) => {
                 SECURITY & PROTOCOL
               </div>
               <div className="text-sm sm:text-base font-bold text-slate-100 font-mono break-all mt-2">
-                {reportData?.metadata?.https_enforced || 'HTTPS Status Unknown'}
+                {reportData?.metadata?.https_enforced ?? 'HTTPS Status Unknown'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
                 {reportData?.metadata?.http_protocol || 'HTTP/1.1'} · {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}

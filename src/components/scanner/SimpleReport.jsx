@@ -26,7 +26,7 @@ const SimpleReport = ({ reportData }) => {
   const mediumRiskCount = issues.filter(i => i.severity === 'Medium').length;
   const lowRiskCount = issues.filter(i => i.severity === 'Low').length;
   const score = reportData?.score;
-  const isWafBlocked = reportData?.status === 'INCOMPLETE' || (findings.length === 1 && findings[0]?.name?.includes('WAF'));
+  const isWafBlocked = findings.length === 1 && findings[0]?.name?.includes('WAF');
 
   let healthSummary = "";
   if (reportData?.executive_summary && isWafBlocked) {
@@ -47,11 +47,10 @@ const SimpleReport = ({ reportData }) => {
 
   // Calculate domain-based health from backend findings
   const calculateDomainHealth = (domain) => {
-    if (isWafBlocked) return -1;
+    if (score === null) return -1; // Zero meaningful checks completed overall
     const domainFindings = findings.filter(f => f.domain === domain);
     const domainIssues = domainFindings.filter(f => f.severity !== 'Passed' && f.severity !== 'Informational');
-    const domainPassed = domainFindings.filter(f => f.severity === 'Passed');
-    if (domainFindings.length === 0) return 100; // No checks in this domain
+    if (domainFindings.length === 0) return 100; // Meaningful checks ran but found no issues
     if (domainIssues.length === 0) return 100;
     if (domainIssues.some(f => f.severity === 'Critical' || f.severity === 'High')) return 20;
     if (domainIssues.some(f => f.severity === 'Medium')) return 50;

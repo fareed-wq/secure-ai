@@ -1,41 +1,41 @@
 def get_waf_fallback_payload(target_url: str) -> dict:
     return {
-        "status": "waf_protected",
+        "status": "INCOMPLETE",
         "url": target_url,
         "target": target_url,
-        "score": 45,
-        "http_status": 0,
+        "score": None,
+        "http_status": None,
         "latency": "Timed Out",
-        "server": "Akamai / Cloudflare WAF (Origin Hidden)",
-        "ip_address": "Protected Origin",
-        "waf_detected": True,
+        "server": "Unknown",
+        "ip_address": "Unknown",
+        "waf_detected": False,
         "target_surface": {
-            "waf_server": "Protected by WAF",
-            "waf_subtext": "Request Timed Out (Packet Drop)",
+            "waf_server": "Unknown",
+            "waf_subtext": "Request Timed Out",
             "waf_pill": "REQUEST TIMEOUT",
-            "frontend_stack": "Standard Web Stack",
-            "frontend_subtext": "HTML5 / JS Application",
-            "frontend_pill": "VERIFIED STACK",
-            "api_surface": "Probes Bypassed",
-            "api_subtext": "WAF Packet Dropping Active",
-            "api_pill": "CLEAN SURFACE",
-            "js_health": "Clean Build",
-            "js_subtext": "0 .map Leaks Detected",
-            "js_pill": "0 LEAKS DETECTED"
+            "frontend_stack": "Unknown",
+            "frontend_subtext": "Could not be verified",
+            "frontend_pill": "NO DATA",
+            "api_surface": "Unknown",
+            "api_subtext": "Target Unreachable",
+            "api_pill": "NO DATA",
+            "js_health": "Unknown",
+            "js_subtext": "Target Unreachable",
+            "js_pill": "NO DATA"
         },
         "findings": [
             {
-                "id": "waf_packet_drop",
-                "name": "Target Origin Protected by Enterprise WAF",
-                "severity": "Informational",
-                "category": "security_defenses",
-                "description": "The target host uses Akamai or Cloudflare TCP packet dropping to block automated scanner IP ranges. Secondary path probing was bypassed to preserve report delivery.",
-                "evidence": {"raw": "TCP Connection Timeout"},
+                "id": "global_timeout",
+                "name": "Scan Aborted (Global Timeout)",
+                "severity": "Inconclusive",
+                "category": "availability",
+                "description": "The scan exceeded the maximum allowable execution time and was aborted. The target may be unresponsive, actively dropping packets, or unusually slow.",
+                "evidence": {"raw": "Execution Timeout Exceeded"},
                 "confidence": "High",
-                "remediation": "N/A"
+                "remediation": "Verify the website is online and responsive."
             }
         ],
-        "severity_counts": {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 1},
-        "category_scores": {"information_exposure": 100, "tls_ssl": 100, "http_headers": 100, "misconfiguration": 100, "security_defenses": 45},
-        "metadata": {"ip_address": "Protected Origin", "http3_supported": False, "https_enforced": False}
+        "severity_counts": {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0, "Inconclusive": 1},
+        "category_scores": {},
+        "metadata": {"ip_address": "Unknown", "http3_supported": None, "https_enforced": None}
     }

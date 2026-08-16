@@ -3,7 +3,7 @@ import requests
 from api.scanner.core import Config
 from api.scanner.data.registry import DOMAIN_MAP
 
-def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: Optional[requests.Response], scan_incomplete: bool = False) -> dict:
+def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: Optional[requests.Response], scan_incomplete: bool = False, completed_modules: int = -1) -> dict:
     # Auto-assign security domains to findings based on their source module
     for f in all_findings:
         if not f.get("domain"):
@@ -222,9 +222,9 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     target_surface["frontend_pill"] = "VERIFIED STACK"
 
     # 2. API Surface — extract precise endpoint path from evidence
-    api_surface = "No Public Spec Exposed"
-    api_subtext = "GraphQL / OpenAPI Clean"
-    api_pill = "CLEAN SURFACE"
+    api_surface = "Unknown" if scan_incomplete else "No Public Spec Exposed"
+    api_subtext = "Not Assessed" if scan_incomplete else "GraphQL / OpenAPI Clean"
+    api_pill = "NO DATA" if scan_incomplete else "CLEAN SURFACE"
     
     for f in all_findings:
         fname = f.get("name", "")
@@ -270,14 +270,18 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
         target_surface["js_subtext"] = "Source Code Reconstruction Risk"
         target_surface["js_pill"] = "LEAKS DETECTED"
     else:
-        target_surface["js_health"] = "Clean Build"
-        target_surface["js_subtext"] = "0 .map Leaks Detected"
-        target_surface["js_pill"] = "0 LEAKS DETECTED"
+        target_surface["js_health"] = "Unknown" if scan_incomplete else "Clean Build"
+        target_surface["js_subtext"] = "Not Assessed" if scan_incomplete else "0 .map Leaks Detected"
+        target_surface["js_pill"] = "NO DATA" if scan_incomplete else "0 LEAKS DETECTED"
+
+    # If we have completed_modules=0, this means NO meaningful checks finished.
+    # Therefore, we do not have enough data to issue a 100/100 score.
+    final_score = score if completed_modules != 0 else None
 
     return {
         "url": url,
         "status": "INCOMPLETE" if scan_incomplete else "COMPLETED",
-        "score": None if scan_incomplete else score,
+        "score": final_score,
         "penalties": penalties,
         "severity_counts": severity_counts,
         "category_scores": category_scores,
@@ -303,6 +307,6 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
         "findings": all_findings,
         "metadata": metadata,
         "potential_issues_count": sum(c for k, c in severity_counts.items() if k in ["Critical", "High", "Medium", "Low"]),
-        "executive_summary": "Scan did not complete fully. Showing partial findings. No overall score is assigned." if scan_incomplete else f"Scan completed. Detected {severity_counts['High'] + severity_counts['Critical']} high-priority issues resulting in a score of {score}/100.",
+        "executive_summary": f"Scan did not complete fully. Showing partial findings with a provisional score of {final_score}/100." if scan_incomplete and final_score is not None else "Scan aborted or target unreachable. Insufficient data for a score." if scan_incomplete else f"Scan completed. Detected {severity_counts['High'] + severity_counts['Critical']} high-priority issues resulting in a score of {score}/100.",
         "disclaimer": "Passive scan only. Modular engine execution."
     }
