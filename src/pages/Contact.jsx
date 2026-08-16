@@ -1,13 +1,32 @@
 import React, { useState } from 'react';
-import { Mail, MessageSquare, AlertTriangle, CheckCircle2, Copy } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Mail, MessageSquare, AlertTriangle, CheckCircle2, Copy, ArrowLeft } from 'lucide-react';
 
 const Contact = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('feedback');
   const [feedbackSuccess, setFeedbackSuccess] = useState(false);
   const [reportSuccess, setReportSuccess] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Form states
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleCopy = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText("contact@urlscanonline.com");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleBack = () => {
+    if (window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/', { replace: true });
+    }
+  };
 
   // Mock submission handler for feedback
   const handleFeedbackSubmit = (e) => {
@@ -281,6 +300,16 @@ const Contact = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-16 text-center">
+          <button
+            onClick={handleBack}
+            className="inline-flex items-center text-slate-400 hover:text-slate-200 transition-colors font-medium"
+          >
+            <ArrowLeft size={16} className="mr-2" />
+            Back
+          </button>
         </div>
 
       </div>
