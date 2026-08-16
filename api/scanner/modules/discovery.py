@@ -270,6 +270,28 @@ class InformationDisclosureModule(ScannerModule):
                     category="information_exposure"
                 ))
 
+            # Technology Exposure Headers
+            tech_headers = ["x-powered-by", "x-aspnet-version", "x-aspnetmvc-version", "x-generator"]
+            disclosed = []
+            for header, value in resp.headers.items():
+                if header.lower() in tech_headers and value.strip():
+                    val_str = value.strip()
+                    if len(val_str) > 100:
+                        val_str = val_str[:97] + "..."
+                    disclosed.append(f"{header}: {val_str}")
+                    
+            if disclosed:
+                findings.append(self.make_finding(
+                    "Technology Information Disclosure",
+                    "Low",
+                    "The response exposes technology/framework information through an HTTP response header. This information can assist reconnaissance and help an attacker identify the application's underlying platform or version.",
+                    "\n".join(disclosed),
+                    confidence="High",
+                    remediation="Remove these headers in your web server or framework configuration to reduce your attack surface.",
+                    owasp="A05: Security Misconfiguration",
+                    category="information_exposure"
+                ))
+
             if resp.text:
                 import re
                 text_slice = resp.text[:2000000]
