@@ -28,6 +28,13 @@ const Contact = () => {
     }
   };
 
+  const handleCardKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      window.location.href = 'mailto:contact@urlscanonline.com';
+    }
+  };
+
   // Mock submission handler for feedback
   const handleFeedbackSubmit = (e) => {
     e.preventDefault();
@@ -68,9 +75,12 @@ const Contact = () => {
 
           {/* Direct Contact Option */}
           <div className="lg:col-span-1 space-y-6">
-            <a
-              href="mailto:contact@urlscanonline.com"
-              className="block bg-slate-900 border border-slate-800 rounded-2xl p-6 group hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all cursor-pointer relative"
+            <div
+              onClick={() => window.location.href = 'mailto:contact@urlscanonline.com'}
+              onKeyDown={handleCardKeyDown}
+              role="button"
+              tabIndex={0}
+              className="block bg-slate-900 border border-slate-800 rounded-2xl p-6 group hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all cursor-pointer relative focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
               <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 mb-6 group-hover:bg-indigo-500/20 transition-colors">
                 <Mail className="w-6 h-6" />
@@ -102,7 +112,7 @@ const Contact = () => {
               <div className="mt-4 flex items-center text-indigo-400 font-medium text-sm group-hover:text-indigo-300 transition-colors">
                 Send Email <span className="ml-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all">→</span>
               </div>
-            </a>
+            </div>
           </div>
 
           {/* Forms Section */}
