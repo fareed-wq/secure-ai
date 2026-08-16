@@ -144,9 +144,11 @@ class ApiWebSecurityModule(ScannerModule):
             # 5. API Cache Security
             path = urlparse(resp.url).path.lower()
             is_sensitive_path = any(x in path for x in ['/api', '/user', '/me', '/account', '/profile'])
+            is_highly_sensitive = any(x in path for x in ['/user', '/me', '/account', '/profile'])
             if is_sensitive_path:
-                cache_control = self.get_header_safe(resp, "Cache-Control", "").lower()
-                if "public" in cache_control or "max-age" in cache_control or "s-maxage" in cache_control:
+                cache_control = self.get_header_safe(resp, "Cache-Control", "")
+                cache_lower = cache_control.lower()
+                if "public" in cache_lower or "max-age" in cache_lower or "s-maxage" in cache_lower:
                     findings.append(self.make_finding(
                         "Sensitive API Response May Be Publicly Cacheable",
                         "Medium",
@@ -158,6 +160,68 @@ class ApiWebSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         impact="Other people on the same network or public computers could view your users' private information."
                     ))
+
+                # Deep Cache Analysis
+                if ("no-store" in cache_lower or "no-cache" in cache_lower) and ("max-age=" in cache_lower or "s-maxage=" in cache_lower):
+                    findings.append(self.make_finding(
+                        "Contradictory Cache-Control Directives",
+                        "Low",
+                        description="The response contains conflicting instructions about whether the data can be cached.",
+                        evidence=f"Cache-Control: {cache_control}",
+                        remediation="Ensure Cache-Control headers consistently enforce a single caching policy (e.g., 'no-store' without 'max-age').",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers",
+                        impact="Different network proxies may interpret these conflicting rules differently, potentially caching sensitive data unexpectedly."
+                    ))
+
+                is_publicly_cacheable = ("public" in cache_lower or (cache_lower and "max-age" in cache_lower and "max-age=0" not in cache_lower and "no-store" not in cache_lower and "private" not in cache_lower))
+                
+                cdn_headers = ["CDN-Cache-Control", "Cloudflare-CDN-Cache-Control"]
+                for ch in cdn_headers:
+                    val = self.get_header_safe(resp, ch).lower()
+                    if val:
+                        if "public" in val or ("max-age" in val and "max-age=0" not in val and "no-store" not in val and "private" not in val):
+                            is_publicly_cacheable = True
+                            findings.append(self.make_finding(
+                                "Permissive CDN Caching on Sensitive Content",
+                                "Medium",
+                                description="A Content Delivery Network (CDN) is explicitly instructed to cache this sensitive response.",
+                                evidence=f"{ch}: {val}",
+                                remediation="Configure CDN-specific cache headers to 'no-store' for sensitive endpoints.",
+                                owasp="A05: Security Misconfiguration",
+                                category="http_headers",
+                                impact="The CDN may serve this sensitive data to unauthorized users or store it on public edge servers."
+                            ))
+
+                if is_publicly_cacheable and is_highly_sensitive:
+                    vary = self.get_header_safe(resp, "Vary", "").lower()
+                    if "cookie" not in vary and "authorization" not in vary:
+                        findings.append(self.make_finding(
+                            "Missing Cache Vary Protection on Sensitive Content",
+                            "Medium",
+                            description="Sensitive content permits shared caching but fails to instruct caches to separate responses per user.",
+                            evidence=f"Cache-Control: {cache_control} | Vary: {vary}",
+                            remediation="If caching is required, ensure 'Vary: Cookie' or 'Vary: Authorization' is present.",
+                            owasp="A05: Security Misconfiguration",
+                            category="http_headers",
+                            impact="A shared cache might mistakenly serve one user's private data to a completely different user."
+                        ))
+
+                if "no-store" in cache_lower and is_highly_sensitive:
+                    etag = self.get_header_safe(resp, "ETag", "")
+                    last_mod = self.get_header_safe(resp, "Last-Modified", "")
+                    if etag or last_mod:
+                        evidence = f"ETag: {etag}" if etag else f"Last-Modified: {last_mod}"
+                        findings.append(self.make_finding(
+                            "Sensitive Response Tracking Indicator (ETag/Last-Modified)",
+                            "Informational",
+                            description="A sensitive response restricts caching but exposes revalidation headers which could be used to track authenticated sessions.",
+                            evidence=evidence,
+                            remediation="Remove ETag and Last-Modified headers from highly sensitive, non-cacheable API or auth endpoints.",
+                            owasp="A05: Security Misconfiguration",
+                            category="http_headers",
+                            impact="Even without caching the content, browsers may send these values back, potentially allowing cross-session tracking."
+                        ))
 
             # 6. API Error Information Disclosure
             if body:

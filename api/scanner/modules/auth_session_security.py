@@ -67,17 +67,20 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     ))
 
             # Cache & Auth Response Posture
-            cache_control = self.get_header_safe(resp, "Cache-Control", "").lower()
-            if self.is_auth_related(url) or self.is_auth_related(resp.text):
+            cache_control = self.get_header_safe(resp, "Cache-Control", "")
+            cache_lower = cache_control.lower()
+            is_highly_sensitive = self.is_auth_related(url) or self.is_auth_related(resp.text)
+            
+            if is_highly_sensitive:
                 is_vuln = False
                 severity = "Medium"
                 
                 if not cache_control:
                     is_vuln = True
-                elif "no-store" in cache_control or "private" in cache_control:
+                elif "no-store" in cache_lower or "private" in cache_lower:
                     is_vuln = False
-                elif "public" in cache_control:
-                    if "max-age=0" in cache_control and "must-revalidate" in cache_control:
+                elif "public" in cache_lower:
+                    if "max-age=0" in cache_lower and "must-revalidate" in cache_lower:
                         # Effectively forces revalidation, lower risk but still not strict no-store
                         is_vuln = True
                         severity = "Low"
@@ -98,6 +101,68 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         confidence="Medium",
                         impact="Other people using the same computer or network might be able to view your users' personal accounts or login details."
                     ))
+
+                # Deep Cache Analysis
+                if cache_control and ("no-store" in cache_lower or "no-cache" in cache_lower) and ("max-age=" in cache_lower or "s-maxage=" in cache_lower):
+                    findings.append(self.make_finding(
+                        "Contradictory Cache-Control Directives",
+                        "Low",
+                        description="The response contains conflicting instructions about whether the data can be cached.",
+                        evidence=f"Cache-Control: {cache_control}",
+                        remediation="Ensure Cache-Control headers consistently enforce a single caching policy (e.g., 'no-store' without 'max-age').",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers",
+                        impact="Different network proxies may interpret these conflicting rules differently, potentially caching sensitive data unexpectedly."
+                    ))
+
+                is_publicly_cacheable = is_vuln or (cache_lower and "max-age" in cache_lower and "max-age=0" not in cache_lower and "no-store" not in cache_lower and "private" not in cache_lower)
+                
+                cdn_headers = ["CDN-Cache-Control", "Cloudflare-CDN-Cache-Control"]
+                for ch in cdn_headers:
+                    val = self.get_header_safe(resp, ch).lower()
+                    if val:
+                        if "public" in val or ("max-age" in val and "max-age=0" not in val and "no-store" not in val and "private" not in val):
+                            is_publicly_cacheable = True
+                            findings.append(self.make_finding(
+                                "Permissive CDN Caching on Sensitive Content",
+                                "Medium",
+                                description="A Content Delivery Network (CDN) is explicitly instructed to cache this sensitive response.",
+                                evidence=f"{ch}: {val}",
+                                remediation="Configure CDN-specific cache headers to 'no-store' for sensitive endpoints.",
+                                owasp="A05: Security Misconfiguration",
+                                category="http_headers",
+                                impact="The CDN may serve this sensitive data to unauthorized users or store it on public edge servers."
+                            ))
+
+                if is_publicly_cacheable:
+                    vary = self.get_header_safe(resp, "Vary", "").lower()
+                    if "cookie" not in vary and "authorization" not in vary:
+                        findings.append(self.make_finding(
+                            "Missing Cache Vary Protection on Sensitive Content",
+                            "Medium",
+                            description="Sensitive content permits shared caching but fails to instruct caches to separate responses per user.",
+                            evidence=f"Cache-Control: {cache_control} | Vary: {vary}",
+                            remediation="If caching is required, ensure 'Vary: Cookie' or 'Vary: Authorization' is present.",
+                            owasp="A05: Security Misconfiguration",
+                            category="http_headers",
+                            impact="A shared cache might mistakenly serve one user's private data to a completely different user."
+                        ))
+
+                if cache_control and "no-store" in cache_lower:
+                    etag = self.get_header_safe(resp, "ETag", "")
+                    last_mod = self.get_header_safe(resp, "Last-Modified", "")
+                    if etag or last_mod:
+                        evidence = f"ETag: {etag}" if etag else f"Last-Modified: {last_mod}"
+                        findings.append(self.make_finding(
+                            "Sensitive Response Tracking Indicator (ETag/Last-Modified)",
+                            "Informational",
+                            description="A sensitive response restricts caching but exposes revalidation headers which could be used to track authenticated sessions.",
+                            evidence=evidence,
+                            remediation="Remove ETag and Last-Modified headers from highly sensitive, non-cacheable API or auth endpoints.",
+                            owasp="A05: Security Misconfiguration",
+                            category="http_headers",
+                            impact="Even without caching the content, browsers may send these values back, potentially allowing cross-session tracking."
+                        ))
 
             # Session Management Technology
             set_cookie = self.get_header_safe(resp, "Set-Cookie", "")
