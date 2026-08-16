@@ -1,5 +1,8 @@
 import re
 import logging
+from html.parser import HTMLParser
+from urllib.parse import urlparse
+import base64
 from typing import List
 import requests
 
@@ -317,6 +320,50 @@ class HTTPSRedirectModule(ScannerModule):
         return findings
 
 
+
+class SRIScriptParser(HTMLParser):
+    def __init__(self, target_url):
+        super().__init__()
+        self.target_url = target_url
+        self.target_netloc = urlparse(target_url).netloc.lower()
+        if self.target_netloc.startswith("www."):
+            self.base_domain = self.target_netloc[4:]
+        else:
+            self.base_domain = self.target_netloc
+            
+        self.third_party_scripts = []
+        
+    def _is_third_party(self, src: str) -> bool:
+        if not src.startswith("http://") and not src.startswith("https://") and not src.startswith("//"):
+            return False
+            
+        if src.startswith("//"):
+            src = "https:" + src
+            
+        parsed = urlparse(src)
+        netloc = parsed.netloc.lower()
+        
+        if not netloc or netloc == self.target_netloc:
+            return False
+            
+        # Check if it's a subdomain of the target (e.g., assets.example.com vs example.com)
+        if netloc.endswith("." + self.base_domain) or netloc == self.base_domain:
+            return False
+            
+        return True
+
+    def handle_starttag(self, tag, attrs):
+        if tag.lower() == "script":
+            attr_dict = {k.lower(): v for k, v in attrs if k and v}
+            src = attr_dict.get("src", "").strip()
+            
+            if src and self._is_third_party(src):
+                self.third_party_scripts.append({
+                    "src": src,
+                    "integrity": attr_dict.get("integrity", "").strip(),
+                    "crossorigin": attr_dict.get("crossorigin", "").strip()
+                })
+
 class SecurityHeadersModule(ScannerModule):
     module_name = "SecurityHeaders"
     description = "Checks HSTS, CSP, XFO, etc."
@@ -627,28 +674,97 @@ class SecurityHeadersModule(ScannerModule):
                     category="http_headers"
                 ))
 
-        # SRI Check
+        # SRI & Third-Party JavaScript Check
         if resp and resp.text:
-            sri_regex = re.compile(r'<(?:script|link)[^>]*(?:src|href)=[\'"](https?://(?:cdnjs|jsdelivr|unpkg|stackpath|maxcdn)[^\'"]+)[\'"][^>]*>', re.IGNORECASE)
-            matches = sri_regex.finditer(resp.text)
-            missing_sri = []
-            for match in matches:
-                tag = match.group(0)
-                url_attr = match.group(1)
-                if 'integrity=' not in tag.lower():
-                    missing_sri.append(url_attr)
-
-            if missing_sri:
-                findings.append(self.make_finding(
-                    "Missing Subresource Integrity (SRI) on CDN Assets",
-                    "Informational",
-                    "Your website loads files from other services without checking if they have been secretly altered.",
-                    "\n".join(missing_sri),
-                    impact="If the external service gets hacked, attackers could alter the files to secretly inject malicious code directly into your website.",
-                    remediation="Add integrity='sha384-...' and crossorigin='anonymous' attributes to all external CDN script tags.",
-                    owasp="A05: Security Misconfiguration",
-                                category="http_headers"
-                ))
+            parser = SRIScriptParser(url)
+            parser.feed(resp.text[:2000000])  # limit size
+            
+            if parser.third_party_scripts:
+                # 1. Third-Party Script Inventory
+                tp_domains = set()
+                for script in parser.third_party_scripts:
+                    parsed = urlparse(script["src"] if not script["src"].startswith("//") else "https:" + script["src"])
+                    if parsed.netloc:
+                        tp_domains.add(parsed.netloc)
+                        
+                if tp_domains:
+                    findings.append(self.make_finding(
+                        "Third-Party Script Execution Detected",
+                        "Informational",
+                        description="Your website allows external organizations to execute JavaScript code in your visitors' browsers.",
+                        evidence="\\n".join(sorted(list(tp_domains))),
+                        impact="If any of these third parties are compromised, they can execute malicious code on your website.",
+                        remediation="Regularly audit third-party dependencies and remove unused external scripts.",
+                        owasp="A00: Informational",
+                        category="technology_detection",
+                        confidence="High"
+                    ))
+                
+                missing_sri = []
+                malformed_sri = []
+                missing_co = []
+                
+                for script in parser.third_party_scripts:
+                    src = script["src"]
+                    integrity = script["integrity"]
+                    crossorigin = script["crossorigin"].lower()
+                    
+                    if not integrity:
+                        missing_sri.append(src)
+                    else:
+                        # 3. Malformed SRI Attribute
+                        # Can have multiple tokens separated by whitespace
+                        tokens = integrity.split()
+                        valid_tokens = 0
+                        for token in tokens:
+                            if re.match(r'^sha(256|384|512)-[a-zA-Z0-9+/]+={0,2}$', token):
+                                valid_tokens += 1
+                        if valid_tokens == 0:
+                            malformed_sri.append(f"{src} (integrity: {integrity})")
+                        
+                        # 4. Cross-Origin Indicator
+                        if crossorigin not in ("anonymous", "use-credentials"):
+                            missing_co.append(src)
+                            
+                # 2. Missing SRI
+                if missing_sri:
+                    findings.append(self.make_finding(
+                        "Missing Subresource Integrity (SRI) on Third-Party Asset",
+                        "Low",
+                        description="Your website loads external JavaScript files without using SRI hashes to verify they haven't been tampered with.",
+                        evidence="\\n".join(missing_sri[:5]) + ("\\n... and others" if len(missing_sri) > 5 else ""),
+                        impact="If the external service gets hacked, attackers could alter the files to secretly inject malicious code directly into your website.",
+                        remediation="Add integrity='sha384-...' and crossorigin='anonymous' attributes to all external script tags.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers",
+                        confidence="High"
+                    ))
+                    
+                if malformed_sri:
+                    findings.append(self.make_finding(
+                        "Malformed Subresource Integrity (SRI) Attribute",
+                        "Low",
+                        description="A third-party script specifies an integrity attribute, but the hash format is invalid and won't work correctly.",
+                        evidence="\\n".join(malformed_sri[:5]),
+                        impact="The browser cannot verify the script, which means tampering will go undetected, or the script may fail to load.",
+                        remediation="Ensure the integrity attribute contains a valid base64-encoded hash starting with sha256-, sha384-, or sha512-.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers",
+                        confidence="High"
+                    ))
+                    
+                if missing_co:
+                    findings.append(self.make_finding(
+                        "Missing Cross-Origin Attribute for SRI Verification",
+                        "Low",
+                        description="A third-party script uses SRI but is missing the required crossorigin attribute.",
+                        evidence="\\n".join(missing_co[:5]),
+                        impact="The browser requires Cross-Origin Resource Sharing (CORS) to verify SRI hashes for third-party scripts. Without this attribute, verification may fail or the script might not load properly.",
+                        remediation="Add crossorigin='anonymous' to the script tag.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers",
+                        confidence="High"
+                    ))
 
         # WAF & Rate-Limiting Detection
         waf_headers = ['server', 'x-cdn', 'cf-ray', 'x-succinct', 'x-istart-waf', 'awsalb']
