@@ -77,7 +77,7 @@ const SafetyComparison = () => {
             <div className="bg-rose-500/10 p-2 rounded-lg text-rose-400">
               <AlertOctagon size={24} />
             </div>
-            <h3 className="text-xl font-bold text-slate-400">Active Pen-Testing</h3>
+            <h3 className="text-xl font-bold text-slate-400">Active Security Testing</h3>
           </div>
 
           <ul className="space-y-5 relative z-10">
@@ -96,7 +96,7 @@ const SafetyComparison = () => {
               </div>
               <div>
                 <span className="block text-sm font-semibold text-slate-400">Interactive Testing</span>
-                <span className="text-sm text-slate-400">Can modify or interact with data</span>
+                <span className="text-sm text-slate-400">Additional requests to application endpoints</span>
               </div>
             </li>
             <li className="flex items-start gap-3">
