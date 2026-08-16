@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Shield, 
-  Search, 
-  PanelLeftClose, 
-  PanelLeftOpen, 
-  Plus, 
-  Code, 
-  Book, 
-  CreditCard, 
-  Info, 
-  MoreHorizontal, 
+import {
+  Shield,
+  Search,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  Code,
+  Book,
+  CreditCard,
+  Info,
+  MoreHorizontal,
   Settings,
   User,
   MessageSquare,
@@ -55,7 +55,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
 
   const moreItems = [
     { label: "Trust Policy", href: "/trust", icon: <Shield size={18} /> },
-    { label: "Contact", href: "/contact", icon: <MessageSquare size={18} /> },
+    { label: "Contact Us", href: "/contact", icon: <MessageSquare size={18} /> },
   ];
 
 
@@ -64,13 +64,13 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     <>
       {/* Mobile Overlay */}
       {isMobileOpen && (
-        <div 
+        <div
           className="md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
 
-      <aside 
+      <aside
         className={`fixed top-0 left-0 bottom-0 md:relative z-50 flex flex-col bg-slate-950 border-r border-slate-800 h-screen transition-transform md:transition-all duration-300
           ${isMobileOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'}
           ${isCollapsed ? 'md:w-16' : 'md:w-64'}
@@ -87,17 +87,17 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           <button className="p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors" title="Quick Search">
             <Search size={18} />
           </button>
-          <button 
-            onClick={() => setIsCollapsed(!isCollapsed)} 
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
             className="hidden md:block p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors"
             title="Toggle Sidebar"
           >
             {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </button>
-          
+
           {/* Mobile Close Button */}
-          <button 
-            onClick={() => setIsMobileOpen(false)} 
+          <button
+            onClick={() => setIsMobileOpen(false)}
             className="md:hidden p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors"
             title="Close Sidebar"
           >
@@ -109,7 +109,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       {/* 2. MAIN NAV */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col p-3 gap-1">
         {/* New Scan Button */}
-        <button 
+        <button
           onClick={() => navigate('/', { state: { resetScan: Date.now() } })}
           className="flex items-center gap-2 p-2 mb-2 text-sm font-medium text-white bg-indigo-600/90 border border-indigo-500/50 rounded-lg shadow-sm hover:bg-indigo-500 transition-colors"
         >
@@ -124,8 +124,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               key={item.href}
               to={item.href}
               className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium transition-colors ${
-                isActive 
-                  ? 'bg-slate-800/80 text-slate-50' 
+                isActive
+                  ? 'bg-slate-800/80 text-slate-50'
                   : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-50'
               }`}
               title={isCollapsed ? item.label : undefined}
@@ -148,7 +148,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
             <div className="text-slate-500"><MoreHorizontal size={18} /></div>
             {!isCollapsed && <span>More</span>}
           </button>
-          
+
           {showMore && !isCollapsed && (
             <div className="ml-8 mt-1 flex flex-col gap-1 border-l-2 border-slate-800 pl-2">
               {moreItems.map((item) => (
@@ -156,8 +156,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                   key={item.href}
                   to={item.href}
                   className={`flex items-center gap-2 p-1.5 rounded-md text-sm transition-colors ${
-                    location.pathname === item.href 
-                      ? 'bg-slate-800/80 text-slate-50 font-medium' 
+                    location.pathname === item.href
+                      ? 'bg-slate-800/80 text-slate-50 font-medium'
                       : 'text-slate-400 hover:text-slate-50 hover:bg-slate-800/50'
                   }`}
                 >
@@ -189,7 +189,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               <span className="text-sm font-medium text-slate-400 truncate">Theme</span>
             </div>
           )}
-          
+
           <button
             onClick={() => setIsLightMode(!isLightMode)}
             className={`${
@@ -208,7 +208,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
 
         <div
           className={`flex items-center transition-all duration-200 ${
-            isCollapsed 
+            isCollapsed
               ? 'justify-center w-full px-0'  // Center icon when collapsed
               : 'justify-start px-3 gap-3'   // Standard row layout when expanded
           }`}
@@ -235,7 +235,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
             </div>
           )}
         </div>
-        
+
         {/* Sign In / Sign Out Button */}
         {!isCollapsed && (
           user ? (
@@ -260,7 +260,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
             </Link>
           )
         )}
-        
+
         {isCollapsed && (
           user ? (
             <button
