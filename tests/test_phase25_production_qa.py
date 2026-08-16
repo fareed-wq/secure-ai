@@ -53,23 +53,26 @@ class TestAPIResponseSchema(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
 
-    def test_api_scan_returns_expected_fields(self):
+    @patch("api.index.acquire_scan_lease")
+    def test_api_scan_returns_expected_fields(self, mock_acquire):
         """Verify scan endpoint returns all expected top-level fields."""
+        mock_acquire.return_value = "dummy-lease-id"
         with patch("api.index.scan_url") as mock_scan:
-            mock_scan.return_value = {
-                "url": "https://example.com",
-                "findings": [],
-                "score": 100,
-                "severity_counts": {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0},
-                "status": "completed",
-            }
-            response = self.client.post("/api/scan", json={"url": "https://example.com"})
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            self.assertIn("score", data)
-            self.assertIn("findings", data)
-            self.assertIn("severity_counts", data)
-            self.assertEqual(data["score"], 100)
+            with patch("api.index.release_scan_lease") as mock_release:
+                mock_scan.return_value = {
+                    "url": "https://example.com",
+                    "findings": [],
+                    "score": 100,
+                    "severity_counts": {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0},
+                    "status": "completed",
+                }
+                response = self.client.post("/api/scan", json={"url": "https://example.com"})
+                self.assertEqual(response.status_code, 200)
+                data = response.json()
+                self.assertIn("score", data)
+                self.assertIn("findings", data)
+                self.assertIn("severity_counts", data)
+                self.assertEqual(data["score"], 100)
 
     def test_api_health_endpoint(self):
         """Verify health endpoint returns online status."""

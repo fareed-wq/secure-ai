@@ -144,7 +144,7 @@ def scan_url(url: str, probe_subdomains: bool = False) -> dict:
     finally:
         orchestrator_module.REGISTERED_MODULES = original
 
-
+from api.scanner.core import acquire_scan_lease, release_scan_lease
 
 
 @app.post("/api/scan")
@@ -157,10 +157,27 @@ async def scan_single(req: ScanRequest, request: Request):
             content={"error": "Rate limit exceeded. Maximum 10 scans per minute allowed.", "status": 429},
             headers={"Retry-After": "60", "X-RateLimit-Limit": "10", "X-RateLimit-Remaining": "0"}
         )
+
+    try:
+        lease_id = acquire_scan_lease()
+    except RuntimeError as e:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Scanner capacity status unknown. Please try again later.", "status": 503}
+        )
+
+    if not lease_id:
+        return JSONResponse(
+            status_code=429,
+            content={"error": "Global scanner capacity is full. Please try again in a few seconds.", "status": 429}
+        )
+
     try:
         return await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains), timeout=55.0)
     except Exception as e:
         return JSONResponse(status_code=200, content=get_waf_fallback_payload(req.url))
+    finally:
+        release_scan_lease(lease_id)
 
 
 @app.post("/api/scan/batch")
@@ -175,10 +192,24 @@ async def scan_batch(req: BatchScanRequest, request: Request):
         )
     workers = min(10, len(req.urls)) or 1
 
+    def process_one_target(u):
+        try:
+            lease_id = acquire_scan_lease()
+        except RuntimeError:
+            return {"error": "Scanner capacity status unknown. Please try again later.", "status": 503, "url": u}
+
+        if not lease_id:
+            return {"error": "Global scanner capacity is full. Please try again in a few seconds.", "status": 429, "url": u}
+
+        try:
+            return scan_url(u)
+        finally:
+            release_scan_lease(lease_id)
+
     def process_batch():
         results = []
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            futures = {pool.submit(scan_url, u): u for u in req.urls}
+            futures = {pool.submit(process_one_target, u): u for u in req.urls}
             for future in as_completed(futures):
                 u = futures[future]
                 try:
