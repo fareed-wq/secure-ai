@@ -19,7 +19,6 @@ from api.scanner.modules.http_security import (
 )
 from api.scanner.modules.network_checks import (
     SubdomainProbingModule,
-    SubdomainTakeoverModule,
     TLSCipherStrengthModule,
     GraphQLIntrospectionModule,
     VerboseStackTraceModule,
@@ -61,7 +60,6 @@ DOMAIN_MAP = {
     "GraphqlIdeModule": "api_surface",
     "ActuatorModule": "api_surface",
     "XmlRpcModule": "api_surface",
-    "SubdomainTakeoverModule": "transport_tls",
     "PassiveSubdomainDiscoveryModule": "api_surface",
     "AuthenticationSessionSecurityModule": "api_surface",
 }
@@ -89,7 +87,6 @@ REGISTERED_MODULES = [
     SecurityHeadersModule(),
     AdvancedSecurityHeadersModule(),
     MixedContentModule(),
-    SubdomainTakeoverModule(),
     TLSCipherStrengthModule(),
     PassiveSubdomainDiscoveryModule(),
     JavaScriptSecurityModule(),
