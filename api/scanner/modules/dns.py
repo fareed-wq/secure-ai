@@ -144,11 +144,17 @@ class DNSEmailSecurityModule(ScannerModule):
             spf_url = f"https://dns.google/resolve?name={domain}&type=TXT"
             resp = safe_request("GET", spf_url, session=session, timeout=(1.5, 2.5))
             spf_records = []
+            all_txt_records = []
 
             if resp and resp.status_code == 200:
                 data = resp.json()
                 for rec in data.get("Answer", []):
                     data_str = rec.get("data", "")
+                    # Normalize data_str by stripping leading/trailing literal quotes sometimes returned by resolvers
+                    if data_str.startswith('"') and data_str.endswith('"'):
+                        data_str = data_str[1:-1]
+                    all_txt_records.append(data_str)
+                    
                     if "v=spf1" in data_str:
                         spf_records.append(data_str)
 
@@ -246,6 +252,80 @@ class DNSEmailSecurityModule(ScannerModule):
                             owasp="A05: Security Misconfiguration",
                             category="domain_email"
                         ))
+
+                # Passive Cloud/Infrastructure TXT Record Analysis
+                infrastructure_findings = []
+                if all_txt_records:
+                    import ipaddress
+                    import re
+                    
+                    ip_pattern = re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b')
+                    internal_host_pattern = re.compile(r'\b[a-z0-9-]+\.(?:internal|corp|local|lan)(?:\.[a-z0-9-]+)*\b')
+                    
+                    for txt in all_txt_records:
+                        txt_lower = txt.lower()
+                        
+                        # Structured classification to ignore common verification and protocol records
+                        if txt_lower.startswith("v=spf1") or txt_lower.startswith("v=dmarc1") or txt_lower.startswith("v=dkim1"):
+                            continue
+                            
+                        # Verification tokens typically match something-verification=abc or MS=ms123
+                        if re.match(r'^[a-z0-9-]*verif(?:ication|y)[a-z0-9-]*\s*=', txt_lower) or txt_lower.startswith("google-site-verification="):
+                            continue
+                            
+                        if re.match(r'^ms=ms\d+', txt_lower) or txt_lower.startswith("apple-domain-verification="):
+                            continue
+                            
+                        val_str = txt.strip()
+                        if len(val_str) > 100:
+                            val_str = val_str[:97] + "..."
+                            
+                        # IP address matching
+                        ips = ip_pattern.findall(txt)
+                        for ip_str in ips:
+                            try:
+                                ip = ipaddress.ip_address(ip_str)
+                                if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_unspecified:
+                                    infrastructure_findings.append({
+                                        "cat": f"Private IP address ({ip_str})",
+                                        "val": val_str
+                                    })
+                            except ValueError:
+                                pass
+                                
+                        # Internal hostname matching
+                        hosts = internal_host_pattern.findall(txt_lower)
+                        if hosts:
+                            infrastructure_findings.append({
+                                "cat": f"Internal hostname ({hosts[0]})",
+                                "val": val_str
+                            })
+                            
+                if infrastructure_findings:
+                    unique_findings = {}
+                    high_conf = False
+                    for f in infrastructure_findings:
+                        if "IP address" in f["cat"]:
+                            high_conf = True
+                        if f["cat"] not in unique_findings:
+                            unique_findings[f["cat"]] = f["val"]
+                            
+                    evidence_lines = []
+                    for cat, val in unique_findings.items():
+                        evidence_lines.append(f"{cat} found in TXT: {val}")
+                        
+                    confidence = "High" if high_conf else "Medium"
+                        
+                    findings.append(self.make_finding(
+                        "Potential Infrastructure Information Disclosure",
+                        "Medium",
+                        "The domain's publicly retrievable DNS TXT data appears to disclose potentially internal infrastructure information. This may provide useful reconnaissance information to an attacker.",
+                        "\n".join(evidence_lines),
+                        confidence=confidence,
+                        remediation="Remove internal infrastructure details from public DNS records.",
+                        owasp="A05: Security Misconfiguration",
+                        category="information_exposure"
+                    ))
 
                 if not spf_records:
                     findings.append(self.make_finding(
