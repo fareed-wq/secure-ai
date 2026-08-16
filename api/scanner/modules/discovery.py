@@ -91,7 +91,7 @@ class ExposedFilesModule(ScannerModule):
                 is_json_api = True
         except Exception as e:
             logger.debug("ExposedFilesModule ds_store fetch failed: %s", e)
-            
+
         if not is_json_api:
             def check_dir_index(path):
                 try:
@@ -146,7 +146,7 @@ class ExposedFilesModule(ScannerModule):
                     logger.debug("ExposedFilesModule source code fetch failed: %s", e)
                     pass
                 return None
-            
+
             log_paths = ['/laravel.log', '/error.log', '/app.log', '/debug.log', '/logs/laravel.log']
             with ThreadPoolExecutor(max_workers=2) as executor:
                 for result in executor.map(check_exposed_log, log_paths):
@@ -160,14 +160,14 @@ class ExposedFilesModule(ScannerModule):
                     if resp and resp.status_code == 200 and 'text/html' not in resp.headers.get('Content-Type', '').lower():
                         chunk = resp.content[:1024]
                         is_zip = chunk.startswith(b'PK\x03\x04') or chunk.startswith(b'\x1f\x8b')
-                        
+
                         try:
                             chunk_text = chunk.decode('utf-8', errors='ignore')
                         except Exception:
                             chunk_text = ""
-                            
+
                         is_sql = '-- MySQL dump' in chunk_text or 'CREATE TABLE' in chunk_text or 'INSERT INTO' in chunk_text
-                        
+
                         if is_zip or is_sql:
                             return self.make_finding(
                                 f"Exposed Site / Database Backup Dump ({path})",
@@ -184,7 +184,7 @@ class ExposedFilesModule(ScannerModule):
                     logger.debug("ExposedFilesModule php info fetch failed: %s", e)
                     pass
                 return None
-            
+
             dump_paths = ['/backup.zip', '/site.tar.gz', '/db.sql', '/dump.sql', '/backup.sql']
             with ThreadPoolExecutor(max_workers=2) as executor:
                 for result in executor.map(check_exposed_dump, dump_paths):
@@ -213,7 +213,7 @@ class ExposedFilesModule(ScannerModule):
                     logger.debug("ExposedFilesModule env file fetch failed: %s", e)
                     pass
                 return None
-            
+
             env_result = check_env_file('/.env')
             if env_result:
                 findings.append(env_result)
@@ -239,7 +239,7 @@ class ExposedFilesModule(ScannerModule):
                 except Exception as e:
                     logger.debug("ExposedFilesModule admin check failed: %s", e)
                 return None
-                
+
             admin_result = check_admin_panel('/admin')
             if admin_result:
                 findings.append(admin_result)
@@ -328,27 +328,27 @@ class RobotsTxtModule(ScannerModule):
             content_type = self.get_header_safe(resp, "Content-Type", "").lower()
             if resp and resp.status_code == 200 and "text/plain" in content_type and "user-agent" in resp.text.lower() and not self.is_spa_fallback(resp, homepage_len):
                 lines = len(resp.text.splitlines())
-                
+
                 interesting_paths = []
                 privileged_paths = []
                 priv_indicators = ['/admin', '/administrator', '/staff', '/management', '/control-panel', '/dashboard', '/internal', '/private', '/secure', '/backend']
-                
+
                 for line in resp.text.splitlines():
                     lower_line = line.lower()
                     if lower_line.startswith("disallow:") or lower_line.startswith("allow:"):
                         path = lower_line.split(":", 1)[1].strip()
-                        
+
                         # Existing sensitive path check
                         if any(path.startswith(x) for x in ['/internal', '/staging', '/backup', '/dev', '/.env', '/admin_dev']):
                             if path not in interesting_paths:
                                 interesting_paths.append(path)
-                                
+
                         # PHASE 31: Privileged Surface Discovery
                         if lower_line.startswith("disallow:"):
                             if any(path.startswith(x) or path.startswith(f"*{x}") for x in priv_indicators):
                                 if path not in privileged_paths:
                                     privileged_paths.append(path)
-                                
+
                 if interesting_paths:
                     findings.append(self.make_finding(
                         "Internal Paths Disclosed in Robots.txt",
@@ -359,7 +359,7 @@ class RobotsTxtModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="information_exposure"
                     ))
-                    
+
                 if privileged_paths:
                     findings.append(self.make_finding(
                         "Privileged / Administrative Surface Discovered",
@@ -371,7 +371,7 @@ class RobotsTxtModule(ScannerModule):
                         owasp="A01: Broken Access Control",
                         category="api_surface"
                     ))
-                
+
                 findings.append(self.make_finding(
                     "robots.txt Found",
                     "Informational",
@@ -454,17 +454,149 @@ class SecurityTxtModule(ScannerModule):
 
             target = f"{scheme}://{hostname}/.well-known/security.txt"
             resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
-            content_type = self.get_header_safe(resp, "Content-Type", "").lower()
-            if resp and resp.status_code == 200 and "text/plain" in content_type and "contact" in resp.text.lower() and not self.is_spa_fallback(resp, homepage_len):
-                findings.append(self.make_finding(
-                    "security.txt Found",
-                    "Passed",
-                    "Your website publishes a standard security contact file.",
-                    target,
-                    impact="This is an excellent practice that allows security researchers to safely report vulnerabilities to you before hackers find them.",
-                    owasp="A05: Security Misconfiguration",
-                    category="information_exposure"
-                ))
+
+            if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
+                content_type = self.get_header_safe(resp, "Content-Type", "").lower()
+
+                # Bounded response text to prevent excessive processing
+                content = resp.text[:100000] if resp.text else ""
+
+                if "text/plain" not in content_type:
+                    findings.append(self.make_finding(
+                        "security.txt Incorrect Content-Type",
+                        "Informational",
+                        "Your security.txt file is not served with the text/plain Content-Type as required by RFC 9116.",
+                        f"Content-Type: {content_type}",
+                        owasp="A05: Security Misconfiguration",
+                        category="information_exposure"
+                    ))
+
+                # Parse lines
+                contacts = []
+                expires_lines = []
+                policies = []
+                languages = []
+
+                for line in content.splitlines():
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    if ":" not in line:
+                        continue
+
+                    key, val = line.split(":", 1)
+                    key = key.strip().lower()
+                    val = val.strip()
+
+                    if key == "contact":
+                        if val:
+                            contacts.append(val)
+                    elif key == "expires":
+                        if val:
+                            expires_lines.append(val)
+                    elif key == "policy":
+                        if val:
+                            policies.append(val)
+                    elif key == "preferred-languages":
+                        if val:
+                            languages.append(val)
+
+                # Contact
+                if not contacts:
+                    findings.append(self.make_finding(
+                        "security.txt Missing Contact",
+                        "Low",
+                        "Your security.txt file is missing the required Contact directive or it is empty.",
+                        target,
+                        remediation="Add at least one valid Contact directive (e.g., Contact: mailto:security@example.com).",
+                        owasp="A05: Security Misconfiguration",
+                        category="information_exposure"
+                    ))
+
+                # Expires
+                if not expires_lines:
+                    findings.append(self.make_finding(
+                        "security.txt Missing Expires",
+                        "Low",
+                        "Your security.txt file is missing the required Expires directive.",
+                        target,
+                        remediation="Add an Expires directive with an RFC3339 formatted date.",
+                        owasp="A05: Security Misconfiguration",
+                        category="information_exposure"
+                    ))
+                elif len(expires_lines) > 1:
+                    findings.append(self.make_finding(
+                        "security.txt Multiple Expires",
+                        "Low",
+                        "Your security.txt file contains multiple Expires directives, which violates RFC 9116.",
+                        target,
+                        remediation="Ensure exactly one Expires directive exists.",
+                        owasp="A05: Security Misconfiguration",
+                        category="information_exposure"
+                    ))
+                else:
+                    # Parse RFC3339 date
+                    expires_str = expires_lines[0]
+                    import datetime
+
+                    clean_date = expires_str.upper().replace('Z', '+00:00')
+                    try:
+                        exp_date = datetime.datetime.fromisoformat(clean_date)
+                        now = datetime.datetime.now(datetime.timezone.utc)
+                        if exp_date.tzinfo is None:
+                            exp_date = exp_date.replace(tzinfo=datetime.timezone.utc)
+
+                        if exp_date < now:
+                            findings.append(self.make_finding(
+                                "Expired security.txt",
+                                "Medium",
+                                "Your security.txt file has expired and may contain stale reporting instructions.",
+                                expires_str,
+                                remediation="Review your security.txt policies and update the Expires date.",
+                                owasp="A05: Security Misconfiguration",
+                                category="information_exposure"
+                            ))
+                        elif contacts:
+                            findings.append(self.make_finding(
+                                "Valid security.txt",
+                                "Passed",
+                                "Your website publishes a standard and valid security contact file.",
+                                target,
+                                impact="This is an excellent practice that allows security researchers to safely report vulnerabilities.",
+                                owasp="A05: Security Misconfiguration",
+                                category="information_exposure"
+                            ))
+
+                    except ValueError:
+                        findings.append(self.make_finding(
+                            "security.txt Invalid Expires",
+                            "Low",
+                            f"The Expires directive is not formatted correctly as RFC3339: {expires_str}",
+                            target,
+                            remediation="Format the date using RFC3339 (e.g., 2024-12-31T23:59:59Z).",
+                            owasp="A05: Security Misconfiguration",
+                            category="information_exposure"
+                        ))
+
+                # Optional info
+                if policies:
+                    findings.append(self.make_finding(
+                        "security.txt Policy Configured",
+                        "Informational",
+                        "Your security.txt file includes a vulnerability disclosure policy link.",
+                        policies[0],
+                        category="information_exposure",
+                        owasp="A05: Security Misconfiguration"
+                    ))
+                if languages:
+                    findings.append(self.make_finding(
+                        "security.txt Preferred-Languages Configured",
+                        "Informational",
+                        "Your security.txt file specifies preferred languages for security reports.",
+                        languages[0],
+                        category="information_exposure",
+                        owasp="A05: Security Misconfiguration"
+                    ))
             else:
                 findings.append(self.make_finding(
                     "security.txt Missing",
@@ -484,7 +616,7 @@ class SecurityTxtModule(ScannerModule):
 class OpenApiModule(ScannerModule):
     module_name = "OpenApiDiscovery"
     description = "Checks for exposed OpenAPI/Swagger specifications."
-    
+
     PRIV_PATTERN = re.compile(r'/(admin|administrator|staff|management|roles|permissions|users|accounts|config|settings|payments|billing|internal)\b', re.IGNORECASE)
     VERSION_PATTERN = re.compile(r'/(v\d+)/', re.IGNORECASE)
 
@@ -513,7 +645,7 @@ class OpenApiModule(ScannerModule):
                                 category="information_exposure",
                                 owasp="A05: Security Misconfiguration"
                             ))
-                            
+
                             # PHASE 31: AUTHORIZATION & ACCESS CONTROL INTELLIGENCE
                             schemes_found = set()
                             components = data.get("components", {})
@@ -521,17 +653,17 @@ class OpenApiModule(ScannerModule):
                                 security_schemes = components.get("securitySchemes", {})
                             else:
                                 security_schemes = {}
-                                
+
                             if "securityDefinitions" in data and isinstance(data["securityDefinitions"], dict):
                                 security_schemes.update(data["securityDefinitions"])
-                                
+
                             if isinstance(security_schemes, dict):
                                 for scheme_name, scheme_details in security_schemes.items():
                                     if isinstance(scheme_details, dict):
                                         scheme_type = scheme_details.get("type", "unknown")
                                         scheme_scheme = scheme_details.get("scheme", "")
                                         schemes_found.add(f"{scheme_name} ({scheme_type} {scheme_scheme})".strip())
-                                    
+
                             if schemes_found:
                                 local_findings.append(self.make_finding(
                                     "API Authorization Scheme Disclosed",
@@ -543,30 +675,30 @@ class OpenApiModule(ScannerModule):
                                     category="authentication",
                                     owasp="A05: Security Misconfiguration"
                                 ))
-                            
+
                             has_global_security = bool(data.get("security", []))
                             privileged_routes = set()
                             unprotected_privileged = set()
                             api_versions = set()
-                            
+
                             paths_dict = data.get("paths", {})
                             if isinstance(paths_dict, dict):
                                 for route_path, operations in paths_dict.items():
                                     if self.VERSION_PATTERN.search(route_path):
                                         api_versions.add(self.VERSION_PATTERN.search(route_path).group(1).lower())
-                                        
+
                                     if self.PRIV_PATTERN.search(route_path) and isinstance(operations, dict):
                                         for method, op_details in operations.items():
                                             if method.lower() not in ['get', 'post', 'put', 'patch', 'delete']:
                                                 continue
-                                                
+
                                             privileged_routes.add(f"{method.upper()} {route_path}")
-                                            
+
                                             if isinstance(op_details, dict):
                                                 local_security = op_details.get("security")
                                                 if not has_global_security and (local_security is None or (isinstance(local_security, list) and len(local_security) == 0)):
                                                     unprotected_privileged.add(f"{method.upper()} {route_path}")
-                                                    
+
                             if privileged_routes:
                                 local_findings.append(self.make_finding(
                                     "Privileged API Routes Publicly Documented",
@@ -578,7 +710,7 @@ class OpenApiModule(ScannerModule):
                                     category="api_surface",
                                     owasp="A01: Broken Access Control"
                                 ))
-                                
+
                             if unprotected_privileged:
                                 local_findings.append(self.make_finding(
                                     "Potentially Unprotected Privileged API Operation",
@@ -590,7 +722,7 @@ class OpenApiModule(ScannerModule):
                                     category="authentication",
                                     owasp="A01: Broken Access Control"
                                 ))
-                                
+
                             if api_versions:
                                 local_findings.append(self.make_finding(
                                     "Versioned API Surface Discovered",
@@ -602,7 +734,7 @@ class OpenApiModule(ScannerModule):
                                     category="api_surface",
                                     owasp="A00: Informational"
                                 ))
-                                
+
                             return local_findings
                     except ValueError:
                         pass
@@ -712,14 +844,14 @@ class ActuatorModule(ScannerModule):
             for result in executor.map(check_path, paths):
                 if result:
                     findings.append(result)
-        
+
         # Deduplicate to keep the highest severity
         highest_severity_finding = None
         severity_order = {"High": 3, "Medium": 2, "Low": 1, "Informational": 0}
         for finding in findings:
             if highest_severity_finding is None or severity_order.get(finding["severity"], 0) > severity_order.get(highest_severity_finding["severity"], 0):
                 highest_severity_finding = finding
-                
+
         return [highest_severity_finding] if highest_severity_finding else []
 
 
@@ -731,7 +863,7 @@ class XmlRpcModule(ScannerModule):
         findings = []
         scheme = "https" if url.startswith("https") else "http"
         target = f"{scheme}://{hostname}/xmlrpc.php"
-        
+
         try:
             resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
             if resp and resp.status_code == 405 and "XML-RPC server accepts POST requests only" in resp.text:
@@ -748,5 +880,5 @@ class XmlRpcModule(ScannerModule):
                 ))
         except Exception as e:
             logger.debug("XmlRpcModule check failed: %s", e)
-        
+
         return findings

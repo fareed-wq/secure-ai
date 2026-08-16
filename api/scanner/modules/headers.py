@@ -11,20 +11,20 @@ class TechFingerprintModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
-            
+
             headers_to_check = ["Server", "X-Powered-By", "X-AspNet-Version", "X-AspNetMvc-Version", "X-Generator"]
             exposed_tech = []
             has_version = False
             import re
             version_regex = re.compile(r'\d')
-            
+
             for h in headers_to_check:
                 val = self.get_header_safe(resp, h)
                 if val:
                     exposed_tech.append(f"{h}: {val}")
                     if version_regex.search(val):
                         has_version = True
-                        
+
             if exposed_tech:
                 if has_version:
                     findings.append(self.make_finding(
@@ -49,7 +49,7 @@ class TechFingerprintModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="information_exposure"
                     ))
-                    
+
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             pass
         except Exception as e:
@@ -68,7 +68,7 @@ class CORSModule(ScannerModule):
             resp = safe_request("GET", url, headers=headers, session=session, timeout=(1.5, 2.5))
             acao = self.get_header_safe(resp, "Access-Control-Allow-Origin")
             acac = self.get_header_safe(resp, "Access-Control-Allow-Credentials").lower() == "true"
-            
+
             if acao == "https://audit-test.local" and acac:
                 findings.append(self.make_finding(
                     "Insecure CORS Policy (Arbitrary Origin Reflection with Credentials)",
@@ -115,13 +115,13 @@ class CORSModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
-        
+
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass
         except Exception as e:
             import logging
             logging.getLogger(__name__).debug("CORSModule failed: %s", e)
-        
+
         if not any("CORS" in f["name"].upper() for f in findings):
             findings.append(self.make_finding(
                 "Strict CORS Policy Enforced",
@@ -159,14 +159,36 @@ class PermissionsPolicyModule(ScannerModule):
                         category="http_headers"
                     ))
             else:
-                findings.append(self.make_finding(
-                    "Permissions-Policy Configured",
-                    "Passed",
-                    "Your website has clear rules that restrict the use of sensitive browser features.",
-                    headers["Permissions-Policy"][:100],
-                    owasp="A05: Security Misconfiguration",
-                    category="http_headers"
-                ))
+                policy_str = headers["Permissions-Policy"]
+                sensitive_features = ["geolocation", "camera", "microphone"]
+                weak_configs = []
+
+                directives = [d.strip() for d in policy_str.split(",")]
+                for d in directives:
+                    for feat in sensitive_features:
+                        if d.startswith(feat):
+                            if "*" in d:
+                                weak_configs.append(feat)
+
+                if weak_configs:
+                    findings.append(self.make_finding(
+                        "Permissive Permissions-Policy",
+                        "Low",
+                        f"Your website's Permissions-Policy explicitly allows broad access to sensitive features: {', '.join(weak_configs)}.",
+                        policy_str[:100],
+                        remediation="Restrict sensitive browser features to 'self' or specific trusted origins.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+                else:
+                    findings.append(self.make_finding(
+                        "Permissions-Policy Configured",
+                        "Passed",
+                        "Your website has clear rules that restrict the use of sensitive browser features.",
+                        policy_str[:100],
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass
         except Exception:
@@ -182,18 +204,18 @@ class CSPQualityModule(ScannerModule):
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             csp = self.get_header_safe(resp, "Content-Security-Policy")
-            
+
             if csp:
                 csp_lower = csp.lower()
                 weaknesses = []
-                
+
                 if "unsafe-inline" in csp_lower:
                     weaknesses.append("unsafe-inline")
                 if "unsafe-eval" in csp_lower:
                     weaknesses.append("unsafe-eval")
                 if "http:" in csp_lower:
                     weaknesses.append("http: sources")
-                
+
                 if weaknesses:
                     findings.append(self.make_finding(
                         "Weak Content-Security-Policy",

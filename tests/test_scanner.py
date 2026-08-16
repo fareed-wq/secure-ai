@@ -84,7 +84,7 @@ class TestScannerModules(unittest.TestCase):
     @patch('requests.Session.request')
     def test_security_txt_module(self, mock_get):
         hp_resp = self.mock_response(status_code=200, text="homepage" * 200)
-        target_resp = self.mock_response(status_code=200, text="Contact: mailto:security@example.com", headers={"Content-Type": "text/plain"})
+        target_resp = self.mock_response(status_code=200, text="Contact: mailto:security@example.com\nExpires: 2030-12-31T23:59:59Z", headers={"Content-Type": "text/plain"})
         mock_get.side_effect = [hp_resp, target_resp]
         module = SecurityTxtModule()
         findings = module.run(self.url, self.hostname, self.session)

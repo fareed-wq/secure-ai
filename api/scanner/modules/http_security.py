@@ -17,8 +17,8 @@ class AdvancedCookieModule(ScannerModule):
     def is_session_cookie(self, name: str) -> bool:
         nl = name.lower()
         session_keywords = {
-            "session", "sessionid", "sess", "sid", "auth", "token", 
-            "access_token", "refresh_token", "jwt", "connect.sid", 
+            "session", "sessionid", "sess", "sid", "auth", "token",
+            "access_token", "refresh_token", "jwt", "connect.sid",
             "phpsessid", "jsessionid", "asp.net_sessionid"
         }
         return any(k in nl for k in session_keywords)
@@ -63,19 +63,21 @@ class AdvancedCookieModule(ScannerModule):
                 if "=" not in cookie_name_part:
                     continue
                 cookie_name = cookie_name_part.split("=")[0].strip()
-                
+
                 if cookie_name in seen_cookies:
                     continue
                 seen_cookies.add(cookie_name)
 
                 directives = [p.lower() for p in parts[1:]]
-                
+
                 is_secure = "secure" in directives
                 is_httponly = "httponly" in directives
-                
+
                 samesite_val = None
                 domain_val = None
                 path_val = None
+                max_age_val = None
+                expires_val = None
                 for d in directives:
                     if d.startswith("samesite="):
                         samesite_val = d.split("=")[1].strip()
@@ -85,10 +87,68 @@ class AdvancedCookieModule(ScannerModule):
                         domain_val = d.split("=", 1)[1].strip()
                     elif d.startswith("path="):
                         path_val = d.split("=", 1)[1].strip()
+                    elif d.startswith("max-age="):
+                        max_age_val = d.split("=", 1)[1].strip()
+                    elif d.startswith("expires="):
+                        expires_val = d.split("=", 1)[1].strip()
 
                 is_session = self.is_session_cookie(cookie_name)
                 masked_cookie = self.mask_cookie_value(cookie_str)
-                
+
+                # Lifetime calculation
+                effective_lifetime = None
+                is_expired_for_deletion = False
+
+                if max_age_val is not None:
+                    try:
+                        max_age_sec = int(max_age_val)
+                        if max_age_sec <= 0:
+                            is_expired_for_deletion = True
+                        else:
+                            effective_lifetime = max_age_sec
+                    except ValueError:
+                        pass
+                elif expires_val is not None:
+                    import datetime
+                    import email.utils
+                    try:
+                        parsed_tuple = email.utils.parsedate_tz(expires_val)
+                        if parsed_tuple:
+                            exp_timestamp = email.utils.mktime_tz(parsed_tuple)
+                            now_timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
+                            diff = exp_timestamp - now_timestamp
+                            if diff <= 0:
+                                is_expired_for_deletion = True
+                            else:
+                                effective_lifetime = diff
+                    except Exception:
+                        pass
+
+                if effective_lifetime is not None and effective_lifetime > 400 * 24 * 3600:
+                    if is_session:
+                        findings.append(self.make_finding(
+                            "Persistent Authentication Cookie",
+                            "Low",
+                            "A cookie used for authentication or sessions is configured to persist for an unusually long time.",
+                            masked_cookie,
+                            impact="If a user's device is compromised, long-lived session cookies provide a larger window for attackers to hijack accounts.",
+                            remediation="Limit session cookie lifetimes to a reasonable duration (e.g., 400 days or less).",
+                            owasp="A05: Security Misconfiguration",
+                            category="session_cookies",
+                            confidence="High"
+                        ))
+                    else:
+                        findings.append(self.make_finding(
+                            "Excessive Cookie Lifetime",
+                            "Informational",
+                            "A cookie is configured to persist for an unusually long time (over 400 days).",
+                            masked_cookie,
+                            impact="Excessively long-lived cookies can pose privacy risks by tracking users indefinitely.",
+                            remediation="Limit cookie lifetimes to 400 days, aligning with modern browser limits.",
+                            owasp="A05: Security Misconfiguration",
+                            category="session_cookies"
+                        ))
+
                 # Smart Session Cookie Checks
                 if is_session:
                     if not is_secure and url.startswith("https"):
@@ -115,7 +175,7 @@ class AdvancedCookieModule(ScannerModule):
                             category="session_cookies",
                             confidence="High"
                         ))
-                    
+
                     if not samesite_val:
                         findings.append(self.make_finding(
                             "Session Cookie Missing SameSite Attribute",
@@ -140,7 +200,7 @@ class AdvancedCookieModule(ScannerModule):
                             category="session_cookies",
                             confidence="High"
                         ))
-                    
+
                     if domain_val and domain_val.startswith(".") and domain_val != f".{hostname}":
                         # Basic broad domain check
                         findings.append(self.make_finding(
@@ -357,7 +417,7 @@ class SecurityHeadersModule(ScannerModule):
                     else:
                         is_strict = False
                         weak_reasons.append("'unsafe-inline' without 'object-src \\'none\\'' and 'base-uri \\'self\\''")
-                        
+
                 if re.search(r"script-src[^;]*\s\*\s", csp + " ") or re.search(r"script-src\s+\*", csp):
                     is_strict = False
                     weak_reasons.append("wildcard '*' script source")
@@ -365,7 +425,7 @@ class SecurityHeadersModule(ScannerModule):
                 if re.search(r"script-src[^;]*\sdata:", csp) or re.search(r"script-src[^;]*\sblob:", csp):
                     is_strict = False
                     weak_reasons.append("data: or blob: script source")
-                    
+
                 if re.search(r"frame-ancestors[^;]*\s\*\s", csp + " ") or re.search(r"frame-ancestors\s+\*", csp):
                     is_strict = False
                     weak_reasons.append("unrestricted frame-ancestors '*'")
@@ -498,7 +558,7 @@ class SecurityHeadersModule(ScannerModule):
                 url_attr = match.group(1)
                 if 'integrity=' not in tag.lower():
                     missing_sri.append(url_attr)
-            
+
             if missing_sri:
                 findings.append(self.make_finding(
                     "Missing Subresource Integrity (SRI) on CDN Assets",
@@ -514,11 +574,11 @@ class SecurityHeadersModule(ScannerModule):
         # WAF & Rate-Limiting Detection
         waf_headers = ['server', 'x-cdn', 'cf-ray', 'x-succinct', 'x-istart-waf', 'awsalb']
         rl_headers = ['x-ratelimit-limit', 'x-ratelimit-remaining', 'retry-after']
-        
+
         waf_found = False
         rl_found = False
         evidence_headers = []
-        
+
         headers = resp.headers if resp else {}
         for k, v in headers.items():
             kl = k.lower()
@@ -528,7 +588,7 @@ class SecurityHeadersModule(ScannerModule):
             if kl in rl_headers:
                 rl_found = True
                 evidence_headers.append(f"{k}: {v}")
-                
+
         if not waf_found and not rl_found:
             findings.append(self.make_finding(
                 "No Web Application Firewall (WAF) / Rate-Limiting Headers Detected",
@@ -561,43 +621,87 @@ class AdvancedSecurityHeadersModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
-            
+
             content_type = self.get_header_safe(resp, "Content-Type", "").lower()
             is_api_response = "application/json" in content_type
 
-            if not is_api_response and not self.get_header_safe(resp, "Cross-Origin-Opener-Policy"):
-                findings.append(self.make_finding(
-                    "Missing COOP Header",
-                    "Informational",
-                    "Your website is missing the Cross-Origin-Opener-Policy (COOP) security rule.",
-                    "Header not found in response",
-                    impact="Malicious websites that open your site in a pop-up might be able to spy on what your users are doing.",
-                    remediation="Set Cross-Origin-Opener-Policy: same-origin to isolate your browsing context from cross-origin popups.",
-                    owasp="A05: Security Misconfiguration",
-                    category="http_headers"
-                ))
-            if not is_api_response and not self.get_header_safe(resp, "Cross-Origin-Embedder-Policy"):
-                findings.append(self.make_finding(
-                    "Missing COEP Header",
-                    "Informational",
-                    "Your website is missing the Cross-Origin-Embedder-Policy (COEP) security rule.",
-                    "Header not found in response",
-                    impact="Your website might accidentally load malicious files from other sites, putting your visitors at risk.",
-                    remediation="Set Cross-Origin-Embedder-Policy: require-corp to prevent loading cross-origin resources without explicit permission.",
-                    owasp="A05: Security Misconfiguration",
-                    category="http_headers"
-                ))
-            if not is_api_response and not self.get_header_safe(resp, "Cross-Origin-Resource-Policy"):
-                findings.append(self.make_finding(
-                    "Missing CORP Header",
-                    "Informational",
-                    "Your website is missing the Cross-Origin-Resource-Policy (CORP) security rule.",
-                    "Header not found in response",
-                    impact="Other malicious websites could embed your private images or resources and try to steal information from your logged-in users.",
-                    remediation="Set Cross-Origin-Resource-Policy: same-origin to prevent other sites from embedding your resources.",
-                    owasp="A05: Security Misconfiguration",
-                    category="http_headers"
-                ))
+            coop = self.get_header_safe(resp, "Cross-Origin-Opener-Policy")
+            coep = self.get_header_safe(resp, "Cross-Origin-Embedder-Policy")
+            corp = self.get_header_safe(resp, "Cross-Origin-Resource-Policy")
+
+            if not is_api_response:
+                weak = []
+                missing = []
+
+                if not coop:
+                    missing.append("Cross-Origin-Opener-Policy")
+                elif coop.lower() == "unsafe-none":
+                    weak.append(f"COOP: {coop}")
+
+                if not coep:
+                    missing.append("Cross-Origin-Embedder-Policy")
+                elif coep.lower() == "unsafe-none":
+                    weak.append(f"COEP: {coep}")
+
+                if not corp:
+                    missing.append("Cross-Origin-Resource-Policy")
+                elif corp.lower() == "unsafe-none":
+                    weak.append(f"CORP: {corp}")
+
+                if weak:
+                    findings.append(self.make_finding(
+                        "Weak Cross-Origin Isolation",
+                        "Low",
+                        "Your website is explicitly configured with weak cross-origin isolation policies.",
+                        ", ".join(weak),
+                        remediation="Configure COOP and COEP to restrict cross-origin interactions.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+
+                if "Cross-Origin-Opener-Policy" in missing:
+                    findings.append(self.make_finding(
+                        "Missing COOP Header",
+                        "Informational",
+                        "Your website is missing the Cross-Origin-Opener-Policy (COOP) security rule.",
+                        "Header not found in response",
+                        impact="Malicious websites that open your site in a pop-up might be able to spy on what your users are doing.",
+                        remediation="Set Cross-Origin-Opener-Policy: same-origin to isolate your browsing context from cross-origin popups.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+                if "Cross-Origin-Embedder-Policy" in missing:
+                    findings.append(self.make_finding(
+                        "Missing COEP Header",
+                        "Informational",
+                        "Your website is missing the Cross-Origin-Embedder-Policy (COEP) security rule.",
+                        "Header not found in response",
+                        impact="Your website might accidentally load malicious files from other sites, putting your visitors at risk.",
+                        remediation="Set Cross-Origin-Embedder-Policy: require-corp to prevent loading cross-origin resources without explicit permission.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+                if "Cross-Origin-Resource-Policy" in missing:
+                    findings.append(self.make_finding(
+                        "Missing CORP Header",
+                        "Informational",
+                        "Your website is missing the Cross-Origin-Resource-Policy (CORP) security rule.",
+                        "Header not found in response",
+                        impact="Other malicious websites could embed your private images or resources and try to steal information from your logged-in users.",
+                        remediation="Set Cross-Origin-Resource-Policy: same-origin to prevent other sites from embedding your resources.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+
+                if not missing and not weak:
+                    findings.append(self.make_finding(
+                        "Cross-Origin Isolation Configured",
+                        "Passed",
+                        "Your website has implemented modern cross-origin isolation headers.",
+                        f"COOP: {coop}, COEP: {coep}, CORP: {corp}",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             # Safely skip on network failures to avoid false positives and noise
             pass
@@ -612,5 +716,5 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                 category="http_headers",
                 impact="Unable to assess due to connection failure."
             ))
-            
+
         return findings
