@@ -50,7 +50,7 @@ def generate_pdf_report(data: dict) -> str:
 <body>
     <div class="header">
         <div>
-            <div class="logo">URLScanOnline Security Report</div>
+            <div class="logo">URLScannerOnline Security Report</div>
             <div style="color: #94a3b8; margin-top: 5px;">Target: {escaped_url} | Date: {report_date}</div>
         </div>
         <div class="score-badge">{data['score']}/100</div>

@@ -24,7 +24,7 @@ const SafetyComparison = () => {
             <div className="bg-indigo-600 p-2 rounded-lg text-white shadow-lg shadow-indigo-500/20">
               <ShieldCheck size={24} />
             </div>
-            <h3 className="text-xl font-bold text-indigo-400">URLScanOnline Audit</h3>
+            <h3 className="text-xl font-bold text-indigo-400">URLScannerOnline Audit</h3>
           </div>
 
           <ul className="space-y-5 relative z-10">

@@ -10,7 +10,7 @@ const WhatsAppIcon = ({ className }) => (
 
 export default function WhatsAppWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const phoneNumber = "918296970075"; // WhatsApp format
 
   const openWhatsApp = () => {
@@ -19,7 +19,7 @@ export default function WhatsAppWidget() {
   };
 
   const openEmail = () => {
-    window.location.href = "mailto:support@secure-ai.com";
+    window.location.href = "mailto:contact@urlscanonline.com";
   };
 
   return (
@@ -39,7 +39,7 @@ export default function WhatsAppWidget() {
                 <WhatsAppIcon className="w-6 h-6" />
                 <span className="font-semibold text-lg">WhatsApp</span>
               </div>
-              <button 
+              <button
                 onClick={() => setIsOpen(false)}
                 className="text-slate-50/80 hover:text-slate-50 transition-colors"
               >
@@ -51,9 +51,9 @@ export default function WhatsAppWidget() {
             <div className="bg-[#E5DDD5] p-5 relative overflow-hidden h-36">
               {/* Background Pattern (subtle) */}
               <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png')" }}></div>
-              
+
               {/* Message Bubble */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
@@ -68,13 +68,13 @@ export default function WhatsAppWidget() {
 
             {/* Actions */}
             <div className="p-4 bg-white flex flex-col gap-3">
-              <button 
+              <button
                 onClick={openWhatsApp}
                 className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-medium py-3 rounded-full transition-colors flex justify-center items-center gap-2"
               >
                 Open WhatsApp Chat
               </button>
-              <button 
+              <button
                 onClick={openEmail}
                 className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-full transition-colors flex justify-center items-center"
               >
@@ -101,7 +101,7 @@ export default function WhatsAppWidget() {
           </motion.button>
         )}
       </AnimatePresence>
-      
+
       {/* Alternate close button when open (matching the screenshot exactly) */}
       <AnimatePresence>
         {isOpen && (
