@@ -391,8 +391,22 @@ class SecurityHeadersModule(ScannerModule):
                     pass
 
         csp = self.get_header_safe(resp, "Content-Security-Policy", "")
+        csp_ro = self.get_header_safe(resp, "Content-Security-Policy-Report-Only", "")
+
         if not is_api_response:
             if not csp:
+                if csp_ro:
+                    findings.append(self.make_finding(
+                        "Content-Security-Policy in Report-Only Mode",
+                        "Informational",
+                        "Your website has a Content Security Policy (CSP) configured, but it is in 'Report-Only' mode and does not actively block threats.",
+                        csp_ro,
+                        impact="Because the policy is not enforced, hackers can still exploit vulnerabilities. Report-Only should be used for testing before enabling full enforcement.",
+                        remediation="Once testing is complete, change the header to 'Content-Security-Policy' to enforce the rules.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+
                 findings.append(self.make_finding(
                     "Missing Content-Security-Policy (CSP)",
                     "High",
@@ -406,6 +420,7 @@ class SecurityHeadersModule(ScannerModule):
             else:
                 is_strict = True
                 weak_reasons = []
+                low_reasons = []
 
                 if "unsafe-eval" in csp:
                     is_strict = False
@@ -418,29 +433,51 @@ class SecurityHeadersModule(ScannerModule):
                         is_strict = False
                         weak_reasons.append("'unsafe-inline' without 'object-src \\'none\\'' and 'base-uri \\'self\\''")
 
-                if re.search(r"script-src[^;]*\s\*\s", csp + " ") or re.search(r"script-src\s+\*", csp):
+                has_script_src = bool(re.search(r"script-src(?:$|[\s;])", csp))
+
+                if re.search(r"script-src[^;]*\s\*\s", csp + " ") or re.search(r"script-src\s+\*(?:$|;)", csp):
                     is_strict = False
                     weak_reasons.append("wildcard '*' script source")
+                elif not has_script_src and (re.search(r"default-src[^;]*\s\*\s", csp + " ") or re.search(r"default-src\s+\*(?:$|;)", csp)):
+                    is_strict = False
+                    weak_reasons.append("wildcard '*' default source (effective script source)")
+
+                if re.search(r"script-src[^;]*\shttp:", csp) or (not has_script_src and re.search(r"default-src[^;]*\shttp:", csp)):
+                    low_reasons.append("insecure 'http:' sources permitted for scripts")
 
                 if re.search(r"script-src[^;]*\sdata:", csp) or re.search(r"script-src[^;]*\sblob:", csp):
                     is_strict = False
                     weak_reasons.append("data: or blob: script source")
 
-                if re.search(r"frame-ancestors[^;]*\s\*\s", csp + " ") or re.search(r"frame-ancestors\s+\*", csp):
+                if re.search(r"frame-ancestors[^;]*\s\*\s", csp + " ") or re.search(r"frame-ancestors\s+\*(?:$|;)", csp):
                     is_strict = False
                     weak_reasons.append("unrestricted frame-ancestors '*'")
 
                 missing_granular = "object-src" not in csp or "base-uri" not in csp
 
-                if not is_strict or missing_granular:
+                if csp_ro:
+                    findings.append(self.make_finding(
+                        "Content-Security-Policy-Report-Only Also Present",
+                        "Informational",
+                        "Your website enforces a CSP but also uses a Report-Only CSP, likely for testing new rules.",
+                        csp_ro,
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+
+                if not is_strict or missing_granular or low_reasons:
                     problems = []
                     if not is_strict:
                         problems.append(f"unsafe directives: {', '.join(weak_reasons)}")
+                    if low_reasons:
+                        problems.append(f"weak configurations: {', '.join(low_reasons)}")
                     if missing_granular:
                         problems.append("missing granular directives like object-src or base-uri")
 
                     problem_desc = f"CSP contains flaws: {'; '.join(problems)}."
-                    sev = "Medium" if not is_strict else "Low"
+                    sev = "Low"
+                    if not is_strict:
+                        sev = "Medium"
 
                     findings.append(self.make_finding(
                         "Weak Content-Security-Policy (CSP)",
@@ -463,6 +500,48 @@ class SecurityHeadersModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))
+
+                positive_indicators = []
+                if "upgrade-insecure-requests" in csp:
+                    positive_indicators.append("upgrade-insecure-requests")
+                if "strict-dynamic" in csp:
+                    positive_indicators.append("strict-dynamic")
+                if "nonce-" in csp:
+                    positive_indicators.append("nonce")
+                if re.search(r"sha(?:256|384|512)-", csp):
+                    positive_indicators.append("hashes")
+
+                if positive_indicators:
+                    findings.append(self.make_finding(
+                        "Advanced CSP Hardening Detected",
+                        "Informational",
+                        "Your CSP includes advanced hardening techniques.",
+                        f"Features detected: {', '.join(positive_indicators)}",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+
+                if resp and resp.text and re.search(r"<form\b", resp.text, re.IGNORECASE):
+                    if not re.search(r"form-action(?:$|[\s;])", csp):
+                        findings.append(self.make_finding(
+                            "CSP Missing form-action Directive",
+                            "Informational",
+                            "Your HTML contains forms, but your CSP does not restrict where those forms can submit data using the 'form-action' directive.",
+                            "Missing 'form-action'",
+                            impact="Hackers could potentially inject a form that sends data to an attacker-controlled server.",
+                            remediation="Add the 'form-action' directive to restrict form submissions to trusted origins.",
+                            owasp="A05: Security Misconfiguration",
+                            category="http_headers"
+                        ))
+                    else:
+                        findings.append(self.make_finding(
+                            "CSP form-action Configured",
+                            "Informational",
+                            "Your CSP correctly restricts form submissions.",
+                            "form-action present",
+                            owasp="A05: Security Misconfiguration",
+                            category="http_headers"
+                        ))
 
         if not self.get_header_safe(resp, "X-Permitted-Cross-Domain-Policies"):
             findings.append(self.make_finding(
