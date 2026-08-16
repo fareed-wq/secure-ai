@@ -151,7 +151,7 @@ class DNSEmailSecurityModule(ScannerModule):
                     data_str = rec.get("data", "")
                     if "v=spf1" in data_str:
                         spf_records.append(data_str)
-                        
+
                 if len(spf_records) > 1:
                     findings.append(self.make_finding(
                         "Multiple SPF Records Detected",
@@ -178,17 +178,75 @@ class DNSEmailSecurityModule(ScannerModule):
                             owasp="A05: Security Misconfiguration",
                             category="domain_email"
                         ))
-                    else:
+
+                    tokens = [t.lower() for t in data_str.split()]
+                    all_mechanisms = [t for t in tokens if t.endswith("all") and t in ("+all", "-all", "~all", "?all", "all")]
+                    if len(all_mechanisms) > 1:
+                        findings.append(self.make_finding(
+                            "Malformed SPF Record (Multiple 'all' mechanisms)",
+                            "Low",
+                            "Your SPF record contains multiple conflicting 'all' mechanisms, which may cause email delivery issues or security bypasses.",
+                            data_str,
+                            impact="Email receivers may ignore the policy, leaving the domain vulnerable to spoofing.",
+                            owasp="A05: Security Misconfiguration",
+                            category="domain_email"
+                        ))
+
+                    if tokens and tokens[0] != "v=spf1":
+                        findings.append(self.make_finding(
+                            "Malformed SPF Record (Version Not First)",
+                            "Low",
+                            "Your SPF record is valid but 'v=spf1' is not the very first term, which violates the standard.",
+                            data_str,
+                            owasp="A05: Security Misconfiguration",
+                            category="domain_email"
+                        ))
+
+                    include_count = sum(1 for t in tokens if t.startswith("include:"))
+                    redirect_count = sum(1 for t in tokens if t.startswith("redirect="))
+
+                    context_msgs = []
+                    if len(all_mechanisms) == 1:
+                        mech = all_mechanisms[0]
+                        if mech == "-all": context_msgs.append("Strict fail policy (-all)")
+                        elif mech == "~all": context_msgs.append("Softfail policy (~all)")
+                        elif mech == "?all": context_msgs.append("Neutral policy (?all)")
+
+                    if include_count > 0:
+                        context_msgs.append(f"Contains {include_count} include mechanism(s)")
+                    if redirect_count > 0:
+                        context_msgs.append("Contains a redirect modifier")
+
+                    other_mechs = [t for t in tokens if t in ("a", "mx", "ptr", "exists", "exp") or t.startswith(("a:", "mx:", "ip4:", "ip6:", "exists:", "ptr:", "exp="))]
+                    if other_mechs:
+                        context_msgs.append(f"Uses standard mechanisms/modifiers: {len(other_mechs)}")
+
+                    if "+all" not in data_str:
+                        desc = "Your email security rules are properly set up to help prevent spoofing."
                         findings.append(self.make_finding(
                             "SPF Record Configured",
                             "Passed",
-                            "Your email security rules are properly set up to help prevent spoofing.",
+                            desc,
                             data_str,
                             confidence="High",
                             owasp="A05: Security Misconfiguration",
                             category="domain_email"
                         ))
-                        
+
+                    if context_msgs:
+                        desc = "Detailed breakdown of your SPF policy configuration.\\n" + "\\n".join(f"- {msg}" for msg in context_msgs)
+                        if include_count > 0:
+                            desc += "\\n(Note: SPF contains include mechanisms; recursive DNS lookup cost cannot be determined without resolving the referenced policies)."
+
+                        findings.append(self.make_finding(
+                            "SPF Policy Analysis",
+                            "Informational",
+                            desc,
+                            data_str,
+                            owasp="A05: Security Misconfiguration",
+                            category="domain_email"
+                        ))
+
                 if not spf_records:
                     findings.append(self.make_finding(
                         "Missing SPF Record",
@@ -226,6 +284,30 @@ class DNSEmailSecurityModule(ScannerModule):
                     d_str = rec.get("data", "")
                     if "v=DMARC1" in d_str:
                         dmarc_found = True
+
+                        tags = [t.strip() for t in d_str.strip().strip(';').split(';') if t.strip()]
+                        tag_dict = {}
+                        duplicate_tags = []
+                        malformed = False
+
+                        for tag in tags:
+                            if '=' not in tag:
+                                malformed = True
+                                continue
+                            k, v = tag.split('=', 1)
+                            k = k.strip().lower()
+                            v = v.strip()
+                            if k in tag_dict:
+                                duplicate_tags.append(k)
+                            tag_dict[k] = v
+
+                        if tags and not tags[0].strip().startswith("v=DMARC1"):
+                            malformed = True
+
+                        p_val = tag_dict.get("p", "").lower()
+                        pct_val = tag_dict.get("pct", "100")
+                        sp_val = tag_dict.get("sp", "")
+
                         if "p=none" in d_str.lower():
                             findings.append(self.make_finding(
                                 "DMARC Monitoring-Only Policy",
@@ -248,6 +330,67 @@ class DNSEmailSecurityModule(ScannerModule):
                                 owasp="A05: Security Misconfiguration",
                                 category="domain_email"
                             ))
+
+                        info_msgs = []
+                        if p_val in ("quarantine", "reject"):
+                            info_msgs.append(f"Enforcement policy: {p_val}")
+                        elif p_val == "none":
+                            info_msgs.append("Enforcement policy: none")
+                        if sp_val:
+                            info_msgs.append(f"Subdomain policy: {sp_val}")
+                        if "rua" in tag_dict:
+                            info_msgs.append("Aggregate reporting (rua) enabled")
+                        if "ruf" in tag_dict:
+                            info_msgs.append("Forensic reporting (ruf) enabled")
+                        if "adkim" in tag_dict:
+                            info_msgs.append(f"DKIM alignment: {tag_dict['adkim']}")
+                        if "aspf" in tag_dict:
+                            info_msgs.append(f"SPF alignment: {tag_dict['aspf']}")
+                        if pct_val != "100":
+                            info_msgs.append(f"Policy percentage: {pct_val}%")
+
+                        if info_msgs:
+                            desc = "Detailed breakdown of your DMARC policy configuration.\\n" + "\\n".join(f"- {msg}" for msg in info_msgs)
+                            findings.append(self.make_finding(
+                                "DMARC Policy Analysis",
+                                "Informational",
+                                desc,
+                                d_str,
+                                owasp="A05: Security Misconfiguration",
+                                category="domain_email"
+                            ))
+
+                        if duplicate_tags:
+                            findings.append(self.make_finding(
+                                "Malformed DMARC Record (Duplicate Tags)",
+                                "Low",
+                                f"Your DMARC record contains duplicate tags ({', '.join(duplicate_tags)}), which may cause email receivers to ignore the policy.",
+                                d_str,
+                                owasp="A05: Security Misconfiguration",
+                                category="domain_email"
+                            ))
+                        elif malformed:
+                            findings.append(self.make_finding(
+                                "Malformed DMARC Record",
+                                "Low",
+                                "Your DMARC record contains invalid syntax or the 'v=DMARC1' tag is not the first tag.",
+                                d_str,
+                                owasp="A05: Security Misconfiguration",
+                                category="domain_email"
+                            ))
+
+                        if p_val in ("quarantine", "reject") and pct_val == "0":
+                            findings.append(self.make_finding(
+                                "DMARC Enforcement Disabled by pct=0",
+                                "Low",
+                                "Your DMARC policy is set to block spoofed emails, but 'pct=0' effectively turns off the enforcement for 100% of emails.",
+                                d_str,
+                                impact="Spoofed emails will still be delivered despite the quarantine/reject policy.",
+                                remediation="Remove 'pct=0' or increase the percentage to gradually enforce the policy.",
+                                owasp="A05: Security Misconfiguration",
+                                category="domain_email"
+                            ))
+
                         break
 
                 if not dmarc_found:
