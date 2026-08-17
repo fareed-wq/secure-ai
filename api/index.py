@@ -1,0 +1,294 @@
+import asyncio
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
+from typing import List
+from urllib.parse import urlparse
+
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, HTMLResponse
+from pydantic import BaseModel, field_validator
+import urllib3
+# Disable insecure request warnings for passive SSL probing
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+from api.scanner.core import Config, IN_MEMORY_LIMITS, get_client_ip, check_rate_limit
+from api.scanner.data.dictionaries import REMEDIATION_SNIPPETS, COMPLIANCE_MAP, IMPACT_MAP
+from api.scanner.transport import (
+    is_public_hostname,
+    BlockAllCookies,
+    get_http_session,
+    safe_request,
+    get_all_headers,
+    get_header,
+)
+from api.scanner.base import ScannerModule
+from api.scanner.modules.headers import TechFingerprintModule, CORSModule, PermissionsPolicyModule
+from api.scanner.modules.discovery import (
+    ExposedFilesModule,
+    InformationDisclosureModule,
+    RobotsTxtModule,
+    SitemapModule,
+    SecurityTxtModule,
+)
+from api.scanner.modules.dns import DNSCAAModule, DNSEmailSecurityModule
+from api.scanner.modules.http_security import (
+    AdvancedCookieModule,
+    HTTPSRedirectModule,
+    SecurityHeadersModule,
+    AdvancedSecurityHeadersModule,
+)
+from api.scanner.modules.network_checks import (
+    SubdomainProbingModule,
+    SubdomainTakeoverModule,
+    TLSCipherStrengthModule,
+    GraphQLIntrospectionModule,
+    VerboseStackTraceModule,
+)
+from api.scanner.modules.tls import EnhancedTLSModule
+from api.scanner.modules.content import (
+    MixedContentModule,
+)
+from api.scanner.data.registry import DOMAIN_MAP, REGISTERED_MODULES
+from api.scanner.fallback import get_waf_fallback_payload
+from api.scanner.scoring import calculate_score
+from api.scanner.orchestrator import scan_url as _scan_url
+import api.scanner.orchestrator as orchestrator_module
+from api.scanner.scoring import calculate_score
+from api.scanner.metadata import (
+    check_liveness,
+    get_ip_location,
+    _parse_whois_date,
+    _get_whois_data,
+    get_metadata,
+)
+from api.scanner.validation import CANONICAL_URL_REGEX, canonicalize_url, normalize_url
+
+
+
+
+
+
+
+app = FastAPI(title="Website Security Posture Checker (Advanced Modular)")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/api/health")
+def health_check() -> dict:
+    return {"status": "online"}
+
+
+
+
+
+class ScanRequest(BaseModel):
+    url: str
+    probe_subdomains: bool = False
+    scan_mode: str = "passive"
+    report_mode: str = "simple"
+
+    @field_validator("url")
+    @classmethod
+    def _normalize(cls, v: str) -> str:
+        return normalize_url(v)
+
+    @field_validator("report_mode")
+    @classmethod
+    def _validate_report_mode(cls, v: str) -> str:
+        v = v.lower()
+        if v not in ["simple", "technical"]:
+            raise ValueError("report_mode must be 'simple' or 'technical'")
+        return v
+
+
+class BatchScanRequest(BaseModel):
+    urls: List[str]
+
+    @field_validator("urls")
+    @classmethod
+    def _normalize_all(cls, v: List[str]) -> List[str]:
+        return [normalize_url(u) for u in v]
+
+
+
+
+
+import os
+import json
+
+class ContactRequest(BaseModel):
+    form_type: str
+    name: str = ""
+    email: str = ""
+    message: str = ""
+    url: str = ""
+    finding: str = ""
+    reason: str = ""
+    details: str = ""
+
+@app.post("/api/contact")
+async def handle_contact(req: ContactRequest, request: Request):
+    ip = get_client_ip(request)
+    if not check_rate_limit(ip):
+        return JSONResponse(status_code=429, content={"error": "Rate limit exceeded. Please try again later."})
+
+    resend_key = os.environ.get("RESEND_API_KEY")
+    if not resend_key:
+        return JSONResponse(status_code=500, content={"error": "Email provider not configured."})
+
+    subject = f"URLScannerOnline {req.form_type.title()} Submission"
+
+    if req.form_type == "feedback":
+        html_content = f"<p><strong>Name:</strong> {req.name}</p><p><strong>Email:</strong> {req.email}</p><p><strong>Message:</strong><br/>{req.message}</p>"
+    else:
+        html_content = f"<p><strong>URL:</strong> {req.url}</p><p><strong>Finding:</strong> {req.finding}</p><p><strong>Reason:</strong><br/>{req.reason}</p><p><strong>Details:</strong><br/>{req.details}</p><p><strong>Email:</strong> {req.email}</p>"
+
+    try:
+        http = urllib3.PoolManager()
+        response = http.request(
+            "POST",
+            "https://api.resend.com/emails",
+            body=json.dumps({
+                "from": "URLScannerOnline Contact <contact@urlscanonline.com>",
+                "to": ["contact@urlscanonline.com"],
+                "subject": subject,
+                "html": html_content
+            }).encode('utf-8'),
+            headers={
+                "Authorization": f"Bearer {resend_key}",
+                "Content-Type": "application/json"
+            }
+        )
+        if response.status >= 400:
+            logger.error(f"Resend API error: {response.data}")
+            return JSONResponse(status_code=500, content={"error": "Failed to send email via provider."})
+
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Email delivery error: {e}")
+        return JSONResponse(status_code=500, content={"error": "Internal server error during email delivery."})
+
+# --- PLUGIN ARCHITECTURE ---
+
+
+
+# --- MODULES ---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Engine Registry
+
+def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive") -> dict:
+    """Compatibility wrapper to allow patching REGISTERED_MODULES via api.index"""
+    original = orchestrator_module.REGISTERED_MODULES
+    orchestrator_module.REGISTERED_MODULES = REGISTERED_MODULES
+    try:
+        return _scan_url(url, probe_subdomains, scan_mode)
+    finally:
+        orchestrator_module.REGISTERED_MODULES = original
+
+from api.scanner.core import acquire_scan_lease, release_scan_lease
+
+
+@app.post("/api/scan")
+@app.post("/scan")
+async def scan_single(req: ScanRequest, request: Request):
+    ip = get_client_ip(request)
+    if not check_rate_limit(ip):
+        return JSONResponse(
+            status_code=429,
+            content={"error": "Rate limit exceeded. Maximum 10 scans per minute allowed.", "status": 429},
+            headers={"Retry-After": "60", "X-RateLimit-Limit": "10", "X-RateLimit-Remaining": "0"}
+        )
+
+    try:
+        lease_id = acquire_scan_lease()
+    except RuntimeError as e:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Scanner capacity status unknown. Please try again later.", "status": 503}
+        )
+
+    if not lease_id:
+        return JSONResponse(
+            status_code=429,
+            content={"error": "Global scanner capacity is full. Please try again in a few seconds.", "status": 429}
+        )
+
+    try:
+        result = await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains, req.scan_mode), timeout=55.0)
+        result["report_mode"] = req.report_mode
+        return result
+    except Exception as e:
+        return JSONResponse(status_code=200, content=get_waf_fallback_payload(req.url))
+    finally:
+        release_scan_lease(lease_id)
+
+
+@app.post("/api/scan/batch")
+@app.post("/scan/batch")
+async def scan_batch(req: BatchScanRequest, request: Request):
+    ip = get_client_ip(request)
+    if not check_rate_limit(ip):
+        return JSONResponse(
+            status_code=429,
+            content={"error": "Rate limit exceeded. Maximum 10 scans per minute allowed.", "status": 429},
+            headers={"Retry-After": "60", "X-RateLimit-Limit": "10", "X-RateLimit-Remaining": "0"}
+        )
+    workers = min(10, len(req.urls)) or 1
+
+    def process_one_target(u):
+        try:
+            lease_id = acquire_scan_lease()
+        except RuntimeError:
+            return {"error": "Scanner capacity status unknown. Please try again later.", "status": 503, "url": u}
+
+        if not lease_id:
+            return {"error": "Global scanner capacity is full. Please try again in a few seconds.", "status": 429, "url": u}
+
+        try:
+            return scan_url(u)
+        finally:
+            release_scan_lease(lease_id)
+
+    def process_batch():
+        results = []
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {pool.submit(process_one_target, u): u for u in req.urls}
+            for future in as_completed(futures):
+                u = futures[future]
+                try:
+                    results.append(future.result())
+                except Exception:
+                    results.append(get_waf_fallback_payload(u))
+        return results
+
+    try:
+        results = await asyncio.wait_for(asyncio.to_thread(process_batch), timeout=55.0)
+        return {"results": results}
+    except Exception:
+        return JSONResponse(status_code=200, content={"results": [get_waf_fallback_payload(u) for u in req.urls]})
+
+
