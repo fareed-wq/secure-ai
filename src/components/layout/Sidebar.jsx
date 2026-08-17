@@ -246,15 +246,26 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               <span className="truncate">Sign Out</span>
             </button>
           ) : (
-            <Link
-              to="/login"
-              className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/20 transition-colors text-sm font-medium"
-            >
-              <div className="w-7 h-7 flex items-center justify-center shrink-0 text-indigo-400">
-                <User size={16} />
-              </div>
-              <span className="truncate">Sign In</span>
-            </Link>
+            <>
+              <Link
+                to="/login"
+                className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/20 transition-colors text-sm font-medium"
+              >
+                <div className="w-7 h-7 flex items-center justify-center shrink-0 text-indigo-400">
+                  <User size={16} />
+                </div>
+                <span className="truncate">Sign In</span>
+              </Link>
+              <Link
+                to="/register"
+                className="w-full flex items-center gap-3 px-2.5 py-2 mt-1 rounded-lg text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/20 transition-colors text-sm font-medium"
+              >
+                <div className="w-7 h-7 flex items-center justify-center shrink-0 text-emerald-400">
+                  <User size={16} />
+                </div>
+                <span className="truncate">Create Account</span>
+              </Link>
+            </>
           )
         )}
 
