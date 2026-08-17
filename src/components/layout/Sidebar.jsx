@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Shield,
-  Search,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
@@ -88,9 +87,6 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           </Link>
         )}
         <div className={`flex items-center ${isCollapsed ? 'flex-col gap-4 w-full' : 'gap-2'}`}>
-          <button className="p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors" title="Quick Search">
-            <Search size={18} />
-          </button>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="hidden md:block p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors"
