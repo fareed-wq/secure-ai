@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRecovery, setIsRecovery] = useState(false);
 
   useEffect(() => {
     // Check active sessions and sets the user
@@ -22,7 +23,12 @@ export const AuthProvider = ({ children }) => {
     });
 
     // Listen for changes on auth state (logged in, signed out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecovery(true);
+      } else if (event === 'SIGNED_OUT') {
+        setIsRecovery(false);
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -34,6 +40,8 @@ export const AuthProvider = ({ children }) => {
   const value = {
     session,
     user,
+    isRecovery,
+    setIsRecovery,
     signOut: () => supabase.auth.signOut(),
   };
 

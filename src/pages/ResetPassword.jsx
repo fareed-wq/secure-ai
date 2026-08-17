@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ShieldCheck, Lock, Loader2, CheckCircle2 } from 'lucide-react';
 import { validatePassword } from '../lib/utils/passwordPolicy';
 import { PasswordChecklist } from '../components/auth/PasswordChecklist';
+import { useAuth } from '../contexts/AuthContext';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -11,36 +12,20 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
-  const [isRecoverySession, setIsRecoverySession] = useState(false);
-  const [recoveryEmail, setRecoveryEmail] = useState('');
+
+  const { session, isRecovery, setIsRecovery } = useAuth();
+  const isRecoverySession = isRecovery;
+  const recoveryEmail = isRecovery && session?.user?.email ? session.user.email : '';
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    // Safely detect if the URL proves this was a recovery navigation.
-    // Supports both PKCE flow (?code=) and Implicit flow (#type=recovery).
-    const isRecoveryLink =
-      window.location.hash.includes('type=recovery') ||
-      window.location.search.includes('code=');
-
     // Check if Supabase already appended an expiration/invalid error to the URL
-    const hasError = window.location.hash.includes('error=') || window.location.search.includes('error=');
+    const hasError = location.hash.includes('error=') || location.search.includes('error=');
     if (hasError) {
       setError("Your reset link has expired or is invalid. Please request a new one.");
     }
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && isRecoveryLink && !hasError)) {
-        setIsRecoverySession(true);
-        if (session?.user?.email) {
-          setRecoveryEmail(session.user.email);
-        }
-      }
-    });
-
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, []);
+  }, [location]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
@@ -70,6 +55,7 @@ const ResetPassword = () => {
         console.error("Update password error:", updateError.message);
       } else {
         await supabase.auth.signOut();
+        setIsRecovery(false);
         setSuccess(true);
       }
     } catch (err) {
