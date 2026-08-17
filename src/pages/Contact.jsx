@@ -153,7 +153,7 @@ const Contact = () => {
                     <option value="General Question">General Question</option>
                     <option value="Security / Bug Report">Security / Bug Report</option>
                     <option value="Billing">Billing</option>
-                    <option value="Partnership">Partnership</option>
+                    <option value="Partnership / Business Inquiry">Partnership / Business Inquiry</option>
                   </select>
                   <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
                     <ChevronDown className="w-5 h-5" />
