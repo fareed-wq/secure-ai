@@ -369,7 +369,7 @@ const SimpleReport = ({ reportData }) => {
                 <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
               </div>
               <div className="flex-1">
-                <h3 className="text-slate-900 dark:text-amber-400 font-bold dark:font-black text-sm dark:text-lg md:dark:text-xl uppercase tracking-wider">
+                <h3 className="text-slate-900 font-bold text-xs uppercase tracking-wider dark:text-amber-400 dark:font-black dark:text-lg md:dark:text-xl">
                   Your Top Priorities
                 </h3>
                 <p className="text-amber-400/80 text-xs md:text-sm mt-0.5 group-open:hidden">
@@ -400,7 +400,7 @@ const SimpleReport = ({ reportData }) => {
       {issues.length > 0 && (
         <div className="bg-white dark:bg-transparent border border-slate-200 dark:border-transparent p-6 md:p-0 rounded-3xl space-y-6 mt-12">
           <div className="flex flex-col">
-            <h3 className="text-slate-900 dark:text-slate-200 font-bold dark:font-black text-sm dark:text-2xl tracking-wider uppercase">All Detected Findings</h3>
+            <h3 className="text-slate-900 font-bold text-xs uppercase tracking-wider dark:text-slate-200 dark:font-black dark:text-2xl">All Detected Findings</h3>
             <p className="text-slate-500 dark:text-slate-400 text-xs dark:text-base mt-1">A complete list of all identified security issues.</p>
           </div>
 
