@@ -156,12 +156,12 @@ const SecurityTrust = () => {
             If you have questions about our security practices or want to report a vulnerability, we'd like to hear from you.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">
-            <a
-              href="mailto:contact@urlscanonline.com"
+            <Link
+              to="/contact"
               className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all"
             >
               Contact Us
-            </a>
+            </Link>
             <Link
               to="/responsible-disclosure"
               className="rounded-xl border border-slate-700 bg-slate-900/80 px-6 py-3 text-sm font-semibold text-slate-300 hover:text-slate-50 hover:border-slate-600 transition-all"
