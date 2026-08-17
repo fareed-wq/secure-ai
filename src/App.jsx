@@ -21,6 +21,7 @@ import SecurityTrust from './pages/SecurityTrust';
 import TermsOfService from './pages/TermsOfService';
 import ResponsibleDisclosure from './pages/ResponsibleDisclosure';
 import ApiDocs from './pages/ApiDocs';
+import Pricing from './pages/Pricing';
 
 const PlaceholderPage = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
@@ -46,7 +47,7 @@ const App = () => {
             <Route path="/docs" element={<ApiDocs />} />
             <Route path="/blog" element={<BlogLanding />} />
             <Route path="/blog/:slug" element={<ArticlePage />} />
-            <Route path="/pricing" element={<PlaceholderPage title="Pricing" />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<PlaceholderPage title="About Us" />} />
             <Route path="/security-trust" element={<SecurityTrust />} />
             <Route path="/terms" element={<TermsOfService />} />
