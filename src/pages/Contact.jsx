@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, AlertTriangle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, ArrowLeft, ChevronDown, AlertTriangle } from 'lucide-react';
 
 const Contact = () => {
   const navigate = useNavigate();
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+
+  // Topic state maps to backend expectations while allowing fresh UI labels
   const [topic, setTopic] = useState('General Question');
 
   const handleBack = () => {
@@ -22,6 +24,8 @@ const Contact = () => {
     setSubmitError('');
   };
 
+  const isUrlRequired = topic === 'Security / Bug Report';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError('');
@@ -29,7 +33,6 @@ const Contact = () => {
     let normalizedUrl = '';
     const formUrl = e.target.elements.url?.value?.trim() || '';
 
-    // If a URL is provided, validate and normalize it
     if (formUrl) {
       normalizedUrl = formUrl;
       if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
@@ -45,12 +48,11 @@ const Contact = () => {
         return;
       }
 
-      e.target.elements.url.value = normalizedUrl; // Update input with normalized URL
+      e.target.elements.url.value = normalizedUrl;
     }
 
-    // Require URL for False Positives
-    if (topic === 'Report a False Positive' && !normalizedUrl) {
-      e.target.elements.url.setCustomValidity('Website URL is required to report a false positive.');
+    if (isUrlRequired && !normalizedUrl) {
+      e.target.elements.url.setCustomValidity('Website URL is required for security and bug reports.');
       e.target.elements.url.reportValidity();
       return;
     }
@@ -85,32 +87,43 @@ const Contact = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-200 font-sans">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+    <div className="flex flex-col min-h-screen font-sans relative overflow-hidden" style={{ backgroundColor: '#070B14' }}>
+
+      {/* Ambient Glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] opacity-30 pointer-events-none">
+        <div className="absolute inset-0 bg-indigo-500/20 blur-[120px] rounded-full mix-blend-screen" />
+        <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 bg-violet-600/20 blur-[100px] rounded-full mix-blend-screen" />
+      </div>
+
+      <div className="relative max-w-2xl mx-auto px-4 sm:px-6 py-20 w-full z-10 flex flex-col items-center">
 
         {/* Header */}
-        <header className="mb-12 text-center md:text-left">
-          <h1 className="text-3xl md:text-5xl font-black text-slate-50 mb-4 tracking-tight">
+        <header className="mb-10 text-center flex flex-col items-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold tracking-wider mb-6">
+            ✦ GET IN TOUCH
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
             Contact Us
           </h1>
-          <p className="text-lg text-slate-400">
+          <p className="text-lg text-slate-400 max-w-lg">
             We typically respond within 1–2 business days. Send us a message below.
           </p>
         </header>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden p-6 md:p-8">
+        {/* Glassmorphism Card */}
+        <div className="w-full bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 sm:p-10">
           {submitSuccess ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mx-auto mb-4">
+            <div className="text-center py-10 animate-in fade-in zoom-in duration-500">
+              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mx-auto mb-6 ring-1 ring-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
-              <h3 className="text-xl font-bold text-slate-50 mb-2">Message Sent</h3>
-              <p className="text-slate-400 mb-6 max-w-sm mx-auto">
+              <h3 className="text-2xl font-bold text-white mb-3">Message Sent</h3>
+              <p className="text-slate-400 mb-8 max-w-sm mx-auto leading-relaxed">
                 Thank you for reaching out! We have received your message and will get back to you shortly.
               </p>
               <button
                 onClick={() => setSubmitSuccess(false)}
-                className="text-indigo-400 hover:text-indigo-300 font-medium text-sm"
+                className="text-indigo-400 hover:text-indigo-300 font-medium text-sm transition-colors hover:underline underline-offset-4"
               >
                 Send another message
               </button>
@@ -118,90 +131,104 @@ const Contact = () => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               {submitError && (
-                <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
-                  {submitError}
+                <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 shrink-0" />
+                  <p>{submitError}</p>
                 </div>
               )}
 
               <div className="space-y-2">
-                <label htmlFor="topic" className="text-sm font-medium text-slate-300">Topic *</label>
-                <select
-                  id="topic"
-                  name="topic"
-                  value={topic}
-                  onChange={handleTopicChange}
-                  required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors appearance-none"
-                >
-                  <option value="General Question">General Question</option>
-                  <option value="Technical Support">Technical Support</option>
-                  <option value="Partnership / Business Inquiry">Partnership / Business Inquiry</option>
-                  <option value="Report a False Positive">Report a False Positive</option>
-                  <option value="Other">Other</option>
-                </select>
+                <label htmlFor="topic" className="block text-sm font-medium text-slate-300">
+                  Topic <span className="text-rose-400">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    id="topic"
+                    name="topic"
+                    value={topic}
+                    onChange={handleTopicChange}
+                    required
+                    className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="General Question">General Question</option>
+                    <option value="Security / Bug Report">Security / Bug Report</option>
+                    <option value="Billing">Billing</option>
+                    <option value="Partnership">Partnership</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-400">
+                    <ChevronDown className="w-5 h-5" />
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-slate-300">Email *</label>
+                <label htmlFor="email" className="block text-sm font-medium text-slate-300">
+                  Email <span className="text-rose-400">*</span>
+                </label>
                 <input
                   id="email"
                   name="email"
                   type="email"
                   required
                   placeholder="jane@example.com"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                  className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-600"
                 />
               </div>
 
-              {(topic === 'Report a False Positive' || topic === 'Technical Support') && (
-                <div className="space-y-2">
-                  <label htmlFor="url" className="text-sm font-medium text-slate-300">
-                    Website URL {topic === 'Report a False Positive' ? '*' : <span className="text-slate-600">(optional)</span>}
+              {isUrlRequired && (
+                <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label htmlFor="url" className="block text-sm font-medium text-slate-300">
+                    Website URL {isUrlRequired ? <span className="text-rose-400">*</span> : <span className="text-slate-500 font-normal">(optional)</span>}
                   </label>
                   <input
                     id="url"
                     name="url"
                     type="text"
-                    required={topic === 'Report a False Positive'}
+                    required={isUrlRequired}
                     placeholder="https://example.com"
                     onChange={(e) => e.target.setCustomValidity('')}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
+                    className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-600"
                   />
-                  {topic === 'Report a False Positive' && (
-                    <p className="text-xs text-slate-500">Please provide the URL related to the false positive.</p>
+                  {isUrlRequired && (
+                    <p className="text-xs text-slate-500 mt-1.5">Required to investigate security issues or bug reports.</p>
                   )}
                 </div>
               )}
 
               <div className="space-y-2">
-                <label htmlFor="message" className="text-sm font-medium text-slate-300">Message *</label>
+                <label htmlFor="message" className="block text-sm font-medium text-slate-300">
+                  Message <span className="text-rose-400">*</span>
+                </label>
                 <textarea
                   id="message"
                   name="message"
                   required
-                  rows="5"
+                  rows="4"
                   placeholder="How can we help?"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors resize-none"
+                  className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none placeholder:text-slate-600"
                 ></textarea>
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors shadow-lg shadow-indigo-600/20"
+                className="w-full relative group overflow-hidden flex items-center justify-center px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/25"
               >
-                {isSubmitting ? 'Sending...' : 'Send Message'}
+                <span className="relative z-10 flex items-center gap-2">
+                  {isSubmitting ? 'Sending...' : 'Send Message →'}
+                </span>
+                <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent z-0" />
               </button>
             </form>
           )}
         </div>
 
-        <div className="mt-12 text-center">
+        <div className="mt-10">
           <button
             onClick={handleBack}
-            className="inline-flex items-center text-slate-400 hover:text-slate-200 transition-colors font-medium"
+            className="inline-flex items-center text-sm text-slate-500 hover:text-slate-300 transition-colors font-medium group"
           >
-            <ArrowLeft size={16} className="mr-2" />
+            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
             Back
           </button>
         </div>
