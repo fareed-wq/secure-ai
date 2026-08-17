@@ -24,6 +24,7 @@ const Register = () => {
       email: formData.email,
       password: formData.password,
       options: {
+        emailRedirectTo: `${window.location.origin}/email-confirmed`,
         data: {
           full_name: formData.fullName,
           company: formData.company
@@ -65,7 +66,7 @@ const Register = () => {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-300">Full Name</label>
               <div className="mt-1 relative rounded-md shadow-sm">

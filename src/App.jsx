@@ -6,6 +6,7 @@ import SaaSLayout from './components/layout/SaaSLayout';
 import RootLayout from './components/layout/RootLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import EmailConfirmed from './pages/EmailConfirmed';
 import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
 import ScanHistory from './pages/ScanHistory';
@@ -58,6 +59,7 @@ const App = () => {
           {/* Auth Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/email-confirmed" element={<EmailConfirmed />} />
 
           {/* Protected SaaS Routes */}
           <Route element={<SaaSLayout />}>
