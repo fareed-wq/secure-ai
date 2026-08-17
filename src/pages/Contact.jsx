@@ -225,7 +225,7 @@ const Contact = () => {
 
         <div className="mt-8 text-center flex flex-col items-center">
           <p className="text-slate-400 mb-8 max-w-lg text-center">
-            We typically respond within 1–2 business days. Send us a message below.
+            We typically respond within 1–2 business days.
           </p>
           <button
             onClick={handleBack}
