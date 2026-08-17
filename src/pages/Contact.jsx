@@ -28,26 +28,89 @@ const Contact = () => {
     }
   };
 
-  // Mock submission handler for feedback
-  const handleFeedbackSubmit = (e) => {
+  const [submitError, setSubmitError] = useState('');
+
+  const handleFeedbackSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate backend integration
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setSubmitError('');
+
+    const formData = new FormData(e.target);
+    const data = {
+      form_type: 'feedback',
+      name: formData.get('name') || '',
+      email: formData.get('email') || '',
+      message: formData.get('message') || '',
+      type: formData.get('type') || ''
+    };
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to submit feedback');
+
       setFeedbackSuccess(true);
-    }, 800);
+    } catch (err) {
+      setSubmitError(err.message || 'An error occurred during submission.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Mock submission handler for reporting false positive
-  const handleReportSubmit = (e) => {
+  const handleReportSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError('');
+
+    const urlEl = e.target.elements.url;
+    let normalizedUrl = urlEl.value.trim();
+    if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+      normalizedUrl = 'https://' + normalizedUrl;
+    }
+
+    try {
+      new URL(normalizedUrl);
+      if (!normalizedUrl.includes('.')) throw new Error('Invalid domain');
+    } catch {
+      urlEl.setCustomValidity('Please enter a valid URL or domain.');
+      urlEl.reportValidity();
+      return;
+    }
+
+    urlEl.value = normalizedUrl; // Update input with normalized URL
+
     setIsSubmitting(true);
-    // Simulate backend integration
-    setTimeout(() => {
-      setIsSubmitting(false);
+
+    const formData = new FormData(e.target);
+    const data = {
+      form_type: 'report',
+      url: normalizedUrl,
+      finding: formData.get('finding') || '',
+      reason: formData.get('reason') || '',
+      details: formData.get('details') || '',
+      email: formData.get('reportEmail') || ''
+    };
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to submit report');
+
       setReportSuccess(true);
-    }, 800);
+    } catch (err) {
+      setSubmitError(err.message || 'An error occurred during submission.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -151,6 +214,11 @@ const Contact = () => {
                     </div>
                   ) : (
                     <form onSubmit={handleFeedbackSubmit} className="space-y-6">
+                      {submitError && (
+                        <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                          {submitError}
+                        </div>
+                      )}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label htmlFor="name" className="text-sm font-medium text-slate-300">Name <span className="text-slate-600">(optional)</span></label>
@@ -229,13 +297,19 @@ const Contact = () => {
                     </div>
                   ) : (
                     <form onSubmit={handleReportSubmit} className="space-y-6">
+                      {submitError && (
+                        <div className="p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-400 text-sm">
+                          {submitError}
+                        </div>
+                      )}
                       <div className="space-y-2">
                         <label htmlFor="url" className="text-sm font-medium text-slate-300">Website URL *</label>
                         <input
                           id="url"
-                          type="url"
+                          type="text"
                           required
                           placeholder="https://example.com"
+                          onChange={(e) => e.target.setCustomValidity('')}
                           className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                         />
                       </div>

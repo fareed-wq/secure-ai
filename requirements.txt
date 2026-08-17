@@ -4,3 +4,4 @@ requests
 pydantic
 cryptography
 python-whois
+urllib3

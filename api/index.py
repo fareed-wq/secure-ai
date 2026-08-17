@@ -123,6 +123,61 @@ class BatchScanRequest(BaseModel):
 
 
 
+import os
+import json
+
+class ContactRequest(BaseModel):
+    form_type: str
+    name: str = ""
+    email: str = ""
+    message: str = ""
+    url: str = ""
+    finding: str = ""
+    reason: str = ""
+    details: str = ""
+
+@app.post("/api/contact")
+async def handle_contact(req: ContactRequest, request: Request):
+    ip = get_client_ip(request)
+    if not check_rate_limit(ip):
+        return JSONResponse(status_code=429, content={"error": "Rate limit exceeded. Please try again later."})
+
+    resend_key = os.environ.get("RESEND_API_KEY")
+    if not resend_key:
+        return JSONResponse(status_code=500, content={"error": "Email provider not configured."})
+
+    subject = f"URLScannerOnline {req.form_type.title()} Submission"
+
+    if req.form_type == "feedback":
+        html_content = f"<p><strong>Name:</strong> {req.name}</p><p><strong>Email:</strong> {req.email}</p><p><strong>Message:</strong><br/>{req.message}</p>"
+    else:
+        html_content = f"<p><strong>URL:</strong> {req.url}</p><p><strong>Finding:</strong> {req.finding}</p><p><strong>Reason:</strong><br/>{req.reason}</p><p><strong>Details:</strong><br/>{req.details}</p><p><strong>Email:</strong> {req.email}</p>"
+
+    try:
+        http = urllib3.PoolManager()
+        response = http.request(
+            "POST",
+            "https://api.resend.com/emails",
+            body=json.dumps({
+                "from": "URLScannerOnline Contact <contact@urlscanonline.com>",
+                "to": ["contact@urlscanonline.com"],
+                "subject": subject,
+                "html": html_content
+            }).encode('utf-8'),
+            headers={
+                "Authorization": f"Bearer {resend_key}",
+                "Content-Type": "application/json"
+            }
+        )
+        if response.status >= 400:
+            logger.error(f"Resend API error: {response.data}")
+            return JSONResponse(status_code=500, content={"error": "Failed to send email via provider."})
+
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Email delivery error: {e}")
+        return JSONResponse(status_code=500, content={"error": "Internal server error during email delivery."})
+
 # --- PLUGIN ARCHITECTURE ---
 
 
