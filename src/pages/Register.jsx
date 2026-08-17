@@ -19,13 +19,6 @@ const Register = () => {
     setLoading(true);
     setError(null);
 
-    // MVP Bypass
-    if (import.meta.env.VITE_SUPABASE_URL === undefined) {
-      alert("MVP Mode: Bypassing auth because Supabase keys are not set.");
-      navigate('/dashboard');
-      setLoading(false);
-      return;
-    }
 
     const { error } = await supabase.auth.signUp({
       email: formData.email,

@@ -15,13 +15,6 @@ const Login = () => {
     setLoading(true);
     setError(null);
     
-    // For MVP demonstration, if Supabase isn't configured, we bypass
-    if (import.meta.env.VITE_SUPABASE_URL === undefined) {
-      alert("MVP Mode: Bypassing auth because Supabase keys are not set.");
-      navigate('/dashboard');
-      setLoading(false);
-      return;
-    }
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     
