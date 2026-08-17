@@ -127,14 +127,11 @@ import os
 import json
 
 class ContactRequest(BaseModel):
-    form_type: str
-    name: str = ""
+    form_type: str = "unified"
+    topic: str = ""
     email: str = ""
     message: str = ""
     url: str = ""
-    finding: str = ""
-    reason: str = ""
-    details: str = ""
 
 @app.post("/api/contact")
 async def handle_contact(req: ContactRequest, request: Request):
@@ -146,12 +143,14 @@ async def handle_contact(req: ContactRequest, request: Request):
     if not resend_key:
         return JSONResponse(status_code=500, content={"error": "Email provider not configured."})
 
-    subject = f"URLScannerOnline {req.form_type.title()} Submission"
+    subject = f"URLScannerOnline Contact: {req.topic}"
 
-    if req.form_type == "feedback":
-        html_content = f"<p><strong>Name:</strong> {req.name}</p><p><strong>Email:</strong> {req.email}</p><p><strong>Message:</strong><br/>{req.message}</p>"
-    else:
-        html_content = f"<p><strong>URL:</strong> {req.url}</p><p><strong>Finding:</strong> {req.finding}</p><p><strong>Reason:</strong><br/>{req.reason}</p><p><strong>Details:</strong><br/>{req.details}</p><p><strong>Email:</strong> {req.email}</p>"
+    html_content = f"""
+    <p><strong>Topic:</strong> {req.topic}</p>
+    <p><strong>Email:</strong> {req.email}</p>
+    <p><strong>Website URL:</strong> {req.url or 'N/A'}</p>
+    <p><strong>Message:</strong><br/>{req.message}</p>
+    """
 
     try:
         http = urllib3.PoolManager()
