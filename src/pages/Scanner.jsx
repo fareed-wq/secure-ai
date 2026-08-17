@@ -185,10 +185,10 @@ function Scanner() {
               exit={{ opacity: 0, scale: 1.05 }}
               className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-slate-900/50 border border-slate-800 backdrop-blur-xl shadow-2xl overflow-hidden relative"
             >
-              <div className="absolute inset-0 bg-slate-200/[0.2] dark:bg-slate-800/[0.2] bg-[size:20px_20px] text-slate-200 dark:text-slate-700" style={{backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)'}}></div>
+              <div className="absolute inset-0 bg-slate-800/[0.2] bg-[size:20px_20px]" style={{backgroundImage: 'radial-gradient(circle, #334155 1px, transparent 1px)'}}></div>
 
               <div className="flex flex-col items-center justify-center space-y-8 py-12 relative z-10">
-                <div className="relative bg-indigo-50/50 dark:bg-transparent border border-indigo-100 dark:border-transparent rounded-full">
+                <div className="relative">
                   <div className="absolute inset-0 border-4 border-indigo-500/30 rounded-full blur-xl animate-pulse"></div>
                   <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-full animate-[spin_3s_linear_infinite] scale-125"></div>
                   <div className="absolute inset-0 border-2 border-purple-500/20 rounded-full animate-[spin_4s_linear_infinite_reverse] scale-150"></div>
@@ -196,10 +196,10 @@ function Scanner() {
                 </div>
 
                 <div className="space-y-4 text-center w-full">
-                  <h2 className="text-2xl tracking-wide font-bold text-slate-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-indigo-300 dark:to-emerald-300">
-                    Establishing Secure Uplink to <span className="text-indigo-600 dark:text-inherit font-semibold dark:font-bold">{url}</span>...
+                  <h2 className="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-emerald-300">
+                    Establishing Secure Uplink to {url}...
                   </h2>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">Please wait while our engine performs passive analysis.</div>
+                  <div className="text-sm text-slate-400">Please wait while our engine performs passive analysis.</div>
                 </div>
               </div>
             </motion.div>
