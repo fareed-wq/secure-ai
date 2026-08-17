@@ -14,10 +14,10 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    
+
     if (error) {
       setError(error.message);
     } else {
@@ -49,7 +49,7 @@ const Login = () => {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-300">
                 Email address
@@ -118,6 +118,12 @@ const Login = () => {
               </button>
             </div>
           </form>
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link to="/" className="text-sm font-medium text-slate-400 hover:text-slate-300 transition-colors">
+            &larr; Back to Home
+          </Link>
         </div>
       </div>
     </div>
