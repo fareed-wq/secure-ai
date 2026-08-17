@@ -105,9 +105,10 @@ const Contact = () => {
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
             Contact Us
           </h1>
-          <p className="text-lg text-slate-400 max-w-lg">
-            We typically respond within 1–2 business days. Send us a message below.
-          </p>
+          <div className="text-lg text-slate-400 max-w-lg space-y-2">
+            <p>Have questions or need assistance? Fill out the form below or reach us directly at contact@urlscanonline.com.</p>
+            <p>We typically respond within 1–2 business days. Send us a message below.</p>
+          </div>
         </header>
 
         {/* Glassmorphism Card */}
