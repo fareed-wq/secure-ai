@@ -45,7 +45,6 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={18} /> },
-    { label: "Run Scan", href: "/scan", icon: <Activity size={18} /> },
     { label: "Services", href: "/services", icon: <Shield size={18} /> },
     { label: "API Docs", href: "/docs", icon: <Code size={18} /> },
     { label: "Security Blog", href: "/blog", icon: <Book size={18} /> },
