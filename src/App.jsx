@@ -7,6 +7,8 @@ import RootLayout from './components/layout/RootLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import EmailConfirmed from './pages/EmailConfirmed';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
 import ScanHistory from './pages/ScanHistory';
@@ -60,6 +62,8 @@ const App = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/email-confirmed" element={<EmailConfirmed />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Protected SaaS Routes */}
           <Route element={<SaaSLayout />}>
