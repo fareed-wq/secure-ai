@@ -11,20 +11,44 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [isRecoverySession, setIsRecoverySession] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
   const navigate = useNavigate();
 
-  // Optionally verify that we have a session to perform the update
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        // We do not strict redirect here because the hash fragment might still be processing,
-        // but if they submit without a session, the request will fail normally.
+    // Safely detect if the URL proves this was a recovery navigation.
+    // Supports both PKCE flow (?code=) and Implicit flow (#type=recovery).
+    const isRecoveryLink =
+      window.location.hash.includes('type=recovery') ||
+      window.location.search.includes('code=');
+
+    // Check if Supabase already appended an expiration/invalid error to the URL
+    const hasError = window.location.hash.includes('error=') || window.location.search.includes('error=');
+    if (hasError) {
+      setError("Your reset link has expired or is invalid. Please request a new one.");
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && isRecoveryLink && !hasError)) {
+        setIsRecoverySession(true);
+        if (session?.user?.email) {
+          setRecoveryEmail(session.user.email);
+        }
       }
     });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    if (!isRecoverySession) {
+      setError("A valid password recovery session is required.");
+      return;
+    }
+
     const { isValid } = validatePassword(password);
     if (!isValid) {
       setError("Password does not meet all requirements.");
@@ -45,6 +69,7 @@ const ResetPassword = () => {
         setError("Your reset link has expired or is invalid. Please request a new one.");
         console.error("Update password error:", updateError.message);
       } else {
+        await supabase.auth.signOut();
         setSuccess(true);
       }
     } catch (err) {
@@ -89,13 +114,22 @@ const ResetPassword = () => {
           Set New Password
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400">
-          Enter your new password below.
+          {isRecoverySession ? (
+            <>Resetting password for <span className="font-medium text-slate-200">{recoveryEmail}</span></>
+          ) : (
+            'Validating secure reset link...'
+          )}
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-slate-900 py-8 px-4 shadow-xl shadow-black/50 sm:rounded-2xl sm:px-10 border border-slate-800">
           <form className="space-y-6" onSubmit={handleUpdate}>
+            {!isRecoverySession && (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm p-3 rounded-lg">
+                A valid recovery link is required to reset your password. Please click the link in your email.
+              </div>
+            )}
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg">
                 {error}
@@ -147,7 +181,7 @@ const ResetPassword = () => {
             <div>
               <button
                 type="submit"
-                disabled={loading || !password || !validatePassword(password).isValid || password !== confirmPassword}
+                disabled={loading || !isRecoverySession || !password || !validatePassword(password).isValid || password !== confirmPassword}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Update Password'}
