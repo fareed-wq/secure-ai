@@ -49,8 +49,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     { label: "API Docs", href: "/docs", icon: <Code size={18} /> },
     { label: "Security Blog", href: "/blog", icon: <Book size={18} /> },
     { label: "Pricing", href: "/pricing", icon: <CreditCard size={18} /> },
-    { label: "About Us", href: "/about", icon: <Info size={18} /> },
     { label: "Contact Us", href: "/contact", icon: <MessageSquare size={18} /> },
+    { label: "About Us", href: "/about", icon: <Info size={18} /> },
   ];
 
   const trustItems = [
