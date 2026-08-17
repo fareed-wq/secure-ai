@@ -76,8 +76,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
 
       <aside
         className={`fixed top-0 left-0 bottom-0 md:relative z-50 flex flex-col bg-slate-950 border-r border-slate-800 h-screen transition-transform md:transition-all duration-300
-          ${isMobileOpen ? 'translate-x-0 w-64' : '-translate-x-full md:translate-x-0'}
-          ${isCollapsed ? 'md:w-16' : 'md:w-64'}
+          ${isMobileOpen ? 'translate-x-0 w-60' : '-translate-x-full md:translate-x-0'}
+          ${isCollapsed ? 'md:w-16' : 'md:w-60'}
         `}
       >
       {/* 1. HEADER */}
