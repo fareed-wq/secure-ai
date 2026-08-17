@@ -86,12 +86,12 @@ const TechnicalReport = ({ reportData }) => {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis border bg-indigo-500/10 text-indigo-400 border-indigo-500/20 uppercase">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis border bg-slate-100 dark:bg-indigo-500/10 text-slate-700 dark:text-indigo-400 border-slate-200 dark:border-indigo-500/20 uppercase">
                 {reportData?.metadata?.waf_cdn_detection || 'Routing Unknown'}
               </span>
               {reportData?.metadata?.whois?.age && reportData?.metadata?.whois?.age !== 'Unknown' && (
                 <span
-                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis border bg-slate-800/80 text-slate-400 border-slate-700/80 uppercase cursor-help"
+                  className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis border bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-400 border-slate-200 dark:border-slate-700/80 uppercase cursor-help"
                   title={reportData?.metadata?.whois?.registrar !== 'Unknown' ? `Registrar: ${reportData.metadata.whois.registrar}` : 'WHOIS Data'}
                 >
                   {reportData.metadata.whois.age}
@@ -126,7 +126,7 @@ const TechnicalReport = ({ reportData }) => {
               <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${
                 reportData?.metadata?.performance_rating === 'NO HTTP RESPONSE' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
                 reportData?.metadata?.performance_rating === 'REQUEST TIMEOUT' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
-                reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30' :
                 reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
                 (reportData?.metadata?.performance_rating === 'High Latency' || reportData?.metadata?.performance_rating === 'SERVER ERROR' || reportData?.metadata?.performance_rating === 'CLIENT ERROR' || reportData?.metadata?.performance_rating === 'TIMEOUT') ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-slate-500/10 text-slate-400 border-slate-500/30'
               }`}>
@@ -161,7 +161,7 @@ const TechnicalReport = ({ reportData }) => {
                 reportData?.metadata?.ssl_badge === 'EXPIRED' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
                 reportData?.metadata?.ssl_badge === 'RENEWAL IMMINENT' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
                 reportData?.metadata?.ssl_badge === 'VALID CERTIFICATE (UNTRUSTED)' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
-                reportData?.metadata?.ssl_badge === 'VALID CERTIFICATE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                reportData?.metadata?.ssl_badge === 'VALID CERTIFICATE' ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30' :
                 'bg-slate-500/10 text-slate-400 border-slate-500/30'
               }`}>
                 {reportData?.metadata?.ssl_badge || 'SSL Unknown'}
@@ -430,25 +430,25 @@ const TechnicalReport = ({ reportData }) => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 {/* PCI-DSS */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                  <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                    <h4 className="font-bold text-slate-200 text-sm">PCI-DSS 4.0</h4>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none rounded-xl p-5">
+                  <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h4 className="text-slate-900 dark:text-slate-200 font-bold text-base dark:text-sm">PCI-DSS 4.0</h4>
+                    <span className={reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-semibold text-xs uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-0.5 rounded-md' : 'bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide uppercase dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/20 dark:px-2 dark:py-1 dark:rounded-md dark:text-[10px] dark:font-bold dark:tracking-wider'}>
                       {reportData?.technical_compliance?.pci_dss_4_0?.status || 'Unknown'}
                     </span>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="text-rose-600 dark:text-red-400 font-semibold dark:font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 dark:gap-1 mb-2"><XCircle className="w-3 h-3" /> Failed Controls</div>
+                      <ul className="text-slate-600 dark:text-slate-300 text-xs space-y-1 ml-4 list-disc marker:text-slate-400 dark:marker:text-slate-600">
                         {(reportData?.technical_compliance?.pci_dss_4_0?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
                         {reportData?.technical_compliance?.pci_dss_4_0?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="text-emerald-600 dark:text-emerald-400 font-semibold dark:font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 dark:gap-1 mb-2"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
+                      <ul className="text-slate-600 dark:text-slate-300 text-xs space-y-1 ml-4 list-disc marker:text-slate-400 dark:marker:text-slate-600">
                         {(reportData?.technical_compliance?.pci_dss_4_0?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
                         {reportData?.technical_compliance?.pci_dss_4_0?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
@@ -457,25 +457,25 @@ const TechnicalReport = ({ reportData }) => {
                 </div>
 
                 {/* NIST SP 800-53 */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                  <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                    <h4 className="font-bold text-slate-200 text-sm">NIST SP 800-53</h4>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none rounded-xl p-5">
+                  <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h4 className="text-slate-900 dark:text-slate-200 font-bold text-base dark:text-sm">NIST SP 800-53</h4>
+                    <span className={reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-semibold text-xs uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-0.5 rounded-md' : 'bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide uppercase dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/20 dark:px-2 dark:py-1 dark:rounded-md dark:text-[10px] dark:font-bold dark:tracking-wider'}>
                       {reportData?.technical_compliance?.nist_sp_800_53?.status || 'Unknown'}
                     </span>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="text-rose-600 dark:text-red-400 font-semibold dark:font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 dark:gap-1 mb-2"><XCircle className="w-3 h-3" /> Failed Controls</div>
+                      <ul className="text-slate-600 dark:text-slate-300 text-xs space-y-1 ml-4 list-disc marker:text-slate-400 dark:marker:text-slate-600">
                         {(reportData?.technical_compliance?.nist_sp_800_53?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
                         {reportData?.technical_compliance?.nist_sp_800_53?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="text-emerald-600 dark:text-emerald-400 font-semibold dark:font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 dark:gap-1 mb-2"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
+                      <ul className="text-slate-600 dark:text-slate-300 text-xs space-y-1 ml-4 list-disc marker:text-slate-400 dark:marker:text-slate-600">
                         {(reportData?.technical_compliance?.nist_sp_800_53?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
                         {reportData?.technical_compliance?.nist_sp_800_53?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
@@ -484,25 +484,25 @@ const TechnicalReport = ({ reportData }) => {
                 </div>
 
                 {/* ISO 27001 */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                  <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                    <h4 className="font-bold text-slate-200 text-sm">ISO 27001</h4>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none rounded-xl p-5">
+                  <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h4 className="text-slate-900 dark:text-slate-200 font-bold text-base dark:text-sm">ISO 27001</h4>
+                    <span className={reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-semibold text-xs uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-0.5 rounded-md' : 'bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide uppercase dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/20 dark:px-2 dark:py-1 dark:rounded-md dark:text-[10px] dark:font-bold dark:tracking-wider'}>
                       {reportData?.technical_compliance?.iso_27001?.status || 'Unknown'}
                     </span>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="text-rose-600 dark:text-red-400 font-semibold dark:font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 dark:gap-1 mb-2"><XCircle className="w-3 h-3" /> Failed Controls</div>
+                      <ul className="text-slate-600 dark:text-slate-300 text-xs space-y-1 ml-4 list-disc marker:text-slate-400 dark:marker:text-slate-600">
                         {(reportData?.technical_compliance?.iso_27001?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
                         {reportData?.technical_compliance?.iso_27001?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="text-emerald-600 dark:text-emerald-400 font-semibold dark:font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 dark:gap-1 mb-2"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
+                      <ul className="text-slate-600 dark:text-slate-300 text-xs space-y-1 ml-4 list-disc marker:text-slate-400 dark:marker:text-slate-600">
                         {(reportData?.technical_compliance?.iso_27001?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
                         {reportData?.technical_compliance?.iso_27001?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
                       </ul>
