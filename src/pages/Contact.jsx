@@ -87,7 +87,7 @@ const Contact = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen font-sans relative overflow-hidden" style={{ backgroundColor: '#070B14' }}>
+    <div className="contact-page flex flex-col min-h-screen font-sans relative overflow-hidden" style={{ backgroundColor: '#070B14' }}>
 
       {/* Ambient Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] opacity-30 pointer-events-none">
@@ -106,12 +106,12 @@ const Contact = () => {
             Contact Us
           </h1>
           <div className="text-lg text-slate-400 max-w-lg space-y-2">
-            <p>Have questions or need assistance? Fill out the form below or reach us directly at <span className="font-medium text-indigo-400">contact@urlscanonline.com</span>.</p>
+            <p>Have questions or need assistance? Fill out the form below or reach us directly at <a href="mailto:contact@urlscanonline.com" className="font-medium text-indigo-400 hover:underline underline-offset-2">contact@urlscanonline.com</a>.</p>
           </div>
         </header>
 
         {/* Glassmorphism Card */}
-        <div className="w-full bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 sm:p-10">
+        <div className="contact-card w-full bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 sm:p-10">
           {submitSuccess ? (
             <div className="text-center py-10 animate-in fade-in zoom-in duration-500">
               <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mx-auto mb-6 ring-1 ring-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
@@ -138,7 +138,7 @@ const Contact = () => {
               )}
 
               <div className="space-y-2">
-                <label htmlFor="topic" className="block text-sm font-medium text-slate-300">
+                <label htmlFor="topic" className="contact-label block text-sm font-medium text-slate-300">
                   Topic <span className="text-rose-400">*</span>
                 </label>
                 <div className="relative">
@@ -148,7 +148,7 @@ const Contact = () => {
                     value={topic}
                     onChange={handleTopicChange}
                     required
-                    className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                    className="contact-input w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
                   >
                     <option value="General Question">General Question</option>
                     <option value="Security / Bug Report">Security / Bug Report</option>
@@ -162,7 +162,7 @@ const Contact = () => {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium text-slate-300">
+                <label htmlFor="email" className="contact-label block text-sm font-medium text-slate-300">
                   Email <span className="text-rose-400">*</span>
                 </label>
                 <input
@@ -170,14 +170,14 @@ const Contact = () => {
                   name="email"
                   type="email"
                   required
-                  placeholder="jane@example.com"
-                  className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-600"
+                  placeholder="you@example.com"
+                  className="contact-input w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-600"
                 />
               </div>
 
               {isUrlRequired && (
                 <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label htmlFor="url" className="block text-sm font-medium text-slate-300">
+                  <label htmlFor="url" className="contact-label block text-sm font-medium text-slate-300">
                     Website URL {isUrlRequired ? <span className="text-rose-400">*</span> : <span className="text-slate-500 font-normal">(optional)</span>}
                   </label>
                   <input
@@ -187,7 +187,7 @@ const Contact = () => {
                     required={isUrlRequired}
                     placeholder="https://example.com"
                     onChange={(e) => e.target.setCustomValidity('')}
-                    className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-600"
+                    className="contact-input w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-600"
                   />
                   {isUrlRequired && (
                     <p className="text-xs text-slate-500 mt-1.5">Required to investigate security issues or bug reports.</p>
@@ -196,7 +196,7 @@ const Contact = () => {
               )}
 
               <div className="space-y-2">
-                <label htmlFor="message" className="block text-sm font-medium text-slate-300">
+                <label htmlFor="message" className="contact-label block text-sm font-medium text-slate-300">
                   Message <span className="text-rose-400">*</span>
                 </label>
                 <textarea
@@ -205,7 +205,7 @@ const Contact = () => {
                   required
                   rows="4"
                   placeholder="How can we help?"
-                  className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none placeholder:text-slate-600"
+                  className="contact-input w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none placeholder:text-slate-600"
                 ></textarea>
               </div>
 
@@ -213,6 +213,7 @@ const Contact = () => {
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full relative group overflow-hidden flex items-center justify-center px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/25"
+                style={{ color: '#ffffff' }}
               >
                 <span className="relative z-10 flex items-center gap-2">
                   {isSubmitting ? 'Sending...' : 'Send Message →'}

@@ -120,6 +120,102 @@
 }
 
 /* ==========================================
+   CONTACT PAGE — LIGHT THEME ONLY
+   Scoped under html.light-theme so dark
+   mode remains completely unchanged.
+   ========================================== */
+
+/* Page background */
+html.light-theme .contact-page {
+  background-color: #f8fafc !important;
+}
+
+/* Hide dark-mode ambient glows in light theme */
+html.light-theme .contact-page > .pointer-events-none {
+  display: none;
+}
+
+/* Header text */
+html.light-theme .contact-page h1 {
+  color: #111827;
+}
+html.light-theme .contact-page header .text-lg p {
+  color: #475569;
+}
+html.light-theme .contact-page header a.text-indigo-400 {
+  color: #6366f1;
+}
+html.light-theme .contact-page header .bg-indigo-500\/10 {
+  background-color: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.2);
+  color: #4f46e5;
+}
+
+/* Form card */
+html.light-theme .contact-card {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+  backdrop-filter: none;
+}
+
+/* Labels */
+html.light-theme .contact-label {
+  color: #334155;
+}
+
+/* Inputs, select, textarea */
+html.light-theme .contact-input {
+  background-color: #ffffff;
+  color: #111827;
+  border-color: #cbd5e1;
+}
+html.light-theme .contact-input::placeholder {
+  color: #64748b;
+}
+html.light-theme .contact-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* Select dropdown arrow */
+html.light-theme .contact-card .relative .text-slate-400 {
+  color: #475569;
+}
+
+/* Select option styling */
+html.light-theme .contact-input option {
+  background-color: #ffffff;
+  color: #111827;
+}
+
+/* Success state */
+html.light-theme .contact-card h3 {
+  color: #111827;
+}
+html.light-theme .contact-card .text-slate-400 {
+  color: #475569;
+}
+
+/* Error alert */
+html.light-theme .contact-card .bg-rose-500\/10 {
+  background-color: rgba(244, 63, 94, 0.06);
+  border-color: rgba(244, 63, 94, 0.2);
+  color: #be123c;
+}
+
+/* Response time + back button */
+html.light-theme .contact-page .mt-8 .text-slate-400 {
+  color: #475569;
+}
+html.light-theme .contact-page .mt-8 .text-slate-500 {
+  color: #64748b;
+}
+html.light-theme .contact-page .mt-8 .text-slate-500:hover {
+  color: #334155;
+}
+
+/* ==========================================
    DEDICATED PRINT LAYOUT
    ========================================== */
 @page {
