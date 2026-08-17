@@ -9,7 +9,7 @@ const TechnicalReport = ({ reportData }) => {
   const [snippetTabs, setSnippetTabs] = useState({}); // { findingIndex: 'nginx' }
 
   const findings = reportData?.findings || [];
-  
+
   const sortedFindings = [...findings].sort((a, b) => {
     const weights = { Critical: 6, High: 5, Medium: 4, Low: 3, Informational: 2, Passed: 1 };
     return (weights[b.severity] || 0) - (weights[a.severity] || 0);
@@ -28,8 +28,8 @@ const TechnicalReport = ({ reportData }) => {
       'High': 'bg-red-600 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm',
       'Medium': 'bg-orange-500 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm',
       'Low': 'bg-yellow-400 text-black font-bold px-2.5 py-1 rounded text-xs shadow-sm',
-      'Informational': 'bg-blue-600 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm',
-      'Passed': 'bg-emerald-500 text-black font-bold px-2.5 py-1 rounded text-xs shadow-sm'
+      'Informational': 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-blue-600 dark:text-white dark:border-transparent font-bold px-2.5 py-1 rounded text-xs shadow-sm',
+      'Passed': 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500 dark:text-black dark:border-transparent font-bold px-2.5 py-1 rounded text-xs shadow-sm'
     };
     return <span className={`uppercase tracking-widest ${styles[severity] || 'bg-slate-700 text-slate-50 font-bold px-2.5 py-1 rounded text-xs shadow-sm'}`}>{severity}</span>;
   };
@@ -55,10 +55,10 @@ const TechnicalReport = ({ reportData }) => {
           .text-amber-500, .text-amber-400 { color: #d97706 !important; }
         }
       `}</style>
-      
+
       {/* 1. Technical Metadata Table HUD */}
       <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden">
-        
+
         {/* Top Header Bar */}
         <div className="flex items-center gap-3 mb-2">
           <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ SCAN_METADATA</span>
@@ -70,7 +70,7 @@ const TechnicalReport = ({ reportData }) => {
         </div>
 
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-          
+
           {/* Card 1: Network & Edge Security */}
           <div className="w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
             <div>
@@ -90,7 +90,7 @@ const TechnicalReport = ({ reportData }) => {
                 {reportData?.metadata?.waf_cdn_detection || 'Routing Unknown'}
               </span>
               {reportData?.metadata?.whois?.age && reportData?.metadata?.whois?.age !== 'Unknown' && (
-                <span 
+                <span
                   className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis border bg-slate-800/80 text-slate-400 border-slate-700/80 uppercase cursor-help"
                   title={reportData?.metadata?.whois?.registrar !== 'Unknown' ? `Registrar: ${reportData.metadata.whois.registrar}` : 'WHOIS Data'}
                 >
@@ -99,7 +99,7 @@ const TechnicalReport = ({ reportData }) => {
               )}
             </div>
           </div>
-          
+
           {/* Card 2: HTTP & Performance */}
           <div className="w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
             <div>
@@ -107,16 +107,16 @@ const TechnicalReport = ({ reportData }) => {
                 <Activity className="w-3.5 h-3.5 shrink-0 text-slate-400" />
                 HTTP STATUS & SERVER
               </div>
-              <div 
+              <div
                 className="text-sm sm:text-base font-bold text-slate-100 font-mono break-all mt-2 cursor-help"
                 title={reportData?.metadata?.http_status != null && reportData?.metadata?.http_status !== 0 ? reportData.metadata.http_status : 'Status Unknown'}
               >
                 {reportData?.metadata?.http_status != null && reportData?.metadata?.http_status !== 0 ? reportData.metadata.http_status : 'Status Unknown'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
-                {(reportData?.metadata?.server_header) 
-                  ? (String(reportData?.metadata?.server_header).startsWith("Server:") 
-                     ? (reportData?.metadata?.server_header) 
+                {(reportData?.metadata?.server_header)
+                  ? (String(reportData?.metadata?.server_header).startsWith("Server:")
+                     ? (reportData?.metadata?.server_header)
                      : `Server: ${reportData?.metadata?.server_header}`)
                   : 'Server: Hidden'
                 }
@@ -126,15 +126,15 @@ const TechnicalReport = ({ reportData }) => {
               <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${
                 reportData?.metadata?.performance_rating === 'NO HTTP RESPONSE' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
                 reportData?.metadata?.performance_rating === 'REQUEST TIMEOUT' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
-                reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 
-                reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 
+                reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
                 (reportData?.metadata?.performance_rating === 'High Latency' || reportData?.metadata?.performance_rating === 'SERVER ERROR' || reportData?.metadata?.performance_rating === 'CLIENT ERROR' || reportData?.metadata?.performance_rating === 'TIMEOUT') ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-slate-500/10 text-slate-400 border-slate-500/30'
               }`}>
                 {reportData?.metadata?.performance_rating || 'Latency Unknown'}
               </span>
             </div>
           </div>
-          
+
           {/* Card 3: SSL/TLS Certificate */}
           <div className="w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
             <div>
@@ -142,7 +142,7 @@ const TechnicalReport = ({ reportData }) => {
                 <Lock className="w-3.5 h-3.5 shrink-0 text-slate-400" />
                 SSL/TLS ENCRYPTION
               </div>
-              <div 
+              <div
                 className="text-sm sm:text-base font-bold text-slate-100 font-mono break-all mt-2 cursor-help"
                 title={reportData?.metadata?.ssl_issuer || 'Unknown Issuer'}
               >
@@ -189,7 +189,7 @@ const TechnicalReport = ({ reportData }) => {
               </span>
             </div>
           </div>
-          
+
         </div>
       </div>
 
@@ -225,7 +225,7 @@ const TechnicalReport = ({ reportData }) => {
                     {group.icon}
                     <h3 className="font-bold text-slate-50 text-lg">{group.label}</h3>
                   </div>
-                  
+
                   <div className="w-full overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
@@ -238,10 +238,10 @@ const TechnicalReport = ({ reportData }) => {
                       </thead>
                       {groupFindings.map((finding) => {
                         const idx = sortedFindings.indexOf(finding);
-                        
+
                         return (
                           <tbody key={idx} className="finding-card divide-y divide-slate-800/50">
-                            <tr 
+                            <tr
                               onClick={() => setExpandedRow(expandedRow === idx ? null : idx)}
                               className={`cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
                             >
@@ -264,7 +264,7 @@ const TechnicalReport = ({ reportData }) => {
                               </button>
                             </td>
                           </tr>
-                          
+
                           {/* Print-only row for full-width code snippet */}
                           {finding.remediation_snippets?.nginx && (
                             <tr className="hidden print:table-row">
@@ -276,15 +276,15 @@ const TechnicalReport = ({ reportData }) => {
                               </td>
                             </tr>
                           )}
-                          
+
                           {expandedRow === idx && (
                               <tr className="print:hidden">
                                 <td colSpan={5} className="p-0 border-b-2 border-indigo-500/50">
-                                  <div 
+                                  <div
                                     className="bg-slate-950 overflow-hidden transition-all duration-300"
                                   >
                                     <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                      
+
                                       <div className="lg:col-span-2 space-y-6">
                                         <div>
                                           <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Technical Description</div>
@@ -313,7 +313,7 @@ const TechnicalReport = ({ reportData }) => {
                                                 else if (num <= 40) level = 'low';
                                               }
                                             }
-                                            
+
                                             let colorClass = 'text-amber-300';
                                             if (level === 'high') colorClass = 'text-emerald-400';
                                             else if (level === 'low') colorClass = 'text-slate-400';
@@ -383,7 +383,7 @@ const TechnicalReport = ({ reportData }) => {
                                               </p>
                                             </>
                                           ) : null}
-                                          
+
                                           <div className="space-y-3 mt-auto pt-4 border-t border-slate-800/80">
                                             <div className="flex justify-between items-center text-xs">
                                               <span className="text-slate-500">Category</span>
@@ -428,7 +428,7 @@ const TechnicalReport = ({ reportData }) => {
                 <h3 className="font-bold text-slate-50 text-lg">Technical Compliance Readiness</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
+
                 {/* PCI-DSS */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
@@ -437,7 +437,7 @@ const TechnicalReport = ({ reportData }) => {
                       {reportData?.technical_compliance?.pci_dss_4_0?.status || 'Unknown'}
                     </span>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
@@ -464,7 +464,7 @@ const TechnicalReport = ({ reportData }) => {
                       {reportData?.technical_compliance?.nist_sp_800_53?.status || 'Unknown'}
                     </span>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
@@ -491,7 +491,7 @@ const TechnicalReport = ({ reportData }) => {
                       {reportData?.technical_compliance?.iso_27001?.status || 'Unknown'}
                     </span>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>

@@ -66,10 +66,10 @@ const SimpleReport = ({ reportData }) => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8" id="report-content">
-      
+
       {/* 1. Executive Summary & Score */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        
+
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 text-slate-50 p-6 lg:p-8 rounded-3xl shadow-xl flex flex-col h-fit">
           <div>
             <h2 className="text-2xl font-black mb-4">Executive Summary</h2>
@@ -142,9 +142,9 @@ const SimpleReport = ({ reportData }) => {
           </div>
         </div>
 
-        <ScoreDisplay 
-          score={score} 
-          isWafBlocked={isWafBlocked} 
+        <ScoreDisplay
+          score={score}
+          isWafBlocked={isWafBlocked}
           penalties={reportData?.penalties}
           severityCounts={reportData?.severity_counts}
         />
@@ -211,7 +211,7 @@ const SimpleReport = ({ reportData }) => {
             };
           }
           const rawSubtext = (ts.api_subtext || '').toLowerCase();
-          
+
           if (rawSubtext.includes('wp-json')) {
             return { val: 'Public API Exposed', sub: 'WordPress REST API (/wp-json/)', pill: 'EXPOSED API' };
           }
@@ -348,8 +348,8 @@ const SimpleReport = ({ reportData }) => {
                   {metric.val === -1 ? (
                     <div className="h-full rounded-full bg-slate-600/40" style={{ width: '100%', backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(148,163,184,0.1) 4px, rgba(148,163,184,0.1) 8px)' }}></div>
                   ) : (
-                    <div 
-                      className={`h-full rounded-full ${metric.val >= 90 ? 'bg-emerald-500' : metric.val >= 50 ? 'bg-amber-500' : 'bg-red-500'}`} 
+                    <div
+                      className={`h-full rounded-full ${metric.val >= 90 ? 'bg-emerald-500' : metric.val >= 50 ? 'bg-amber-500' : 'bg-red-500'}`}
                       style={{ width: `${metric.val}%` }}
                     ></div>
                   )}
@@ -362,14 +362,14 @@ const SimpleReport = ({ reportData }) => {
 
       {/* 3. Action Checklist (Top Priorities) */}
       {topPriorities.length > 0 && (
-        <div className="bg-amber-950/20 border border-amber-900/50 p-6 md:p-8 rounded-3xl mt-12 mb-12">
+        <div className="bg-white dark:bg-amber-950/20 border border-slate-200 dark:border-amber-900/50 p-6 md:p-8 rounded-3xl mt-12 mb-12">
           <details className="group">
             <summary className="flex items-center gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
               <div className="bg-amber-500/20 p-2.5 md:p-3 rounded-xl text-amber-400 shrink-0">
                 <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
               </div>
               <div className="flex-1">
-                <h3 className="font-black text-lg md:text-xl text-slate-50 uppercase tracking-wider text-amber-400">
+                <h3 className="font-black text-lg md:text-xl text-slate-900 dark:text-slate-50 uppercase tracking-wider text-amber-600 dark:text-amber-400">
                   Your Top Priorities
                 </h3>
                 <p className="text-amber-400/80 text-xs md:text-sm mt-0.5 group-open:hidden">
@@ -383,7 +383,7 @@ const SimpleReport = ({ reportData }) => {
                 <ChevronDown size={20} />
               </div>
             </summary>
-            
+
             <div className="mt-6 pt-6 border-t border-amber-900/30">
               <p className="text-slate-400 mb-6">Review these business risks with your IT provider or web developer.</p>
               <div className="grid gap-6">
@@ -398,12 +398,12 @@ const SimpleReport = ({ reportData }) => {
 
       {/* 3.5 All Detected Findings */}
       {issues.length > 0 && (
-        <div className="space-y-6 mt-12">
+        <div className="bg-white dark:bg-transparent border border-slate-200 dark:border-transparent p-6 md:p-0 rounded-3xl space-y-6 mt-12">
           <div className="flex flex-col">
-            <h3 className="font-black text-2xl text-slate-50 uppercase tracking-wider text-slate-200">All Detected Findings</h3>
+            <h3 className="font-black text-2xl text-slate-900 dark:text-slate-50 uppercase tracking-wider dark:text-slate-200">All Detected Findings</h3>
             <p className="text-slate-400 mt-1">A complete list of all identified security issues.</p>
           </div>
-          
+
           <div className="grid gap-6">
             {issues.map((issue, idx) => (
               <FindingCard key={`finding-${idx}`} issue={issue} idx={idx} />
@@ -414,31 +414,31 @@ const SimpleReport = ({ reportData }) => {
 
       {/* 4. Security Strengths (Passed Checks) */}
       {passed.length > 0 && (
-        <div className="bg-emerald-950/20 border border-emerald-900/50 p-6 md:p-8 rounded-3xl mt-12">
+        <div className="bg-white dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-900/50 p-6 md:p-8 rounded-3xl mt-12">
           <details className="group">
             <summary className="flex items-center gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-              <div className="bg-emerald-500/20 p-2.5 md:p-3 rounded-xl text-emerald-400 shrink-0">
+              <div className="bg-emerald-100 dark:bg-emerald-500/20 p-2.5 md:p-3 rounded-xl text-emerald-600 dark:text-emerald-400 shrink-0">
                 <Check className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
               </div>
               <div className="flex-1">
-                <h3 className="font-black text-lg md:text-xl text-slate-50 flex items-center gap-2">
+                <h3 className="font-black text-lg md:text-xl text-emerald-700 dark:text-slate-50 flex items-center gap-2">
                   {passed.length} security checks passed
                 </h3>
-                <p className="text-emerald-400/80 text-xs md:text-sm mt-0.5 group-open:hidden">View passed checks</p>
-                <p className="text-emerald-400/80 text-xs md:text-sm mt-0.5 hidden group-open:block">Hide passed checks</p>
+                <p className="text-emerald-600 dark:text-emerald-400/80 text-xs md:text-sm mt-0.5 group-open:hidden">View passed checks</p>
+                <p className="text-emerald-600 dark:text-emerald-400/80 text-xs md:text-sm mt-0.5 hidden group-open:block">Hide passed checks</p>
               </div>
-              <div className="text-emerald-500 bg-emerald-500/10 p-2 rounded-full group-open:rotate-180 transition-transform">
+              <div className="text-emerald-600 dark:text-emerald-500 bg-emerald-100 dark:bg-emerald-500/10 p-2 rounded-full group-open:rotate-180 transition-transform">
                 <ChevronDown size={20} />
               </div>
             </summary>
-            
-            <div className="mt-6 pt-6 border-t border-emerald-900/30">
-              <h4 className="text-emerald-400 font-bold mb-4 uppercase tracking-wider text-xs md:text-sm">Passed Security Checks</h4>
+
+            <div className="mt-6 pt-6 border-t border-emerald-200 dark:border-emerald-900/30">
+              <h4 className="text-emerald-700 dark:text-emerald-400 font-bold mb-4 uppercase tracking-wider text-xs md:text-sm">Passed Security Checks</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {passed.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 bg-slate-900/40 p-3 rounded-lg border border-emerald-900/20">
-                    <Check className="w-4 h-4 md:w-5 md:h-5 text-emerald-500 shrink-0 mt-0.5" />
-                    <span className="text-slate-300 text-sm font-medium leading-snug">{item.name}</span>
+                  <div key={i} className="flex items-start gap-3 bg-emerald-50 dark:bg-slate-900/40 p-3 rounded-lg border border-emerald-200 dark:border-emerald-900/20">
+                    <Check className="w-4 h-4 md:w-5 md:h-5 text-emerald-600 dark:text-emerald-500 shrink-0 mt-0.5" />
+                    <span className="text-emerald-700 dark:text-slate-300 text-sm font-medium leading-snug">{item.name}</span>
                   </div>
                 ))}
               </div>
