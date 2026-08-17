@@ -10,7 +10,6 @@ import {
   Book,
   CreditCard,
   Info,
-  MoreHorizontal,
   Settings,
   User,
   MessageSquare,
@@ -28,7 +27,6 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [showMore, setShowMore] = useState(false);
   const [isLightMode, setIsLightMode] = useState(() => {
     return localStorage.getItem('theme') === 'light';
   });
@@ -50,11 +48,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     { label: "Security Blog", href: "/blog", icon: <Book size={18} /> },
     { label: "Pricing", href: "/pricing", icon: <CreditCard size={18} /> },
     { label: "About Us", href: "/about", icon: <Info size={18} /> },
-  ];
-
-  const moreItems = [
-    { label: "Trust Policy", href: "/trust", icon: <Shield size={18} /> },
     { label: "Contact Us", href: "/contact", icon: <MessageSquare size={18} /> },
+    { label: "Trust & Policy", href: "/trust", icon: <Shield size={18} /> },
   ];
 
 
@@ -137,38 +132,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           );
         })}
 
-        {/* More Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setShowMore(!showMore)}
-            className="w-full flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-50 transition-colors"
-            title={isCollapsed ? "More" : undefined}
-          >
-            <div className="text-slate-500"><MoreHorizontal size={18} /></div>
-            {!isCollapsed && <span>More</span>}
-          </button>
 
-          {showMore && !isCollapsed && (
-            <div className="ml-8 mt-1 flex flex-col gap-1 border-l-2 border-slate-800 pl-2">
-              {moreItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={`flex items-center gap-2 p-1.5 rounded-md text-sm transition-colors ${
-                    location.pathname === item.href
-                      ? 'bg-slate-800/80 text-slate-50 font-medium'
-                      : 'text-slate-400 hover:text-slate-50 hover:bg-slate-800/50'
-                  }`}
-                >
-                  <div className={location.pathname === item.href ? "text-indigo-400" : "text-slate-500"}>
-                    {item.icon}
-                  </div>
-                  <span className="truncate">{item.label}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
 
 
       </div>
