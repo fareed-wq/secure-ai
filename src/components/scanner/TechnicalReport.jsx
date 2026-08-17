@@ -432,7 +432,7 @@ const TechnicalReport = ({ reportData }) => {
                 {/* PCI-DSS */}
                 <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-                    <h4 className="text-slate-900 font-bold text-base dark:text-slate-200 dark:text-sm">PCI-DSS 4.0</h4>
+                    <h4 className="text-slate-900 dark:text-slate-200 font-bold text-base dark:text-sm">PCI-DSS 4.0</h4>
                     <span className={reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-semibold text-xs uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-0.5 rounded-md' : 'bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide uppercase dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/20 dark:px-2 dark:py-1 dark:rounded-md dark:text-[10px] dark:font-bold dark:tracking-wider'}>
                       {reportData?.technical_compliance?.pci_dss_4_0?.status || 'Unknown'}
                     </span>
@@ -459,7 +459,7 @@ const TechnicalReport = ({ reportData }) => {
                 {/* NIST SP 800-53 */}
                 <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-                    <h4 className="text-slate-900 font-bold text-base dark:text-slate-200 dark:text-sm">NIST SP 800-53</h4>
+                    <h4 className="text-slate-900 dark:text-slate-200 font-bold text-base dark:text-sm">NIST SP 800-53</h4>
                     <span className={reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-semibold text-xs uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-0.5 rounded-md' : 'bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide uppercase dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/20 dark:px-2 dark:py-1 dark:rounded-md dark:text-[10px] dark:font-bold dark:tracking-wider'}>
                       {reportData?.technical_compliance?.nist_sp_800_53?.status || 'Unknown'}
                     </span>
@@ -486,7 +486,7 @@ const TechnicalReport = ({ reportData }) => {
                 {/* ISO 27001 */}
                 <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-                    <h4 className="text-slate-900 font-bold text-base dark:text-slate-200 dark:text-sm">ISO 27001</h4>
+                    <h4 className="text-slate-900 dark:text-slate-200 font-bold text-base dark:text-sm">ISO 27001</h4>
                     <span className={reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 font-semibold text-xs uppercase tracking-wider border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-0.5 rounded-md' : 'bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-xs font-semibold tracking-wide uppercase dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/20 dark:px-2 dark:py-1 dark:rounded-md dark:text-[10px] dark:font-bold dark:tracking-wider'}>
                       {reportData?.technical_compliance?.iso_27001?.status || 'Unknown'}
                     </span>
