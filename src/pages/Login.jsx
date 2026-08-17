@@ -19,7 +19,13 @@ const Login = () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setError(error.message);
+      if (error.message === 'Email not confirmed') {
+        setError('Please check your email to verify your account before signing in.');
+      } else if (error.message === 'Invalid login credentials') {
+        setError('Incorrect email or password.');
+      } else {
+        setError('Unable to sign in. Please try again.');
+      }
     } else {
       navigate('/dashboard');
     }

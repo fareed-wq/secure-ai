@@ -33,7 +33,11 @@ const Register = () => {
     });
 
     if (error) {
-      setError(error.message);
+      if (error.message === 'User already registered') {
+        setError('An account with this email already exists.');
+      } else {
+        setError(error.message || 'Unable to create account. Please try again.');
+      }
     } else {
       alert("Registration successful! Check your email to confirm.");
       navigate('/login');
