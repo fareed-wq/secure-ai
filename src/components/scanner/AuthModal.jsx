@@ -46,7 +46,7 @@ const AuthModal = ({ isOpen, onClose, featureName }) => {
                   to="/register"
                   className="block w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all"
                 >
-                  Create Account
+                  Sign Up
                 </Link>
                 <Link 
                   to="/login"

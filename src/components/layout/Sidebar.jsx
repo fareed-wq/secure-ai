@@ -274,7 +274,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                 <div className="w-7 h-7 flex items-center justify-center shrink-0 text-emerald-400">
                   <User size={16} />
                 </div>
-                <span className="truncate">Create Account</span>
+                <span className="truncate">Sign Up</span>
               </Link>
             </>
           )

@@ -52,7 +52,7 @@ const Register = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
         <ShieldCheck className="w-16 h-16 text-emerald-500 mb-4" />
         <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-slate-50">
-          Create an account
+          Sign Up
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400">
           Already have an account?{' '}
@@ -148,7 +148,7 @@ const Register = () => {
                 disabled={loading}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-slate-900 bg-emerald-500 hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-colors"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Account'}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign Up'}
               </button>
             </div>
           </form>
