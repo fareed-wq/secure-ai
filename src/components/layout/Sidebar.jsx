@@ -236,15 +236,26 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         {/* Sign In / Sign Out Button */}
         {!isCollapsed && (
           user ? (
-            <button
-              onClick={async () => { await signOut(); navigate('/login'); }}
-              className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-slate-400 hover:text-slate-50 hover:bg-slate-900/50 transition-colors text-sm font-medium"
-            >
-              <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
-                <LogOut size={16} />
-              </div>
-              <span className="truncate">Sign Out</span>
-            </button>
+            <>
+              <Link
+                to="/settings"
+                className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-slate-400 hover:text-slate-50 hover:bg-slate-900/50 transition-colors text-sm font-medium"
+              >
+                <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
+                  <Settings size={16} />
+                </div>
+                <span className="truncate">Settings</span>
+              </Link>
+              <button
+                onClick={async () => { await signOut(); navigate('/login'); }}
+                className="w-full flex items-center gap-3 px-2.5 py-2 rounded-lg text-slate-400 hover:text-slate-50 hover:bg-slate-900/50 transition-colors text-sm font-medium"
+              >
+                <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
+                  <LogOut size={16} />
+                </div>
+                <span className="truncate">Sign Out</span>
+              </button>
+            </>
           ) : (
             <>
               <Link
