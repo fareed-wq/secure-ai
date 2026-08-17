@@ -179,7 +179,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           }`}
         >
           {!isCollapsed && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
                 {isLightMode ? <Sun size={18} /> : <Moon size={18} />}
               </div>
