@@ -107,7 +107,6 @@ const Contact = () => {
           </h1>
           <div className="text-lg text-slate-400 max-w-lg space-y-2">
             <p>Have questions or need assistance? Fill out the form below or reach us directly at contact@urlscanonline.com.</p>
-            <p>We typically respond within 1–2 business days. Send us a message below.</p>
           </div>
         </header>
 
@@ -224,7 +223,10 @@ const Contact = () => {
           )}
         </div>
 
-        <div className="mt-10">
+        <div className="mt-8 text-center flex flex-col items-center">
+          <p className="text-slate-400 mb-8 max-w-lg text-center">
+            We typically respond within 1–2 business days. Send us a message below.
+          </p>
           <button
             onClick={handleBack}
             className="inline-flex items-center text-sm text-slate-500 hover:text-slate-300 transition-colors font-medium group"
