@@ -167,14 +167,6 @@ function Scanner() {
               <ScanForm onScan={handleScan} />
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-slate-400 mt-8 font-medium">
-                {!user && (
-                  <>
-                    <Link to="/register" className="text-emerald-400 hover:text-emerald-300 transition-colors underline underline-offset-4">
-                      Create a free account to save reports
-                    </Link>
-                    <span className="hidden sm:inline text-slate-700">•</span>
-                  </>
-                )}
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
               </div>
 
