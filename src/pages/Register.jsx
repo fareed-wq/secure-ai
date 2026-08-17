@@ -7,6 +7,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
     fullName: '',
     company: ''
   });
@@ -16,6 +17,15 @@ const Register = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long.');
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -134,7 +144,27 @@ const Register = () => {
                   type="password"
                   name="password"
                   required
+                  minLength={8}
                   value={formData.password}
+                  onChange={handleChange}
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300">Confirm Password</label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-slate-500" />
+                </div>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  required
+                  minLength={8}
+                  value={formData.confirmPassword}
                   onChange={handleChange}
                   className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="••••••••"

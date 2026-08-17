@@ -46,12 +46,10 @@ const App = () => {
             <Route path="/scan" element={<Scanner />} />
 
             {/* New ChatGPT-Sidebar Routes */}
-            <Route path="/services" element={<PlaceholderPage title="Services" />} />
             <Route path="/docs" element={<ApiDocs />} />
             <Route path="/blog" element={<BlogLanding />} />
             <Route path="/blog/:slug" element={<ArticlePage />} />
             <Route path="/pricing" element={<Pricing />} />
-            <Route path="/about" element={<PlaceholderPage title="About Us" />} />
             <Route path="/security-trust" element={<SecurityTrust />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/responsible-disclosure" element={<ResponsibleDisclosure />} />
