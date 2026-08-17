@@ -18,7 +18,9 @@ import {
   Activity,
   X,
   Sun,
-  Moon
+  Moon,
+  FileText,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -49,7 +51,12 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     { label: "Pricing", href: "/pricing", icon: <CreditCard size={18} /> },
     { label: "About Us", href: "/about", icon: <Info size={18} /> },
     { label: "Contact Us", href: "/contact", icon: <MessageSquare size={18} /> },
-    { label: "Trust & Policy", href: "/trust", icon: <Shield size={18} /> },
+  ];
+
+  const trustItems = [
+    { label: "Security & Trust", href: "/security-trust", icon: <Shield size={18} /> },
+    { label: "Terms of Service", href: "/terms", icon: <FileText size={18} /> },
+    { label: "Responsible Disclosure", href: "/responsible-disclosure", icon: <AlertTriangle size={18} /> },
   ];
 
 
@@ -132,6 +139,33 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           );
         })}
 
+        {/* Trust & Policy Section */}
+        {!isCollapsed && (
+          <div className="mt-2 pt-2 border-t border-slate-800/60">
+            <span className="px-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Trust & Policy</span>
+          </div>
+        )}
+        {isCollapsed && <div className="mt-2 pt-2 border-t border-slate-800/60" />}
+        {trustItems.map((item) => {
+          const isActive = location.pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-slate-800/80 text-slate-50'
+                  : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-50'
+              }`}
+              title={isCollapsed ? item.label : undefined}
+            >
+              <div className={isActive ? "text-indigo-400" : "text-slate-500"}>
+                {item.icon}
+              </div>
+              {!isCollapsed && <span className="truncate">{item.label}</span>}
+            </Link>
+          );
+        })}
 
 
 
