@@ -20,6 +20,7 @@ import Contact from './pages/Contact';
 import SecurityTrust from './pages/SecurityTrust';
 import TermsOfService from './pages/TermsOfService';
 import ResponsibleDisclosure from './pages/ResponsibleDisclosure';
+import ApiDocs from './pages/ApiDocs';
 
 const PlaceholderPage = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
@@ -42,7 +43,7 @@ const App = () => {
 
             {/* New ChatGPT-Sidebar Routes */}
             <Route path="/services" element={<PlaceholderPage title="Services" />} />
-            <Route path="/docs" element={<PlaceholderPage title="API Docs" />} />
+            <Route path="/docs" element={<ApiDocs />} />
             <Route path="/blog" element={<BlogLanding />} />
             <Route path="/blog/:slug" element={<ArticlePage />} />
             <Route path="/pricing" element={<PlaceholderPage title="Pricing" />} />
