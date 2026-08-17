@@ -3,6 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { User, Building, Mail, Save, Loader2, Lock, LogOut } from 'lucide-react';
+import { validatePassword } from '../lib/utils/passwordPolicy';
+import { PasswordChecklist } from '../components/auth/PasswordChecklist';
 
 const Settings = () => {
   const { user, signOut } = useAuth();
@@ -49,8 +51,9 @@ const Settings = () => {
   const handleSavePassword = async (e) => {
     e.preventDefault();
 
-    if (passwordData.newPassword.length < 8) {
-      setError('Password must be at least 8 characters long.');
+    const { isValid } = validatePassword(passwordData.newPassword);
+    if (!isValid) {
+      setError('Password does not meet all requirements.');
       return;
     }
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -215,10 +218,12 @@ const Settings = () => {
               </div>
             </div>
 
+            <PasswordChecklist password={passwordData.newPassword} confirmPassword={passwordData.confirmPassword} showConfirm={true} />
+
             <div className="pt-4 flex justify-end">
               <button
                 type="submit"
-                disabled={passwordLoading || !passwordData.newPassword || !passwordData.confirmPassword}
+                disabled={passwordLoading || !passwordData.newPassword || !validatePassword(passwordData.newPassword).isValid || passwordData.newPassword !== passwordData.confirmPassword}
                 className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
               >
                 {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ShieldCheck, Lock, Loader2, CheckCircle2 } from 'lucide-react';
+import { validatePassword } from '../lib/utils/passwordPolicy';
+import { PasswordChecklist } from '../components/auth/PasswordChecklist';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
@@ -23,8 +25,9 @@ const ResetPassword = () => {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long.");
+    const { isValid } = validatePassword(password);
+    if (!isValid) {
+      setError("Password does not meet all requirements.");
       return;
     }
     if (password !== confirmPassword) {
@@ -98,7 +101,7 @@ const ResetPassword = () => {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-300">
                 New Password
@@ -114,7 +117,7 @@ const ResetPassword = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 placeholder-slate-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   placeholder="••••••••"
-                  minLength={8}
+                  maxLength={72}
                 />
               </div>
             </div>
@@ -134,15 +137,17 @@ const ResetPassword = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 placeholder-slate-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   placeholder="••••••••"
-                  minLength={8}
+                  maxLength={72}
                 />
               </div>
             </div>
 
+            <PasswordChecklist password={password} confirmPassword={confirmPassword} showConfirm={true} />
+
             <div>
               <button
                 type="submit"
-                disabled={loading || !password || !confirmPassword}
+                disabled={loading || !password || !validatePassword(password).isValid || password !== confirmPassword}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Update Password'}

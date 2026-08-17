@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ShieldCheck, Mail, Lock, User, Loader2, Building } from 'lucide-react';
+import { validatePassword } from '../lib/utils/passwordPolicy';
+import { PasswordChecklist } from '../components/auth/PasswordChecklist';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -13,12 +16,15 @@ const Register = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const turnstileRef = React.useRef();
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+    const { isValid } = validatePassword(formData.password);
+    if (!isValid) {
+      setError('Password does not meet all requirements.');
       return;
     }
     if (formData.password !== formData.confirmPassword) {
@@ -29,11 +35,11 @@ const Register = () => {
     setLoading(true);
     setError(null);
 
-
     const { error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
       options: {
+        captchaToken,
         emailRedirectTo: `${window.location.origin}/email-confirmed`,
         data: {
           full_name: formData.fullName,
@@ -41,6 +47,9 @@ const Register = () => {
         }
       }
     });
+
+    turnstileRef.current?.reset();
+    setCaptchaToken(null);
 
     if (error) {
       if (error.message === 'User already registered') {
@@ -144,7 +153,7 @@ const Register = () => {
                   type="password"
                   name="password"
                   required
-                  minLength={8}
+                  maxLength={72}
                   value={formData.password}
                   onChange={handleChange}
                   className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
@@ -163,7 +172,7 @@ const Register = () => {
                   type="password"
                   name="confirmPassword"
                   required
-                  minLength={8}
+                  maxLength={72}
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
@@ -172,10 +181,21 @@ const Register = () => {
               </div>
             </div>
 
+            <PasswordChecklist password={formData.password} confirmPassword={formData.confirmPassword} showConfirm={true} />
+
             <div>
+              <div className="flex justify-center mb-6">
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => setCaptchaToken(null)}
+                />
+              </div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !captchaToken || !formData.password || !validatePassword(formData.password).isValid || formData.password !== formData.confirmPassword}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-slate-900 bg-emerald-500 hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-colors"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign Up'}

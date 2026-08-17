@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ShieldCheck, Mail, Loader2, CheckCircle2 } from 'lucide-react';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const turnstileRef = React.useRef();
 
   const handleReset = async (e) => {
     e.preventDefault();
@@ -19,8 +22,12 @@ const ForgotPassword = () => {
 
     try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        captchaToken,
         redirectTo: `${window.location.origin}/reset-password`,
       });
+
+      turnstileRef.current?.reset();
+      setCaptchaToken(null);
 
       if (resetError) {
         setError("Unable to process request. Please try again later.");
@@ -82,7 +89,7 @@ const ForgotPassword = () => {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-300">
                 Email address
@@ -103,9 +110,18 @@ const ForgotPassword = () => {
             </div>
 
             <div>
+              <div className="flex justify-center mb-6">
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => setCaptchaToken(null)}
+                />
+              </div>
               <button
                 type="submit"
-                disabled={loading || !email}
+                disabled={loading || !email || !captchaToken}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Reset Link'}
@@ -113,7 +129,7 @@ const ForgotPassword = () => {
             </div>
           </form>
         </div>
-        
+
         <div className="mt-6 text-center">
           <Link to="/login" className="text-sm font-medium text-slate-400 hover:text-slate-300 transition-colors">
             &larr; Back to Sign In
