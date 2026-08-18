@@ -33,7 +33,7 @@ const SaaSLayout = () => {
           <span className="ml-2 font-bold text-slate-50 tracking-tight">Dashboard</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div id="main-scroll-container" className="flex-1 overflow-y-auto">
           <main className="p-8 max-w-7xl mx-auto">
             <Outlet />
           </main>

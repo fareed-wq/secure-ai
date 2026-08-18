@@ -110,7 +110,10 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col p-3 gap-1">
         {/* New Scan Button */}
         <button
-          onClick={() => navigate('/', { state: { resetScan: Date.now() } })}
+          onClick={() => {
+            navigate('/', { state: { resetScan: Date.now() } });
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          }}
           className="flex items-center gap-2 p-2 mb-2 text-sm font-medium text-white bg-indigo-600/90 border border-indigo-500/50 rounded-lg shadow-sm hover:bg-indigo-500 transition-colors"
         >
           <Plus size={18} className="text-indigo-100" />

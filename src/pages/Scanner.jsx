@@ -33,12 +33,23 @@ function Scanner() {
   const { isGeneratingPdf, generatePdf } = usePdfGenerator();
   const reportRef = useRef(null);
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.getElementById('main-scroll-container')?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  };
+
+  useEffect(() => {
+    // Scroll to top on mount (e.g. normal navigation)
+    scrollToTop();
+  }, []);
+
   useEffect(() => {
     if (location.state?.resetScan) {
       setScanState('idle');
       setReportData(null);
       setUrl('');
       setErrorMessage('');
+      scrollToTop();
     }
   }, [location.state?.resetScan]);
 
@@ -86,6 +97,7 @@ function Scanner() {
     } catch (error) {
       console.error('Backend Connection Error:', error);
       setErrorMessage(`Failed to connect to the backend scanner: ${error.message || error}`);
+    scrollToTop();
       setScanState('error');
     }
   };
@@ -95,6 +107,7 @@ function Scanner() {
     setUrl('');
     setReportData(null);
     setErrorMessage('');
+    scrollToTop();
   };
 
   const handleSelectMode = (mode) => {
