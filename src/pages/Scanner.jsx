@@ -152,7 +152,7 @@ function Scanner() {
 
 
       {/* Dynamic Content */}
-      <div className="relative z-10 max-w-7xl mx-auto pb-32 print:hidden">
+      <div className="relative z-10 max-w-7xl mx-auto print:hidden">
         <AnimatePresence mode="wait">
 
           {/* 1. IDLE STATE (Search Bar) */}
