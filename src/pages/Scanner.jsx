@@ -120,7 +120,7 @@ function Scanner() {
   };
 
   return (
-    <div className="scanner-page scanner-wallpaper min-h-screen bg-slate-950 font-sans text-slate-50 selection:bg-indigo-500/30">
+    <div className="scanner-page scanner-wallpaper flow-root min-h-screen bg-slate-950 font-sans text-slate-50 selection:bg-indigo-500/30">
 
 
 
