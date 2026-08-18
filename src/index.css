@@ -961,6 +961,7 @@ html.light-theme .technical-compliance-list li::marker {
    HOME / SCANNER PAGE WALLPAPER
    ============================================ */
 .scanner-wallpaper {
+  background-color: #000411 !important;
   background-image: url('/assets/home-wallpaper-dark.webp');
   background-size: 100% auto;
   background-position: center top;
@@ -969,5 +970,6 @@ html.light-theme .technical-compliance-list li::marker {
 }
 
 html.light-theme .scanner-wallpaper {
+  background-color: #eef2fa !important;
   background-image: url('/assets/home-wallpaper-light.webp');
 }
