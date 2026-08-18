@@ -862,3 +862,50 @@ html.light-theme .technical-report h3 {
 html.light-theme .technical-report .text-slate-50 {
   color: #0f172a !important;
 }
+
+/* ============================================
+   TECHNICAL REPORT — FINAL VISUAL POLISH
+   ============================================ */
+
+/* 1. COMPLIANCE STATUS BADGES */
+html.light-theme .technical-compliance-compliant {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+html.light-theme .technical-compliance-action {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #be123c !important;
+}
+
+/* 2. PASSED FINDING ROWS */
+html.light-theme .technical-passed-row {
+  background-color: #f8fffb !important;
+}
+html.light-theme .technical-passed-row:hover {
+  background-color: rgba(16,185,129,0.08) !important;
+}
+
+/* 3. REMEDIATION PANEL */
+html.light-theme .technical-remediation-panel {
+  background-color: #f8faff !important;
+  border-color: #c7d2fe !important;
+}
+
+/* 4. TECHNICAL SECTION / TABLE HEADER HIERARCHY */
+html.light-theme .technical-section {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+html.light-theme .technical-findings-table thead tr {
+  background-color: #f1f5f9 !important;
+}
+
+/* 5. COMPLIANCE / METADATA CARD SEPARATION */
+html.light-theme .technical-compliance-card,
+html.light-theme .technical-metadata {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 4px rgba(15,23,42,0.04) !important;
+}

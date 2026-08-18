@@ -430,10 +430,10 @@ const TechnicalReport = ({ reportData }) => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 {/* PCI-DSS */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                     <h4 className="font-bold text-slate-200 text-sm">PCI-DSS 4.0</h4>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
                       {reportData?.technical_compliance?.pci_dss_4_0?.status || 'Unknown'}
                     </span>
                   </div>
@@ -457,10 +457,10 @@ const TechnicalReport = ({ reportData }) => {
                 </div>
 
                 {/* NIST SP 800-53 */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                     <h4 className="font-bold text-slate-200 text-sm">NIST SP 800-53</h4>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
                       {reportData?.technical_compliance?.nist_sp_800_53?.status || 'Unknown'}
                     </span>
                   </div>
@@ -484,10 +484,10 @@ const TechnicalReport = ({ reportData }) => {
                 </div>
 
                 {/* ISO 27001 */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                     <h4 className="font-bold text-slate-200 text-sm">ISO 27001</h4>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
                       {reportData?.technical_compliance?.iso_27001?.status || 'Unknown'}
                     </span>
                   </div>
