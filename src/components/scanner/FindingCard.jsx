@@ -65,7 +65,7 @@ const FindingCard = ({ issue, idx }) => {
       </div>
 
       <div className="w-full md:w-80">
-        <div className={`${risk.container} w-full md:w-80`}>
+        <div className={`simple-business-risk-box ${risk.container} w-full md:w-80`}>
           <div className="mb-1">
             <SeverityBadge severity={issue.severity} />
           </div>
