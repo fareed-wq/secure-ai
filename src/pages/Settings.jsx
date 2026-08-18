@@ -78,7 +78,7 @@ const Settings = () => {
 
     if (updateError) {
       const errMsg = updateError.message?.toLowerCase() || '';
-      if (errMsg.includes("invalid password") || errMsg.includes("invalid current password") || errMsg.includes("incorrect password") || updateError.status === 403) {
+      if (errMsg.includes("invalid password") || errMsg.includes("invalid current password") || errMsg.includes("incorrect password") || errMsg.includes("current password required") || updateError.status === 403) {
         setError("Your current password is incorrect.");
       } else if (errMsg.includes("different from the old password") || errMsg.includes("different from the previous")) {
         setError("Your new password must be different from your current password.");
