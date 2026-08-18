@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, AlertOctagon, Check, X, Shield, ChevronDown, FileSearch, Users, Scale, Globe2, Database, Gauge, Server, Code2, Lock, Clock3 } from 'lucide-react';
+import { ShieldCheck, AlertOctagon, Check, X, Shield, ChevronDown, FileSearch, Users, Scale, Globe2, Database, Gauge, Server, Code2, Lock, Clock3, ShieldAlert } from 'lucide-react';
 
 const faqs = [
   {
