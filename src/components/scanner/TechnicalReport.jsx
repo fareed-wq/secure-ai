@@ -39,7 +39,7 @@ const TechnicalReport = ({ reportData }) => {
   };
 
   return (
-    <div className="space-y-8" id="report-content">
+    <div className="technical-report space-y-8" id="report-content">
       <style>{`
         @media print {
           body, html, #report-content { background: white !important; color: #0f172a !important; }
@@ -57,7 +57,7 @@ const TechnicalReport = ({ reportData }) => {
       `}</style>
 
       {/* 1. Technical Metadata Table HUD */}
-      <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+      <div className="technical-section report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden">
 
         {/* Top Header Bar */}
         <div className="flex items-center gap-3 mb-2">
@@ -72,7 +72,7 @@ const TechnicalReport = ({ reportData }) => {
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
 
           {/* Card 1: Network & Edge Security */}
-          <div className="w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
+          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
                 <Globe className="w-3.5 h-3.5 shrink-0 text-slate-400" />
@@ -101,7 +101,7 @@ const TechnicalReport = ({ reportData }) => {
           </div>
 
           {/* Card 2: HTTP & Performance */}
-          <div className="w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
+          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
                 <Activity className="w-3.5 h-3.5 shrink-0 text-slate-400" />
@@ -136,7 +136,7 @@ const TechnicalReport = ({ reportData }) => {
           </div>
 
           {/* Card 3: SSL/TLS Certificate */}
-          <div className="w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
+          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
                 <Lock className="w-3.5 h-3.5 shrink-0 text-slate-400" />
@@ -170,7 +170,7 @@ const TechnicalReport = ({ reportData }) => {
           </div>
 
           {/* Card 4: Traffic & Protocol Posture */}
-          <div className="w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
+          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
                 <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-slate-400" />
@@ -220,14 +220,14 @@ const TechnicalReport = ({ reportData }) => {
               if (groupFindings.length === 0) return null;
 
               return (
-                <div key={group.key} className="report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+                <div key={group.key} className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
                   <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
                     {group.icon}
                     <h3 className="font-bold text-slate-50 text-lg">{group.label}</h3>
                   </div>
 
                   <div className="w-full overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                    <table className="technical-findings-table w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
                           <th className="px-6 py-4" style={{ width: '15%' }}>Severity</th>
@@ -243,7 +243,7 @@ const TechnicalReport = ({ reportData }) => {
                           <tbody key={idx} className="finding-card divide-y divide-slate-800/50 border-b border-slate-700/40 last:border-b-0">
                             <tr
                               onClick={() => setExpandedRow(expandedRow === idx ? null : idx)}
-                              className={`cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
+                              className={`technical-finding-row ${finding.severity === 'Passed' ? 'technical-passed-row' : ''} cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
                             >
                             <td className="px-6 py-4 whitespace-nowrap">
                               {getSeverityBadge(finding.severity)}
@@ -253,9 +253,9 @@ const TechnicalReport = ({ reportData }) => {
                             </td>
                             <td className="px-6 py-4">
                               {finding.owasp && finding.owasp !== "N/A" ? (
-                                <span className="bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2.5 py-1 rounded-md text-xs hover:bg-indigo-500/20 cursor-pointer">{finding.owasp}</span>
+                                <span className="technical-owasp-badge bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2.5 py-1 rounded-md text-xs hover:bg-indigo-500/20 cursor-pointer">{finding.owasp}</span>
                               ) : (
-                                <span className="text-slate-600 text-xs">-</span>
+                                <span className="technical-owasp-badge-none text-slate-600 text-xs">-</span>
                               )}
                             </td>
                             <td className="px-6 py-4 text-right print:hidden align-top">
@@ -278,7 +278,7 @@ const TechnicalReport = ({ reportData }) => {
                           )}
 
                           {expandedRow === idx && (
-                              <tr className="print:hidden">
+                              <tr className="technical-finding-expanded print:hidden">
                                 <td colSpan={5} className="p-0 border-b-2 border-indigo-500/50">
                                   <div
                                     className="bg-slate-950 overflow-hidden transition-all duration-300"
@@ -288,7 +288,7 @@ const TechnicalReport = ({ reportData }) => {
                                       <div className="lg:col-span-2 space-y-6">
                                         <div>
                                           <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Technical Description</div>
-                                          <p className="text-slate-300 leading-relaxed text-sm">{finding.description}</p>
+                                          <p className="technical-description text-slate-300 leading-relaxed text-sm">{finding.description}</p>
                                         </div>
 
                                         {finding.impact && finding.impact !== "N/A" && (
@@ -296,7 +296,7 @@ const TechnicalReport = ({ reportData }) => {
                                             <div className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-2">
                                               <span>⚠️</span> Security Impact & Risk
                                             </div>
-                                            <p className="text-rose-200/80 leading-relaxed text-sm">{finding.impact}</p>
+                                            <p className="technical-risk-text text-rose-200/80 leading-relaxed text-sm">{finding.impact}</p>
                                           </div>
                                         )}
 
@@ -321,7 +321,7 @@ const TechnicalReport = ({ reportData }) => {
                                             return (
                                               <div>
                                                 <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Confidence Score</div>
-                                                <div className={`${colorClass} font-bold mb-4`}>{finding.confidence}</div>
+                                                <div className={`technical-confidence ${colorClass} font-bold mb-4`}>{finding.confidence}</div>
                                               </div>
                                             );
                                           })()
@@ -336,7 +336,7 @@ const TechnicalReport = ({ reportData }) => {
                                               </button>
                                             </div>
                                             {typeof finding.evidence === 'object' && finding.evidence.request_path ? (
-                                              <div className="bg-slate-950 border border-slate-700/50 rounded-lg p-4 font-mono text-sm">
+                                              <div className="technical-evidence bg-slate-950 border border-slate-700/50 rounded-lg p-4 font-mono text-sm">
                                                 <div className="text-cyan-400 mb-2">
                                                   GET {finding.evidence.request_path} • Status: {finding.evidence.status_code} • {finding.evidence.content_type}
                                                 </div>
@@ -347,7 +347,7 @@ const TechnicalReport = ({ reportData }) => {
                                                 )}
                                               </div>
                                             ) : (
-                                              <pre className="bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                                              <pre className="technical-evidence bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
                                                 {typeof finding.evidence === 'object' && finding.evidence.raw ? finding.evidence.raw : (typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence))}
                                               </pre>
                                             )}
@@ -358,7 +358,7 @@ const TechnicalReport = ({ reportData }) => {
                                       </div>
 
                                       <div className="space-y-6">
-                                        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 h-full">
+                                        <div className="technical-remediation-panel bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 h-full">
                                           {finding.severity === 'Passed' ? (
                                             <div className="flex flex-col items-center justify-center p-6 text-center rounded-lg bg-emerald-950/20 border border-emerald-800/30 my-auto">
                                               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 mb-2">
@@ -421,7 +421,7 @@ const TechnicalReport = ({ reportData }) => {
 
         {activeView === 'compliance' && reportData?.technical_compliance && (
           <div className="w-full max-w-full overflow-hidden">
-            <div className="report-section grid grid-cols-1 gap-6">
+            <div className="technical-section report-section grid grid-cols-1 gap-6">
             <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <ShieldAlert className="w-5 h-5 text-indigo-400" />
