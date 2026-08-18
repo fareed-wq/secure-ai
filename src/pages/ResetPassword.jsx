@@ -58,8 +58,16 @@ const ResetPassword = () => {
       const { error: updateError } = await supabase.auth.updateUser({ password });
 
       if (updateError) {
-        setError("Your reset link has expired or is invalid. Please request a new one.");
         console.error("Update password error:", updateError.message);
+        const errMsg = updateError.message?.toLowerCase() || '';
+
+        if (errMsg.includes("different from the old password") || errMsg.includes("different from the previous")) {
+          setError("Your new password must be different from your current password.");
+        } else if (updateError.status === 401 || updateError.status === 403 || errMsg.includes("expired") || errMsg.includes("invalid")) {
+          setError("Your reset link has expired or is invalid. Please request a new one.");
+        } else {
+          setError(updateError.message || "An unexpected error occurred. Please try again.");
+        }
       } else {
         await supabase.auth.signOut();
         setIsRecovery(false);
