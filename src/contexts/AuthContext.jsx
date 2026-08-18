@@ -25,7 +25,12 @@ export const AuthProvider = ({ children }) => {
     // Definitive completion check: getUser() waits for background auth initialization
     // (including PKCE/URL token exchange) to complete before resolving.
     supabase.auth.getUser().finally(() => {
-      setIsRecoveryValidating(false);
+      // Supabase internally emits PASSWORD_RECOVERY inside a setTimeout(0).
+      // We push validation completion to the macro-task queue to guarantee it
+      // executes strictly after the recovery event has fired.
+      setTimeout(() => {
+        setIsRecoveryValidating(false);
+      }, 0);
     });
 
     // Listen for changes on auth state (logged in, signed out, etc.)
