@@ -703,3 +703,8 @@ html.light-theme .simple-business-risk-info {
   background-color: #eff6ff !important;
   border-color: #bfdbfe !important;
 }
+
+/* 5. Business Risk Description Contrast */
+html.light-theme .simple-business-risk-description {
+  color: #334155 !important;
+}
