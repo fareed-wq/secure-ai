@@ -34,21 +34,12 @@ const PlaceholderPage = ({ title }) => (
 );
 
 const RecoveryGuard = ({ children }) => {
-  const { isRecovery, setIsRecovery, signOut } = useAuth();
+  const { isRecovery } = useAuth();
   const location = useLocation();
 
-  React.useEffect(() => {
-    // If user is in a recovery session but navigates to a public page,
-    // cancel the recovery session and sign them out.
-    // We exclude protected SaaS routes because SaaSLayout already forces them back to /reset-password.
-    const protectedRoutes = ['/dashboard', '/history', '/reports', '/compare', '/settings'];
-    const isProtected = protectedRoutes.some(route => location.pathname.startsWith(route));
-
-    if (isRecovery && location.pathname !== '/reset-password' && !isProtected) {
-      console.log(`[${new Date().toISOString()}] [RecoveryGuard] FIRING LOGOUT GUARD. path: ${location.pathname}, isRecovery: ${isRecovery}`);
-      signOut().then(() => setIsRecovery(false));
-    }
-  }, [location.pathname, isRecovery, signOut, setIsRecovery]);
+  if (isRecovery && location.pathname !== '/reset-password') {
+    return <Navigate to="/reset-password" replace />;
+  }
 
   return children;
 };
