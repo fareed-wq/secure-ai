@@ -22,7 +22,7 @@ const RootLayout = () => {
           <img src="/logo-transparent.png" alt="URLScan Online Logo" className="ml-2 h-7 w-auto" />
         </div>
 
-        <div id="main-scroll-container" className="flex-1 overflow-y-auto">
+        <div id="main-scroll-container" className="flex-1 overflow-y-auto flex flex-col">
           <Outlet />
         </div>
       </div>
