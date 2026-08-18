@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [isRecovery, setIsRecovery] = useState(() => {
     return localStorage.getItem('supabase_recovery_state') === 'true';
   });
+  const [isRecoveryValidating, setIsRecoveryValidating] = useState(true);
 
   useEffect(() => {
     if (isRecovery) {
@@ -27,9 +28,11 @@ export const AuthProvider = ({ children }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      setIsRecoveryValidating(false);
     }).catch(() => {
       // Catch errors if mock keys are used
       setLoading(false);
+      setIsRecoveryValidating(false);
     });
 
     // Listen for changes on auth state (logged in, signed out, etc.)
@@ -52,6 +55,7 @@ export const AuthProvider = ({ children }) => {
     user,
     isRecovery,
     setIsRecovery,
+    isRecoveryValidating,
     signOut: () => supabase.auth.signOut(),
   };
 

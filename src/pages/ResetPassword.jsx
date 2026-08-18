@@ -13,13 +13,17 @@ const ResetPassword = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  const { session, isRecovery, setIsRecovery } = useAuth();
+  const { session, isRecovery, setIsRecovery, isRecoveryValidating } = useAuth();
   const isRecoverySession = isRecovery;
   const recoveryEmail = isRecovery && session?.user?.email ? session.user.email : '';
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
+    if (isRecoveryValidating) {
+      return; // Do not redirect while recovery state is still being determined
+    }
+
     const hasError = location.hash.includes('error=') || location.search.includes('error=');
 
     if (isRecoverySession) {
@@ -31,7 +35,7 @@ const ResetPassword = () => {
       // instead of keeping the user on a disabled form.
       navigate('/forgot-password', { replace: true });
     }
-  }, [location, isRecoverySession, success, navigate]);
+  }, [location, isRecoverySession, success, navigate, isRecoveryValidating]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
