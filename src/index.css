@@ -681,3 +681,25 @@ html.light-theme .simple-score-card .text-slate-500,
 html.light-theme .simple-score-card summary {
   color: #334155 !important;
 }
+
+
+/* 4. Business Risk Colors Only */
+html.light-theme .simple-business-risk-high {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+}
+
+html.light-theme .simple-business-risk-medium {
+  background-color: #fff7ed !important;
+  border-color: #fed7aa !important;
+}
+
+html.light-theme .simple-business-risk-low {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+html.light-theme .simple-business-risk-info {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
