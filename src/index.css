@@ -973,3 +973,19 @@ html.light-theme .scanner-wallpaper {
   background-color: #eef2fa !important;
   background-image: url('/assets/home-wallpaper-light.webp');
 }
+/* Ensure the outer document background matches the fallback to prevent overscroll/bounce from showing mismatched colors */
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body,
+#root {
+  background-color: #000411;
+}
+
+html.light-theme body,
+html.light-theme #root {
+  background-color: #eef2fa;
+}
