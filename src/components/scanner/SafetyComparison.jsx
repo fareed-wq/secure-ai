@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { ShieldCheck, AlertOctagon, Check, X, Shield, ChevronDown } from 'lucide-react';
+import { ShieldCheck, AlertOctagon, Check, X, Shield, ChevronDown, FileSearch, Users, Scale } from 'lucide-react';
 
 const faqs = [
   {
+    icon: Shield,
     question: "Do you need access to my systems?",
     answer: "No. URLScannerOnline only needs your public website URL—no passwords, admin access, or credentials.\nDeeper testing requires your explicit approval and separate access."
   },
   {
+    icon: Scale,
     question: "Is this legal and safe for my site?",
     answer: "Yes, when you scan a website you own or are authorized to assess.\nOur passive checks are read-only and designed to minimize impact on live systems."
   },
   {
+    icon: FileSearch,
     question: "What happens after I submit?",
     answer: "We analyze the website using automated security checks and generate a clear report.\nYou’ll see detected risks, severity levels, and recommended remediation steps."
   },
   {
+    icon: Users,
     question: "Who is this for?",
     answer: "It’s designed for website owners, developers, businesses, and security teams.\nIt’s especially useful for anyone who wants a quick security overview without intrusive testing."
   }
@@ -39,7 +43,7 @@ const SafetyComparison = () => {
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <ShieldCheck size={100} />
           </div>
-          
+
           <div className="flex items-center gap-3 mb-6 relative z-10">
             <div className="bg-indigo-600 p-2 rounded-lg text-white shadow-lg shadow-indigo-500/20">
               <ShieldCheck size={24} />
@@ -143,33 +147,50 @@ const SafetyComparison = () => {
 
       {/* FAQ Section */}
       <div className="max-w-3xl mx-auto mt-16 text-left animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
-        <h3 className="text-xl md:text-2xl font-bold text-slate-200 mb-6 text-center">Frequently Asked Questions</h3>
-        <div className="space-y-4">
-          {faqs.map((faq, index) => (
-            <div key={index} className="bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors rounded-xl overflow-hidden">
-              <button
-                onClick={() => setOpenFaq(openFaq === index ? null : index)}
-                className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none"
-              >
-                <span className="font-semibold text-slate-200 text-sm md:text-base pr-4">{faq.question}</span>
-                <div className={`text-slate-400 shrink-0 transition-transform duration-300 ${openFaq === index ? 'rotate-180' : ''}`}>
-                  <ChevronDown size={20} />
-                </div>
-              </button>
+        <div className="text-center mb-8">
+          <h3 className="text-xl md:text-2xl font-bold text-slate-200 mb-2">Frequently Asked Questions</h3>
+          <p className="text-sm text-slate-400">Everything you need to know about our scanning engine.</p>
+        </div>
+        <div className="space-y-3">
+          {faqs.map((faq, index) => {
+            const isOpen = openFaq === index;
+            const Icon = faq.icon;
+            return (
               <div
-                className={`transition-all duration-300 ease-in-out ${openFaq === index ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}
+                key={index}
+                className={`transition-colors rounded-lg border overflow-hidden ${
+                  isOpen
+                    ? 'bg-slate-800/80 border-indigo-500/30'
+                    : 'bg-slate-900/70 border-slate-700/60 hover:bg-slate-800/50 hover:border-slate-600/60'
+                }`}
               >
-                <div className="p-5 md:p-6 pt-0 text-slate-400 text-sm md:text-base leading-relaxed">
-                  {faq.answer.split('\n').map((line, i) => (
-                    <React.Fragment key={i}>
-                      {line}
-                      {i !== faq.answer.split('\n').length - 1 && <br />}
-                    </React.Fragment>
-                  ))}
+                <button
+                  onClick={() => setOpenFaq(isOpen ? null : index)}
+                  className="w-full flex items-center justify-between p-4 md:px-5 md:py-4 text-left focus:outline-none"
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-4 h-4 md:w-5 md:h-5 text-indigo-300 shrink-0" />
+                    <span className="font-semibold text-slate-200 text-sm md:text-base pr-4">{faq.question}</span>
+                  </div>
+                  <div className={`text-slate-400 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+                    <ChevronDown size={18} />
+                  </div>
+                </button>
+                <div
+                  className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}
+                >
+                  <div className="p-4 md:px-5 md:pb-5 pt-0 text-slate-400 text-sm leading-relaxed ml-7 md:ml-8">
+                    {faq.answer.split('\n').map((line, i) => (
+                      <React.Fragment key={i}>
+                        {line}
+                        {i !== faq.answer.split('\n').length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
