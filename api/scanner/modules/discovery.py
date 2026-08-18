@@ -266,7 +266,7 @@ class InformationDisclosureModule(ScannerModule):
                     server,
                     impact="Hackers can easily look up the exact version of your server to find known security flaws and launch a targeted attack against your website.",
                     remediation="Configure server to only return generic names (e.g., 'nginx').",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="information_exposure"
                 ))
 
@@ -279,7 +279,7 @@ class InformationDisclosureModule(ScannerModule):
                     if len(val_str) > 100:
                         val_str = val_str[:97] + "..."
                     disclosed.append(f"{header}: {val_str}")
-                    
+
             if disclosed:
                 findings.append(self.make_finding(
                     "Technology Information Disclosure",
@@ -288,7 +288,7 @@ class InformationDisclosureModule(ScannerModule):
                     "\n".join(disclosed),
                     confidence="High",
                     remediation="Remove these headers in your web server or framework configuration to reduce your attack surface.",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="information_exposure"
                 ))
 
@@ -296,7 +296,7 @@ class InformationDisclosureModule(ScannerModule):
                 import re
                 text_slice = resp.text[:2000000]
                 text_lower = text_slice.lower()
-                
+
                 # Subdomain Takeover Signatures
                 takeover_signatures = {
                     "GitHub Pages": "there isn't a github pages site here.",
@@ -306,7 +306,7 @@ class InformationDisclosureModule(ScannerModule):
                     "Shopify": "sorry, this shop is currently unavailable.",
                     "Vercel": "deployment_not_found"
                 }
-                
+
                 if resp.status_code in (404, 403, 500, 502, 503):
                     for provider, sig in takeover_signatures.items():
                         if sig in text_lower:
@@ -321,7 +321,7 @@ class InformationDisclosureModule(ScannerModule):
                                 confidence="Medium"
                             ))
                             break
-                            
+
                 # Passive IP disclosure check
                 private_ip_regex = re.compile(r'\b(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3})\b')
                 matches = private_ip_regex.findall(text_slice)
@@ -334,7 +334,7 @@ class InformationDisclosureModule(ScannerModule):
                         ", ".join(unique_ips[:3]),
                         impact="Attackers can use these internal addresses to map out your private network and launch targeted attacks.",
                         remediation="Remove internal IP addresses from the public response.",
-                        owasp="A01: Broken Access Control",
+                        owasp="Not Mapped",
                         category="information_exposure"
                     ))
 
@@ -418,7 +418,7 @@ class RobotsTxtModule(ScannerModule):
                         "\\n".join(privileged_paths[:10]),
                         impact="Hackers can easily find where to launch attacks to try and guess passwords and take control of your website.",
                         confidence="High",
-                        owasp="A01: Broken Access Control",
+                        owasp="Not Mapped",
                         category="api_surface"
                     ))
 
@@ -428,7 +428,7 @@ class RobotsTxtModule(ScannerModule):
                     "Your website provides instructions for search engines.",
                     target,
                     impact="This is normal and helps search engines know what parts of your site to index.",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="information_exposure"
                 ))
             else:
@@ -438,7 +438,7 @@ class RobotsTxtModule(ScannerModule):
                     "Your website does not provide instructions for search engines.",
                     target,
                     impact="Search engines might index parts of your website you didn't intend to be public, or they might not index your site efficiently.",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="information_exposure"
                 ))
         except Exception as e:
@@ -470,7 +470,7 @@ class SitemapModule(ScannerModule):
                     "A map of your website's pages was found.",
                     target,
                     impact="This is a standard file that helps search engines discover all the public pages on your website.",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="information_exposure"
                 ))
             else:
@@ -480,7 +480,7 @@ class SitemapModule(ScannerModule):
                     "Your website is missing a map of its pages.",
                     target,
                     impact="Search engines might have a harder time discovering and ranking all the public pages on your website.",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="information_exposure"
                 ))
         except Exception as e:
@@ -517,7 +517,7 @@ class SecurityTxtModule(ScannerModule):
                         "Informational",
                         "Your security.txt file is not served with the text/plain Content-Type as required by RFC 9116.",
                         f"Content-Type: {content_type}",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="information_exposure"
                     ))
 
@@ -559,7 +559,7 @@ class SecurityTxtModule(ScannerModule):
                         "Your security.txt file is missing the required Contact directive or it is empty.",
                         target,
                         remediation="Add at least one valid Contact directive (e.g., Contact: mailto:security@example.com).",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="information_exposure"
                     ))
 
@@ -571,7 +571,7 @@ class SecurityTxtModule(ScannerModule):
                         "Your security.txt file is missing the required Expires directive.",
                         target,
                         remediation="Add an Expires directive with an RFC3339 formatted date.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="information_exposure"
                     ))
                 elif len(expires_lines) > 1:
@@ -581,7 +581,7 @@ class SecurityTxtModule(ScannerModule):
                         "Your security.txt file contains multiple Expires directives, which violates RFC 9116.",
                         target,
                         remediation="Ensure exactly one Expires directive exists.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="information_exposure"
                     ))
                 else:
@@ -603,7 +603,7 @@ class SecurityTxtModule(ScannerModule):
                                 "Your security.txt file has expired and may contain stale reporting instructions.",
                                 expires_str,
                                 remediation="Review your security.txt policies and update the Expires date.",
-                                owasp="A05: Security Misconfiguration",
+                                owasp="Not Mapped",
                                 category="information_exposure"
                             ))
                         elif contacts:
@@ -613,7 +613,7 @@ class SecurityTxtModule(ScannerModule):
                                 "Your website publishes a standard and valid security contact file.",
                                 target,
                                 impact="This is an excellent practice that allows security researchers to safely report vulnerabilities.",
-                                owasp="A05: Security Misconfiguration",
+                                owasp="Not Mapped",
                                 category="information_exposure"
                             ))
 
@@ -624,7 +624,7 @@ class SecurityTxtModule(ScannerModule):
                             f"The Expires directive is not formatted correctly as RFC3339: {expires_str}",
                             target,
                             remediation="Format the date using RFC3339 (e.g., 2024-12-31T23:59:59Z).",
-                            owasp="A05: Security Misconfiguration",
+                            owasp="Not Mapped",
                             category="information_exposure"
                         ))
 
@@ -636,7 +636,7 @@ class SecurityTxtModule(ScannerModule):
                         "Your security.txt file includes a vulnerability disclosure policy link.",
                         policies[0],
                         category="information_exposure",
-                        owasp="A05: Security Misconfiguration"
+                        owasp="Not Mapped"
                     ))
                 if languages:
                     findings.append(self.make_finding(
@@ -645,7 +645,7 @@ class SecurityTxtModule(ScannerModule):
                         "Your security.txt file specifies preferred languages for security reports.",
                         languages[0],
                         category="information_exposure",
-                        owasp="A05: Security Misconfiguration"
+                        owasp="Not Mapped"
                     ))
             else:
                 findings.append(self.make_finding(
@@ -655,7 +655,7 @@ class SecurityTxtModule(ScannerModule):
                     target,
                     impact="Friendly security researchers may have a hard time contacting you if they find a vulnerability, leaving you at risk.",
                     remediation="Publish a security.txt file at /.well-known/security.txt.",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="information_exposure"
                 ))
         except Exception as e:
@@ -693,7 +693,7 @@ class OpenApiModule(ScannerModule):
                                 impact="Hackers can use this documentation as a blueprint to understand exactly how your website works and find ways to attack it.",
                                 confidence="High",
                                 category="information_exposure",
-                                owasp="A05: Security Misconfiguration"
+                                owasp="Not Mapped"
                             ))
 
                             # PHASE 31: AUTHORIZATION & ACCESS CONTROL INTELLIGENCE
@@ -723,7 +723,7 @@ class OpenApiModule(ScannerModule):
                                     impact="Hackers can use this information to focus their attacks on your specific security mechanisms.",
                                     confidence="High",
                                     category="authentication",
-                                    owasp="A05: Security Misconfiguration"
+                                    owasp="Not Mapped"
                                 ))
 
                             has_global_security = bool(data.get("security", []))
@@ -782,7 +782,7 @@ class OpenApiModule(ScannerModule):
                                     impact="Hackers can check if you are using outdated versions and target older, potentially vulnerable features of your website.",
                                     confidence="High",
                                     category="api_surface",
-                                    owasp="A00: Informational"
+                                    owasp="Not Mapped"
                                 ))
 
                             return local_findings
@@ -825,7 +825,7 @@ class GraphqlIdeModule(ScannerModule):
                             impact="Hackers can use this interactive tool to easily explore and extract hidden data from your database.",
                             confidence="High",
                             category="information_exposure",
-                            owasp="A05: Security Misconfiguration"
+                            owasp="Not Mapped"
                         )
             except Exception as e:
                 logger.debug("GraphqlIdeModule check failed for %s: %s", path, e)
@@ -882,7 +882,7 @@ class ActuatorModule(ScannerModule):
                                     impact="Hackers can use these tools to monitor your server's health and gather intelligence to plan an attack.",
                                     confidence="High",
                                     category="information_exposure",
-                                    owasp="A05: Security Misconfiguration"
+                                    owasp="Not Mapped"
                                 )
                     except ValueError:
                         pass

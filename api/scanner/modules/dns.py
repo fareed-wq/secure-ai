@@ -30,7 +30,7 @@ class DNSCAAModule(ScannerModule):
                         "Passed",
                         "Your domain has rules that control exactly which security companies are allowed to issue SSL certificates for your website.",
                         ", ".join(caa_issuers),
-                        owasp="A02: Cryptographic Failures",
+                        owasp="Not Mapped",
                         category="domain_email"
                     ))
                 else:
@@ -42,7 +42,7 @@ class DNSCAAModule(ScannerModule):
                         impact="A hacker could trick any certificate company into issuing a fake certificate for your site, allowing them to spy on your visitors.",
                         confidence="High",
                         remediation="Add CAA records in DNS specifying authorized CAs (e.g., 'issue letsencrypt.org').",
-                        owasp="A02: Cryptographic Failures",
+                        owasp="Not Mapped",
                         category="domain_email"
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
@@ -54,7 +54,7 @@ class DNSCAAModule(ScannerModule):
                 "Inconclusive",
                 "We could not verify your domain's CAA records due to a network timeout with the DNS resolver.",
                 "DNS resolution timed out or failed.",
-                owasp="A00: Informational",
+                owasp="Not Mapped",
                 category="domain_email"
             ))
 
@@ -70,7 +70,7 @@ class DNSCAAModule(ScannerModule):
                         "Passed",
                         "Your domain has advanced security protections enabled to prevent hackers from tampering with your website's internet address.",
                         "DS record found",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="dns_security"
                     ))
                 else:
@@ -80,7 +80,7 @@ class DNSCAAModule(ScannerModule):
                         "Your domain does not have advanced security protections to verify its internet address.",
                         "DNSSEC validation records not observed",
                         impact="Hackers might be able to redirect your visitors to a fake copy of your website to steal their passwords or payment info.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="dns_security"
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
@@ -91,7 +91,7 @@ class DNSCAAModule(ScannerModule):
                 "Inconclusive",
                 "We could not verify your domain's DNSSEC status due to a network timeout with the DNS resolver.",
                 "DNS resolution timed out or failed.",
-                owasp="A00: Informational",
+                owasp="Not Mapped",
                 category="dns_security"
             ))
 
@@ -109,7 +109,7 @@ class DNSCAAModule(ScannerModule):
                         "Your domain is set up so that any random subdomain (like anything.yourwebsite.com) points to your server.",
                         "Randomized subdomain successfully resolved to an IP",
                         confidence="Medium",
-                        owasp="A00: Informational",
+                        owasp="Not Mapped",
                         category="dns_security"
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
@@ -123,7 +123,7 @@ class DNSCAAModule(ScannerModule):
                 "Inconclusive",
                 "We could not verify your domain's DNS-based security records due to a network timeout with the DNS resolver.",
                 "DNS resolution timed out or failed.",
-                owasp="A00: Informational",
+                owasp="Not Mapped",
                 category="dns_security"
             ))
 
@@ -154,7 +154,7 @@ class DNSEmailSecurityModule(ScannerModule):
                     if data_str.startswith('"') and data_str.endswith('"'):
                         data_str = data_str[1:-1]
                     all_txt_records.append(data_str)
-                    
+
                     if "v=spf1" in data_str:
                         spf_records.append(data_str)
 
@@ -249,7 +249,7 @@ class DNSEmailSecurityModule(ScannerModule):
                             "Informational",
                             desc,
                             data_str,
-                            owasp="A05: Security Misconfiguration",
+                            owasp="Not Mapped",
                             category="domain_email"
                         ))
 
@@ -258,28 +258,28 @@ class DNSEmailSecurityModule(ScannerModule):
                 if all_txt_records:
                     import ipaddress
                     import re
-                    
+
                     ip_pattern = re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b')
                     internal_host_pattern = re.compile(r'\b[a-z0-9-]+\.(?:internal|corp|local|lan)(?:\.[a-z0-9-]+)*\b')
-                    
+
                     for txt in all_txt_records:
                         txt_lower = txt.lower()
-                        
+
                         # Structured classification to ignore common verification and protocol records
                         if txt_lower.startswith("v=spf1") or txt_lower.startswith("v=dmarc1") or txt_lower.startswith("v=dkim1"):
                             continue
-                            
+
                         # Verification tokens typically match something-verification=abc or MS=ms123
                         if re.match(r'^[a-z0-9-]*verif(?:ication|y)[a-z0-9-]*\s*=', txt_lower) or txt_lower.startswith("google-site-verification="):
                             continue
-                            
+
                         if re.match(r'^ms=ms\d+', txt_lower) or txt_lower.startswith("apple-domain-verification="):
                             continue
-                            
+
                         val_str = txt.strip()
                         if len(val_str) > 100:
                             val_str = val_str[:97] + "..."
-                            
+
                         # IP address matching
                         ips = ip_pattern.findall(txt)
                         for ip_str in ips:
@@ -292,7 +292,7 @@ class DNSEmailSecurityModule(ScannerModule):
                                     })
                             except ValueError:
                                 pass
-                                
+
                         # Internal hostname matching
                         hosts = internal_host_pattern.findall(txt_lower)
                         if hosts:
@@ -300,7 +300,7 @@ class DNSEmailSecurityModule(ScannerModule):
                                 "cat": f"Internal hostname ({hosts[0]})",
                                 "val": val_str
                             })
-                            
+
                 if infrastructure_findings:
                     unique_findings = {}
                     high_conf = False
@@ -309,13 +309,13 @@ class DNSEmailSecurityModule(ScannerModule):
                             high_conf = True
                         if f["cat"] not in unique_findings:
                             unique_findings[f["cat"]] = f["val"]
-                            
+
                     evidence_lines = []
                     for cat, val in unique_findings.items():
                         evidence_lines.append(f"{cat} found in TXT: {val}")
-                        
+
                     confidence = "High" if high_conf else "Medium"
-                        
+
                     findings.append(self.make_finding(
                         "Potential Infrastructure Information Disclosure",
                         "Medium",
@@ -348,7 +348,7 @@ class DNSEmailSecurityModule(ScannerModule):
                 "Inconclusive",
                 "We could not verify your domain's SPF records due to a network timeout with the DNS resolver.",
                 "DNS resolution timed out or failed.",
-                owasp="A00: Informational",
+                owasp="Not Mapped",
                 category="domain_email"
             ))
 
@@ -397,7 +397,7 @@ class DNSEmailSecurityModule(ScannerModule):
                                 impact="While you can see who is trying to spoof your emails, those fake emails will still reach your customers' inboxes.",
                                 confidence="High",
                                 remediation="Consider upgrading DMARC policy from 'p=none' to 'p=quarantine' or 'p=reject'.",
-                                owasp="A05: Security Misconfiguration",
+                                owasp="Not Mapped",
                                 category="domain_email"
                             ))
                         else:
@@ -436,7 +436,7 @@ class DNSEmailSecurityModule(ScannerModule):
                                 "Informational",
                                 desc,
                                 d_str,
-                                owasp="A05: Security Misconfiguration",
+                                owasp="Not Mapped",
                                 category="domain_email"
                             ))
 
@@ -494,7 +494,7 @@ class DNSEmailSecurityModule(ScannerModule):
                 "Inconclusive",
                 "We could not verify your domain's DMARC policy due to a network timeout with the DNS resolver.",
                 "DNS resolution timed out or failed.",
-                owasp="A00: Informational",
+                owasp="Not Mapped",
                 category="domain_email"
             ))
 
@@ -524,7 +524,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         "Your domain does not explicitly force emails to be encrypted when traveling across the internet.",
                         "DNS record not found",
                         confidence="High",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="domain_email"
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
@@ -548,7 +548,7 @@ class DNSEmailSecurityModule(ScannerModule):
                                 f"We found digital signatures (DKIM) configured, which helps prove your emails are genuinely from you.",
                                 rec.get("data", "")[:180],
                                 confidence="High",
-                                owasp="A05: Security Misconfiguration",
+                                owasp="Not Mapped",
                                 category="domain_email"
                             ))
                             dkim_found = True
@@ -566,7 +566,7 @@ class DNSEmailSecurityModule(ScannerModule):
                 "Inconclusive",
                 "We could not verify your domain's email security records (like SPF or DMARC) due to a network timeout with the DNS resolver.",
                 "DNS resolution timed out or failed.",
-                owasp="A00: Informational",
+                owasp="Not Mapped",
                 category="domain_email"
             ))
 

@@ -39,7 +39,7 @@ class EnhancedTLSModule(ScannerModule):
                             "Informational",
                             "Your website supports TLS 1.3, the latest and most secure version of the TLS protocol.",
                             "Version: TLSv1.3",
-                            owasp="A02: Cryptographic Failures",
+                            owasp="Not Mapped",
                             category="encryption_tls",
                             impact="TLS 1.3 removes obsolete and insecure features from previous versions and speeds up secure connections."
                         ))
@@ -53,7 +53,7 @@ class EnhancedTLSModule(ScannerModule):
                             "Your website uses a 'wildcard' certificate that covers multiple subdomains at once.",
                             f"CN: {cn}",
                             remediation="Consider using specific SANs instead of wildcards.",
-                            owasp="A02: Cryptographic Failures",
+                            owasp="Not Mapped",
                             category="encryption_tls",
                             impact="If a hacker manages to steal this certificate, they can create fake secure pages for any of your subdomains, putting your entire brand at risk."
                         ))
@@ -119,7 +119,7 @@ class EnhancedTLSModule(ScannerModule):
                             "Informational",
                             "Identifies the Certificate Authority (CA) that issued your digital certificate.",
                             "\\n".join(issuer_parts),
-                            owasp="A02: Cryptographic Failures",
+                            owasp="Not Mapped",
                             category="encryption_tls"
                         ))
 
@@ -131,7 +131,7 @@ class EnhancedTLSModule(ScannerModule):
                             "Informational",
                             "Lists all the hostnames and subdomains covered by this single digital certificate.",
                             "\\n".join(f"- {name}" for name in dns_names),
-                            owasp="A02: Cryptographic Failures",
+                            owasp="Not Mapped",
                             category="encryption_tls"
                         ))
         except Exception as e:
@@ -168,7 +168,7 @@ class EnhancedTLSModule(ScannerModule):
                 "Passed",
                 "Your website correctly rejects outdated and insecure connection methods.",
                 "TLS 1.2+ Only",
-                owasp="A02: Cryptographic Failures",
+                owasp="Not Mapped",
                 category="encryption_tls",
                 impact="This protects your visitors by ensuring they only connect using modern, strong security standards."
             ))

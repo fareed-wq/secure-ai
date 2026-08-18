@@ -35,7 +35,7 @@ class TechFingerprintModule(ScannerModule):
                         impact="Hackers can easily look up the exact version of your server to find known security flaws and launch a targeted attack against your website.",
                         confidence="High",
                         remediation="Configure server to return generic names and omit version numbers.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="information_exposure"
                     ))
                 else:
@@ -46,7 +46,7 @@ class TechFingerprintModule(ScannerModule):
                         "\\n".join(exposed_tech),
                         impact="Hackers can use this information to better understand your systems and plan potential attacks.",
                         remediation="Configure server to return generic names or remove headers.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="information_exposure"
                     ))
 
@@ -155,7 +155,7 @@ class PermissionsPolicyModule(ScannerModule):
                         "Header not found in response",
                         impact="If your website gets hacked, the attackers could secretly turn on the visitors' cameras or track their location.",
                         remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="http_headers"
                     ))
             else:
@@ -186,7 +186,7 @@ class PermissionsPolicyModule(ScannerModule):
                         "Passed",
                         "Your website has clear rules that restrict the use of sensitive browser features.",
                         policy_str[:100],
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="http_headers"
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):

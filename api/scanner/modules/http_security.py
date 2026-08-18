@@ -330,33 +330,33 @@ class SRIScriptParser(HTMLParser):
             self.base_domain = self.target_netloc[4:]
         else:
             self.base_domain = self.target_netloc
-            
+
         self.third_party_scripts = []
-        
+
     def _is_third_party(self, src: str) -> bool:
         if not src.startswith("http://") and not src.startswith("https://") and not src.startswith("//"):
             return False
-            
+
         if src.startswith("//"):
             src = "https:" + src
-            
+
         parsed = urlparse(src)
         netloc = parsed.netloc.lower()
-        
+
         if not netloc or netloc == self.target_netloc:
             return False
-            
+
         # Check if it's a subdomain of the target (e.g., assets.example.com vs example.com)
         if netloc.endswith("." + self.base_domain) or netloc == self.base_domain:
             return False
-            
+
         return True
 
     def handle_starttag(self, tag, attrs):
         if tag.lower() == "script":
             attr_dict = {k.lower(): v for k, v in attrs if k and v}
             src = attr_dict.get("src", "").strip()
-            
+
             if src and self._is_third_party(src):
                 self.third_party_scripts.append({
                     "src": src,
@@ -431,7 +431,7 @@ class SecurityHeadersModule(ScannerModule):
                             "Your website is correctly using HSTS to force visitors to use secure connections.",
                             hsts,
                             impact="Your visitors are protected from connection downgrade attacks.",
-                            owasp="A02: Cryptographic Failures",
+                            owasp="Not Mapped",
                             category="encryption_tls"
                         ))
                 except Exception:
@@ -450,7 +450,7 @@ class SecurityHeadersModule(ScannerModule):
                         csp_ro,
                         impact="Because the policy is not enforced, hackers can still exploit vulnerabilities. Report-Only should be used for testing before enabling full enforcement.",
                         remediation="Once testing is complete, change the header to 'Content-Security-Policy' to enforce the rules.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="http_headers"
                     ))
 
@@ -508,7 +508,7 @@ class SecurityHeadersModule(ScannerModule):
                         "Informational",
                         "Your website enforces a CSP but also uses a Report-Only CSP, likely for testing new rules.",
                         csp_ro,
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="http_headers"
                     ))
 
@@ -544,7 +544,7 @@ class SecurityHeadersModule(ScannerModule):
                         "Your website has a strong Content Security Policy (CSP) in place.",
                         csp,
                         impact="Your website is well-protected against malicious script injection attacks.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="http_headers"
                     ))
 
@@ -598,7 +598,7 @@ class SecurityHeadersModule(ScannerModule):
                 "Header not found in response",
                 impact="Although rare today, outdated plugins could be tricked into stealing data from your website.",
                 remediation="Set the X-Permitted-Cross-Domain-Policies header to 'none' to prevent Flash/PDF cross-domain data loading.",
-                owasp="A05: Security Misconfiguration",
+                owasp="Not Mapped",
                 category="http_headers"
             ))
 
@@ -610,7 +610,7 @@ class SecurityHeadersModule(ScannerModule):
                 "Header not found in response",
                 impact="This could slightly leak visitors' browsing habits to external network monitors, though the risk is very low.",
                 remediation="Set X-DNS-Prefetch-Control: off to prevent browsers from performing DNS lookups for external links on the page.",
-                owasp="A05: Security Misconfiguration",
+                owasp="Not Mapped",
                 category="http_headers"
             ))
 
@@ -634,7 +634,7 @@ class SecurityHeadersModule(ScannerModule):
                 "Header not found in response",
                 impact="Hackers could upload a malicious script disguised as an image, and the browser might run it, compromising the user's computer.",
                 remediation="Set X-Content-Type-Options: nosniff to prevent browsers from MIME-sniffing the response.",
-                owasp="A05: Security Misconfiguration",
+                owasp="Not Mapped",
                 category="http_headers"
             ))
 
@@ -647,7 +647,7 @@ class SecurityHeadersModule(ScannerModule):
                 "Header not found in response",
                 impact="Sensitive information hidden in your website's web addresses (like secret password reset tokens) could be accidentally leaked to other websites.",
                 remediation="Set Referrer-Policy to 'strict-origin-when-cross-origin' or 'no-referrer' to control URL leakage.",
-                owasp="A05: Security Misconfiguration",
+                owasp="Not Mapped",
                 category="http_headers"
             ))
         else:
@@ -670,7 +670,7 @@ class SecurityHeadersModule(ScannerModule):
                     "Your website correctly controls what web address information is shared when visitors click external links.",
                     referrer,
                     impact="Sensitive information in your web addresses is protected from being leaked to other websites.",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="http_headers"
                 ))
 
@@ -678,7 +678,7 @@ class SecurityHeadersModule(ScannerModule):
         if resp and resp.text:
             parser = SRIScriptParser(url)
             parser.feed(resp.text[:2000000])  # limit size
-            
+
             if parser.third_party_scripts:
                 # 1. Third-Party Script Inventory
                 tp_domains = set()
@@ -686,7 +686,7 @@ class SecurityHeadersModule(ScannerModule):
                     parsed = urlparse(script["src"] if not script["src"].startswith("//") else "https:" + script["src"])
                     if parsed.netloc:
                         tp_domains.add(parsed.netloc)
-                        
+
                 if tp_domains:
                     findings.append(self.make_finding(
                         "Third-Party Script Execution Detected",
@@ -695,20 +695,20 @@ class SecurityHeadersModule(ScannerModule):
                         evidence="\\n".join(sorted(list(tp_domains))),
                         impact="If any of these third parties are compromised, they can execute malicious code on your website.",
                         remediation="Regularly audit third-party dependencies and remove unused external scripts.",
-                        owasp="A00: Informational",
+                        owasp="Not Mapped",
                         category="technology_detection",
                         confidence="High"
                     ))
-                
+
                 missing_sri = []
                 malformed_sri = []
                 missing_co = []
-                
+
                 for script in parser.third_party_scripts:
                     src = script["src"]
                     integrity = script["integrity"]
                     crossorigin = script["crossorigin"].lower()
-                    
+
                     if not integrity:
                         missing_sri.append(src)
                     else:
@@ -721,11 +721,11 @@ class SecurityHeadersModule(ScannerModule):
                                 valid_tokens += 1
                         if valid_tokens == 0:
                             malformed_sri.append(f"{src} (integrity: {integrity})")
-                        
+
                         # 4. Cross-Origin Indicator
                         if crossorigin not in ("anonymous", "use-credentials"):
                             missing_co.append(src)
-                            
+
                 # 2. Missing SRI
                 if missing_sri:
                     findings.append(self.make_finding(
@@ -739,7 +739,7 @@ class SecurityHeadersModule(ScannerModule):
                         category="http_headers",
                         confidence="High"
                     ))
-                    
+
                 if malformed_sri:
                     findings.append(self.make_finding(
                         "Malformed Subresource Integrity (SRI) Attribute",
@@ -752,7 +752,7 @@ class SecurityHeadersModule(ScannerModule):
                         category="http_headers",
                         confidence="High"
                     ))
-                    
+
                 if missing_co:
                     findings.append(self.make_finding(
                         "Missing Cross-Origin Attribute for SRI Verification",
@@ -791,7 +791,7 @@ class SecurityHeadersModule(ScannerModule):
                 "We could not detect a Web Application Firewall (WAF) or speed limit (rate-limiting) protecting your website.",
                 "WAF/CDN headers absent",
                 impact="Your website is more vulnerable to automated attacks, such as hackers guessing passwords very quickly or crashing your site by flooding it with traffic.",
-                owasp="A05: Security Misconfiguration",
+                owasp="Not Mapped",
                                 category="http_headers"
             ))
         elif waf_found:
@@ -862,7 +862,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         "Header not found in response",
                         impact="Malicious websites that open your site in a pop-up might be able to spy on what your users are doing.",
                         remediation="Set Cross-Origin-Opener-Policy: same-origin to isolate your browsing context from cross-origin popups.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="http_headers"
                     ))
                 if "Cross-Origin-Embedder-Policy" in missing:
@@ -873,7 +873,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         "Header not found in response",
                         impact="Your website might accidentally load malicious files from other sites, putting your visitors at risk.",
                         remediation="Set Cross-Origin-Embedder-Policy: require-corp to prevent loading cross-origin resources without explicit permission.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="http_headers"
                     ))
                 if "Cross-Origin-Resource-Policy" in missing:
@@ -884,7 +884,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         "Header not found in response",
                         impact="Other malicious websites could embed your private images or resources and try to steal information from your logged-in users.",
                         remediation="Set Cross-Origin-Resource-Policy: same-origin to prevent other sites from embedding your resources.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="http_headers"
                     ))
 
@@ -907,7 +907,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                 f"The scanner could not complete this check because the target connection failed: {e}",
                 "Network request failed",
                 confidence="High",
-                owasp="A00: N/A",
+                owasp="Not Mapped",
                 category="http_headers",
                 impact="Unable to assess due to connection failure."
             ))

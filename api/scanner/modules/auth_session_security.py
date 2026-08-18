@@ -25,7 +25,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
     def is_auth_related(self, text: str) -> bool:
         lower_text = text.lower()
         return any(re.search(r'\b' + re.escape(k) + r'\b', lower_text) for k in self.AUTH_KEYWORDS)
-        
+
     def extract_forms(self, html: str) -> List[str]:
         return self.FORM_PATTERN.findall(html)
 
@@ -38,9 +38,9 @@ class AuthenticationSessionSecurityModule(ScannerModule):
             resp = safe_request("GET", url, session=session, timeout=(1.5, 3.5))
             if not resp:
                 return findings
-                
+
             headers = resp.headers if resp else {}
-            
+
             # WWW-Authenticate Intelligence
             www_auth = self.get_header_safe(resp, "WWW-Authenticate")
             if www_auth:
@@ -49,7 +49,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     "Informational",
                     description="Your server publicly announces the exact method it uses to verify user logins.",
                     evidence=www_auth,
-                    owasp="A07: Identification and Authentication Failures",
+                    owasp="Not Mapped",
                     category="authentication",
                     impact="This information helps hackers understand how to target your login systems more effectively."
                 ))
@@ -70,11 +70,11 @@ class AuthenticationSessionSecurityModule(ScannerModule):
             cache_control = self.get_header_safe(resp, "Cache-Control", "")
             cache_lower = cache_control.lower()
             is_highly_sensitive = self.is_auth_related(url) or self.is_auth_related(resp.text)
-            
+
             if is_highly_sensitive:
                 is_vuln = False
                 severity = "Medium"
-                
+
                 if not cache_control:
                     is_vuln = True
                 elif "no-store" in cache_lower or "private" in cache_lower:
@@ -88,7 +88,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         # Positive max-age or s-maxage with public is risky for auth
                         is_vuln = True
                         severity = "Medium"
-                        
+
                 if is_vuln:
                     findings.append(self.make_finding(
                         "Authentication Response May Be Publicly Cacheable",
@@ -116,7 +116,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     ))
 
                 is_publicly_cacheable = is_vuln or (cache_lower and "max-age" in cache_lower and "max-age=0" not in cache_lower and "no-store" not in cache_lower and "private" not in cache_lower)
-                
+
                 cdn_headers = ["CDN-Cache-Control", "Cloudflare-CDN-Cache-Control"]
                 for ch in cdn_headers:
                     val = self.get_header_safe(resp, ch).lower()
@@ -159,7 +159,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             description="A sensitive response restricts caching but exposes revalidation headers which could be used to track authenticated sessions.",
                             evidence=evidence,
                             remediation="Remove ETag and Last-Modified headers from highly sensitive, non-cacheable API or auth endpoints.",
-                            owasp="A05: Security Misconfiguration",
+                            owasp="Not Mapped",
                             category="http_headers",
                             impact="Even without caching the content, browsers may send these values back, potentially allowing cross-session tracking."
                         ))
@@ -176,7 +176,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     "Informational",
                     description="Your website publicly reveals the specific software it uses to keep users logged in.",
                     evidence=f"Technologies: {', '.join(found_session_techs)}",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="session_cookies",
                     confidence="High",
                     impact="Hackers can use this information to search for specific flaws in that software and launch targeted attacks."
@@ -185,7 +185,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
             # HTML Parsing
             if resp.text:
                 html_lower = resp.text.lower()
-                
+
                 # Password Reset / Account Recovery
                 for rec in self.RECOVERY_KEYWORDS:
                     if rec in html_lower:
@@ -194,13 +194,13 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             "Informational",
                             description="We found a password reset or account recovery page on your website.",
                             evidence=f"Matched reference: {rec}",
-                            owasp="A07: Identification and Authentication Failures",
+                            owasp="Not Mapped",
                             category="authentication",
                             confidence="High",
                             impact="These pages are frequent targets for hackers trying to break into user accounts, so they must be heavily protected."
                         ))
                         break # One finding is enough
-                        
+
                 # PHASE 31: Privileged / Administrative Surface Discovery (HTML Links)
                 privileged_surface_links = set()
                 hrefs = self.HREF_PATTERN.findall(resp.text)
@@ -208,7 +208,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     href_lower = href.lower()
                     if any(href_lower.startswith(kw) or href_lower.startswith(f"http://{hostname}{kw}") or href_lower.startswith(f"https://{hostname}{kw}") for kw in self.PRIVILEGED_HTML_KEYWORDS):
                         privileged_surface_links.add(href)
-                
+
                 # Authentication Technology
                 found_auth_techs = []
                 for atech in self.AUTH_TECHS:
@@ -220,7 +220,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         "Informational",
                         description="Your website shows that it uses external third-party services to handle user logins.",
                         evidence=f"Technologies: {', '.join(found_auth_techs)}",
-                        owasp="A07: Identification and Authentication Failures",
+                        owasp="Not Mapped",
                         category="authentication",
                         confidence="Medium",
                         impact="If these external services have security flaws or are misconfigured, hackers might be able to bypass your login process."
@@ -230,17 +230,17 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                 forms = self.extract_forms(resp.text)
                 for form in forms:
                     inputs = self.extract_inputs(form)
-                    
+
                     is_password_form = any('type="password"' in i.lower() or "type='password'" in i.lower() for i in inputs)
                     action_match = self.ACTION_PATTERN.search(form)
                     method_match = self.METHOD_PATTERN.search(form)
-                    
+
                     action = action_match.group(1) if action_match else ""
                     method = method_match.group(1).upper() if method_match else "GET"
-                    
+
                     if any(action.lower().startswith(kw) for kw in self.PRIVILEGED_HTML_KEYWORDS):
                         privileged_surface_links.add(action)
-                    
+
                     if is_password_form:
                         # Login Form Detection
                         action_truncated = action[:50] + "..." if len(action) > 50 else action
@@ -249,12 +249,12 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             "Informational",
                             description="We found a page where users are asked to enter their passwords.",
                             evidence=f"Action: {action_truncated}, Method: {method}",
-                            owasp="A07: Identification and Authentication Failures",
+                            owasp="Not Mapped",
                             category="authentication",
                             confidence="High",
                             impact="This is the front door to your users' accounts and is a primary target for hackers trying to break in."
                         ))
-                        
+
                         # Password Form Over HTTP
                         if action.lower().startswith("http://"):
                             findings.append(self.make_finding(
@@ -268,7 +268,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                 confidence="High",
                                 impact="Anyone watching the network can read the passwords in plain text and steal user accounts."
                             ))
-                            
+
                         # External Authentication Action
                         if action.startswith("http"):
                             action_domain = urlparse(action).netloc
@@ -278,12 +278,12 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                     "Informational",
                                     description="Your website's login form sends user passwords to a completely different website.",
                                     evidence=f"External Target: {action_domain}",
-                                    owasp="A07: Identification and Authentication Failures",
+                                    owasp="Not Mapped",
                                     category="authentication",
                                     confidence="High",
                                     impact="If this other website is compromised or untrusted, hackers could easily steal all of your users' passwords."
                                 ))
-                                
+
                         # Password Autocomplete Policy
                         for inp in inputs:
                             if 'type="password"' in inp.lower() or "type='password'" in inp.lower():
@@ -293,7 +293,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                         "Informational",
                                         description="Your website explicitly prevents web browsers from saving user passwords.",
                                         evidence="autocomplete='off' present on password field.",
-                                        owasp="A05: Security Misconfiguration",
+                                        owasp="Not Mapped",
                                         category="authentication",
                                         impact="This makes it harder for users to use strong, complex passwords saved in password managers, leading them to choose weaker passwords."
                                     ))
@@ -328,7 +328,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         description="We found hidden links to administrator or restricted areas of your website.",
                         evidence="\\n".join(list(privileged_surface_links)[:10]),
                         confidence="Medium",
-                        owasp="A01: Broken Access Control",
+                        owasp="Not Mapped",
                         category="api_surface",
                         impact="Hackers look for these hidden areas to find ways to take complete control over your website."
                     ))
@@ -344,9 +344,9 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                 f"The scanner could not complete this check because the target connection failed: {e}",
                 "Network request failed",
                 confidence="High",
-                owasp="A00: N/A",
+                owasp="Not Mapped",
                 category="authentication",
                 impact="Unable to assess due to connection failure."
             ))
-            
+
         return findings

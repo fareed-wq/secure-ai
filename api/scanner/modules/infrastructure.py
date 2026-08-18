@@ -64,7 +64,7 @@ class InfrastructureIntelligenceModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         domain = hostname[4:] if hostname.startswith("www.") else hostname
-        
+
         discovered_hostnames = set()
 
         # 1. Certificate SAN Correlation
@@ -83,7 +83,7 @@ class InfrastructureIntelligenceModule(ScannerModule):
                                 if norm_h:
                                     sans.append(norm_h)
                                     discovered_hostnames.add(norm_h)
-                        
+
                         sans = list(set(sans))
                         if len(sans) > 0:
                             total = len(sans)
@@ -100,7 +100,7 @@ class InfrastructureIntelligenceModule(ScannerModule):
                                 impact="This is not a security flaw, but it gives outsiders a view of your web properties, which could help them find less protected sites to target.",
                                 confidence="High",
                                 category="information_exposure",
-                                owasp="A00: Informational"
+                                owasp="Not Mapped"
                             ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             pass
@@ -110,7 +110,7 @@ class InfrastructureIntelligenceModule(ScannerModule):
         # Gather CNAME/A/MX/NS for fingerprinting
         cloud_fingerprints = set()
         cname_targets = []
-        
+
         # NS Records
         try:
             ns_url = f"https://dns.google/resolve?name={domain}&type=NS"
@@ -137,7 +137,7 @@ class InfrastructureIntelligenceModule(ScannerModule):
                         impact="This is not a security flaw. Knowing your DNS provider is public information, but it helps map your infrastructure.",
                         confidence="High",
                         category="technology_detection",
-                        owasp="A00: Informational"
+                        owasp="Not Mapped"
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             pass
@@ -170,7 +170,7 @@ class InfrastructureIntelligenceModule(ScannerModule):
                         impact="This is not a security flaw. Your mail provider is public information, but it helps understand your email setup.",
                         confidence="High",
                         category="technology_detection",
-                        owasp="A00: Informational"
+                        owasp="Not Mapped"
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             pass
@@ -193,7 +193,7 @@ class InfrastructureIntelligenceModule(ScannerModule):
                 pass
             except Exception:
                 pass
-                
+
         # Aggregate Cloud Fingerprinting
         if cloud_fingerprints:
             evidence = "\\n".join(f"Provider: {p[0]} (Indicator: {p[1]})" for p in list(cloud_fingerprints)[:5])
@@ -205,7 +205,7 @@ class InfrastructureIntelligenceModule(ScannerModule):
                 impact="This is not a security flaw, but knowing your hosting provider helps map your infrastructure and could inform targeted attacks.",
                 confidence="High",
                 category="technology_detection",
-                owasp="A00: Informational"
+                owasp="Not Mapped"
             ))
 
         # Dangling Cloud Resource Check
@@ -214,7 +214,7 @@ class InfrastructureIntelligenceModule(ScannerModule):
         for c in cname_targets:
             if any(re.search(p, c) for patterns in self.CLOUD_PROVIDERS.values() for p in patterns):
                 dangling_candidates.append(c)
-                
+
         for cand in dangling_candidates[:3]: # Bounded to max 3
             try:
                 d_url = f"http://{cand}/"

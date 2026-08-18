@@ -19,7 +19,7 @@ class SimpleHTMLResourceParser(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         attr_dict = {k.lower(): v for k, v in attrs if k and v}
-        
+
         # Check subresource URLs
         target_attr = None
         if tag in ["script", "img", "iframe", "embed", "audio", "video", "source"]:
@@ -47,7 +47,7 @@ class MixedContentModule(ScannerModule):
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             if not resp or not resp.text or not url.startswith("https"):
                 return findings
-                
+
             ctype = resp.headers.get("Content-Type", "")
             if "application/json" in ctype or hostname.startswith("api."):
                 return findings
@@ -88,7 +88,7 @@ class MixedContentModule(ScannerModule):
                     "All parts of your website are safely using secure connections.",
                     "Clean HTML subresources",
                     impact="Your visitors are protected from eavesdropping and tampering when loading resources and submitting forms on your page.",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="encryption_tls"
                 ))
 

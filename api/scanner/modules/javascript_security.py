@@ -43,15 +43,15 @@ class JavaScriptSecurityModule(ScannerModule):
         "Bearer Token": re.compile(r'Bearer\s+([A-Za-z0-9._~+/=-]{20,})'),
         "Private RSA Key": re.compile(r'-----BEGIN (?:RSA|EC|DSA|OPENSSH) PRIVATE KEY-----')
     }
-    
+
     # Do not flag generic test values
     TEST_KEYWORDS = ["EXAMPLE", "TEST", "DUMMY", "SAMPLE", "MOCK", "123456", "000000", "AKIAIOSFODNN7EXAMPLE", "PK_LIVE_", "NEXT_PUBLIC_"]
-    
+
     # PUBLIC CLIENT KEYS (Informational)
     PUBLIC_KEY_PATTERNS = {
         "Google / Firebase Client API Key": re.compile(r'\b(AIzaSy[0-9A-Za-z\-_]{35})\b')
     }
-    
+
     # 2. INTERNAL INFRASTRUCTURE PATTERNS
     INTERNAL_HOST_PATTERNS = [
         re.compile(r'https?://(?:[a-zA-Z0-9\-]+\.)*(?:internal|staging|dev|corp)\.[a-zA-Z0-9\-]+\.[a-zA-Z]+(?::\d+)?'),
@@ -97,11 +97,11 @@ class JavaScriptSecurityModule(ScannerModule):
     # API ROUTES
     API_ROUTE_PATTERN = re.compile(r'["\'](/api/v\d+/[a-zA-Z0-9_\-\/\{\}]+|/graphql|/rest/[a-zA-Z0-9_\-\/\{\}]+)[\'"]')
     ABS_API_ROUTE_PATTERN = re.compile(r'["\'](https?://api\.[a-zA-Z0-9\.\-]+/[a-zA-Z0-9_\-\/\{\}]+)[\'"]')
-    
+
     # IDOR / SEQUENTIAL ID
     SEQ_ID_PATTERN = re.compile(r'/(?:users|orders|accounts|customers)/(?:\{[a-zA-Z0-9_]+\}|\d+)')
-    
-    # CONFIG 
+
+    # CONFIG
     DANGEROUS_CONFIG = re.compile(r'["\'](?:accessToken|private_key|client_secret|DB_PASSWORD|password|secret)["\']\s*[:=]\s*["\']([^"\'\s]+)["\']', re.IGNORECASE)
 
     # PHASE 31: AUTHORIZATION & ACCESS CONTROL
@@ -125,14 +125,14 @@ class JavaScriptSecurityModule(ScannerModule):
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             if not resp or not resp.text:
                 return findings
-                
+
             content_type = resp.headers.get("Content-Type", "").lower()
             if "application/json" in content_type:
                 return findings
-                
+
             parser = JSScriptParser()
             parser.feed(resp.text[:self.MAX_READ_BYTES])
-            
+
             # Extract same-origin assets
             target_netloc = urlparse(url).netloc
             script_urls = []
@@ -142,9 +142,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 if parsed.netloc == target_netloc or parsed.netloc == "":
                     if full_url not in script_urls:
                         script_urls.append(full_url)
-                        
+
             script_urls = script_urls[:self.MAX_BUNDLES]
-            
+
             secrets_found = set()
             info_secrets_found = set()
             api_endpoints = set()
@@ -159,38 +159,38 @@ class JavaScriptSecurityModule(ScannerModule):
             privileged_apis = set()
             api_versions = set()
             source_maps = []
-            
+
             map_count = 0
-            
+
             for js_url in script_urls:
                 js_resp = safe_request("GET", js_url, session=session, timeout=(1.5, 2.5))
                 if not js_resp or js_resp.status_code != 200:
                     continue
-                    
+
                 js_text = js_resp.text[:self.MAX_READ_BYTES] if js_resp.text else ""
                 filename = js_url.split('/')[-1].split('?')[0] or "bundle.js"
-                
+
                 # 1. SECRET DETECTION
                 for secret_name, pattern in self.SECRET_PATTERNS.items():
                     for match in pattern.finditer(js_text):
                         raw_match = match.group(1) if len(match.groups()) > 0 else match.group(0)
                         if not self._is_test_value(raw_match):
                             secrets_found.add(f"Pattern: {secret_name} | Location: {filename} | Value: {self._mask_secret(raw_match)}")
-                
+
                 # 1.5 PUBLIC KEY DETECTION
                 for key_name, pattern in self.PUBLIC_KEY_PATTERNS.items():
                     for match in pattern.finditer(js_text):
                         raw_match = match.group(1) if len(match.groups()) > 0 else match.group(0)
                         if not self._is_test_value(raw_match):
                             info_secrets_found.add(f"Pattern: {key_name} | Location: {filename} | Value: {self._mask_secret(raw_match)}")
-                            
+
                 # 2. INTERNAL HOSTS
                 for pattern in self.INTERNAL_HOST_PATTERNS:
                     for match in pattern.finditer(js_text):
                         host = match.group(0)
                         if "example.com" not in host.lower(): # exclude generic
                             internal_hosts.add(host)
-                            
+
                 # 3. DEBUG ARTIFACTS
                 for indicator in self.DEBUG_INDICATORS:
                     if re.search(indicator, js_text):
@@ -200,27 +200,27 @@ class JavaScriptSecurityModule(ScannerModule):
                 for fw_name, pattern in self.FRAMEWORKS.items():
                     if re.search(pattern, js_text):
                         frameworks.add(fw_name)
-                        
+
                 # 5. OUTDATED LIBRARIES
                 for lib_name, pattern in self.LIBRARIES.items():
                     match = pattern.search(js_text)
                     if match:
                         version = match.group(1)
                         outdated_libs.add(f"{lib_name} v{version}")
-                        
+
                 # 6. API ROUTES
                 for match in self.API_ROUTE_PATTERN.finditer(js_text):
                     route = match.group(1)
                     api_endpoints.add(route)
                     if self.SEQ_ID_PATTERN.search(route):
                         seq_id_routes.add(route)
-                        
+
                 for match in self.ABS_API_ROUTE_PATTERN.finditer(js_text):
                     route = match.group(1)
                     api_endpoints.add(route)
                     if self.SEQ_ID_PATTERN.search(route):
                         seq_id_routes.add(route)
-                        
+
                 # 7. DANGEROUS CONFIG
                 for match in self.DANGEROUS_CONFIG.finditer(js_text):
                     val = match.group(1)
@@ -234,15 +234,15 @@ class JavaScriptSecurityModule(ScannerModule):
                     snippet = match.group(0)[:50].strip()
                     if snippet:
                         auth_logic_found.add(snippet)
-                        
+
                 for match in self.ROLE_MODEL_PATTERN.finditer(js_text):
                     snippet = match.group(0)[:80].strip()
                     if snippet:
                         role_models_found.add(snippet)
-                        
+
                 for match in self.PRIVILEGED_API_PATTERN.finditer(js_text):
                     privileged_apis.add(match.group(1))
-                    
+
                 for match in self.API_VERSION_PATTERN.finditer(js_text):
                     api_versions.add(match.group(1).lower())
 
@@ -255,7 +255,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     map_url = js_url.replace(".min.js", ".map")
                 else:
                     map_url = js_url + ".map"
-                    
+
                 if map_url and map_count < self.MAX_MAPS:
                     map_count += 1
                     try:
@@ -264,7 +264,7 @@ class JavaScriptSecurityModule(ScannerModule):
                             m_text = m_resp.text[:self.MAX_READ_BYTES] if m_resp.text else ""
                             if m_text.strip().startswith("{") and ("\"version\"" in m_text or "\"sources\"" in m_text):
                                 source_maps.append(map_url)
-                                
+
                                 # 8a. SENSITIVE CONTENT IN MAP
                                 if "\"sourcesContent\"" in m_text:
                                     for secret_name, pattern in self.SECRET_PATTERNS.items():
@@ -274,8 +274,8 @@ class JavaScriptSecurityModule(ScannerModule):
                                                 secrets_found.add(f"Pattern: {secret_name} | Location: {map_url} (SourceMap) | Value: {self._mask_secret(raw_match)}")
                     except Exception as e:
                         logger.debug("Source map fetch failed: %s", e)
-                        
-            # FRONTEND CONFIG 
+
+            # FRONTEND CONFIG
             if re.search(r'window\.(?:__CONFIG__|ENV|__INITIAL_STATE__|__ENV__|config)\s*=', resp.text):
                 if re.search(r'["\']?(?:debug|env|environment)["\']?\s*:\s*(?:true|["\'](?:development|staging)["\'])', resp.text, re.IGNORECASE) or \
                    re.search(r'(?:\.internal\.|\.staging\.|localhost)', resp.text):
@@ -302,7 +302,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
                 ))
-            
+
             if info_secrets_found:
                 findings.append(self.make_finding(
                     "Client-Side API Key Detected",
@@ -311,10 +311,10 @@ class JavaScriptSecurityModule(ScannerModule):
                     "\\n".join(list(info_secrets_found)[:5]),
                     impact="While this key is meant to be public, if it isn't properly restricted, others could use it on their own websites and run up your bill.",
                     remediation="Ensure public API keys have HTTP Referrer restrictions configured.",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="information_exposure"
                 ))
-                
+
             if internal_hosts:
                 findings.append(self.make_finding(
                     "Internal Infrastructure References Disclosed in Client-Side Code",
@@ -326,7 +326,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
                 ))
-                
+
             if debug_artifacts:
                 findings.append(self.make_finding(
                     "Client-Side Development Artifacts Detected",
@@ -338,7 +338,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
                 ))
-                
+
             if frameworks:
                 findings.append(self.make_finding(
                     "Client-Side Framework Detected",
@@ -348,9 +348,9 @@ class JavaScriptSecurityModule(ScannerModule):
                     impact="Knowing the exact tools you use allows hackers to search for specific flaws related to those tools.",
                     confidence="High",
                     category="technology_detection",
-                    owasp="A00: Informational"
+                    owasp="Not Mapped"
                 ))
-                
+
             if outdated_libs:
                 findings.append(self.make_finding(
                     "Outdated Client-Side JavaScript Library Detected",
@@ -362,7 +362,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     category="technology_detection",
                     owasp="A06: Vulnerable and Outdated Components"
                 ))
-                
+
             if api_endpoints:
                 count = len(api_endpoints)
                 examples = "\\n".join(list(api_endpoints)[:5])
@@ -377,9 +377,9 @@ class JavaScriptSecurityModule(ScannerModule):
                     impact="This provides a complete map of your application for attackers to explore and find hidden vulnerabilities.",
                     confidence="High",
                     category="api_surface",
-                    owasp="A00: Informational"
+                    owasp="Not Mapped"
                 ))
-                
+
             if seq_id_routes:
                 findings.append(self.make_finding(
                     "Sequential Object Identifiers Detected in API Routes (IDOR Risk)",
@@ -391,7 +391,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     category="api_surface",
                     owasp="A01: Broken Access Control"
                 ))
-                
+
             if dangerous_config:
                 findings.append(self.make_finding(
                     "Sensitive Client-Side Configuration Reference Detected",
@@ -423,7 +423,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "The code that checks if a user is an admin or has special permissions is visible in your public website files.",
                     "\\n".join(list(auth_logic_found)[:5]),
                     impact="Hackers can study this code to understand how your security works and try to trick the system into giving them admin access.",
-                    owasp="A01: Broken Access Control",
+                    owasp="Not Mapped",
                     category="authentication",
                     confidence="Medium"
                 ))
@@ -435,7 +435,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "The list of user roles and permissions (like 'admin' or 'editor') is exposed in your website's code.",
                     "\\n".join(list(role_models_found)[:5]),
                     impact="This helps attackers understand exactly what permissions exist, giving them a target list of roles to try and steal.",
-                    owasp="A01: Broken Access Control",
+                    owasp="Not Mapped",
                     category="authentication",
                     confidence="High"
                 ))
@@ -447,11 +447,11 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Paths to restricted administrative areas were found in the public code of your website.",
                     "\\n".join(list(privileged_apis)[:5]),
                     impact="Attackers can use these paths to find your private admin login pages or try to access restricted functions directly.",
-                    owasp="A01: Broken Access Control",
+                    owasp="Not Mapped",
                     category="api_surface",
                     confidence="High"
                 ))
-                
+
             if api_versions:
                 findings.append(self.make_finding(
                     "Versioned API Surface Discovered",
@@ -459,7 +459,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Your website reveals the exact version number of the backend services it communicates with.",
                     f"Versions observed: {', '.join(api_versions)}",
                     impact="Knowing the exact version helps hackers quickly look up known weaknesses for that specific system.",
-                    owasp="A00: Informational",
+                    owasp="Not Mapped",
                     category="api_surface",
                     confidence="High"
                 ))
@@ -469,5 +469,5 @@ class JavaScriptSecurityModule(ScannerModule):
             pass
         except Exception as e:
             logger.debug("JavaScriptSecurityModule failed: %s", e)
-            
+
         return findings

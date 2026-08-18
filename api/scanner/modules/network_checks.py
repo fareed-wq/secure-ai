@@ -75,7 +75,7 @@ class SubdomainTakeoverModule(ScannerModule):
                     "We checked your domain records and found no abandoned cloud resources.",
                     f"[-] DNS & CNAME Audit\n[!] Target: {hostname} -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records.",
                     impact="Your domains are properly managed, preventing hackers from hijacking them to host malicious content.",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="domain_email"
                 ))
                 return findings
@@ -114,7 +114,7 @@ class SubdomainTakeoverModule(ScannerModule):
                         f"Your domain correctly points to an active third-party service.",
                         f"Target: {cname_target}",
                         impact="Properly configured domain records ensure visitors are safely directed to the right place without risk of hijacking.",
-                        owasp="A05: Security Misconfiguration",
+                        owasp="Not Mapped",
                         category="domain_email"
                     ))
             else:
@@ -124,7 +124,7 @@ class SubdomainTakeoverModule(ScannerModule):
                     "We checked your domain records and found no abandoned cloud resources.",
                     f"[-] DNS & CNAME Audit\n[!] Target: {hostname} -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records.",
                     impact="Your domains are properly managed, preventing hackers from hijacking them to host malicious content.",
-                    owasp="A05: Security Misconfiguration",
+                    owasp="Not Mapped",
                     category="domain_email"
                 ))
 
@@ -154,7 +154,7 @@ class TLSCipherStrengthModule(ScannerModule):
                     cipher_info = ssock.cipher()
                     if cipher_info:
                         cipher_name, tls_ver, bit_len = cipher_info[0], cipher_info[1], cipher_info[2]
-                        
+
                         is_weak = any(kw in cipher_name.upper() for kw in self.WEAK_CIPHER_KEYWORDS) or bit_len < 128
                         if is_weak:
                             findings.append(self.make_finding(
@@ -190,7 +190,7 @@ class TLSCipherStrengthModule(ScannerModule):
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"
                 ))
-        
+
         except Exception as e:
             findings.append(self.make_finding(
                 "Deprecated or Weak TLS Cipher Suite Detected",
@@ -208,10 +208,10 @@ class TLSCipherStrengthModule(ScannerModule):
             weak_ctx = ssl.create_default_context()
             weak_ctx.check_hostname = False
             weak_ctx.verify_mode = ssl.CERT_NONE
-            
+
             # Explicitly prevent TLS 1.3 fallback which bypasses legacy cipher suites
             weak_ctx.maximum_version = ssl.TLSVersion.TLSv1_2
-            
+
             weak_ctx.set_ciphers("3DES:RC4:DES:MD5:EXPORT")
 
             weak_supported = False
@@ -247,13 +247,13 @@ class GraphQLIntrospectionModule(ScannerModule):
         findings = []
         base_url = url.rstrip('/')
         paths = ["/graphql", "/api/graphql"]
-        
+
         with ThreadPoolExecutor(max_workers=2) as file_pool:
             futures = {}
             for path in paths:
                 target_url = f"{base_url}{path}?query={{__typename}}"
                 futures[file_pool.submit(safe_request, "GET", target_url, session=session, timeout=(1.5, 2.5))] = target_url
-                
+
             for future in as_completed(futures):
                 try:
                     resp = future.result()
@@ -268,7 +268,7 @@ class GraphQLIntrospectionModule(ScannerModule):
                                     "Your database interface (GraphQL) is publicly answering questions about how it is structured.",
                                     target_url,
                                     impact="Hackers can ask your database for a complete map of all your data fields, making it much easier to find and steal private information.",
-                                    owasp="A05: Security Misconfiguration",
+                                    owasp="Not Mapped",
                                     category="information_exposure"
                                 ))
                                 break
@@ -325,12 +325,12 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
                         name_value = entry.get("name_value", "")
                         if not name_value:
                             continue
-                        
+
                         for raw_name in name_value.splitlines():
                             clean_name = raw_name.lower().strip().strip('.')
                             if clean_name.startswith("*."):
                                 clean_name = clean_name[2:]
-                                
+
                             if clean_name == domain or clean_name.endswith(f".{domain}"):
                                 discovered_subdomains.add(clean_name)
         except Exception as e:
@@ -340,14 +340,14 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
                 "Inconclusive",
                 "We could not verify your domain's certificate transparency logs due to a network timeout with an external service.",
                 "crt.sh connection timed out or failed.",
-                owasp="A00: Informational",
+                owasp="Not Mapped",
                 category="information_exposure"
             ))
 
         if discovered_subdomains:
             sub_list = sorted(list(discovered_subdomains))
             summary_count = len(sub_list)
-            
+
             categories = {
                 "API": 0,
                 "Administrative": 0,
@@ -386,14 +386,14 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
             evidence_str += "Examples:\n"
             preview = "\n- ".join(sub_list[:20])
             evidence_str += f"- {preview}"
-            
+
             finding = self.make_finding(
                 "Subdomains Discovered",
                 "Informational",
                 "We found publicly visible addresses (subdomains) connected to your main website.",
                 evidence_str,
                 impact="Each of these addresses is another potential doorway into your network that hackers might try to break into.",
-                owasp="A05: Security Misconfiguration",
+                owasp="Not Mapped",
                 category="information_exposure"
             )
             finding["metadata"] = {

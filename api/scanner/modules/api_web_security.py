@@ -41,7 +41,7 @@ class ApiWebSecurityModule(ScannerModule):
             if len(resp.history) > 0:
                 first_url = resp.history[0].url
                 final_url = resp.url
-                
+
                 # Check HTTP -> HTTP vs HTTPS -> HTTP
                 if first_url.startswith("https://") and final_url.startswith("http://"):
                     findings.append(self.make_finding(
@@ -55,7 +55,7 @@ class ApiWebSecurityModule(ScannerModule):
                         owasp="A02: Cryptographic Failures",
                         impact="Hackers can intercept this unencrypted traffic to steal sensitive user data like passwords or personal information."
                     ))
-                
+
                 # Excessive redirect chain
                 if len(resp.history) > 5:
                     chain = " -> ".join([h.url for h in resp.history] + [final_url])
@@ -70,7 +70,7 @@ class ApiWebSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         impact="This makes your website load slowly and can make it easier for attackers to hide malicious links from your users."
                     ))
-                    
+
                 # Cross-domain redirect
                 first_domain = urlparse(first_url).hostname
                 final_domain = urlparse(final_url).hostname
@@ -116,7 +116,7 @@ class ApiWebSecurityModule(ScannerModule):
             content_type = self.get_header_safe(resp, "Content-Type", "").lower()
             body = resp.text
             is_json = False
-            
+
             if body and len(body) > 1 and len(body) < 100000:
                 body_stripped = body.strip()
                 if body_stripped.startswith("{") or body_stripped.startswith("["):
@@ -125,7 +125,7 @@ class ApiWebSecurityModule(ScannerModule):
                         is_json = True
                     except Exception:
                         pass
-                        
+
             # Only check mismatch if it's NOT an SPA fallback
             if is_json and not self.is_spa_fallback(resp, 0):
                 if "text/html" in content_type or "text/plain" in content_type:
@@ -175,7 +175,7 @@ class ApiWebSecurityModule(ScannerModule):
                     ))
 
                 is_publicly_cacheable = ("public" in cache_lower or (cache_lower and "max-age" in cache_lower and "max-age=0" not in cache_lower and "no-store" not in cache_lower and "private" not in cache_lower))
-                
+
                 cdn_headers = ["CDN-Cache-Control", "Cloudflare-CDN-Cache-Control"]
                 for ch in cdn_headers:
                     val = self.get_header_safe(resp, ch).lower()
@@ -218,7 +218,7 @@ class ApiWebSecurityModule(ScannerModule):
                             description="A sensitive response restricts caching but exposes revalidation headers which could be used to track authenticated sessions.",
                             evidence=evidence,
                             remediation="Remove ETag and Last-Modified headers from highly sensitive, non-cacheable API or auth endpoints.",
-                            owasp="A05: Security Misconfiguration",
+                            owasp="Not Mapped",
                             category="http_headers",
                             impact="Even without caching the content, browsers may send these values back, potentially allowing cross-session tracking."
                         ))
@@ -254,7 +254,7 @@ class ApiWebSecurityModule(ScannerModule):
                         evidence="\\n".join(list(ws_matches)[:3]),
                         confidence="High",
                         category="information_exposure",
-                        owasp="A00: Informational",
+                        owasp="Not Mapped",
                         impact="If not properly secured, hackers might be able to intercept or send fake messages through this real-time connection."
                     ))
                 elif "new WebSocket(" in body or 'WebSocket("' in body or "WebSocket('" in body:
@@ -265,7 +265,7 @@ class ApiWebSecurityModule(ScannerModule):
                         evidence="new WebSocket(...) observed",
                         confidence="High",
                         category="information_exposure",
-                        owasp="A00: Informational",
+                        owasp="Not Mapped",
                         impact="Without proper security checks, hackers could manipulate this connection to steal data or attack your site."
                     ))
 
@@ -279,7 +279,7 @@ class ApiWebSecurityModule(ScannerModule):
                         evidence="\\n".join(list(ver_matches)[:5]),
                         confidence="High",
                         category="information_exposure",
-                        owasp="A00: Informational",
+                        owasp="Not Mapped",
                         impact="Hackers can look up this exact version to find known security flaws and use them against your website."
                     ))
 
@@ -293,7 +293,7 @@ class ApiWebSecurityModule(ScannerModule):
                         evidence="\\n".join(list(auth_matches)[:5]),
                         confidence="High",
                         category="information_exposure",
-                        owasp="A00: Informational",
+                        owasp="Not Mapped",
                         impact="If left unprotected or hidden weakly, hackers can try to guess passwords and gain control over your website."
                     ))
 
@@ -307,7 +307,7 @@ class ApiWebSecurityModule(ScannerModule):
                         evidence="\\n".join(list(gql_matches)[:3]),
                         confidence="Medium",
                         category="information_exposure",
-                        owasp="A00: Informational",
+                        owasp="Not Mapped",
                         impact="Hackers often target these systems to pull large amounts of sensitive data if they aren't fully locked down."
                     ))
 
@@ -321,10 +321,10 @@ class ApiWebSecurityModule(ScannerModule):
                         evidence="\\n".join(list(doc_matches)[:5]),
                         confidence="High",
                         category="information_exposure",
-                        owasp="A00: Informational",
+                        owasp="Not Mapped",
                         impact="This gives hackers a complete map of how your website works, making it much easier for them to plan an attack."
                     ))
-                    
+
         except requests.exceptions.RequestException:
             pass
         except Exception as e:
@@ -349,7 +349,7 @@ class ApiWebSecurityModule(ScannerModule):
                                 evidence=f"Observed fields: {', '.join(found_fields)}",
                                 confidence="High",
                                 category="information_exposure",
-                                owasp="A00: Informational",
+                                owasp="Not Mapped",
                                 impact="While normally safe, any misconfiguration here could help hackers figure out how to bypass your login system."
                             ))
                     except Exception:
