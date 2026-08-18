@@ -1,11 +1,20 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
+const sanitizeText = (text) => {
+  if (typeof text !== 'string') return text;
+  return text
+    .replace(/[\u2018\u2019]/g, "'") // Smart single quotes
+    .replace(/[\u201C\u201D]/g, '"') // Smart double quotes
+    .replace(/[\u2013\u2014]/g, "-") // En and em dashes
+    .replace(/\u2026/g, "...");      // Ellipsis
+};
+
 export const generateStructuredPdf = (scanData, scanMode, reportMode) => {
   const doc = new jsPDF();
   const url = scanData.target_url || scanData.url || 'Unknown Target';
   const date = new Date(scanData.scan_start || Date.now()).toLocaleString();
-  
+
   // Basic Settings
   const margin = 14;
   let yPos = 20;
@@ -13,21 +22,21 @@ export const generateStructuredPdf = (scanData, scanMode, reportMode) => {
   // Title
   doc.setFontSize(18);
   doc.setTextColor(15, 23, 42); // slate-900
-  doc.text("URLScannerOnline Security Assessment Report", margin, yPos);
-  
+  doc.text(sanitizeText("URLScannerOnline Security Assessment Report"), margin, yPos);
+
   yPos += 10;
   doc.setFontSize(11);
   doc.setTextColor(71, 85, 105); // slate-600
-  doc.text(`Target URL: ${url}`, margin, yPos);
+  doc.text(sanitizeText(`Target URL: ${url}`), margin, yPos);
   yPos += 6;
-  doc.text(`Date: ${date}`, margin, yPos);
+  doc.text(sanitizeText(`Date: ${date}`), margin, yPos);
   yPos += 6;
-  doc.text(`Scan Type: ${scanMode === 'active' ? 'Advanced (Active Security Testing)' : 'Basic (Passive/Read-Only)'}`, margin, yPos);
+  doc.text(sanitizeText(`Scan Type: ${scanMode === 'active' ? 'Advanced' : 'Basic'}`), margin, yPos);
   yPos += 6;
-  doc.text(`Report Type: ${reportMode === 'technical' ? 'Technical' : 'Simple'}`, margin, yPos);
+  doc.text(sanitizeText(`Report Type: ${reportMode === 'technical' ? 'Technical' : 'Simple'}`), margin, yPos);
   yPos += 6;
-  doc.text(`Overall Security Score: ${scanData.score !== undefined ? scanData.score + '/100' : 'N/A'}`, margin, yPos);
-  
+  doc.text(sanitizeText(`Overall Security Score: ${scanData.score !== undefined ? scanData.score + '/100' : 'N/A'}`), margin, yPos);
+
   // Draw Line
   yPos += 10;
   doc.setDrawColor(203, 213, 225); // slate-300
@@ -37,7 +46,7 @@ export const generateStructuredPdf = (scanData, scanMode, reportMode) => {
   // Executive Summary
   doc.setFontSize(14);
   doc.setTextColor(15, 23, 42);
-  doc.text("1. Executive Summary", margin, yPos);
+  doc.text(sanitizeText("1. Executive Summary"), margin, yPos);
   yPos += 8;
 
   doc.setFontSize(10);
@@ -50,30 +59,38 @@ export const generateStructuredPdf = (scanData, scanMode, reportMode) => {
 
   const summaryText = `Scan completed for ${url}. Total checks evaluated: ${totalFindings}.
 High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${lowCount} | Passed: ${passedCount}`;
-  
-  doc.text(doc.splitTextToSize(summaryText, 210 - 2 * margin), margin, yPos);
+
+  doc.text(doc.splitTextToSize(sanitizeText(summaryText), 210 - 2 * margin), margin, yPos);
   yPos += 16;
 
-  const actionItems = (scanData.findings || []).filter(f => f.severity !== 'Passed');
+  let actionItems = (scanData.findings || []).filter(f => f.severity !== 'Passed');
   const passedItems = (scanData.findings || []).filter(f => f.severity === 'Passed');
 
   if (reportMode === 'simple') {
     // SIMPLE REPORT
+
+    // Sort findings for simple report (Critical/High/Medium/Low/Info)
+    const severityOrder = { 'Critical': 1, 'High': 2, 'Medium': 3, 'Low': 4, 'Info': 5 };
+    actionItems.sort((a, b) => (severityOrder[a.severity] || 6) - (severityOrder[b.severity] || 6));
+
+    // Cap to most important 8 findings
+    const topActionItems = actionItems.slice(0, 8);
+
     doc.setFontSize(14);
     doc.setTextColor(15, 23, 42);
-    doc.text("2. Key Risks & Prioritized Recommendations", margin, yPos);
+    doc.text(sanitizeText("2. Key Risks & Prioritized Recommendations"), margin, yPos);
     yPos += 6;
 
-    if (actionItems.length === 0) {
+    if (topActionItems.length === 0) {
       doc.setFontSize(10);
       doc.setTextColor(51, 65, 85);
-      doc.text("No security issues were identified.", margin, yPos);
+      doc.text(sanitizeText("No security issues were identified."), margin, yPos);
       yPos += 10;
     } else {
-      const simpleData = actionItems.map(f => [
-        `[${f.severity.toUpperCase()}] ${f.name}`,
-        f.description || 'No description provided.',
-        f.remediation || 'No remediation provided.'
+      const simpleData = topActionItems.map(f => [
+        sanitizeText(`[${f.severity.toUpperCase()}] ${f.name}`),
+        sanitizeText(f.description || 'No description provided.'),
+        sanitizeText(f.remediation || 'No remediation provided.')
       ]);
 
       autoTable(doc, {
@@ -84,7 +101,9 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
         headStyles: { fillColor: [99, 102, 241] }, // indigo-500
         styles: { fontSize: 9, cellPadding: 4 },
         columnStyles: { 0: { cellWidth: 40 }, 1: { cellWidth: 70 }, 2: { cellWidth: 70 } },
-        margin: { left: margin, right: margin }
+        margin: { left: margin, right: margin },
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid'
       });
       yPos = doc.lastAutoTable.finalY + 10;
     }
@@ -92,23 +111,23 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
     // Passed Checks
     doc.setFontSize(14);
     doc.setTextColor(15, 23, 42);
-    
+
     // Check if we need to page break before passed checks
     if (yPos > 250) {
       doc.addPage();
       yPos = 20;
     }
-    
-    doc.text("3. Important Passed Checks", margin, yPos);
+
+    doc.text(sanitizeText("3. Important Passed Checks"), margin, yPos);
     yPos += 6;
 
     if (passedItems.length === 0) {
       doc.setFontSize(10);
       doc.setTextColor(51, 65, 85);
-      doc.text("No passed checks to report.", margin, yPos);
+      doc.text(sanitizeText("No passed checks to report."), margin, yPos);
       yPos += 10;
     } else {
-      const passedData = passedItems.map(f => [f.name]);
+      const passedData = passedItems.map(f => [sanitizeText(f.name)]);
       autoTable(doc, {
         startY: yPos,
         head: [['Passed Security Checks']],
@@ -116,7 +135,9 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
         theme: 'grid',
         headStyles: { fillColor: [16, 185, 129] }, // emerald-500
         styles: { fontSize: 9, cellPadding: 3 },
-        margin: { left: margin, right: margin }
+        margin: { left: margin, right: margin },
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid'
       });
       yPos = doc.lastAutoTable.finalY + 10;
     }
@@ -125,43 +146,61 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
     // TECHNICAL REPORT
     doc.setFontSize(14);
     doc.setTextColor(15, 23, 42);
-    doc.text("2. Detailed Findings", margin, yPos);
+    doc.text(sanitizeText("2. Detailed Findings"), margin, yPos);
     yPos += 6;
 
     if (actionItems.length === 0) {
       doc.setFontSize(10);
       doc.setTextColor(51, 65, 85);
-      doc.text("No security issues were identified.", margin, yPos);
+      doc.text(sanitizeText("No security issues were identified."), margin, yPos);
       yPos += 10;
     } else {
       actionItems.forEach((f, index) => {
-        const severityColor = f.severity === 'High' ? [239, 68, 68] : f.severity === 'Medium' ? [245, 158, 11] : [99, 102, 241];
-        
-        const findingData = [
-          ['Module/Category', `${f.module || 'N/A'} / ${f.category || 'N/A'}`],
-          ['Description', f.description || 'N/A'],
-          ['OWASP Mapping', f.owasp || 'N/A'],
-          ['Confidence', f.confidence || '100%'],
-          ['Remediation', f.remediation || 'N/A']
-        ];
+        const severityColor = f.severity === 'High' || f.severity === 'Critical' ? [239, 68, 68] : f.severity === 'Medium' ? [245, 158, 11] : [99, 102, 241];
 
-        if (f.evidence) {
-          findingData.push(['Evidence', typeof f.evidence === 'string' ? f.evidence : JSON.stringify(f.evidence, null, 2)]);
+        const findingData = [];
+
+        if (f.module || f.category) {
+          findingData.push(['Module/Category', sanitizeText(`${f.module || 'N/A'} / ${f.category || 'N/A'}`)]);
         }
-        
-        if (f.remediation_snippets) {
-            findingData.push(['Remediation Snippets', JSON.stringify(f.remediation_snippets, null, 2)]);
+
+        if (f.description) {
+          findingData.push(['Description', sanitizeText(f.description)]);
+        }
+
+        if (f.owasp) {
+          findingData.push(['OWASP Mapping', sanitizeText(f.owasp)]);
+        }
+
+        if (f.confidence) {
+          findingData.push(['Confidence', sanitizeText(f.confidence)]);
+        }
+
+        if (f.remediation) {
+          findingData.push(['Remediation', sanitizeText(f.remediation)]);
+        }
+
+        if (f.evidence && Object.keys(f.evidence).length > 0) {
+          const evStr = typeof f.evidence === 'string' ? f.evidence : JSON.stringify(f.evidence, null, 2);
+          findingData.push(['Evidence', sanitizeText(evStr)]);
+        }
+
+        if (f.remediation_snippets && Object.keys(f.remediation_snippets).length > 0) {
+          const rsStr = typeof f.remediation_snippets === 'string' ? f.remediation_snippets : JSON.stringify(f.remediation_snippets, null, 2);
+          findingData.push(['Remediation Snippets', sanitizeText(rsStr)]);
         }
 
         autoTable(doc, {
           startY: yPos,
-          head: [[`Finding ${index + 1}: ${f.name} [${f.severity.toUpperCase()}]`, '']],
+          head: [[sanitizeText(`Finding ${index + 1}: ${f.name} [${f.severity.toUpperCase()}]`), '']],
           body: findingData,
           theme: 'grid',
           headStyles: { fillColor: severityColor },
           styles: { fontSize: 9, cellPadding: 4, overflow: 'linebreak' },
           columnStyles: { 0: { cellWidth: 40, fontStyle: 'bold' } },
-          margin: { left: margin, right: margin }
+          margin: { left: margin, right: margin },
+          pageBreak: 'auto',
+          rowPageBreak: 'avoid'
         });
         yPos = doc.lastAutoTable.finalY + 10;
       });
@@ -170,23 +209,23 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
     // Passed Checks
     doc.setFontSize(14);
     doc.setTextColor(15, 23, 42);
-    
+
     // Check if we need to page break before passed checks
     if (yPos > 250) {
       doc.addPage();
       yPos = 20;
     }
 
-    doc.text("3. Passed Security Checks", margin, yPos);
+    doc.text(sanitizeText("3. Passed Security Checks"), margin, yPos);
     yPos += 6;
 
     if (passedItems.length === 0) {
       doc.setFontSize(10);
       doc.setTextColor(51, 65, 85);
-      doc.text("No passed checks to report.", margin, yPos);
+      doc.text(sanitizeText("No passed checks to report."), margin, yPos);
       yPos += 10;
     } else {
-      const passedData = passedItems.map(f => [f.name, f.module || 'N/A']);
+      const passedData = passedItems.map(f => [sanitizeText(f.name), sanitizeText(f.module || 'N/A')]);
       autoTable(doc, {
         startY: yPos,
         head: [['Passed Check', 'Module']],
@@ -194,7 +233,9 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
         theme: 'grid',
         headStyles: { fillColor: [16, 185, 129] }, // emerald-500
         styles: { fontSize: 9, cellPadding: 3 },
-        margin: { left: margin, right: margin }
+        margin: { left: margin, right: margin },
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid'
       });
       yPos = doc.lastAutoTable.finalY + 10;
     }
@@ -203,23 +244,25 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
     if (scanData.technologies && scanData.technologies.length > 0) {
       doc.setFontSize(14);
       doc.setTextColor(15, 23, 42);
-      
+
       if (yPos > 250) {
         doc.addPage();
         yPos = 20;
       }
 
-      doc.text("4. Technologies Detected", margin, yPos);
+      doc.text(sanitizeText("4. Technologies Detected"), margin, yPos);
       yPos += 6;
 
-      const techData = scanData.technologies.map(t => [t]);
+      const techData = scanData.technologies.map(t => [sanitizeText(t)]);
       autoTable(doc, {
         startY: yPos,
         head: [['Technology']],
         body: techData,
         theme: 'plain',
         styles: { fontSize: 9, cellPadding: 2 },
-        margin: { left: margin, right: margin }
+        margin: { left: margin, right: margin },
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid'
       });
       yPos = doc.lastAutoTable.finalY + 10;
     }
@@ -233,16 +276,16 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
 
   doc.setFontSize(12);
   doc.setTextColor(15, 23, 42);
-  doc.text("Disclaimer & Scope", margin, yPos);
+  doc.text(sanitizeText("Disclaimer & Scope"), margin, yPos);
   yPos += 6;
 
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
-  const disclaimerText = scanMode === 'active' 
-    ? "This report was generated using Active Security Testing, which performs deeper interaction with the target. While findings indicate potential risks based on responses received, this automated scan does not replace a manual penetration test." 
+  const disclaimerText = scanMode === 'active'
+    ? "This report was generated using Active Security Testing, which performs deeper interaction with the target. While findings indicate potential risks based on responses received, this automated scan does not replace a manual penetration test."
     : "This report was generated using Passive Security Assessment, which observes publicly accessible signals without intrusive testing. It is designed to be safe for production environments but may not detect vulnerabilities requiring active exploitation.";
-  
-  doc.text(doc.splitTextToSize(disclaimerText, 210 - 2 * margin), margin, yPos);
+
+  doc.text(doc.splitTextToSize(sanitizeText(disclaimerText), 210 - 2 * margin), margin, yPos);
 
   // Add page numbers
   const pageCount = doc.internal.getNumberOfPages();
@@ -250,11 +293,21 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184); // slate-400
-    doc.text(`Page ${i} of ${pageCount}`, 210 / 2, 297 - 10, { align: 'center' });
+    doc.text(sanitizeText(`Page ${i} of ${pageCount}`), 210 / 2, 297 - 10, { align: 'center' });
   }
 
+  // FILE NAMING: Convert target URL to hostname only
+  let hostname = url;
+  try {
+    hostname = new URL(url.startsWith('http') ? url : 'http://' + url).hostname;
+    hostname = hostname.replace(/^www\./i, '');
+  } catch (e) {
+    // fallback to safeUrl if parsing fails
+  }
+  const safeHostname = hostname.replace(/[^a-z0-9.-]/gi, '_').toLowerCase();
+  const displayScanMode = scanMode === 'active' ? 'advanced' : 'basic';
+  const filename = `${safeHostname}_${displayScanMode}_${reportMode}_report.pdf`;
+
   // Save the PDF
-  const safeUrl = url.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-  const filename = `${safeUrl}_${scanMode}_${reportMode}_report.pdf`;
   doc.save(filename);
 };
