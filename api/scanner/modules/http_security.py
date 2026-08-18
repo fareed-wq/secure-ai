@@ -450,7 +450,7 @@ class SecurityHeadersModule(ScannerModule):
                         csp_ro,
                         impact="Because the policy is not enforced, hackers can still exploit vulnerabilities. Report-Only should be used for testing before enabling full enforcement.",
                         remediation="Once testing is complete, change the header to 'Content-Security-Policy' to enforce the rules.",
-                        owasp="Not Mapped",
+                        owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))
 
