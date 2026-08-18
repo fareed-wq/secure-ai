@@ -108,7 +108,7 @@ function Scanner() {
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-slate-50 selection:bg-indigo-500/30">
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
+
 
 
       {/* Auth Modal */}
