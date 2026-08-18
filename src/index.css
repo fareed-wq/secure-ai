@@ -956,3 +956,52 @@ html.light-theme .technical-compliance-list::marker,
 html.light-theme .technical-compliance-list li::marker {
   color: #64748b !important;
 }
+
+/* ============================================
+   HOME / SCANNER PAGE WALLPAPER
+   ============================================ */
+.scanner-wallpaper {
+  position: relative;
+  isolation: isolate;
+}
+
+.scanner-wallpaper::before,
+.scanner-wallpaper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 1. DARK THEME WALLPAPER */
+html:not(.light-theme) .scanner-wallpaper::before {
+  background-image:
+    linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+    radial-gradient(circle at 30% 20%, rgba(168, 85, 247, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 70% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 40%);
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+}
+
+html:not(.light-theme) .scanner-wallpaper::after {
+  background-image: radial-gradient(circle, rgba(99, 102, 241, 0.2) 1.5px, transparent 1.5px);
+  background-size: 80px 80px;
+  background-position: -0.5px -0.5px;
+}
+
+/* 2. LIGHT THEME WALLPAPER */
+html.light-theme .scanner-wallpaper::before {
+  background-image:
+    linear-gradient(to right, rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+    radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(6, 182, 212, 0.02) 0%, transparent 40%);
+  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+}
+
+html.light-theme .scanner-wallpaper::after {
+  background-image: radial-gradient(circle, rgba(99, 102, 241, 0.06) 1.5px, transparent 1.5px);
+  background-size: 80px 80px;
+  background-position: -0.5px -0.5px;
+}
