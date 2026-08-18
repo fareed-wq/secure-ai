@@ -422,7 +422,7 @@ const TechnicalReport = ({ reportData }) => {
         {activeView === 'compliance' && reportData?.technical_compliance && (
           <div className="w-full max-w-full overflow-hidden">
             <div className="technical-section report-section grid grid-cols-1 gap-6">
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-2xl">
+            <div className="technical-compliance-section bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <ShieldAlert className="w-5 h-5 text-indigo-400" />
                 <h3 className="font-bold text-slate-50 text-lg">Technical Compliance Readiness</h3>
@@ -440,17 +440,17 @@ const TechnicalReport = ({ reportData }) => {
 
                   <div className="space-y-4">
                     <div>
-                      <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
+                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
                         {(reportData?.technical_compliance?.pci_dss_4_0?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.pci_dss_4_0?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {reportData?.technical_compliance?.pci_dss_4_0?.failed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
                       </ul>
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
+                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
                         {(reportData?.technical_compliance?.pci_dss_4_0?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.pci_dss_4_0?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {reportData?.technical_compliance?.pci_dss_4_0?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
                       </ul>
                     </div>
                   </div>
@@ -467,17 +467,17 @@ const TechnicalReport = ({ reportData }) => {
 
                   <div className="space-y-4">
                     <div>
-                      <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
+                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
                         {(reportData?.technical_compliance?.nist_sp_800_53?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.nist_sp_800_53?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {reportData?.technical_compliance?.nist_sp_800_53?.failed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
                       </ul>
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
+                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
                         {(reportData?.technical_compliance?.nist_sp_800_53?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.nist_sp_800_53?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {reportData?.technical_compliance?.nist_sp_800_53?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
                       </ul>
                     </div>
                   </div>
@@ -494,17 +494,17 @@ const TechnicalReport = ({ reportData }) => {
 
                   <div className="space-y-4">
                     <div>
-                      <div className="text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Failed Controls</div>
+                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
                         {(reportData?.technical_compliance?.iso_27001?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.iso_27001?.failed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {reportData?.technical_compliance?.iso_27001?.failed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
                       </ul>
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
-                      <ul className="text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                      <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Passed Controls</div>
+                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
                         {(reportData?.technical_compliance?.iso_27001?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.iso_27001?.passed_controls?.length === 0 && <li className="text-slate-500">None</li>}
+                        {reportData?.technical_compliance?.iso_27001?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
                       </ul>
                     </div>
                   </div>

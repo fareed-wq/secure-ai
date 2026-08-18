@@ -909,3 +909,50 @@ html.light-theme .technical-metadata {
   border-color: #cbd5e1 !important;
   box-shadow: 0 2px 4px rgba(15,23,42,0.04) !important;
 }
+
+/* ============================================
+   TECHNICAL REPORT — COMPLIANCE READINESS
+   ============================================ */
+
+/* 1. COMPLIANCE SECTION CONTAINER */
+html.light-theme .technical-compliance-section {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+html.light-theme .technical-compliance-section .text-slate-50 {
+  color: #0f172a !important;
+}
+
+/* 2. COMPLIANCE CARDS */
+html.light-theme .technical-compliance-card {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 4px rgba(15,23,42,0.04) !important;
+}
+
+/* 3. FAILED & PASSED HEADINGS */
+html.light-theme .technical-compliance-failed-heading {
+  color: #dc2626 !important;
+}
+html.light-theme .technical-compliance-passed-heading {
+  color: #059669 !important;
+}
+
+/* 4. CARD DIVIDERS */
+html.light-theme .technical-compliance-card .border-slate-800 {
+  border-color: #cbd5e1 !important;
+}
+
+/* 5. TYPOGRAPHY */
+html.light-theme .technical-compliance-card h4 {
+  color: #0f172a !important;
+}
+html.light-theme .technical-compliance-list,
+html.light-theme .technical-compliance-list-item-none {
+  color: #475569 !important;
+}
+html.light-theme .technical-compliance-list::marker,
+html.light-theme .technical-compliance-list li::marker {
+  color: #64748b !important;
+}
