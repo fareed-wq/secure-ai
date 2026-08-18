@@ -7,7 +7,9 @@ const sanitizeText = (text) => {
     .replace(/[\u2018\u2019]/g, "'") // Smart single quotes
     .replace(/[\u201C\u201D]/g, '"') // Smart double quotes
     .replace(/[\u2013\u2014]/g, "-") // En and em dashes
-    .replace(/\u2026/g, "...");      // Ellipsis
+    .replace(/\u2026/g, "...")      // Ellipsis
+    .replace(/\uFFFD/g, "")         // Replacement character
+    .replace(/[\u00A0\u200B-\u200F\uFEFF\x00-\x09\x0B-\x1F\x7F-\x9F]/g, " "); // Control characters and non-breaking spaces
 };
 
 export const generateStructuredPdf = (scanData, scanMode, reportMode) => {
@@ -156,6 +158,12 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
       yPos += 10;
     } else {
       actionItems.forEach((f, index) => {
+        // Page break if we are too close to the bottom (reserve ~67 units for header + 1-2 rows)
+        if (yPos > 230) {
+          doc.addPage();
+          yPos = 20;
+        }
+
         const severityColor = f.severity === 'High' || f.severity === 'Critical' ? [239, 68, 68] : f.severity === 'Medium' ? [245, 158, 11] : [99, 102, 241];
 
         const findingData = [];
