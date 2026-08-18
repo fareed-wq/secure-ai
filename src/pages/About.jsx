@@ -144,13 +144,13 @@ const About = () => {
           <h2 className="text-3xl font-bold text-slate-50 mb-8 text-center">Choose the level of testing you need</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800">
-              <h3 className="text-xl font-bold text-indigo-400 mb-3">PASSIVE SECURITY ASSESSMENT</h3>
+              <h3 className="text-xl font-bold text-indigo-400 mb-3">BASIC SCAN</h3>
               <p className="text-slate-400">
                 Designed for low-impact assessment of publicly accessible security signals. It does not attempt to exploit vulnerabilities and is suitable for routine checks and production environments.
               </p>
             </div>
             <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800">
-              <h3 className="text-xl font-bold text-purple-400 mb-3">ACTIVE SECURITY TESTING</h3>
+              <h3 className="text-xl font-bold text-purple-400 mb-3">ADVANCED SCAN</h3>
               <p className="text-slate-400">
                 Performs additional security tests that generate more requests and may have greater impact on the target environment. Use only on systems you own or are authorized to test.
               </p>
