@@ -421,3 +421,220 @@ html.light-theme .faq-card .text-indigo-300 {
 html.light-theme .faq-answer {
   color: #475569 !important;
 }
+
+/* ============================================
+   SIMPLE REPORT — LIGHT THEME ONLY
+   ============================================ */
+
+/* 1. Main Simple Report */
+html.light-theme .simple-report {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* 2. Executive Summary */
+html.light-theme .simple-executive-summary {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+html.light-theme .simple-executive-summary h2 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-executive-summary p {
+  color: #475569 !important;
+}
+
+/* 3. Score / Risk Card */
+html.light-theme .simple-score-card {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .simple-score-card .text-slate-50 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-score-card .text-slate-400 {
+  color: #64748b !important;
+}
+html.light-theme .simple-score-card .text-slate-500 {
+  color: #64748b !important;
+}
+html.light-theme .simple-score-card summary {
+  color: #475569 !important;
+}
+html.light-theme .simple-score-card .bg-slate-950\/50 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+html.light-theme .simple-score-card .bg-slate-800\/30 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* 4. Summary Stat Cards */
+html.light-theme .simple-stat-card {
+  background-color: #ffffff !important;
+}
+html.light-theme .simple-stat-card .text-slate-50 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-stat-card .text-slate-300 {
+  color: #1e293b !important;
+}
+html.light-theme .simple-stat-card .bg-amber-500\/10 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+html.light-theme .simple-stat-card .bg-emerald-500\/10 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+html.light-theme .simple-stat-card .bg-blue-500\/10 {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+html.light-theme .simple-stat-card .bg-slate-500\/10 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+html.light-theme .simple-stat-card .bg-slate-800\/40 {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+/* 5. Target Surface Breakdown */
+html.light-theme .simple-surface-section {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .simple-surface-section h2 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-surface-card {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .simple-surface-card:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+html.light-theme .simple-surface-card .text-slate-50 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-surface-card .text-slate-400 {
+  color: #475569 !important;
+}
+
+/* 6. Website Health Summary */
+html.light-theme .simple-health-section {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .simple-health-section h3 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-health-section .text-slate-300 {
+  color: #1e293b !important;
+}
+html.light-theme .simple-health-section .text-slate-500 {
+  color: #475569 !important;
+}
+html.light-theme .simple-health-section .bg-slate-500\/10 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* 7. Top Priorities */
+html.light-theme .simple-priorities-section {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .simple-priorities-section h3 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-priorities-section p {
+  color: #475569 !important;
+}
+
+/* 8. Findings / Priority Cards */
+html.light-theme .simple-finding-card {
+  background-color: #ffffff !important;
+  border-top-color: #e2e8f0 !important;
+  border-right-color: #e2e8f0 !important;
+  border-bottom-color: #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+html.light-theme .simple-finding-card h4 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-finding-card .text-slate-100 {
+  color: #1e293b !important;
+}
+html.light-theme .simple-finding-card .text-slate-300 {
+  color: #475569 !important;
+}
+html.light-theme .simple-finding-card .bg-slate-800\/80 {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+html.light-theme .simple-finding-card .bg-slate-900\/80 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Risk Variants */
+html.light-theme .simple-risk-high {
+  background-color: #fff1f2 !important;
+  border-left-color: #e11d48 !important;
+}
+html.light-theme .simple-risk-medium {
+  background-color: #fff7ed !important;
+  border-left-color: #ea580c !important;
+}
+html.light-theme .simple-risk-low {
+  background-color: #f8fafc !important;
+  border-left-color: #fbbf24 !important;
+}
+html.light-theme .simple-risk-info {
+  background-color: #eff6ff !important;
+  border-left-color: #3b82f6 !important;
+}
+
+/* 9. All Findings */
+html.light-theme .simple-findings-section h3 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-findings-section p {
+  color: #475569 !important;
+}
+
+/* 10. Passed Checks Section */
+html.light-theme .simple-passed-section {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+html.light-theme .simple-passed-section h3 {
+  color: #064e3b !important;
+}
+html.light-theme .simple-passed-section p {
+  color: #065f46 !important;
+}
+html.light-theme .simple-passed-section h4 {
+  color: #064e3b !important;
+}
+html.light-theme .simple-passed-item {
+  background-color: #ffffff !important;
+  border-color: #a7f3d0 !important;
+}
+html.light-theme .simple-passed-item span {
+  color: #064e3b !important;
+}
+
+/* End */
+html.light-theme .simple-report .text-center h3 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-report .text-center p {
+  color: #475569 !important;
+}

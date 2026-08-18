@@ -65,12 +65,12 @@ const SimpleReport = ({ reportData }) => {
   ];
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8" id="report-content">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="simple-report space-y-8" id="report-content">
 
       {/* 1. Executive Summary & Score */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 text-slate-50 p-6 lg:p-8 rounded-3xl shadow-xl flex flex-col h-fit">
+        <div className="simple-executive-summary lg:col-span-2 bg-slate-900 border border-slate-800 text-slate-50 p-6 lg:p-8 rounded-3xl shadow-xl flex flex-col h-fit">
           <div>
             <h2 className="text-2xl font-black mb-4">Executive Summary</h2>
             <p className="text-xl text-slate-300 leading-relaxed">
@@ -86,7 +86,7 @@ const SimpleReport = ({ reportData }) => {
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 w-full">
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
+            <div className="simple-stat-card bg-amber-500/10 border border-amber-500/30 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
               <div>
                 <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Issues Found</div>
                 <div className="text-4xl font-extrabold tracking-tight mt-2 block text-slate-50">{issues.length}</div>
@@ -106,7 +106,7 @@ const SimpleReport = ({ reportData }) => {
                 </span>
               </div>
             </div>
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
+            <div className="simple-stat-card bg-emerald-500/10 border border-emerald-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
               <div>
                 <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Passed Checks</div>
                 <div className="text-4xl font-extrabold tracking-tight mt-2 block text-emerald-400">{passed.length}</div>
@@ -117,7 +117,7 @@ const SimpleReport = ({ reportData }) => {
                 </span>
               </div>
             </div>
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
+            <div className="simple-stat-card bg-blue-500/10 border border-blue-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
               <div>
                 <div className="text-xs font-bold text-blue-500 uppercase tracking-wider">Informational</div>
                 <div className="text-4xl font-extrabold tracking-tight mt-2 block text-blue-400">{informational.length}</div>
@@ -128,7 +128,7 @@ const SimpleReport = ({ reportData }) => {
                 </span>
               </div>
             </div>
-            <div className="bg-slate-500/10 border border-slate-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
+            <div className="simple-stat-card bg-slate-500/10 border border-slate-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
               <div>
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Inconclusive</div>
                 <div className="text-4xl font-extrabold tracking-tight mt-2 block text-slate-300">{inconclusive.length}</div>
@@ -284,7 +284,7 @@ const SimpleReport = ({ reportData }) => {
           },
         ];
         return (
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-6 backdrop-blur-md shadow-xl">
+          <div className="simple-surface-section rounded-2xl border border-slate-800 bg-slate-950/80 p-6 backdrop-blur-md shadow-xl">
             <div className="flex items-center gap-2.5 mb-6">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                 <span className="relative flex h-2.5 w-2.5">
@@ -298,7 +298,7 @@ const SimpleReport = ({ reportData }) => {
               {surfaceCards.map((card, idx) => {
                 const Icon = card.icon;
                 return (
-                  <div key={idx} className="w-full min-w-0 min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
+                  <div key={idx} className="simple-surface-card w-full min-w-0 min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
                     <div>
                       <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
                         <Icon className={`w-3.5 h-3.5 shrink-0 ${card.iconColor}`} />
@@ -325,7 +325,7 @@ const SimpleReport = ({ reportData }) => {
       })()}
 
       {/* 2. Security Health Bars */}
-      <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl">
+      <div className="simple-health-section bg-slate-900 border border-slate-800 p-8 rounded-3xl">
         <h3 className="text-xl font-bold text-slate-50 mb-6">Website Health Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
           {healthMetrics.map((metric, i) => {
@@ -362,7 +362,7 @@ const SimpleReport = ({ reportData }) => {
 
       {/* 3. Action Checklist (Top Priorities) */}
       {topPriorities.length > 0 && (
-        <div className="bg-amber-950/20 border border-amber-900/50 p-6 md:p-8 rounded-3xl mt-12 mb-12">
+        <div className="simple-priorities-section bg-amber-950/20 border border-amber-900/50 p-6 md:p-8 rounded-3xl mt-12 mb-12">
           <details className="group">
             <summary className="flex items-center gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
               <div className="bg-amber-500/20 p-2.5 md:p-3 rounded-xl text-amber-400 shrink-0">
@@ -398,7 +398,7 @@ const SimpleReport = ({ reportData }) => {
 
       {/* 3.5 All Detected Findings */}
       {issues.length > 0 && (
-        <div className="space-y-6 mt-12">
+        <div className="simple-findings-section space-y-6 mt-12">
           <div className="flex flex-col">
             <h3 className="font-black text-2xl text-slate-50 uppercase tracking-wider text-slate-200">All Detected Findings</h3>
             <p className="text-slate-400 mt-1">A complete list of all identified security issues.</p>
@@ -414,7 +414,7 @@ const SimpleReport = ({ reportData }) => {
 
       {/* 4. Security Strengths (Passed Checks) */}
       {passed.length > 0 && (
-        <div className="bg-emerald-950/20 border border-emerald-900/50 p-6 md:p-8 rounded-3xl mt-12">
+        <div className="simple-passed-section bg-emerald-950/20 border border-emerald-900/50 p-6 md:p-8 rounded-3xl mt-12">
           <details className="group">
             <summary className="flex items-center gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
               <div className="bg-emerald-500/20 p-2.5 md:p-3 rounded-xl text-emerald-400 shrink-0">
@@ -436,7 +436,7 @@ const SimpleReport = ({ reportData }) => {
               <h4 className="text-emerald-400 font-bold mb-4 uppercase tracking-wider text-xs md:text-sm">Passed Security Checks</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
                 {passed.map((item, i) => (
-                  <div key={i} className="flex items-start gap-3 bg-slate-900/40 p-3 rounded-lg border border-emerald-900/20">
+                  <div key={i} className="simple-passed-item flex items-start gap-3 bg-slate-900/40 p-3 rounded-lg border border-emerald-900/20">
                     <Check className="w-4 h-4 md:w-5 md:h-5 text-emerald-500 shrink-0 mt-0.5" />
                     <span className="text-slate-300 text-sm font-medium leading-snug">{item.name}</span>
                   </div>

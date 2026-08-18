@@ -33,10 +33,11 @@ const FindingCard = ({ issue, idx }) => {
   };
 
   return (
-    <div className={`finding-card border-y border-r border-slate-800 rounded-3xl p-8 flex flex-col md:flex-row gap-8 items-start shadow-xl ${
-      issue.severity === 'Critical' || issue.severity === 'High' ? 'border-l-4 border-l-red-500 bg-red-950/10' :
-      issue.severity === 'Medium' ? 'border-l-4 border-l-amber-500 bg-amber-950/10' :
-      'border-l-4 border-l-slate-600 bg-slate-900/40'
+    <div className={`simple-finding-card finding-card border-y border-r border-slate-800 rounded-3xl p-8 flex flex-col md:flex-row gap-8 items-start shadow-xl ${
+      issue.severity === 'Critical' || issue.severity === 'High' ? 'simple-risk-high border-l-4 border-l-red-500 bg-red-950/10' :
+      issue.severity === 'Medium' ? 'simple-risk-medium border-l-4 border-l-amber-500 bg-amber-950/10' :
+      issue.severity === 'Informational' ? 'simple-risk-info border-l-4 border-l-blue-500 bg-blue-900/10' :
+      'simple-risk-low border-l-4 border-l-slate-600 bg-slate-900/40'
     }`}>
       
       <div className="flex-1 space-y-4">

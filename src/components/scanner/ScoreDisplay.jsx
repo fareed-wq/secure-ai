@@ -15,7 +15,7 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
   const hasDeductions = highDeduction > 0 || medDeduction > 0 || lowDeduction > 0;
 
   return (
-    <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-xl flex flex-col items-center justify-between text-center w-full h-full">
+    <div className="simple-score-card bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-xl flex flex-col items-center justify-between text-center w-full h-full">
       <div className="flex flex-col items-center justify-center flex-grow">
         <div className="relative">
           <svg className="w-40 h-40 transform -rotate-90">
