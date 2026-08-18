@@ -9,18 +9,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isRecovery, setIsRecovery] = useState(() => {
-    return localStorage.getItem('supabase_recovery_state') === 'true';
-  });
+  const [isRecovery, setIsRecovery] = useState(false);
   const [isRecoveryValidating, setIsRecoveryValidating] = useState(true);
-
-  useEffect(() => {
-    if (isRecovery) {
-      localStorage.setItem('supabase_recovery_state', 'true');
-    } else {
-      localStorage.removeItem('supabase_recovery_state');
-    }
-  }, [isRecovery]);
 
   useEffect(() => {
     // Check active sessions and sets the user
@@ -28,9 +18,15 @@ export const AuthProvider = ({ children }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      setIsRecoveryValidating(false);
+
+      // Determine if we are actively in a recovery callback flow
+      const url = window.location.href;
+      const isCallback = url.includes('code=') || url.includes('access_token=') || url.includes('error=') || url.includes('error_description=');
+
+      if (!isCallback) {
+        setIsRecoveryValidating(false);
+      }
     }).catch(() => {
-      // Catch errors if mock keys are used
       setLoading(false);
       setIsRecoveryValidating(false);
     });
@@ -39,6 +35,7 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsRecovery(true);
+        setIsRecoveryValidating(false);
       } else if (event === 'SIGNED_OUT') {
         setIsRecovery(false);
       }
@@ -56,6 +53,7 @@ export const AuthProvider = ({ children }) => {
     isRecovery,
     setIsRecovery,
     isRecoveryValidating,
+    setIsRecoveryValidating,
     signOut: () => supabase.auth.signOut(),
   };
 
