@@ -90,13 +90,13 @@ const ScanForm = ({ onScan }) => {
           <div className="flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors">
             <h3 className="text-xs font-bold text-slate-400 mb-3 tracking-widest uppercase">Scan Configuration</h3>
             <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-3 cursor-pointer group">
+              <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${scanMode === 'passive' ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-transparent border-transparent hover:bg-slate-800/50'}`}>
                 <input type="radio" name="scanMode" value="passive" checked={scanMode === 'passive'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />
-                <span className={`text-sm font-medium transition-colors ${scanMode === 'passive' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Basic Scan</span>
+                <span className={`text-sm font-medium transition-colors ${scanMode === 'passive' ? 'text-indigo-300' : 'text-slate-400'}`}>Basic Scan</span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer group">
+              <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${scanMode === 'active' ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-transparent border-transparent hover:bg-slate-800/50'}`}>
                 <input type="radio" name="scanMode" value="active" checked={scanMode === 'active'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />
-                <span className={`text-sm font-medium transition-colors ${scanMode === 'active' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Advanced Scan</span>
+                <span className={`text-sm font-medium transition-colors ${scanMode === 'active' ? 'text-indigo-300' : 'text-slate-400'}`}>Advanced Scan</span>
               </label>
             </div>
           </div>
@@ -104,13 +104,13 @@ const ScanForm = ({ onScan }) => {
           <div className="flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors">
             <h3 className="text-xs font-bold text-slate-400 mb-3 tracking-widest uppercase">Report Style</h3>
             <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-3 cursor-pointer group">
+              <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${reportMode === 'simple' ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-transparent border-transparent hover:bg-slate-800/50'}`}>
                 <input type="radio" name="reportMode" value="simple" checked={reportMode === 'simple'} onChange={(e) => setReportMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />
-                <span className={`text-sm font-medium transition-colors ${reportMode === 'simple' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Simple</span>
+                <span className={`text-sm font-medium transition-colors ${reportMode === 'simple' ? 'text-indigo-300' : 'text-slate-400'}`}>Simple</span>
               </label>
-              <label className="flex items-center gap-3 cursor-pointer group">
+              <label className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-all ${reportMode === 'technical' ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-transparent border-transparent hover:bg-slate-800/50'}`}>
                 <input type="radio" name="reportMode" value="technical" checked={reportMode === 'technical'} onChange={(e) => setReportMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />
-                <span className={`text-sm font-medium transition-colors ${reportMode === 'technical' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Technical</span>
+                <span className={`text-sm font-medium transition-colors ${reportMode === 'technical' ? 'text-indigo-300' : 'text-slate-400'}`}>Technical</span>
               </label>
             </div>
           </div>
