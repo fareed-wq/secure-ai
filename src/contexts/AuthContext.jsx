@@ -9,7 +9,17 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isRecovery, setIsRecovery] = useState(false);
+  const [isRecovery, setIsRecovery] = useState(() => {
+    return localStorage.getItem('supabase_recovery_state') === 'true';
+  });
+
+  useEffect(() => {
+    if (isRecovery) {
+      localStorage.setItem('supabase_recovery_state', 'true');
+    } else {
+      localStorage.removeItem('supabase_recovery_state');
+    }
+  }, [isRecovery]);
 
   useEffect(() => {
     // Check active sessions and sets the user

@@ -1,6 +1,6 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Analytics } from '@vercel/analytics/react';
 import SaaSLayout from './components/layout/SaaSLayout';
 import RootLayout from './components/layout/RootLayout';
@@ -33,12 +33,32 @@ const PlaceholderPage = ({ title }) => (
   </div>
 );
 
+const RecoveryGuard = ({ children }) => {
+  const { isRecovery, setIsRecovery, signOut } = useAuth();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    // If user is in a recovery session but navigates to a public page,
+    // cancel the recovery session and sign them out.
+    // We exclude protected SaaS routes because SaaSLayout already forces them back to /reset-password.
+    const protectedRoutes = ['/dashboard', '/history', '/reports', '/compare', '/settings'];
+    const isProtected = protectedRoutes.some(route => location.pathname.startsWith(route));
+
+    if (isRecovery && location.pathname !== '/reset-password' && !isProtected) {
+      signOut().then(() => setIsRecovery(false));
+    }
+  }, [location.pathname, isRecovery, signOut, setIsRecovery]);
+
+  return children;
+};
+
 const App = () => {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-          {/* Public Routes with Sidebar */}
+        <RecoveryGuard>
+          <Routes>
+            {/* Public Routes with Sidebar */}
           <Route element={<RootLayout />}>
             <Route path="/" element={<Scanner />} />
             <Route path="/services" element={<Services />} />
@@ -74,7 +94,8 @@ const App = () => {
 
           {/* Redirect root to dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
+          </Routes>
+        </RecoveryGuard>
       </BrowserRouter>
       <Analytics />
     </AuthProvider>

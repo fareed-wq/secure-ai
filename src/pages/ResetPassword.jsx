@@ -22,10 +22,15 @@ const ResetPassword = () => {
   useEffect(() => {
     // Check if Supabase already appended an expiration/invalid error to the URL
     const hasError = location.hash.includes('error=') || location.search.includes('error=');
-    if (hasError) {
+
+    if (isRecoverySession) {
+      // Clear any stale errors (e.g. from a previous failed attempt on the same page)
+      // once a valid recovery session is established.
+      setError(null);
+    } else if (hasError) {
       setError("Your reset link has expired or is invalid. Please request a new one.");
     }
-  }, [location]);
+  }, [location, isRecoverySession]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
