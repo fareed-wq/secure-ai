@@ -9,7 +9,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
       {/* Left: Info */}
       <div className="flex-1">
         <h2 className="text-2xl font-bold mb-1 text-slate-50">Live Security Posture Report</h2>
-        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
           <span className="flex items-center gap-2"><Globe className="w-4 h-4"/> {url}</span>
           <span className="opacity-50">•</span>
           <span>Scanned on {new Date(timestamp || Date.now()).toLocaleString()}</span>
@@ -17,13 +17,13 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
       </div>
 
       {/* Middle: Mode Toggle */}
-      <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 print:hidden">
+      <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 print:hidden">
         <button
           onClick={() => onToggleMode('simple')}
           className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-            activeMode === 'simple' 
-              ? 'bg-emerald-500/20 text-emerald-400 shadow' 
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+            activeMode === 'simple'
+              ? 'bg-emerald-500/20 text-emerald-400 shadow'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-200 hover:bg-slate-100 dark:bg-slate-800'
           }`}
         >
           Simple
@@ -31,9 +31,9 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
         <button
           onClick={() => onToggleMode('technical')}
           className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-            activeMode === 'technical' 
-              ? 'bg-blue-500/20 text-blue-400 shadow' 
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+            activeMode === 'technical'
+              ? 'bg-blue-500/20 text-blue-400 shadow'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-200 hover:bg-slate-100 dark:bg-slate-800'
           }`}
         >
           Technical
@@ -43,24 +43,24 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
       {/* Right: Actions & Score */}
       <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
         <div className="flex gap-2 print:hidden">
-          <button 
+          <button
             onClick={onExportPdf}
             title="Export PDF"
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
+            className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
           >
             <Download className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={() => onRequireAuth('save reports to your dashboard')}
             title="Save to Dashboard"
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
+            className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
           >
             <Bookmark className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={() => onRequireAuth('share public links')}
             title="Share Public Link"
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
+            className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
           >
             <Share2 className="w-4 h-4" />
           </button>
@@ -69,23 +69,23 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
         <div className={`flex items-center gap-2.5 px-4 py-2.5 bg-slate-900/90 border rounded-xl backdrop-blur-md shadow-lg ${
           isWafBlocked
             ? 'border-slate-500/30'
-            : score >= 90 ? 'border-emerald-500/30' 
+            : score >= 90 ? 'border-emerald-500/30'
             : score >= 80 ? 'border-teal-500/30'
             : score >= 70 ? 'border-amber-500/30'
             : score >= 60 ? 'border-orange-500/30'
             : 'border-rose-500/30'
         }`}>
           <div className="flex flex-col text-right">
-            <span className="text-[10px] font-bold font-mono tracking-wider text-slate-400 uppercase">SCORE</span>
+            <span className="text-[10px] font-bold font-mono tracking-wider text-slate-500 dark:text-slate-400 uppercase">SCORE</span>
             {isWafBlocked ? (
-              <span className="text-xl font-extrabold font-mono leading-none text-slate-400">N/A</span>
+              <span className="text-xl font-extrabold font-mono leading-none text-slate-500 dark:text-slate-400">N/A</span>
             ) : (
               <span className={`text-xl font-extrabold font-mono leading-none ${
                  score >= 90 ? 'text-emerald-400' :
                  score >= 80 ? 'text-teal-400' :
                  score >= 70 ? 'text-amber-400' :
                  score >= 60 ? 'text-orange-400' : 'text-rose-400'
-              }`}>{score}<span className="text-sm font-normal text-slate-400">/100</span></span>
+              }`}>{score}<span className="text-sm font-normal text-slate-500 dark:text-slate-400">/100</span></span>
             )}
           </div>
         </div>
