@@ -18,9 +18,6 @@ export default function WhatsAppWidget() {
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
   };
 
-  const openEmail = () => {
-    window.location.href = "mailto:contact@urlscanonline.com";
-  };
 
   return (
     <div className="fixed bottom-6 right-6 z-[100] font-sans">
@@ -73,12 +70,6 @@ export default function WhatsAppWidget() {
                 className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-medium py-3 rounded-full transition-colors flex justify-center items-center gap-2"
               >
                 Open WhatsApp Chat
-              </button>
-              <button
-                onClick={openEmail}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-full transition-colors flex justify-center items-center"
-              >
-                Email Support
               </button>
             </div>
           </motion.div>
