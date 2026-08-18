@@ -87,30 +87,30 @@ const ScanForm = ({ onScan }) => {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full mt-4 text-left">
-          <div className="flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
-            <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">Scan Type</h3>
+          <div className="flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors">
+            <h3 className="text-xs font-bold text-slate-400 mb-3 tracking-widest uppercase">Scan Configuration</h3>
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-3 cursor-pointer group">
-                <input type="radio" name="scanMode" value="passive" checked={scanMode === 'passive'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900" />
-                <span className={`text-sm font-medium ${scanMode === 'passive' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Basic</span>
+                <input type="radio" name="scanMode" value="passive" checked={scanMode === 'passive'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />
+                <span className={`text-sm font-medium transition-colors ${scanMode === 'passive' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Basic Scan</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer group">
-                <input type="radio" name="scanMode" value="active" checked={scanMode === 'active'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900" />
-                <span className={`text-sm font-medium ${scanMode === 'active' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Advanced</span>
+                <input type="radio" name="scanMode" value="active" checked={scanMode === 'active'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />
+                <span className={`text-sm font-medium transition-colors ${scanMode === 'active' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Advanced Scan</span>
               </label>
             </div>
           </div>
 
-          <div className="flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
-            <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">Report Type</h3>
+          <div className="flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors">
+            <h3 className="text-xs font-bold text-slate-400 mb-3 tracking-widest uppercase">Report Style</h3>
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-3 cursor-pointer group">
-                <input type="radio" name="reportMode" value="simple" checked={reportMode === 'simple'} onChange={(e) => setReportMode(e.target.value)} className="w-4 h-4 text-emerald-500 bg-slate-800 border-slate-600 focus:ring-emerald-500 focus:ring-offset-slate-900" />
-                <span className={`text-sm font-medium ${reportMode === 'simple' ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Simple</span>
+                <input type="radio" name="reportMode" value="simple" checked={reportMode === 'simple'} onChange={(e) => setReportMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />
+                <span className={`text-sm font-medium transition-colors ${reportMode === 'simple' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Simple</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer group">
-                <input type="radio" name="reportMode" value="technical" checked={reportMode === 'technical'} onChange={(e) => setReportMode(e.target.value)} className="w-4 h-4 text-emerald-500 bg-slate-800 border-slate-600 focus:ring-emerald-500 focus:ring-offset-slate-900" />
-                <span className={`text-sm font-medium ${reportMode === 'technical' ? 'text-emerald-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Technical</span>
+                <input type="radio" name="reportMode" value="technical" checked={reportMode === 'technical'} onChange={(e) => setReportMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />
+                <span className={`text-sm font-medium transition-colors ${reportMode === 'technical' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Technical</span>
               </label>
             </div>
           </div>
