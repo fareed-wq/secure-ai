@@ -1,7 +1,27 @@
-import React from 'react';
-import { ShieldCheck, AlertOctagon, Check, X, Shield } from 'lucide-react';
+import React, { useState } from 'react';
+import { ShieldCheck, AlertOctagon, Check, X, Shield, ChevronDown } from 'lucide-react';
+
+const faqs = [
+  {
+    question: "Do you need access to my systems?",
+    answer: "No. URLScannerOnline only needs your public website URL—no passwords, admin access, or credentials.\nDeeper testing requires your explicit approval and separate access."
+  },
+  {
+    question: "Is this legal and safe for my site?",
+    answer: "Yes, when you scan a website you own or are authorized to assess.\nOur passive checks are read-only and designed to minimize impact on live systems."
+  },
+  {
+    question: "What happens after I submit?",
+    answer: "We analyze the website using automated security checks and generate a clear report.\nYou’ll see detected risks, severity levels, and recommended remediation steps."
+  },
+  {
+    question: "Who is this for?",
+    answer: "It’s designed for website owners, developers, businesses, and security teams.\nIt’s especially useful for anyone who wants a quick security overview without intrusive testing."
+  }
+];
 
 const SafetyComparison = () => {
+  const [openFaq, setOpenFaq] = useState(null);
   return (
     <div className="w-full mt-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
       <div className="text-center mb-8">
@@ -118,6 +138,38 @@ const SafetyComparison = () => {
               </div>
             </li>
           </ul>
+        </div>
+      </div>
+
+      {/* FAQ Section */}
+      <div className="max-w-3xl mx-auto mt-16 text-left animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
+        <h3 className="text-xl md:text-2xl font-bold text-slate-200 mb-6 text-center">Frequently Asked Questions</h3>
+        <div className="space-y-4">
+          {faqs.map((faq, index) => (
+            <div key={index} className="bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors rounded-xl overflow-hidden">
+              <button
+                onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                className="w-full flex items-center justify-between p-5 md:p-6 text-left focus:outline-none"
+              >
+                <span className="font-semibold text-slate-200 text-sm md:text-base pr-4">{faq.question}</span>
+                <div className={`text-slate-400 shrink-0 transition-transform duration-300 ${openFaq === index ? 'rotate-180' : ''}`}>
+                  <ChevronDown size={20} />
+                </div>
+              </button>
+              <div
+                className={`transition-all duration-300 ease-in-out ${openFaq === index ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}
+              >
+                <div className="p-5 md:p-6 pt-0 text-slate-400 text-sm md:text-base leading-relaxed">
+                  {faq.answer.split('\n').map((line, i) => (
+                    <React.Fragment key={i}>
+                      {line}
+                      {i !== faq.answer.split('\n').length - 1 && <br />}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
