@@ -102,7 +102,7 @@ const ResetPassword = () => {
           Set New Password
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400">
-          {isRecoverySession ? (
+          {isRecovery ? (
             <>Resetting password for <span className="font-medium text-slate-200">{recoveryEmail}</span></>
           ) : (
             'Validating secure reset link...'
@@ -113,7 +113,7 @@ const ResetPassword = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-slate-900 py-8 px-4 shadow-xl shadow-black/50 sm:rounded-2xl sm:px-10 border border-slate-800">
           <form className="space-y-6" onSubmit={handleUpdate}>
-            {!isRecoverySession && (
+            {!isRecovery && (
               <div className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm p-3 rounded-lg">
                 A valid recovery link is required to reset your password. Please click the link in your email.
               </div>
@@ -169,7 +169,7 @@ const ResetPassword = () => {
             <div>
               <button
                 type="submit"
-                disabled={loading || !isRecoverySession || !password || !validatePassword(password).isValid || password !== confirmPassword}
+                disabled={loading || !isRecovery || !password || !validatePassword(password).isValid || password !== confirmPassword}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Update Password'}
