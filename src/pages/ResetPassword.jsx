@@ -13,73 +13,25 @@ const ResetPassword = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  const { session, isRecovery, setIsRecovery, isRecoveryValidating, setIsRecoveryValidating } = useAuth();
-  const isRecoverySession = isRecovery;
+  const { session, isRecovery, setIsRecovery, isRecoveryValidating } = useAuth();
   const recoveryEmail = isRecovery && session?.user?.email ? session.user.email : '';
   const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    const handleExchange = async () => {
-      const searchParams = new URLSearchParams(location.search);
-      const hashParams = new URLSearchParams(location.hash.substring(1));
-
-      const code = searchParams.get('code');
-      const errorDesc = searchParams.get('error_description') || hashParams.get('error_description') || searchParams.get('error') || hashParams.get('error');
-
-      if (errorDesc) {
-        setError(decodeURIComponent(errorDesc.replace(/\+/g, ' ')));
-        window.history.replaceState({}, document.title, location.pathname);
-        setIsRecoveryValidating(false);
-        return;
-      }
-
-      if (code) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        if (exchangeError) {
-          setError(exchangeError.message);
-        } else {
-          setIsRecovery(true);
-          setError(null);
-        }
-        window.history.replaceState({}, document.title, location.pathname);
-        setIsRecoveryValidating(false);
-      } else if (hashParams.get('access_token') && hashParams.get('type') === 'recovery') {
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: hashParams.get('access_token'),
-          refresh_token: hashParams.get('refresh_token')
-        });
-        if (sessionError) {
-          setError(sessionError.message);
-        } else {
-          setIsRecovery(true);
-          setError(null);
-        }
-        window.history.replaceState({}, document.title, location.pathname);
-        setIsRecoveryValidating(false);
-      }
-    };
-
-    handleExchange();
-  }, [location, setIsRecovery, setIsRecoveryValidating]);
 
   useEffect(() => {
     if (isRecoveryValidating) {
       return; // Do not redirect while recovery state is still being determined
     }
 
-    if (isRecoverySession) {
-      // Clear any stale errors once a valid recovery session is established.
+    if (isRecovery) {
       setError(null);
-    } else if (!success && !error) {
-      // If validation finished, there is no valid session, and no specific error displayed, redirect
+    } else if (!success) {
       navigate('/forgot-password', { replace: true });
     }
-  }, [isRecoverySession, success, navigate, isRecoveryValidating, error]);
+  }, [isRecovery, success, navigate, isRecoveryValidating]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    if (!isRecoverySession) {
+    if (!isRecovery) {
       setError("A valid password recovery session is required.");
       return;
     }

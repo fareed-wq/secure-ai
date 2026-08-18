@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, checkInitialRecovery } from '../lib/supabase';
 
 const AuthContext = createContext({});
 
@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isRecovery, setIsRecovery] = useState(false);
+  const [isRecovery, setIsRecovery] = useState(checkInitialRecovery);
   const [isRecoveryValidating, setIsRecoveryValidating] = useState(true);
 
   useEffect(() => {
@@ -18,16 +18,13 @@ export const AuthProvider = ({ children }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-
-      // Determine if we are actively in a recovery callback flow
-      const url = window.location.href;
-      const isCallback = url.includes('code=') || url.includes('access_token=') || url.includes('error=') || url.includes('error_description=');
-
-      if (!isCallback) {
-        setIsRecoveryValidating(false);
-      }
     }).catch(() => {
       setLoading(false);
+    });
+
+    // Definitive completion check: getUser() waits for background auth initialization
+    // (including PKCE/URL token exchange) to complete before resolving.
+    supabase.auth.getUser().finally(() => {
       setIsRecoveryValidating(false);
     });
 
@@ -53,7 +50,6 @@ export const AuthProvider = ({ children }) => {
     isRecovery,
     setIsRecovery,
     isRecoveryValidating,
-    setIsRecoveryValidating,
     signOut: () => supabase.auth.signOut(),
   };
 

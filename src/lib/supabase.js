@@ -16,3 +16,12 @@ export const supabase = createClient(
   supabaseUrl || '',
   supabaseAnonKey || ''
 );
+
+let initialRecoveryTriggered = false;
+supabase.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    initialRecoveryTriggered = true;
+  }
+});
+
+export const checkInitialRecovery = () => initialRecoveryTriggered;
