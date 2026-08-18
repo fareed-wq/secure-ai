@@ -13,8 +13,10 @@ export const AuthProvider = ({ children }) => {
   const [isRecoveryValidating, setIsRecoveryValidating] = useState(true);
 
   useEffect(() => {
+    console.log(`[${new Date().toISOString()}] [AuthContext] Mount/useEffect start. Path: ${window.location.pathname}`);
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log(`[${new Date().toISOString()}] [AuthContext] getSession().then resolved. Session exists: ${!!session}`);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -29,12 +31,14 @@ export const AuthProvider = ({ children }) => {
       // We push validation completion to the macro-task queue to guarantee it
       // executes strictly after the recovery event has fired.
       setTimeout(() => {
+        console.log(`[${new Date().toISOString()}] [AuthContext] getUser() setTimeout fired. Setting isRecoveryValidating = false.`);
         setIsRecoveryValidating(false);
       }, 0);
     });
 
     // Listen for changes on auth state (logged in, signed out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`[${new Date().toISOString()}] [AuthContext] onAuthStateChange event: ${event}. Current path: ${window.location.pathname}`);
       if (event === 'PASSWORD_RECOVERY') {
         setIsRecovery(true);
         setIsRecoveryValidating(false);

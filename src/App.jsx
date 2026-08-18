@@ -45,6 +45,7 @@ const RecoveryGuard = ({ children }) => {
     const isProtected = protectedRoutes.some(route => location.pathname.startsWith(route));
 
     if (isRecovery && location.pathname !== '/reset-password' && !isProtected) {
+      console.log(`[${new Date().toISOString()}] [RecoveryGuard] FIRING LOGOUT GUARD. path: ${location.pathname}, isRecovery: ${isRecovery}`);
       signOut().then(() => setIsRecovery(false));
     }
   }, [location.pathname, isRecovery, signOut, setIsRecovery]);

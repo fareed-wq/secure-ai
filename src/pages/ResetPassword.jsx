@@ -18,13 +18,18 @@ const ResetPassword = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    console.log(`[${new Date().toISOString()}] [ResetPassword] Effect running. isRecovery: ${isRecovery}, isRecoveryValidating: ${isRecoveryValidating}, path: ${window.location.pathname}`);
+
     if (isRecoveryValidating) {
+      console.log(`[${new Date().toISOString()}] [ResetPassword] Returning early (still validating)`);
       return; // Do not redirect while recovery state is still being determined
     }
 
     if (isRecovery) {
+      console.log(`[${new Date().toISOString()}] [ResetPassword] Valid recovery, clearing error`);
       setError(null);
     } else if (!success) {
+      console.log(`[${new Date().toISOString()}] [ResetPassword] Redirecting to /forgot-password`);
       navigate('/forgot-password', { replace: true });
     }
   }, [isRecovery, success, navigate, isRecoveryValidating]);
