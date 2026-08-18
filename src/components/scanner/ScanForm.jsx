@@ -92,11 +92,11 @@ const ScanForm = ({ onScan }) => {
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-3 cursor-pointer group">
                 <input type="radio" name="scanMode" value="passive" checked={scanMode === 'passive'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900" />
-                <span className={`text-sm font-medium ${scanMode === 'passive' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Basic / Passive</span>
+                <span className={`text-sm font-medium ${scanMode === 'passive' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Basic</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer group">
                 <input type="radio" name="scanMode" value="active" checked={scanMode === 'active'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900" />
-                <span className={`text-sm font-medium ${scanMode === 'active' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Advanced / Active</span>
+                <span className={`text-sm font-medium ${scanMode === 'active' ? 'text-indigo-400' : 'text-slate-400 group-hover:text-slate-300'}`}>Advanced</span>
               </label>
             </div>
           </div>
