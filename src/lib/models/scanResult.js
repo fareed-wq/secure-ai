@@ -54,7 +54,7 @@
 /**
  * Normalizes the raw backend scan result into a stable frontend model without
  * losing or mutating any technical data.
- * 
+ *
  * @param {Object} rawData - The raw JSON response from the backend.
  * @returns {ReportData} The normalized report data with safe aliases and _raw preserved.
  */
@@ -84,13 +84,21 @@ export const normalizeScanResult = (rawData) => {
   normalized.metadata.ssl_issuer = normalized.metadata.ssl_issuer || rawData.ssl_issuer;
   normalized.metadata.ssl_days_left = normalized.metadata.ssl_days_left || rawData.ssl_days_left;
 
-  // 2 & 3. FINDING CATEGORY & MODULE DEFAULTS
+  // 2, 3 & 4. FINDING CATEGORY, MODULE DEFAULTS & OWASP NORMALIZATION
   if (Array.isArray(rawData.findings)) {
-    normalized.findings = rawData.findings.map(finding => ({
-      ...finding,
-      category: finding.category || "HTTP_HEADERS",
-      module: finding.module || "SecurityHeaders"
-    }));
+    normalized.findings = rawData.findings.map(finding => {
+      let owaspDisplay = finding.owasp;
+      if (owaspDisplay && (owaspDisplay === "A00: Informational" || owaspDisplay === "A00" || owaspDisplay.startsWith("A00:"))) {
+        owaspDisplay = "Not Mapped";
+      }
+
+      return {
+        ...finding,
+        category: finding.category || "HTTP_HEADERS",
+        module: finding.module || "SecurityHeaders",
+        owasp: owaspDisplay
+      };
+    });
   }
 
   return normalized;
