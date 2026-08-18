@@ -23,6 +23,7 @@ const Settings = () => {
   });
 
   const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
@@ -51,6 +52,11 @@ const Settings = () => {
   const handleSavePassword = async (e) => {
     e.preventDefault();
 
+    if (!passwordData.currentPassword) {
+      setError('Please enter your current password.');
+      return;
+    }
+
     const { isValid } = validatePassword(passwordData.newPassword);
     if (!isValid) {
       setError('Password does not meet all requirements.');
@@ -66,14 +72,22 @@ const Settings = () => {
     setSuccess(null);
 
     const { error: updateError } = await supabase.auth.updateUser({
-      password: passwordData.newPassword
+      password: passwordData.newPassword,
+      current_password: passwordData.currentPassword
     });
 
     if (updateError) {
-      setError(updateError.message || 'Failed to update password. Please try again.');
+      const errMsg = updateError.message?.toLowerCase() || '';
+      if (errMsg.includes("invalid password") || errMsg.includes("invalid current password") || errMsg.includes("incorrect password") || updateError.status === 403) {
+        setError("Your current password is incorrect.");
+      } else if (errMsg.includes("different from the old password") || errMsg.includes("different from the previous")) {
+        setError("Your new password must be different from your current password.");
+      } else {
+        setError(updateError.message || 'Failed to update password. Please try again.');
+      }
     } else {
       setSuccess('Password updated successfully.');
-      setPasswordData({ newPassword: '', confirmPassword: '' });
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     }
     setPasswordLoading(false);
   };
@@ -180,6 +194,25 @@ const Settings = () => {
 
         <div className="p-6">
           <form className="space-y-6" onSubmit={handleSavePassword}>
+            <div className="grid grid-cols-1 gap-6">
+              <div className="md:w-1/2">
+                <label className="block text-sm font-medium text-slate-300">Current Password</label>
+                <div className="mt-1 relative rounded-md shadow-sm">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-slate-500" />
+                  </div>
+                  <input
+                    type="password"
+                    required
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                    className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm placeholder-slate-600"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-slate-300">New Password</label>
@@ -223,7 +256,7 @@ const Settings = () => {
             <div className="pt-4 flex justify-end">
               <button
                 type="submit"
-                disabled={passwordLoading || !passwordData.newPassword || !validatePassword(passwordData.newPassword).isValid || passwordData.newPassword !== passwordData.confirmPassword}
+                disabled={passwordLoading || !passwordData.currentPassword || !passwordData.newPassword || !validatePassword(passwordData.newPassword).isValid || passwordData.newPassword !== passwordData.confirmPassword}
                 className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
               >
                 {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
