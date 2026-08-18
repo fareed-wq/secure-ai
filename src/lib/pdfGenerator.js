@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 export const generateStructuredPdf = (scanData, scanMode, reportMode) => {
   const doc = new jsPDF();
@@ -76,7 +76,7 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
         f.remediation || 'No remediation provided.'
       ]);
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Finding', 'Description', 'Recommendation']],
         body: simpleData,
@@ -109,7 +109,7 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
       yPos += 10;
     } else {
       const passedData = passedItems.map(f => [f.name]);
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Passed Security Checks']],
         body: passedData,
@@ -153,7 +153,7 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
             findingData.push(['Remediation Snippets', JSON.stringify(f.remediation_snippets, null, 2)]);
         }
 
-        doc.autoTable({
+        autoTable(doc, {
           startY: yPos,
           head: [[`Finding ${index + 1}: ${f.name} [${f.severity.toUpperCase()}]`, '']],
           body: findingData,
@@ -187,7 +187,7 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
       yPos += 10;
     } else {
       const passedData = passedItems.map(f => [f.name, f.module || 'N/A']);
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Passed Check', 'Module']],
         body: passedData,
@@ -213,7 +213,7 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
       yPos += 6;
 
       const techData = scanData.technologies.map(t => [t]);
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPos,
         head: [['Technology']],
         body: techData,
