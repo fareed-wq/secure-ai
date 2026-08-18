@@ -155,7 +155,7 @@ class PermissionsPolicyModule(ScannerModule):
                         "Header not found in response",
                         impact="If your website gets hacked, the attackers could secretly turn on the visitors' cameras or track their location.",
                         remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.",
-                        owasp="Not Mapped",
+                        owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))
             else:
@@ -186,7 +186,7 @@ class PermissionsPolicyModule(ScannerModule):
                         "Passed",
                         "Your website has clear rules that restrict the use of sensitive browser features.",
                         policy_str[:100],
-                        owasp="Not Mapped",
+                        owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):

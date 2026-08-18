@@ -431,7 +431,7 @@ class SecurityHeadersModule(ScannerModule):
                             "Your website is correctly using HSTS to force visitors to use secure connections.",
                             hsts,
                             impact="Your visitors are protected from connection downgrade attacks.",
-                            owasp="Not Mapped",
+                            owasp="A02: Cryptographic Failures",
                             category="encryption_tls"
                         ))
                 except Exception:
@@ -544,7 +544,7 @@ class SecurityHeadersModule(ScannerModule):
                         "Your website has a strong Content Security Policy (CSP) in place.",
                         csp,
                         impact="Your website is well-protected against malicious script injection attacks.",
-                        owasp="Not Mapped",
+                        owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))
 
@@ -634,7 +634,7 @@ class SecurityHeadersModule(ScannerModule):
                 "Header not found in response",
                 impact="Hackers could upload a malicious script disguised as an image, and the browser might run it, compromising the user's computer.",
                 remediation="Set X-Content-Type-Options: nosniff to prevent browsers from MIME-sniffing the response.",
-                owasp="Not Mapped",
+                owasp="A05: Security Misconfiguration",
                 category="http_headers"
             ))
 
@@ -647,7 +647,7 @@ class SecurityHeadersModule(ScannerModule):
                 "Header not found in response",
                 impact="Sensitive information hidden in your website's web addresses (like secret password reset tokens) could be accidentally leaked to other websites.",
                 remediation="Set Referrer-Policy to 'strict-origin-when-cross-origin' or 'no-referrer' to control URL leakage.",
-                owasp="Not Mapped",
+                owasp="A05: Security Misconfiguration",
                 category="http_headers"
             ))
         else:
@@ -670,7 +670,7 @@ class SecurityHeadersModule(ScannerModule):
                     "Your website correctly controls what web address information is shared when visitors click external links.",
                     referrer,
                     impact="Sensitive information in your web addresses is protected from being leaked to other websites.",
-                    owasp="Not Mapped",
+                    owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
 
