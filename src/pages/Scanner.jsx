@@ -120,7 +120,7 @@ function Scanner() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-50 selection:bg-indigo-500/30">
+    <div className="scanner-page min-h-screen bg-slate-950 font-sans text-slate-50 selection:bg-indigo-500/30">
 
 
 
@@ -138,12 +138,12 @@ function Scanner() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-50/80 dark:bg-slate-950/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-sm"
           >
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 flex flex-col items-center max-w-sm w-full mx-4 text-center">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 flex flex-col items-center max-w-sm w-full mx-4 text-center">
               <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-50 mb-2">Generating PDF</h3>
-              <p className="text-slate-500 dark:text-slate-400">Please wait while we prepare your report...</p>
+              <h3 className="text-xl font-bold text-slate-50 mb-2">Generating PDF</h3>
+              <p className="text-slate-400">Please wait while we prepare your report...</p>
             </div>
           </motion.div>
         )}
@@ -166,10 +166,10 @@ function Scanner() {
             >
               {/* 1. Hero Headline */}
               <div className="space-y-4">
-                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-emerald-600 dark:from-indigo-400 dark:via-purple-400 dark:to-emerald-400">
+                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400">
                   IS YOUR WEBSITE SAFE?
                 </h1>
-                <p className="text-2xl font-semibold text-slate-600 dark:text-slate-300 max-w-2xl mx-auto tracking-wide">
+                <p className="text-2xl font-semibold text-slate-300 max-w-2xl mx-auto tracking-wide">
                   FIND OUT IN ONE CLICK.
                 </p>
               </div>
@@ -181,7 +181,7 @@ function Scanner() {
               {/* 3. Input Bar Container */}
               <ScanForm onScan={handleScan} />
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-slate-500 dark:text-slate-400 mt-8 font-medium">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-slate-400 mt-8 font-medium">
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
               </div>
 
@@ -198,23 +198,23 @@ function Scanner() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
-              className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 backdrop-blur-xl shadow-2xl overflow-hidden relative"
+              className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-slate-900/50 border border-slate-800 backdrop-blur-xl shadow-2xl overflow-hidden relative"
             >
-              <div className="absolute inset-0 bg-slate-200/[0.2] dark:bg-slate-800/[0.2] bg-[size:20px_20px]" style={{backgroundImage: 'radial-gradient(circle, #334155 1px, transparent 1px)'}}></div>
+              <div className="absolute inset-0 bg-slate-800/[0.2] bg-[size:20px_20px]" style={{backgroundImage: 'radial-gradient(circle, #334155 1px, transparent 1px)'}}></div>
 
               <div className="flex flex-col items-center justify-center space-y-8 py-12 relative z-10">
                 <div className="relative">
-                  <div className="absolute inset-0 border-4 border-indigo-300 dark:border-indigo-500/30 rounded-full blur-xl animate-pulse"></div>
-                  <div className="absolute inset-0 border-2 border-emerald-300 dark:border-emerald-500/20 rounded-full animate-[spin_3s_linear_infinite] scale-125"></div>
-                  <div className="absolute inset-0 border-2 border-purple-300 dark:border-purple-500/20 rounded-full animate-[spin_4s_linear_infinite_reverse] scale-150"></div>
-                  <Loader2 className="w-20 h-20 text-indigo-600 dark:text-indigo-400 animate-spin relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
+                  <div className="absolute inset-0 border-4 border-indigo-500/30 rounded-full blur-xl animate-pulse"></div>
+                  <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-full animate-[spin_3s_linear_infinite] scale-125"></div>
+                  <div className="absolute inset-0 border-2 border-purple-500/20 rounded-full animate-[spin_4s_linear_infinite_reverse] scale-150"></div>
+                  <Loader2 className="w-20 h-20 text-indigo-400 animate-spin relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
                 </div>
 
                 <div className="space-y-4 text-center w-full">
-                  <h2 className="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-emerald-600 dark:from-indigo-300 dark:to-emerald-300">
+                  <h2 className="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-emerald-300">
                     Establishing Secure Uplink to {url}...
                   </h2>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">Please wait while our engine performs passive analysis.</div>
+                  <div className="text-sm text-slate-400">Please wait while our engine performs passive analysis.</div>
                 </div>
               </div>
             </motion.div>
@@ -262,7 +262,7 @@ function Scanner() {
                   </>
                 )}
 
-                <button onClick={resetScan} className="bg-slate-200 hover:bg-slate-300 text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-50 px-6 py-3 rounded-xl transition-all">
+                <button onClick={resetScan} className="bg-slate-800 hover:bg-slate-700 text-slate-50 px-6 py-3 rounded-xl transition-all">
                   Run Another Scan
                 </button>
               </motion.div>
@@ -298,7 +298,7 @@ function Scanner() {
               </ErrorBoundary>
 
               <div className="mt-12 flex justify-center">
-                <button onClick={resetScan} className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:text-slate-50 transition-colors underline underline-offset-4">
+                <button onClick={resetScan} className="text-slate-400 hover:text-slate-50 transition-colors underline underline-offset-4">
                   Run another scan
                 </button>
               </div>

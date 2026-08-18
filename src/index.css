@@ -242,3 +242,182 @@ html.light-theme .contact-page .mt-8 .text-slate-500:hover {
   break-inside: avoid;
   page-break-inside: avoid;
 }
+
+/* ============================================
+   HOME / SCANNER — LIGHT THEME ONLY
+   ============================================ */
+
+/* 1. Scanner page */
+html.light-theme .scanner-page {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Hero text adjustments */
+html.light-theme .scanner-page h1 {
+  background-image: linear-gradient(to right, #4f46e5, #9333ea, #059669);
+}
+html.light-theme .scanner-page h1 + p {
+  color: #475569 !important;
+}
+html.light-theme .scanner-page .text-slate-400 {
+  color: #64748b;
+}
+html.light-theme .scanner-page .text-slate-500 {
+  color: #64748b;
+}
+
+/* 2. URL input */
+html.light-theme .scan-url-shell {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+html.light-theme .scan-url-shell:focus-within {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+}
+html.light-theme .scan-url-input {
+  color: #0f172a !important;
+}
+html.light-theme .scan-url-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* 3. Scan Configuration / Report Style cards */
+html.light-theme .scan-config-card {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .scan-config-card h3 {
+  color: #64748b !important;
+}
+html.light-theme .scan-option {
+  border-color: transparent;
+}
+html.light-theme .scan-option:hover {
+  background-color: #f8fafc !important;
+}
+html.light-theme .scan-option span {
+  color: #475569 !important;
+}
+html.light-theme .scan-option.scan-option-selected {
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+html.light-theme .scan-option.scan-option-selected span {
+  color: #4f46e5 !important;
+}
+
+/* Passive hint text */
+html.light-theme .scanner-page form > .flex.items-center.text-xs {
+  color: #64748b !important;
+}
+html.light-theme .scanner-page form > .flex.items-center.text-xs strong {
+  color: #334155 !important;
+}
+html.light-theme .scanner-page form > .flex.items-center.text-xs span.text-indigo-400 {
+  color: #6366f1 !important;
+}
+
+/* 4. Safety comparison */
+html.light-theme .safety-section h2 {
+  color: #0f172a !important;
+}
+html.light-theme .safety-section p {
+  color: #475569 !important;
+}
+
+html.light-theme .safety-card-left {
+  background-color: #ffffff !important;
+  border-color: #a7f3d0 !important;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.05) !important;
+}
+html.light-theme .safety-card-left h3 {
+  color: #0f172a !important;
+}
+html.light-theme .safety-card-left .text-slate-200 {
+  color: #1e293b !important;
+}
+html.light-theme .safety-card-left .text-slate-400 {
+  color: #64748b !important;
+}
+html.light-theme .safety-card-left .bg-emerald-500\/20 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  color: #059669 !important;
+}
+html.light-theme .safety-card-left .bg-slate-800 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+html.light-theme .safety-card-right {
+  background-color: #ffffff !important;
+  border-color: #fecdd3 !important;
+}
+html.light-theme .safety-card-right h3 {
+  color: #0f172a !important;
+}
+html.light-theme .safety-card-right .text-slate-400 {
+  color: #334155 !important;
+}
+html.light-theme .safety-card-right .text-slate-500 {
+  color: #64748b !important;
+}
+html.light-theme .safety-card-right .bg-rose-500\/10 {
+  background-color: rgba(244, 63, 94, 0.08) !important;
+  color: #e11d48 !important;
+}
+html.light-theme .safety-card-right .bg-rose-500\/20 {
+  background-color: rgba(244, 63, 94, 0.1) !important;
+  color: #e11d48 !important;
+}
+html.light-theme .safety-card-right .bg-slate-800\/50 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+/* 5. Reassurance strip */
+html.light-theme .safety-reassurance {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+}
+html.light-theme .safety-reassurance span.text-indigo-300 {
+  color: #4f46e5 !important;
+}
+html.light-theme .safety-reassurance .text-indigo-400 {
+  color: #4f46e5 !important;
+}
+
+/* 6. FAQ */
+html.light-theme .faq-section h3 {
+  color: #0f172a !important;
+}
+html.light-theme .faq-section p {
+  color: #475569 !important;
+}
+
+html.light-theme .faq-card {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .faq-card:hover:not(.faq-card-open) {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+html.light-theme .faq-card-open {
+  background-color: rgba(99, 102, 241, 0.05) !important;
+  border-color: rgba(99, 102, 241, 0.2) !important;
+}
+html.light-theme .faq-question {
+  color: #0f172a !important;
+}
+html.light-theme .faq-card .text-indigo-300 {
+  color: #4f46e5 !important;
+}
+html.light-theme .faq-answer {
+  color: #475569 !important;
+}
