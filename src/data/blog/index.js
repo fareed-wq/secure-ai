@@ -12,7 +12,7 @@ export const articles = [
                 "id": "enforce-https",
                 "number": "01",
                 "title": "Enforce HTTPS Everywhere",
-                "content": "Ensure your website uses TLS encryption for all connections. Never transmit data over plain HTTP. Obtain a valid SSL/TLS certificate and force all traffic to use HTTPS.",
+                "content": "Ensure your website uses TLS encryption for all connections. Never transmit data over plain HTTP. Obtain a valid SSL/TLS certificate and force all traffic to use HTTPS. You can quickly verify your HTTPS setup using a <a href=\"/scan\">passive vulnerability scanner</a>.",
                 "listTitle": "What to check",
                 "list": [
                     "HTTPS is enabled on all pages",
@@ -36,7 +36,7 @@ export const articles = [
                 "id": "security-headers",
                 "number": "03",
                 "title": "Implement Essential Security Headers",
-                "content": "Deploy security headers such as X-Content-Type-Options, X-Frame-Options, and Referrer-Policy to instruct browsers to enforce basic security mechanisms automatically.",
+                "content": "Deploy <a href=\"/blog/http-security-headers-guide\">security headers</a> such as X-Content-Type-Options, X-Frame-Options, and Referrer-Policy to instruct browsers to enforce basic security mechanisms automatically.",
                 "listTitle": "What to check",
                 "list": [
                     "X-Content-Type-Options is set to nosniff",
@@ -48,7 +48,7 @@ export const articles = [
                 "id": "setup-csp",
                 "number": "04",
                 "title": "Set up Content Security Policy (CSP)",
-                "content": "A well-designed Content Security Policy can significantly reduce the impact of many XSS and content-injection scenarios, but it should complement secure application coding rather than replace it.",
+                "content": "A well-designed <a href=\"/blog/content-security-policy-guide\">Content Security Policy</a> can significantly reduce the impact of many XSS and content-injection scenarios, but it should complement secure application coding rather than replace it.",
                 "listTitle": "What to check",
                 "list": [
                     "CSP header is present",
@@ -288,7 +288,7 @@ export const articles = [
     },
     {
         "id": "3",
-        "title": "OWASP Top 10 Explained: Common Web Application Security Risks",
+        "title": "How to Detect OWASP Top 10 Vulnerabilities Using Passive Scanning",
         "slug": "owasp-top-10-explained",
         "category": "OWASP Security",
         "primaryKeyword": "OWASP Top 10",
@@ -385,6 +385,20 @@ export const articles = [
                 "id": "pp",
                 "title": "Permissions-Policy",
                 "content": "Controls browser features and APIs. Allows you to disable APIs like the camera or microphone, reducing the attack surface."
+            }
+        ],
+        "faqs": [
+            {
+                "question": "What are the most critical HTTP security headers?",
+                "answer": "The most critical headers are Content-Security-Policy (CSP), Strict-Transport-Security (HSTS), X-Content-Type-Options, X-Frame-Options, and Referrer-Policy."
+            },
+            {
+                "question": "Can I check my website security headers for free?",
+                "answer": "Yes, you can use online passive vulnerability scanners to check your security headers without performing any active exploitation."
+            },
+            {
+                "question": "Does missing X-Frame-Options mean I am vulnerable to Clickjacking?",
+                "answer": "Yes, if X-Frame-Options or a CSP frame-ancestors directive is missing, malicious sites can embed your site in an iframe to trick users into clicking buttons."
             }
         ]
     },

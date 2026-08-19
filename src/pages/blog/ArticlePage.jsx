@@ -28,6 +28,21 @@ const ArticlePage = () => {
       }
       linkCanonical.href = `https://www.urlscanonline.com/blog/${article.slug}`;
 
+      // Open Graph Tags
+      const setMetaProperty = (prop, content) => {
+        let tag = document.querySelector(`meta[property="${prop}"]`);
+        if (!tag) {
+          tag = document.createElement('meta');
+          tag.setAttribute('property', prop);
+          document.head.appendChild(tag);
+        }
+        tag.content = content;
+      };
+      setMetaProperty('og:title', `${article.title} | URLScannerOnline`);
+      setMetaProperty('og:description', article.excerpt);
+      setMetaProperty('og:url', `https://www.urlscanonline.com/blog/${article.slug}`);
+      setMetaProperty('og:type', 'article');
+
       // Structured Data
       let scriptSchema = document.querySelector('#schema-article');
       if (!scriptSchema) {
@@ -48,6 +63,19 @@ const ArticlePage = () => {
           "name": "URLScannerOnline"
         }
       };
+
+      // FAQ Schema (if article has faqs)
+      if (article.faqs && article.faqs.length > 0) {
+        schema.mainEntity = article.faqs.map(faq => ({
+          "@type": "Question",
+          "name": faq.question,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": faq.answer
+          }
+        }));
+      }
+
       scriptSchema.textContent = JSON.stringify(schema);
     }
   }, [article]);
@@ -180,6 +208,21 @@ const ArticlePage = () => {
               </section>
             ))}
           </div>
+
+          {/* FAQ Section */}
+          {article.faqs && article.faqs.length > 0 && (
+            <div className="mt-16 bg-slate-900/40 border border-slate-800 rounded-2xl p-8">
+              <h2 className="text-2xl font-bold text-slate-50 mb-8">Frequently Asked Questions</h2>
+              <div className="space-y-6">
+                {article.faqs.map((faq, i) => (
+                  <div key={i}>
+                    <h3 className="text-lg font-bold text-slate-200 mb-2">{faq.question}</h3>
+                    <p className="text-slate-400">{faq.answer}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <hr className="border-slate-800 mb-12" />
