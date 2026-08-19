@@ -51,12 +51,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     { label: "Pricing", href: "/pricing", icon: <CreditCard size={18} /> },
     { label: "Contact Us", href: "/contact", icon: <MessageSquare size={18} /> },
     { label: "API Docs", href: "/docs", icon: <Code size={18} /> },
-  ];
-
-  const trustItems = [
-    { label: "Security & Trust", href: "/security-trust", icon: <Shield size={18} /> },
-    { label: "Terms of Service", href: "/terms", icon: <FileText size={18} /> },
-    { label: "Responsible Disclosure", href: "/responsible-disclosure", icon: <AlertTriangle size={18} /> },
+    { label: "Trust & Policy", href: "/trust-policy", icon: <Shield size={18} /> },
   ];
 
 
@@ -141,40 +136,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           );
         })}
 
-        {/* Trust & Policy Section */}
-        <div className={`flex flex-col transition-colors ${
-          !isCollapsed ? 'bg-slate-900/40 rounded-xl border border-slate-800/60 p-1.5 mt-2' : 'gap-1'
-        }`}>
-          {!isCollapsed && (
-            <div className="flex items-center gap-2 px-2 py-1.5 mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              <Shield size={14} />
-              <span className="truncate">Trust & Policy</span>
-            </div>
-          )}
 
-          <div className="flex flex-col gap-1">
-            {trustItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium transition-colors ${
-                    isActive
-                      ? 'bg-slate-800/80 text-slate-50'
-                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-50'
-                  }`}
-                  title={isCollapsed ? item.label : undefined}
-                >
-                  <div className={isActive ? "text-indigo-400" : "text-slate-500"}>
-                    {item.icon}
-                  </div>
-                  {!isCollapsed && <span className="truncate">{item.label}</span>}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
 
 
 
