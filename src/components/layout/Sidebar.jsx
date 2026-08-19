@@ -19,9 +19,7 @@ import {
   Sun,
   Moon,
   FileText,
-  AlertTriangle,
-  ChevronDown,
-  ChevronRight
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -30,7 +28,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isTrustPolicyExpanded, setIsTrustPolicyExpanded] = useState(false);
+
   const [isLightMode, setIsLightMode] = useState(() => {
     return localStorage.getItem('theme') === 'light';
   });
@@ -145,55 +143,37 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
 
         {/* Trust & Policy Section */}
         <div className={`flex flex-col transition-colors ${
-          !isCollapsed && isTrustPolicyExpanded ? 'bg-slate-900/40 rounded-xl border border-slate-800/60' : ''
+          !isCollapsed ? 'bg-slate-900/40 rounded-xl border border-slate-800/60 p-1.5 mt-2' : 'gap-1'
         }`}>
-          <button
-            onClick={() => {
-              if (isCollapsed) setIsCollapsed(false);
-              setIsTrustPolicyExpanded(!isTrustPolicyExpanded);
-            }}
-            className={`flex items-center justify-between p-2 w-full text-sm font-medium transition-colors text-slate-400 hover:bg-slate-800/50 hover:text-slate-50 ${
-              !isCollapsed && isTrustPolicyExpanded ? 'rounded-t-xl rounded-b-sm' : 'rounded-lg'
-            }`}
-            title={isCollapsed ? "Trust & Policy" : undefined}
-          >
-            <div className="flex items-center gap-3">
-              <div className="text-slate-500">
-                <Shield size={18} />
-              </div>
-              {!isCollapsed && <span className="truncate">Trust & Policy</span>}
-            </div>
-            {!isCollapsed && (
-              <div className="text-slate-500">
-                {isTrustPolicyExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-              </div>
-            )}
-          </button>
-
-          {/* Nested Items */}
-          {(!isCollapsed && isTrustPolicyExpanded) && (
-            <div className="flex flex-col gap-1 p-1.5 pt-0">
-              {trustItems.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-slate-800/80 text-slate-50'
-                        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-50'
-                    }`}
-                  >
-                    <div className={isActive ? "text-indigo-400" : "text-slate-500"}>
-                      {item.icon}
-                    </div>
-                    <span className="truncate">{item.label}</span>
-                  </Link>
-                );
-              })}
+          {!isCollapsed && (
+            <div className="flex items-center gap-2 px-2 py-1.5 mb-1 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              <Shield size={14} />
+              <span className="truncate">Trust & Policy</span>
             </div>
           )}
+
+          <div className="flex flex-col gap-1">
+            {trustItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-slate-800/80 text-slate-50'
+                      : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-50'
+                  }`}
+                  title={isCollapsed ? item.label : undefined}
+                >
+                  <div className={isActive ? "text-indigo-400" : "text-slate-500"}>
+                    {item.icon}
+                  </div>
+                  {!isCollapsed && <span className="truncate">{item.label}</span>}
+                </Link>
+              );
+            })}
+          </div>
         </div>
 
 
