@@ -5,8 +5,10 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Menu } from 'lucide-react';
 
 const SaaSLayout = () => {
-  const { user, isRecovery } = useAuth();
+  const { user, isRecovery, loading } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  if (loading) return null;
 
   if (!user) {
     return <Navigate to="/login" replace />;

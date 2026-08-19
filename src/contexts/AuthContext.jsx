@@ -54,13 +54,13 @@ export const AuthProvider = ({ children }) => {
     user,
     isRecovery,
     setIsRecovery,
-    isRecoveryValidating,
+    isRecoveryValidating, loading,
     signOut: () => supabase.auth.signOut(),
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

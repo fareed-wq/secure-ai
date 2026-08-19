@@ -4,27 +4,28 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Analytics } from '@vercel/analytics/react';
 import SaaSLayout from './components/layout/SaaSLayout';
 import RootLayout from './components/layout/RootLayout';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import EmailConfirmed from './pages/EmailConfirmed';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
-import Dashboard from './pages/Dashboard';
 import Scanner from './pages/Scanner';
-import ScanHistory from './pages/ScanHistory';
-import SavedReports from './pages/SavedReports';
-import Compare from './pages/Compare';
-import Settings from './pages/Settings';
-import Services from './pages/Services';
-import About from './pages/About';
-import BlogLanding from './pages/blog/BlogLanding';
-import ArticlePage from './pages/blog/ArticlePage';
-import Contact from './pages/Contact';
-import SecurityTrust from './pages/SecurityTrust';
-import TermsOfService from './pages/TermsOfService';
-import ResponsibleDisclosure from './pages/ResponsibleDisclosure';
-import ApiDocs from './pages/ApiDocs';
-import Pricing from './pages/Pricing';
+
+const Login = React.lazy(() => import('./pages/Login'));
+const Register = React.lazy(() => import('./pages/Register'));
+const EmailConfirmed = React.lazy(() => import('./pages/EmailConfirmed'));
+const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const ScanHistory = React.lazy(() => import('./pages/ScanHistory'));
+const SavedReports = React.lazy(() => import('./pages/SavedReports'));
+const Compare = React.lazy(() => import('./pages/Compare'));
+const Settings = React.lazy(() => import('./pages/Settings'));
+const Services = React.lazy(() => import('./pages/Services'));
+const About = React.lazy(() => import('./pages/About'));
+const BlogLanding = React.lazy(() => import('./pages/blog/BlogLanding'));
+const ArticlePage = React.lazy(() => import('./pages/blog/ArticlePage'));
+const Contact = React.lazy(() => import('./pages/Contact'));
+const SecurityTrust = React.lazy(() => import('./pages/SecurityTrust'));
+const TermsOfService = React.lazy(() => import('./pages/TermsOfService'));
+const ResponsibleDisclosure = React.lazy(() => import('./pages/ResponsibleDisclosure'));
+const ApiDocs = React.lazy(() => import('./pages/ApiDocs'));
+const Pricing = React.lazy(() => import('./pages/Pricing'));
 
 const PlaceholderPage = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
@@ -49,6 +50,7 @@ const App = () => {
     <AuthProvider>
       <BrowserRouter>
         <RecoveryGuard>
+          <React.Suspense fallback={<div className="flex h-screen bg-slate-950 items-center justify-center text-slate-500">Loading...</div>}>
           <Routes>
             {/* Public Routes with Sidebar */}
           <Route element={<RootLayout />}>
@@ -87,6 +89,7 @@ const App = () => {
           {/* Redirect root to dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
+          </React.Suspense>
         </RecoveryGuard>
       </BrowserRouter>
       <Analytics />
