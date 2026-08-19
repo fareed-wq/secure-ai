@@ -83,7 +83,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       <div className="flex items-center justify-between p-4 border-b border-slate-800">
         {!isCollapsed && (
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-            <img src="/logo-transparent.png" alt="URLScan Online Logo" className="h-8 w-auto" />
+            <img src="/logo-transparent.webp" alt="URLScan Online Logo" width="654" height="164" className="h-8 w-auto" />
           </Link>
         )}
         <div className={`flex items-center ${isCollapsed ? 'flex-col gap-4 w-full' : 'gap-2'}`}>

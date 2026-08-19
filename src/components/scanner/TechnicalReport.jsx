@@ -223,7 +223,7 @@ const TechnicalReport = ({ reportData }) => {
                 <div key={group.key} className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
                   <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
                     {group.icon}
-                    <h3 className="font-bold text-slate-50 text-lg">{group.label}</h3>
+                    <h2 className="font-bold text-slate-50 text-lg">{group.label}</h2>
                   </div>
 
                   <div className="w-full overflow-x-auto">
@@ -259,7 +259,7 @@ const TechnicalReport = ({ reportData }) => {
                               )}
                             </td>
                             <td className="px-6 py-4 text-right print:hidden align-top">
-                              <button className="text-slate-500 hover:text-slate-50 transition-colors">
+                              <button aria-label={expandedRow === idx ? "Collapse Details" : "Expand Details"} className="text-slate-500 hover:text-slate-50 transition-colors">
                                 {expandedRow === idx ? <ChevronUp className="w-5 h-5 inline" /> : <ChevronDown className="w-5 h-5 inline" />}
                               </button>
                             </td>
@@ -425,14 +425,14 @@ const TechnicalReport = ({ reportData }) => {
             <div className="technical-compliance-section bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-2xl">
               <div className="flex items-center gap-3 mb-6">
                 <ShieldAlert className="w-5 h-5 text-indigo-400" />
-                <h3 className="font-bold text-slate-50 text-lg">Technical Compliance Readiness</h3>
+                <h2 className="font-bold text-slate-50 text-lg">Technical Compliance Readiness</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
                 {/* PCI-DSS */}
                 <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                    <h4 className="font-bold text-slate-200 text-sm">PCI-DSS 4.0</h4>
+                    <h3 className="font-bold text-slate-200 text-sm">PCI-DSS 4.0</h3>
                     <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
                       {reportData?.technical_compliance?.pci_dss_4_0?.status || 'Unknown'}
                     </span>
@@ -459,7 +459,7 @@ const TechnicalReport = ({ reportData }) => {
                 {/* NIST SP 800-53 */}
                 <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                    <h4 className="font-bold text-slate-200 text-sm">NIST SP 800-53</h4>
+                    <h3 className="font-bold text-slate-200 text-sm">NIST SP 800-53</h3>
                     <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
                       {reportData?.technical_compliance?.nist_sp_800_53?.status || 'Unknown'}
                     </span>
@@ -486,7 +486,7 @@ const TechnicalReport = ({ reportData }) => {
                 {/* ISO 27001 */}
                 <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
                   <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                    <h4 className="font-bold text-slate-200 text-sm">ISO 27001</h4>
+                    <h3 className="font-bold text-slate-200 text-sm">ISO 27001</h3>
                     <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
                       {reportData?.technical_compliance?.iso_27001?.status || 'Unknown'}
                     </span>
@@ -519,7 +519,7 @@ const TechnicalReport = ({ reportData }) => {
 
       {/* 5. Final Recommendation */}
       <div className="text-center mt-12 py-12 border-t border-slate-800">
-        <h3 className="text-2xl font-black text-slate-50 mb-4">Ready to improve your score?</h3>
+        <h2 className="text-2xl font-black text-slate-50 mb-4">Ready to improve your score?</h2>
         <p className="text-slate-400 text-lg max-w-2xl mx-auto">
           Interested in advanced testing? Let's chat on WhatsApp!
         </p>

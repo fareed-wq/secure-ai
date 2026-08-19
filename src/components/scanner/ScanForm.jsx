@@ -88,7 +88,7 @@ const ScanForm = ({ onScan }) => {
 
         <div className="flex flex-col sm:flex-row gap-4 w-full mt-4 text-left">
           <div className="scan-config-card flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors">
-            <h3 className="text-xs font-bold text-slate-400 mb-2.5 tracking-widest uppercase">Scan Configuration</h3>
+            <h2 className="text-xs font-bold text-slate-400 mb-2.5 tracking-widest uppercase">Scan Configuration</h2>
             <div className="flex flex-col gap-1.5">
               <label className={`scan-option flex items-center gap-3 cursor-pointer px-3 py-2 rounded-lg border transition-all ${scanMode === 'passive' ? 'scan-option-selected bg-indigo-500/10 border-indigo-500/30' : 'bg-transparent border-transparent hover:bg-slate-800/50'}`}>
                 <input type="radio" name="scanMode" value="passive" checked={scanMode === 'passive'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />
@@ -102,7 +102,7 @@ const ScanForm = ({ onScan }) => {
           </div>
 
           <div className="scan-config-card flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors">
-            <h3 className="text-xs font-bold text-slate-400 mb-2.5 tracking-widest uppercase">Report Style</h3>
+            <h2 className="text-xs font-bold text-slate-400 mb-2.5 tracking-widest uppercase">Report Style</h2>
             <div className="flex flex-col gap-1.5">
               <label className={`scan-option flex items-center gap-3 cursor-pointer px-3 py-2 rounded-lg border transition-all ${reportMode === 'simple' ? 'scan-option-selected bg-indigo-500/10 border-indigo-500/30' : 'bg-transparent border-transparent hover:bg-slate-800/50'}`}>
                 <input type="radio" name="reportMode" value="simple" checked={reportMode === 'simple'} onChange={(e) => setReportMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />

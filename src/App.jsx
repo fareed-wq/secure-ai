@@ -51,44 +51,46 @@ const App = () => {
       <BrowserRouter>
         <RecoveryGuard>
           <React.Suspense fallback={<div className="flex h-screen bg-slate-950 items-center justify-center text-slate-500">Loading...</div>}>
-          <Routes>
-            {/* Public Routes with Sidebar */}
-          <Route element={<RootLayout />}>
-            <Route path="/" element={<Scanner />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/scan" element={<Scanner />} />
+          <main className="flex-1 w-full h-full">
+            <Routes>
+              {/* Public Routes with Sidebar */}
+              <Route element={<RootLayout />}>
+                <Route path="/" element={<Scanner />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/scan" element={<Scanner />} />
 
-            {/* New ChatGPT-Sidebar Routes */}
-            <Route path="/docs" element={<ApiDocs />} />
-            <Route path="/blog" element={<BlogLanding />} />
-            <Route path="/blog/:slug" element={<ArticlePage />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/security-trust" element={<SecurityTrust />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/responsible-disclosure" element={<ResponsibleDisclosure />} />
-            <Route path="/contact" element={<Contact />} />
-          </Route>
+                {/* New ChatGPT-Sidebar Routes */}
+                <Route path="/docs" element={<ApiDocs />} />
+                <Route path="/blog" element={<BlogLanding />} />
+                <Route path="/blog/:slug" element={<ArticlePage />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/security-trust" element={<SecurityTrust />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/responsible-disclosure" element={<ResponsibleDisclosure />} />
+                <Route path="/contact" element={<Contact />} />
+              </Route>
 
-          {/* Auth Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/email-confirmed" element={<EmailConfirmed />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+              {/* Auth Routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/email-confirmed" element={<EmailConfirmed />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Protected SaaS Routes */}
-          <Route element={<SaaSLayout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/history" element={<ScanHistory />} />
-            <Route path="/reports" element={<SavedReports />} />
-            <Route path="/compare" element={<Compare />} />
-            <Route path="/settings" element={<Settings />} />
-          </Route>
+              {/* Protected SaaS Routes */}
+              <Route element={<SaaSLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/history" element={<ScanHistory />} />
+                <Route path="/reports" element={<SavedReports />} />
+                <Route path="/compare" element={<Compare />} />
+                <Route path="/settings" element={<Settings />} />
+              </Route>
 
-          {/* Redirect root to dashboard */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
+              {/* Redirect root to dashboard */}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </main>
           </React.Suspense>
         </RecoveryGuard>
       </BrowserRouter>

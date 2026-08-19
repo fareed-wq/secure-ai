@@ -26,7 +26,7 @@ const SaaSLayout = () => {
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
         {/* Mobile Header */}
         <div className="md:hidden flex items-center p-4 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-30">
-          <button
+          <button aria-label="Open Mobile Menu"
             onClick={() => setIsMobileOpen(true)}
             className="p-2 -ml-2 text-slate-400 hover:text-slate-50 transition-colors"
           >
@@ -36,9 +36,9 @@ const SaaSLayout = () => {
         </div>
 
         <div id="main-scroll-container" className="flex-1 overflow-y-auto">
-          <main className="p-8 max-w-7xl mx-auto">
+          <div className="p-8 max-w-7xl mx-auto">
             <Outlet />
-          </main>
+          </div>
         </div>
       </div>
     </div>

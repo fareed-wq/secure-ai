@@ -19,7 +19,7 @@ const RootLayout = () => {
           >
             <Menu size={24} />
           </button>
-          <img src="/logo-transparent.png" alt="URLScan Online Logo" className="ml-2 h-7 w-auto" />
+          <img src="/logo-transparent.webp" alt="URLScan Online Logo" width="654" height="164" className="ml-2 h-7 w-auto" />
         </div>
 
         <div id="main-scroll-container" className="flex-1 overflow-y-auto flex flex-col">

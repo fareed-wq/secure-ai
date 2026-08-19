@@ -35,10 +35,10 @@ const SavedReports = () => {
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-800">
               <span className="text-xs text-slate-500">Saved on {new Date(report.date).toLocaleDateString()}</span>
               <div className="flex gap-2">
-                <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-50 transition-colors" title="View">
+                <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-50 transition-colors" title="View" aria-label="View">
                   <FileText className="w-4 h-4" />
                 </button>
-                <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-400 transition-colors" title="Export PDF">
+                <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-400 transition-colors" title="Export PDF" aria-label="Export PDF">
                   <Download className="w-4 h-4" />
                 </button>
               </div>

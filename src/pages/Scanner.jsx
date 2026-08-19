@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
@@ -10,12 +10,12 @@ import usePdfGenerator from '../hooks/usePdfGenerator';
 import ScanForm from '../components/scanner/ScanForm';
 
 import ReportHeader from '../components/scanner/ReportHeader';
-import SimpleReport from '../components/scanner/SimpleReport';
-import AuthModal from '../components/scanner/AuthModal';
+const SimpleReport = React.lazy(() => import('../components/scanner/SimpleReport'));
+const AuthModal = React.lazy(() => import('../components/scanner/AuthModal'));
 import ErrorBoundary from '../components/ErrorBoundary';
 import SafetyComparison from '../components/scanner/SafetyComparison';
 import BottomTicker from '../components/scanner/BottomTicker';
-import TechnicalReport from '../components/scanner/TechnicalReport';
+const TechnicalReport = React.lazy(() => import('../components/scanner/TechnicalReport'));
 
 import { scanApi } from '../lib/api/scanner';
 
@@ -125,11 +125,13 @@ function Scanner() {
 
 
       {/* Auth Modal */}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        featureName={authFeatureName}
-      />
+      <React.Suspense fallback={null}>
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          featureName={authFeatureName}
+        />
+      </React.Suspense>
 
       {/* Loading overlay for PDF generation */}
       <AnimatePresence>
@@ -142,7 +144,7 @@ function Scanner() {
           >
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 flex flex-col items-center max-w-sm w-full mx-4 text-center">
               <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-              <h3 className="text-xl font-bold text-slate-50 mb-2">Generating PDF</h3>
+              <h2 className="text-xl font-bold text-slate-50 mb-2">Generating PDF</h2>
               <p className="text-slate-400">Please wait while we prepare your report...</p>
             </div>
           </motion.div>
@@ -152,7 +154,7 @@ function Scanner() {
 
 
       {/* Dynamic Content */}
-      <div className="relative z-10 max-w-7xl mx-auto print:hidden">
+      <div className="relative z-10 max-w-7xl mx-auto pb-32 print:hidden">
         <AnimatePresence mode="wait">
 
           {/* 1. IDLE STATE (Search Bar) */}
@@ -290,11 +292,13 @@ function Scanner() {
               />
 
               <ErrorBoundary>
-                {reportMode === 'simple' ? (
-                  <SimpleReport reportData={reportData} />
-                ) : (
-                  <TechnicalReport reportData={reportData} />
-                )}
+                <React.Suspense fallback={<div className="py-12 flex justify-center text-slate-500"><Loader2 className="animate-spin h-8 w-8" /></div>}>
+                  {reportMode === 'simple' ? (
+                    <SimpleReport reportData={reportData} />
+                  ) : (
+                    <TechnicalReport reportData={reportData} />
+                  )}
+                </React.Suspense>
               </ErrorBoundary>
 
               <div className="mt-12 flex justify-center">
