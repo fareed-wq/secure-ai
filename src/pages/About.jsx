@@ -2,10 +2,14 @@ import React, { useEffect } from 'react';
 import { Shield, Lock, Users, Zap, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useSEO } from '../hooks/useSEO';
+
 const About = () => {
-  useEffect(() => {
-    document.title = "About | URLScannerOnline";
-  }, []);
+  useSEO({
+    title: 'About',
+    description: 'Learn about URLScannerOnline, our mission, and how we help teams secure their websites passively.',
+    path: '/about'
+  });
 
   return (
     <div className="space-y-16 pb-12">

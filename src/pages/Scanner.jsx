@@ -18,8 +18,14 @@ import BottomTicker from '../components/scanner/BottomTicker';
 const TechnicalReport = React.lazy(() => import('../components/scanner/TechnicalReport'));
 
 import { scanApi } from '../lib/api/scanner';
+import { useSEO } from '../hooks/useSEO';
 
 function Scanner() {
+  useSEO({
+    title: 'Free Website Security Scanner',
+    description: 'Check if your website is safe instantly. Uncover hidden security risks automatically with our passive security posture checker.',
+    path: '/'
+  });
   const { user } = useAuth();
   const location = useLocation();
   const [url, setUrl] = useState('');

@@ -52,10 +52,11 @@ const Register = () => {
     setCaptchaToken(null);
 
     if (error) {
+      // Keep generic auth errors to prevent user enumeration
       if (error.message === 'User already registered') {
-        setError('An account with this email already exists.');
+        navigate('/email-confirmed', { state: { email } });
       } else {
-        setError(error.message || 'Unable to create account. Please try again.');
+        setError('Unable to create account. Please try again.');
       }
     } else {
       alert("Registration successful! Check your email to confirm.");

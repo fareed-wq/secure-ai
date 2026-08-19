@@ -27,6 +27,7 @@ const ResponsibleDisclosure = React.lazy(() => import('./pages/ResponsibleDisclo
 const TrustAndPolicy = React.lazy(() => import('./pages/TrustAndPolicy'));
 const ApiDocs = React.lazy(() => import('./pages/ApiDocs'));
 const Pricing = React.lazy(() => import('./pages/Pricing'));
+const NotFound = React.lazy(() => import('./pages/NotFound'));
 
 const PlaceholderPage = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
@@ -89,8 +90,10 @@ const App = () => {
                 <Route path="/settings" element={<Settings />} />
               </Route>
 
-              {/* Redirect root to dashboard */}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              {/* Redirect root to dashboard (if we were previously doing that globally, wait, let's keep * to NotFound inside RootLayout or outside) */}
+              <Route element={<RootLayout />}>
+                <Route path="*" element={<NotFound />} />
+              </Route>
             </Routes>
           </main>
           </React.Suspense>

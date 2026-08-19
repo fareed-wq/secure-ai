@@ -77,7 +77,14 @@ app = FastAPI(title="Website Security Posture Checker (Advanced Modular)")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://www.urlscanonline.com",
+        "https://urlscanonline.com",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5176"
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )

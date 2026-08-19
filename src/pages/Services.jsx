@@ -27,7 +27,14 @@ const getImpactStyles = (impact) => {
   return 'border-amber-500/30 bg-amber-500/10 text-amber-400';
 };
 
+import { useSEO } from '../hooks/useSEO';
+
 const Services = () => {
+  useSEO({
+    title: 'Security Checks & Services',
+    description: 'Explore the comprehensive list of passive security checks URLScannerOnline performs to secure your website.',
+    path: '/services'
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
 

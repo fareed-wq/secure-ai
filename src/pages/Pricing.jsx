@@ -1,10 +1,14 @@
 import React, { useEffect } from 'react';
 import { CreditCard, Clock, CheckCircle2, Shield, Zap, Building2 } from 'lucide-react';
 
+import { useSEO } from '../hooks/useSEO';
+
 const Pricing = () => {
-  useEffect(() => {
-    document.title = "Pricing | URLScannerOnline";
-  }, []);
+  useSEO({
+    title: 'Pricing',
+    description: 'Simple, transparent pricing for URLScannerOnline. Free to start, upgrade when you need to.',
+    path: '/pricing'
+  });
 
   const plannedPlans = [
     {

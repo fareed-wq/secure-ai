@@ -2,7 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, ArrowLeft, ChevronDown, AlertTriangle } from 'lucide-react';
 
+import { useSEO } from '../hooks/useSEO';
+
 const Contact = () => {
+  useSEO({
+    title: 'Contact Us',
+    description: 'Get in touch with URLScannerOnline for support, sales, or general questions.',
+    path: '/contact'
+  });
   const navigate = useNavigate();
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
