@@ -963,7 +963,7 @@ html.light-theme .technical-compliance-list li::marker {
 .scanner-wallpaper {
   background-color: #000411 !important;
   background-image: url('/assets/home_wallpaper_dark.webp');
-  background-size: 100% auto;
+  background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
   background-attachment: scroll;
