@@ -71,4 +71,34 @@
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+  <url>
+    <loc>https://www.urlscanonline.com/blog/fix-missing-strict-transport-security-header</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.urlscanonline.com/blog/fix-missing-content-security-policy-header</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.urlscanonline.com/blog/fix-missing-x-frame-options-header</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.urlscanonline.com/blog/fix-insecure-cookie-flags</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.urlscanonline.com/blog/fix-cors-misconfiguration</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.urlscanonline.com/blog/passive-vulnerability-scanner-vs-active-penetration-testing</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
 </urlset>
