@@ -83,7 +83,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       <div className="flex items-center justify-between p-4 border-b border-slate-800">
         {!isCollapsed && (
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-            <img src="/logo-transparent.webp" alt="URLScan Online Logo" width="654" height="164" className="h-8 w-auto" />
+            <img src="/logo-transparent.webp" alt="URLScan Online Logo" width="256" height="64" className="h-8 w-auto" />
           </Link>
         )}
         <div className={`flex items-center ${isCollapsed ? 'flex-col gap-4 w-full' : 'gap-2'}`}>
@@ -91,6 +91,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="hidden md:block p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors"
             title="Toggle Sidebar"
+            aria-label="Toggle Sidebar"
           >
             {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </button>
@@ -100,6 +101,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
             onClick={() => setIsMobileOpen(false)}
             className="md:hidden p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors"
             title="Close Sidebar"
+            aria-label="Close Sidebar"
           >
             <X size={18} />
           </button>
@@ -307,6 +309,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               onClick={async () => { await signOut(); navigate('/login'); }}
               className="w-full flex justify-center px-2.5 py-2 rounded-lg text-slate-400 hover:text-slate-50 hover:bg-slate-900/50 transition-colors"
               title="Sign Out"
+              aria-label="Sign Out"
             >
               <div className="w-7 h-7 flex items-center justify-center shrink-0 text-slate-400">
                 <LogOut size={16} />
@@ -317,6 +320,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               to="/login"
               className="w-full flex justify-center px-2.5 py-2 rounded-lg text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/20 transition-colors"
               title="Sign In"
+              aria-label="Sign In"
             >
               <div className="w-7 h-7 flex items-center justify-center shrink-0 text-indigo-400">
                 <User size={16} />
