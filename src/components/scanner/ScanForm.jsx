@@ -149,6 +149,21 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
           </div>
         )}
 
+        {quotaReached && isGuest && (
+          <div className="w-full bg-slate-900/90 border border-rose-500/30 rounded-xl p-6 mt-4 text-center">
+            <h3 className="text-slate-50 font-bold text-lg mb-2">You've used your 3 free Guest scans for this week.</h3>
+            <p className="text-slate-400 text-sm mb-6">Create a free account to unlock Advanced Scan, get 5 scans every week, download PDF reports, and access your scan history.</p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto">
+                Create Free Account
+              </Link>
+              <Link to="/login" className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto">
+                Sign In
+              </Link>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row gap-4 w-full mt-4 text-left">
           <div className="scan-config-card flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors relative overflow-hidden">
             <h2 className="text-xs font-bold text-slate-400 mb-2.5 tracking-widest uppercase">Scan Configuration</h2>

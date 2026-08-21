@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { History, ExternalLink, Calendar, ShieldAlert } from 'lucide-react';
+import { History, ExternalLink, Calendar, ShieldAlert, Trash2, X } from 'lucide-react';
 import { Link, Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,32 +9,58 @@ const ScanHistory = () => {
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+  const [deleteMessage, setDeleteMessage] = useState(null);
+
+  const fetchHistory = async () => {
+    try {
+      const { data, error: err } = await supabase
+        .from('scans')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (err) throw err;
+      setScans(data || []);
+    } catch (err) {
+      console.error('Error fetching history:', err);
+      setError('Failed to load scan history.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
       setLoading(false);
       return;
     }
-
-    const fetchHistory = async () => {
-      try {
-        const { data, error: err } = await supabase
-          .from('scans')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (err) throw err;
-        setScans(data || []);
-      } catch (err) {
-        console.error('Error fetching history:', err);
-        setError('Failed to load scan history.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchHistory();
   }, [user]);
+
+  const handleDelete = async (id) => {
+    setDeletingId(id);
+    setDeleteMessage(null);
+    try {
+      const { error } = await supabase
+        .from('scans')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      setScans(scans.filter(scan => scan.id !== id));
+      setDeleteMessage({ type: 'success', text: 'Scan deleted.' });
+      setTimeout(() => setDeleteMessage(null), 3000);
+    } catch (err) {
+      console.error('Error deleting scan:', err);
+      setDeleteMessage({ type: 'error', text: 'Could not delete scan.' });
+      setTimeout(() => setDeleteMessage(null), 3000);
+    } finally {
+      setDeletingId(null);
+      setDeleteConfirmId(null);
+    }
+  };
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -50,10 +76,18 @@ const ScanHistory = () => {
 
   return (
     <div className="space-y-6 text-slate-200">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Scan History</h1>
-        <p className="text-slate-400 mt-1">Review all your previous security assessments.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Scan History</h1>
+          <p className="text-slate-400 mt-1">Review all your previous security assessments.</p>
+        </div>
       </div>
+
+      {deleteMessage && (
+        <div className={`p-4 rounded-xl flex items-center gap-2 ${deleteMessage.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'}`}>
+          {deleteMessage.text}
+        </div>
+      )}
 
       {error ? (
         <div className="bg-rose-500/10 border border-rose-500/30 p-4 rounded-xl text-rose-400 flex items-center gap-2">
@@ -89,9 +123,11 @@ const ScanHistory = () => {
                           <span className="text-xs text-slate-400 mt-1">{modeLabel}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-slate-400 flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(scan.created_at).toLocaleDateString()}
+                      <td className="p-4 text-slate-400">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          {new Date(scan.created_at).toLocaleDateString()}
+                        </div>
                       </td>
                       <td className="p-4">
                         <div className={`inline-flex px-2 py-1 rounded text-xs font-bold ${scan.score >= 85 ? 'bg-emerald-500/10 text-emerald-400' : scan.score >= 70 ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-400'}`}>
@@ -99,15 +135,55 @@ const ScanHistory = () => {
                         </div>
                       </td>
                       <td className="p-4 text-right">
-                        <Link to={`/history/${scan.id}`} className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300">
-                          View Report <ExternalLink className="w-4 h-4" />
-                        </Link>
+                        <div className="flex items-center justify-end gap-4">
+                          <Link to={`/history/${scan.id}`} className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors">
+                            View Report <ExternalLink className="w-4 h-4" />
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteConfirmId(scan.id)}
+                            className="inline-flex items-center gap-1 text-rose-500 hover:text-rose-400 transition-colors"
+                            aria-label="Delete scan"
+                          >
+                            <Trash2 className="w-4 h-4" /> Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+            <h3 className="text-xl font-bold text-slate-50 mb-2">Delete scan?</h3>
+            <p className="text-slate-400 text-sm mb-6">
+              Are you sure you want to delete this scan from your history? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmId(null)}
+                className="px-4 py-2 text-sm font-semibold text-slate-300 hover:text-slate-50 transition-colors"
+                disabled={deletingId !== null}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(deleteConfirmId)}
+                disabled={deletingId !== null}
+                className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+              >
+                {deletingId ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

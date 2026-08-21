@@ -6,7 +6,7 @@ import SimpleReport from '../components/scanner/SimpleReport';
 import TechnicalReport from '../components/scanner/TechnicalReport';
 import ReportHeader from '../components/scanner/ReportHeader';
 import usePdfGenerator from '../hooks/usePdfGenerator';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 const ScanReport = () => {
   const { scanId } = useParams();
@@ -86,7 +86,19 @@ const ScanReport = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+      
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => navigate('/history')}
+          className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-200 transition-colors bg-slate-900 border border-slate-700 hover:border-slate-500 px-4 py-2 rounded-lg text-sm font-semibold"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Scan History
+        </button>
+      </div>
       <ReportHeader
+
         url={scan.target_url}
         score={scan.score}
         timestamp={scan.created_at}
@@ -97,11 +109,7 @@ const ScanReport = () => {
       />
       
       <div ref={reportRef} className="bg-slate-950 p-6 sm:p-8 rounded-2xl border border-slate-800 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-          <div className="text-[120px] font-black tracking-tighter leading-none select-none">
-            {scan.score}
-          </div>
-        </div>
+        
 
         {activeMode === 'simple' ? (
           <SimpleReport
