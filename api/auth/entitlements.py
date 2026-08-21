@@ -56,6 +56,9 @@ def verify_jwt(token: str) -> dict:
     except jwt.InvalidTokenError as e:
         logger.error(f"JWT Validation failed: {e}")
         raise HTTPException(status_code=401, detail="Invalid token.")
+    except Exception as e:
+        logger.error(f"Unexpected authentication error: {e}")
+        raise HTTPException(status_code=500, detail="Authentication server error.")
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security)) -> Optional[dict]:
     if not credentials:
