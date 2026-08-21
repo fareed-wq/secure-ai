@@ -74,44 +74,16 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
                 <h4 className="text-slate-50 font-bold text-lg mb-2">Scan Blocked</h4>
                 <p className="text-slate-300 text-sm mb-6">{validationError}</p>
                 
-                {quotaReached && isGuest && validationError.includes('3 free Guest scans') ? (
-                  <>
-                    <p className="text-slate-400 text-sm mb-6">Create a free account to unlock Advanced Scan, get 5 scans every week, download PDF reports, and access your scan history.</p>
-                    <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full mb-3 block">
-                      Create Free Account
-                    </Link>
-                    <Link to="/login" className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-6 rounded-xl transition-all w-full mb-3 block">
-                      Sign In
-                    </Link>
-                  </>
-                ) : quotaReached && !isGuest && validationError.includes('5 free scans') ? (
-                  <>
-                    <p className="text-slate-400 text-sm mb-6">You have reached your weekly limit. Upgrade to Professional for unlimited scans.</p>
-                    <button
-                      onClick={() => setValidationError('')}
-                      className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full"
-                    >
-                      Got it
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setValidationError('');
-                      setTimeout(() => urlInputRef.current?.focus(), 100);
-                    }}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full"
-                  >
-                    Got it
-                  </button>
-                )}
-                {quotaReached && (
-                  <button onClick={() => setValidationError('')} className="text-slate-400 text-sm hover:text-white mt-3">
-                    Dismiss
-                  </button>
-                )}
-              </div>
-            </motion.div>
+                {quotaReached && !isGuest && validationError.includes('5 free scans') ? (
+                    <>
+                      <p className="text-slate-400 text-sm mb-6">You have reached your weekly limit. Upgrade to Professional for unlimited scans.</p>
+                      <button onClick={() => setValidationError('')} className="bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 px-6 rounded-xl transition-all w-full mb-3">Close</button>
+                    </>
+                  ) : (
+                    <button onClick={() => setValidationError('')} className="bg-slate-800 hover:bg-slate-700 text-white font-medium py-2.5 px-6 rounded-xl transition-all w-full">Close</button>
+                  )}
+                </div>
+              </motion.div>
           </div>
         )}
       </AnimatePresence>
@@ -147,7 +119,24 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
             </span>
             <span className="text-slate-500 border-l border-slate-700 pl-2 ml-1">Resets Monday</span>
           </div>
-        )}
+        )
+
+          {isGuest && (
+            <div className={`w-full max-w-2xl bg-slate-900/90 border rounded-xl p-6 mt-2 text-center shadow-xl ${quotaReached ? 'border-rose-500/30' : 'border-indigo-500/20'}`}>
+              {quotaReached && (
+                <h3 className="text-rose-400 font-bold text-lg mb-2">You've used your 3 free Guest scans for this week.</h3>
+              )}
+              <p className="text-slate-300 text-sm mb-5 font-medium">Create a free account to unlock Advanced Scan, get 5 scans every week, download PDF reports, and access your scan history.</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto shadow-lg shadow-indigo-500/20">
+                  Create Free Account
+                </Link>
+                <Link to="/login" className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto border border-slate-700">
+                  Sign In
+                </Link>
+              </div>
+            </div>
+          )}}
 
         
 
