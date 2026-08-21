@@ -50,7 +50,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={onExportPdf}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onExportPdf(e); }}
             title="Download PDF Report"
             className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
           >
