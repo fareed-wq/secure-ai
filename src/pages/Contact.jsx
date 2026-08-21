@@ -94,7 +94,7 @@ const Contact = () => {
   };
 
   return (
-    <div className="contact-page flex flex-col min-h-screen font-sans relative overflow-hidden" style={{ backgroundColor: '#070B14' }}>
+    <div className="contact-page flex flex-col min-h-screen font-sans relative overflow-x-hidden" style={{ backgroundColor: '#070B14' }}>
 
       {/* Ambient Glows */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[500px] opacity-30 pointer-events-none">
