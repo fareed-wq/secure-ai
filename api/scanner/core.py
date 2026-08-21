@@ -152,3 +152,34 @@ def release_scan_lease(lease_id: str):
         requests.post(redis_url, json=payload, headers=headers, timeout=1.5)
     except Exception as e:
         logger.error(f"Failed to release scan lease {lease_id}: {e}")
+
+def acquire_guest_lease(ip: str) -> bool:
+    """Ensure maximum guest scan concurrency = 1 per IP."""
+    redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
+    redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+    if not redis_url or not redis_token:
+        raise RuntimeError("Redis missing; cannot determine guest concurrency.")
+    key = f"guest_active:{ip}"
+    headers = {"Authorization": f"Bearer {redis_token}"}
+    payload = ["SET", key, "1", "NX", "EX", "65"]
+    try:
+        resp = requests.post(redis_url, json=payload, headers=headers, timeout=1.5)
+        if resp.status_code == 200:
+            result = resp.json().get("result")
+            return result == "OK"
+        raise RuntimeError(f"Upstash REST error: {resp.text}")
+    except Exception as e:
+        logger.error(f"Failed to acquire guest lease: {e}")
+        raise RuntimeError("Failed to acquire guest lease due to Redis error.")
+
+def release_guest_lease(ip: str):
+    redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
+    redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+    if not redis_url or not redis_token:
+        return
+    headers = {"Authorization": f"Bearer {redis_token}"}
+    payload = ["DEL", f"guest_active:{ip}"]
+    try:
+        requests.post(redis_url, json=payload, headers=headers, timeout=1.5)
+    except Exception:
+        pass

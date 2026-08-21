@@ -1,17 +1,34 @@
 import React, { useState, useRef } from 'react';
-import { Search, ArrowRight, ShieldAlert } from 'lucide-react';
+import { Search, ArrowRight, ShieldAlert, Lock, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
-const ScanForm = ({ onScan }) => {
+const ScanForm = ({ onScan, quotaInfo, user }) => {
   const [url, setUrl] = useState('');
   const [scanMode, setScanMode] = useState('passive');
   const [reportMode, setReportMode] = useState('simple');
   const [validationError, setValidationError] = useState('');
   const urlInputRef = useRef(null);
 
+  const isGuest = !user;
+  const quotaReached = isGuest && quotaInfo?.quota?.quota_remaining <= 0;
+  const quotaUsed = quotaInfo?.quota?.quota_used || 0;
+  const quotaLimit = quotaInfo?.quota?.quota_limit || 3;
+  const quotaRemaining = quotaInfo?.quota?.quota_remaining || 0;
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!url) return;
+    
+    if (quotaReached) {
+      setValidationError("You've used your 3 free Basic scans for this week.");
+      return;
+    }
+
+    if (isGuest && scanMode === 'active') {
+      setValidationError("Advanced scanning is available for signed-in users only.");
+      return;
+    }
 
     let parsedUrl = url.trim();
     let cleanInput = parsedUrl.replace(/^https?:\/\//i, '').replace(/^www\./i, '');
@@ -49,17 +66,28 @@ const ScanForm = ({ onScan }) => {
                 <div className="bg-rose-500/10 p-3 rounded-full mb-4">
                   <ShieldAlert className="w-8 h-8 text-rose-400" />
                 </div>
-                <h4 className="text-slate-50 font-bold text-lg mb-2">Invalid Domain Format</h4>
+                <h4 className="text-slate-50 font-bold text-lg mb-2">Scan Blocked</h4>
                 <p className="text-slate-300 text-sm mb-6">{validationError}</p>
-                <button
-                  onClick={() => {
-                    setValidationError('');
-                    setTimeout(() => urlInputRef.current?.focus(), 100);
-                  }}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full"
-                >
-                  Got it
-                </button>
+                {quotaReached ? (
+                  <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full mb-3 block">
+                    Create Free Account
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setValidationError('');
+                      setTimeout(() => urlInputRef.current?.focus(), 100);
+                    }}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full"
+                  >
+                    Got it
+                  </button>
+                )}
+                {quotaReached && (
+                  <button onClick={() => setValidationError('')} className="text-slate-400 text-sm hover:text-white mt-3">
+                    Dismiss
+                  </button>
+                )}
               </div>
             </motion.div>
           </div>
@@ -75,28 +103,47 @@ const ScanForm = ({ onScan }) => {
             required
             placeholder="example.com"
             value={url}
+            disabled={quotaReached}
             onChange={(e) => {
               setUrl(e.target.value);
               if (validationError) setValidationError('');
             }}
-            className="scan-url-input w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none"
+            className="scan-url-input w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none disabled:opacity-50"
           />
-          <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 shrink-0">
+          <button type="submit" disabled={quotaReached} className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
             Scan <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
+        {isGuest && quotaInfo && (
+          <div className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-900 border border-slate-700/50 mt-1">
+            <AlertCircle className={`w-3.5 h-3.5 ${quotaReached ? 'text-rose-400' : 'text-indigo-400'}`} />
+            <span className="text-slate-300">
+              Guest Quota: {quotaUsed}/{quotaLimit} used — {quotaRemaining} remaining.
+            </span>
+            <span className="text-slate-500 border-l border-slate-700 pl-2 ml-1">Resets Monday</span>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row gap-4 w-full mt-4 text-left">
-          <div className="scan-config-card flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors">
+          <div className="scan-config-card flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors relative overflow-hidden">
             <h2 className="text-xs font-bold text-slate-400 mb-2.5 tracking-widest uppercase">Scan Configuration</h2>
-            <div className="flex flex-col gap-1.5">
+            <div className="flex flex-col gap-1.5 relative z-10">
               <label className={`scan-option flex items-center gap-3 cursor-pointer px-3 py-2 rounded-lg border transition-all ${scanMode === 'passive' ? 'scan-option-selected bg-indigo-500/10 border-indigo-500/30' : 'bg-transparent border-transparent hover:bg-slate-800/50'}`}>
                 <input type="radio" name="scanMode" value="passive" checked={scanMode === 'passive'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />
                 <span className={`text-sm font-medium transition-colors ${scanMode === 'passive' ? 'text-indigo-300' : 'text-slate-400'}`}>Basic Scan</span>
               </label>
-              <label className={`scan-option flex items-center gap-3 cursor-pointer px-3 py-2 rounded-lg border transition-all ${scanMode === 'active' ? 'scan-option-selected bg-indigo-500/10 border-indigo-500/30' : 'bg-transparent border-transparent hover:bg-slate-800/50'}`}>
-                <input type="radio" name="scanMode" value="active" checked={scanMode === 'active'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer" />
-                <span className={`text-sm font-medium transition-colors ${scanMode === 'active' ? 'text-indigo-300' : 'text-slate-400'}`}>Advanced Scan</span>
+              <label className={`scan-option flex items-center justify-between gap-3 cursor-pointer px-3 py-2 rounded-lg border transition-all ${scanMode === 'active' ? 'scan-option-selected bg-indigo-500/10 border-indigo-500/30' : 'bg-transparent border-transparent hover:bg-slate-800/50'} ${isGuest ? 'opacity-60 grayscale cursor-not-allowed' : ''}`} onClick={(e) => {
+                if (isGuest) {
+                  e.preventDefault();
+                  setValidationError("Advanced scanning is available for signed-in users only.");
+                }
+              }}>
+                <div className="flex items-center gap-3">
+                  <input type="radio" name="scanMode" value="active" disabled={isGuest} checked={scanMode === 'active'} onChange={(e) => setScanMode(e.target.value)} className="w-4 h-4 text-indigo-500 bg-slate-800 border-slate-600 focus:ring-indigo-500 focus:ring-offset-slate-900 transition-colors cursor-pointer disabled:cursor-not-allowed" />
+                  <span className={`text-sm font-medium transition-colors ${scanMode === 'active' ? 'text-indigo-300' : 'text-slate-400'}`}>Advanced Scan</span>
+                </div>
+                {isGuest && <Lock className="w-3.5 h-3.5 text-slate-500" />}
               </label>
             </div>
           </div>
