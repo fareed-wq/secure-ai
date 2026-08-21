@@ -136,7 +136,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
                 </Link>
               </div>
             </div>
-          )}}
+          )}
 
         
 
