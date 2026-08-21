@@ -100,22 +100,10 @@ function Scanner() {
       setReportData(data);
       setScanState('view-report'); // Skip mode selection, go straight to report
 
-      // Save scan to Supabase if user is logged in
-      if (user) {
-        // Run asynchronously so it doesn't block the UI
-        supabase.from('scans').insert([{
-          user_id: user.id,
-          target_url: parsedUrl,
-          score: data.score || 0,
-          report_data: data
-        }]).then(({ error }) => {
-          if (error) console.error("Failed to save scan history:", error);
-        });
-      }
     } catch (error) {
       console.error('Backend Connection Error:', error);
       const msg = error.message || String(error);
-      if (msg.includes("You've used your 3 free Basic scans")) {
+      if (msg.includes("You've used your 3 free Guest scans")) {
         setErrorMessage(msg);
       } else {
         setErrorMessage(`Failed to connect to the backend scanner: ${msg}`);
@@ -143,12 +131,52 @@ function Scanner() {
     setScanState('view-report');
   };
 
+  const [saveStatus, setSaveStatus] = useState('');
+  const [savedScanId, setSavedScanId] = useState(null);
+
   const handlePdfExport = () => {
     if (!user) {
       handleRequireAuth('download PDF reports');
       return;
     }
     generatePdf(reportData, executedScanMode, reportMode);
+  };
+
+  const handleSaveScan = async () => {
+    if (!user) {
+      handleRequireAuth('save reports to your dashboard');
+      return null;
+    }
+    
+    if (savedScanId) {
+        return savedScanId;
+    }
+    
+    setSaveStatus('saving');
+    try {
+      const { data, error } = await supabase.from('scans').insert([{
+        user_id: user.id,
+        target_url: reportData.url,
+        score: reportData.score || 0,
+        report_data: reportData
+      }]).select();
+      
+      if (error) {
+        console.error("Failed to save scan:", error);
+        setSaveStatus('error');
+        return null;
+      } else if (data && data.length > 0) {
+        const newId = data[0].id;
+        setSavedScanId(newId);
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus(''), 3000);
+        return newId;
+      }
+    } catch (error) {
+      console.error("Failed to save scan:", error);
+      setSaveStatus('error');
+      return null;
+    }
   };
 
   return (
@@ -290,20 +318,22 @@ function Scanner() {
                     </details>
                   </>
                 ) : (
-                  <>
-                    <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Incomplete</h2>
-                    <p className="text-red-200 mb-8">{errorMessage}</p>
-                    
-                    {errorMessage && errorMessage.includes("You've used your 3 free Basic scans") && !user && (
-                      <div className="mb-8">
-                        <Link to="/register" className="bg-rose-500 hover:bg-rose-600 text-white font-medium px-6 py-3 rounded-xl transition-all inline-flex items-center gap-2 shadow-lg shadow-rose-500/20">
-                          <Lock className="w-5 h-5" />
-                          Create Free Account
-                        </Link>
-                        <p className="text-red-300/80 mt-3 text-sm">Sign up for a free account to unlock unlimited basic scans.</p>
-                      </div>
-                    )}
-                  </>
+                    <>
+                      <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Incomplete</h2>
+                      <p className="text-red-200 mb-8">{errorMessage}</p>
+                      
+                      {errorMessage && errorMessage.includes("You've used your 3 free Guest scans") && !user && (
+                        <div className="mb-8 flex flex-col gap-3 max-w-sm mx-auto">
+                          <p className="text-red-300/80 mb-2 text-sm">Create a free account to unlock Advanced Scan, get 5 scans every week, save reports, download PDF reports, and access your scan history.</p>
+                          <Link to="/register" className="bg-rose-500 hover:bg-rose-600 text-white font-medium px-6 py-3 rounded-xl transition-all shadow-lg shadow-rose-500/20 text-center w-full">
+                            Create Free Account
+                          </Link>
+                          <Link to="/login" className="bg-transparent border border-red-500/30 text-red-300 hover:bg-red-950 px-6 py-3 rounded-xl transition-all text-center w-full">
+                            Sign In
+                          </Link>
+                        </div>
+                      )}
+                    </>
                 )}
 
                 <button onClick={resetScan} className="bg-slate-800 hover:bg-slate-700 text-slate-50 px-6 py-3 rounded-xl transition-all">
@@ -330,6 +360,9 @@ function Scanner() {
                 onToggleMode={setReportMode}
                 onExportPdf={handlePdfExport}
                 onRequireAuth={handleRequireAuth}
+                onSaveScan={handleSaveScan}
+                savedScanId={savedScanId}
+                saveStatus={saveStatus}
                 reportData={reportData}
               />
 

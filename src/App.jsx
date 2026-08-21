@@ -12,6 +12,7 @@ const EmailConfirmed = React.lazy(() => import('./pages/EmailConfirmed'));
 const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
+const SharedReport = React.lazy(() => import('./pages/SharedReport'));
 const ScanHistory = React.lazy(() => import('./pages/ScanHistory'));
 const SavedReports = React.lazy(() => import('./pages/SavedReports'));
 const Compare = React.lazy(() => import('./pages/Compare'));
@@ -59,6 +60,7 @@ const App = () => {
               <Route element={<RootLayout />}>
                 <Route path="/" element={<Scanner />} />
                 <Route path="/services" element={<Services />} />
+                <Route path="/shared/:token" element={<SharedReport />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/scan" element={<Scanner />} />
 
