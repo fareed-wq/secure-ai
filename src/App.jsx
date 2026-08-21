@@ -28,7 +28,6 @@ const TrustAndPolicy = React.lazy(() => import('./pages/TrustAndPolicy'));
 const ApiDocs = React.lazy(() => import('./pages/ApiDocs'));
 const Pricing = React.lazy(() => import('./pages/Pricing'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
-const AuthDiagnostic = React.lazy(() => import('./pages/AuthDiagnostic'));
 
 const PlaceholderPage = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
@@ -76,7 +75,6 @@ const App = () => {
               </Route>
 
               {/* Auth Routes */}
-              <Route path="/auth-diagnostic" element={<AuthDiagnostic />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/email-confirmed" element={<EmailConfirmed />} />

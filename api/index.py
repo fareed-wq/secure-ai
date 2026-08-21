@@ -74,8 +74,6 @@ from api.scanner.validation import CANONICAL_URL_REGEX, canonicalize_url, normal
 
 
 app = FastAPI(title="Website Security Posture Checker (Advanced Modular)")
-from api.auth_smoke_test import router as auth_smoke_router
-app.include_router(auth_smoke_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -217,19 +215,36 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
     finally:
         orchestrator_module.REGISTERED_MODULES = original
 
-from api.scanner.core import acquire_scan_lease, release_scan_lease
-
+from fastapi import Depends
+from api.auth.entitlements import get_current_user, Entitlements, check_guest_quota, consume_guest_quota
+from api.scanner.core import acquire_scan_lease, release_scan_lease, acquire_guest_lease, release_guest_lease
 
 @app.post("/api/scan")
 @app.post("/scan")
-async def scan_single(req: ScanRequest, request: Request):
+async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(get_current_user)):
     ip = get_client_ip(request)
+    entitlements = Entitlements(user)
+
+    if req.scan_mode == "advanced" and not entitlements.can_advanced_scan:
+        return JSONResponse(status_code=403, content={"error": "Advanced scanning is not available for Guest users.", "status": 403})
+
+    if entitlements.plan == "guest":
+        quota = check_guest_quota(ip)
+        if quota["quota_remaining"] <= 0:
+            return JSONResponse(status_code=429, content={"error": "You've used your 3 free Basic scans for this week.", "status": 429})
+
     if not check_rate_limit(ip):
         return JSONResponse(
             status_code=429,
             content={"error": "Rate limit exceeded. Maximum 10 scans per minute allowed.", "status": 429},
             headers={"Retry-After": "60", "X-RateLimit-Limit": "10", "X-RateLimit-Remaining": "0"}
         )
+
+    from api.scanner.orchestrator import validate_scan_target
+    validation_error = validate_scan_target(req.url, req.scan_mode)
+    if validation_error:
+        # Return 200 with the error dict (as scanner originally did) without consuming quota
+        return JSONResponse(status_code=200, content=validation_error)
 
     try:
         lease_id = acquire_scan_lease()
@@ -245,7 +260,17 @@ async def scan_single(req: ScanRequest, request: Request):
             content={"error": "Global scanner capacity is full. Please try again in a few seconds.", "status": 429}
         )
 
+    has_guest_lease = False
     try:
+        if entitlements.plan == "guest":
+            has_guest_lease = acquire_guest_lease(ip)
+            if not has_guest_lease:
+                return JSONResponse(status_code=429, content={"error": "You already have a scan in progress.", "status": 429})
+            
+            # Consume quota only after all validation and leases are acquired
+            if not consume_guest_quota(ip):
+                return JSONResponse(status_code=429, content={"error": "You've used your 3 free Basic scans for this week.", "status": 429})
+
         result = await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains, req.scan_mode), timeout=55.0)
         result["report_mode"] = req.report_mode
         return result
@@ -253,11 +278,27 @@ async def scan_single(req: ScanRequest, request: Request):
         return JSONResponse(status_code=200, content=get_waf_fallback_payload(req.url))
     finally:
         release_scan_lease(lease_id)
+        if has_guest_lease:
+            release_guest_lease(ip)
+
+
+@app.get("/api/quota")
+def get_quota(request: Request, user: dict = Depends(get_current_user)):
+    entitlements = Entitlements(user)
+    if entitlements.plan == "guest":
+        ip = get_client_ip(request)
+        quota = check_guest_quota(ip)
+        return {"plan": "guest", "quota": quota}
+    return {"plan": entitlements.plan, "unlimited": entitlements.is_unlimited}
 
 
 @app.post("/api/scan/batch")
 @app.post("/scan/batch")
-async def scan_batch(req: BatchScanRequest, request: Request):
+async def scan_batch(req: BatchScanRequest, request: Request, user: dict = Depends(get_current_user)):
+    entitlements = Entitlements(user)
+    if entitlements.plan == "guest":
+        return JSONResponse(status_code=403, content={"error": "Batch scanning requires an account.", "status": 403})
+
     ip = get_client_ip(request)
     if not check_rate_limit(ip):
         return JSONResponse(

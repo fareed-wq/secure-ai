@@ -5,34 +5,45 @@ export const API_BASE_URL =
     ? (import.meta.env.VITE_API_URL || 'http://localhost:5000') 
     : '';
 
+import { supabase } from '../supabase';
+
 class ScanApiClient {
-  /**
-   * Submits a URL to the backend scanner API.
-   * 
-   * @param {string} url - The URL to scan.
-   * @returns {Promise<Object>} - The raw scan report data or throws an error.
-   */
+  async getAuthHeader() {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {};
+  }
+
   async runScan(url, scanMode = 'passive', reportMode = 'simple') {
     const minWait = new Promise(resolve => setTimeout(resolve, 6000));
     
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(await this.getAuthHeader())
+    };
+
     const fetchPromise = fetch(`${API_BASE_URL}/api/scan`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify({ url, scan_mode: scanMode, report_mode: reportMode }),
     });
 
-    // Wait for at least 6 seconds and for the fetch to complete
     const [response] = await Promise.all([fetchPromise, minWait]);
-    
     const data = await response.json();
     
-    if (data.error) {
-      throw new Error(data.error);
-    }
-    
+    if (data.error) throw new Error(data.error);
     return normalizeScanResult(data);
+  }
+
+  async getQuota() {
+    try {
+      const headers = await this.getAuthHeader();
+      const response = await fetch(`${API_BASE_URL}/api/quota`, { headers });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch (e) {
+      console.error("Failed to fetch quota", e);
+      return null;
+    }
   }
 }
 

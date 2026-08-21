@@ -38,6 +38,7 @@ function Scanner() {
   const [authFeatureName, setAuthFeatureName] = useState('');
   const { isGeneratingPdf, generatePdf } = usePdfGenerator();
   const reportRef = useRef(null);
+  const [quotaInfo, setQuotaInfo] = useState(null);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -45,9 +46,18 @@ function Scanner() {
   };
 
   useEffect(() => {
-    // Scroll to top on mount (e.g. normal navigation)
+    // Scroll to top on mount
     scrollToTop();
   }, []);
+
+  // Fetch quota info
+  useEffect(() => {
+    const fetchQuota = async () => {
+      const q = await scanApi.getQuota();
+      if (q) setQuotaInfo(q);
+    };
+    fetchQuota();
+  }, [user]);
 
   useEffect(() => {
     if (location.state?.resetScan) {
@@ -187,7 +197,7 @@ function Scanner() {
               </div>
 
               {/* 3. Input Bar Container */}
-              <ScanForm onScan={handleScan} />
+              <ScanForm onScan={handleScan} quotaInfo={quotaInfo} user={user} />
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-slate-400 mt-8 font-medium">
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>

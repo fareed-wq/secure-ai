@@ -1,0 +1,285 @@
+﻿[
+    {
+        "id": "fix-hsts-header",
+        "title": "How to Fix Missing Strict-Transport-Security Header",
+        "slug": "fix-missing-strict-transport-security-header",
+        "category": "Remediation",
+        "primaryKeyword": "strict-transport-security header",
+        "excerpt": "Learn why the HTTP Strict Transport Security (HSTS) header is critical for securing your traffic and how to implement it safely on modern web servers.",
+        "content": "The <strong>Strict-Transport-Security (HSTS)</strong> header is an essential security control that instructs web browsers to only connect to your site via secure HTTPS connections. Without this header, your visitors are vulnerable to protocol downgrade attacks and cookie hijacking. In this guide, we explain how to safely implement HSTS to secure your application.<br><br>Before enforcing strict policies, you can use our <a href=\"/scan\">passive vulnerability scanner</a> to verify your baseline TLS configuration.",
+        "sections": [
+            {
+                "id": "what-is-hsts",
+                "number": "01",
+                "title": "What is Strict-Transport-Security?",
+                "content": "HSTS is a response header sent by the server. When a browser receives this header, it remembers that this domain should never be loaded over unencrypted HTTP. If a user types `http://yourdomain.com`, the browser will automatically upgrade the request to `https://` internally before sending it over the network.",
+                "listTitle": "Key benefits",
+                "list": [
+                    "Prevents SSL stripping attacks",
+                    "Forces secure connections natively in the browser",
+                    "Improves page load times by skipping HTTP-to-HTTPS redirects"
+                ]
+            },
+            {
+                "id": "hsts-directives",
+                "number": "02",
+                "title": "Understanding HSTS Directives",
+                "content": "An HSTS header contains several important directives that dictate its behavior. The most critical is `max-age`, which specifies how long (in seconds) the browser should remember to enforce HTTPS.",
+                "listTitle": "Common directives",
+                "list": [
+                    "max-age: Duration in seconds (e.g., 31536000 for 1 year)",
+                    "includeSubDomains: Applies the rule to all subdomains",
+                    "preload: Authorizes browser vendors to hardcode your domain into their global HSTS preload list"
+                ]
+            },
+            {
+                "id": "how-to-fix",
+                "number": "03",
+                "title": "How to Implement HSTS",
+                "content": "You can add the HSTS header at your web server, load balancer, or CDN level. Below are basic examples for common web servers. <strong>Warning:</strong> Start with a short max-age (like 5 minutes) to test your configuration before committing to a 1-year duration.",
+                "listTitle": "Configuration examples",
+                "list": [
+                    "Nginx: add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;",
+                    "Apache: Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains\"",
+                    "Express (Node.js): Use the Helmet.js middleware"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "fix-csp-header",
+        "title": "How to Fix Missing Content-Security-Policy Header",
+        "slug": "fix-missing-content-security-policy-header",
+        "category": "Remediation",
+        "primaryKeyword": "content-security-policy header",
+        "excerpt": "Content-Security-Policy (CSP) is your primary defense against Cross-Site Scripting (XSS). Learn how to incrementally deploy a CSP to protect your users.",
+        "content": "A missing <strong>Content-Security-Policy (CSP)</strong> header leaves your website heavily exposed to Cross-Site Scripting (XSS) and data injection attacks. CSP provides a rigorous allowlist of trusted content sources, preventing the browser from executing malicious inline scripts or loading untrusted assets.<br><br>To see if your current framework exposes any headers by default, consider running a quick check using our <a href=\"/scan\">passive vulnerability scanner</a>.",
+        "sections": [
+            {
+                "id": "why-csp-matters",
+                "number": "01",
+                "title": "Why You Need a CSP",
+                "content": "Modern web applications load resources from dozens of external domains (analytics, fonts, CDNs). If an attacker manages to inject a malicious script tag into your page, the browser will execute it by default. CSP acts as a strict set of rules, telling the browser exactly which domains are allowed to provide scripts, styles, and images.",
+                "listTitle": "Attacks mitigated by CSP",
+                "list": [
+                    "Cross-Site Scripting (XSS)",
+                    "Clickjacking (via frame-ancestors)",
+                    "Data exfiltration (by restricting form-action and connect-src)"
+                ]
+            },
+            {
+                "id": "csp-report-only",
+                "number": "02",
+                "title": "Start with Report-Only Mode",
+                "content": "Implementing a strict CSP on an existing application can break functionality if legitimate assets are blocked. Use the `Content-Security-Policy-Report-Only` header first. This instructs the browser to report violations to an endpoint you control without actually blocking the resources.",
+                "listTitle": "Rollout strategy",
+                "list": [
+                    "1. Deploy Content-Security-Policy-Report-Only",
+                    "2. Analyze violation reports to identify legitimate resources",
+                    "3. Adjust your allowlist accordingly",
+                    "4. Enforce the policy using the standard Content-Security-Policy header"
+                ]
+            },
+            {
+                "id": "basic-csp-example",
+                "number": "03",
+                "title": "Basic CSP Configuration",
+                "content": "A strong baseline CSP restricts all resources to the same origin by default, and then explicitly opens up permissions as needed. Ensure you read up on <a href=\"/blog/http-security-headers-guide\">general HTTP security headers</a> for broader context.",
+                "listTitle": "Example Policy",
+                "list": [
+                    "default-src 'self';",
+                    "script-src 'self' https://trusted-cdn.com;",
+                    "object-src 'none';"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "fix-x-frame-options",
+        "title": "How to Fix Missing X-Frame-Options Header",
+        "slug": "fix-missing-x-frame-options-header",
+        "category": "Remediation",
+        "primaryKeyword": "x-frame-options header",
+        "excerpt": "Clickjacking is a stealthy UI-redress attack. Find out how the X-Frame-Options header stops attackers from framing your website.",
+        "content": "If your website is missing the <strong>X-Frame-Options</strong> header, it can be embedded inside an invisible iframe on a malicious third-party site. This technique, known as Clickjacking, tricks users into clicking sensitive buttons (like \"Transfer Funds\" or \"Delete Account\") while they think they are interacting with the attacker's harmless page.",
+        "sections": [
+            {
+                "id": "understanding-clickjacking",
+                "number": "01",
+                "title": "Understanding Clickjacking",
+                "content": "In a clickjacking attack, a malicious actor overlays your legitimate site inside a transparent iframe, placing it directly underneath a deceptive button. When the user attempts to click the visible button, the click is intercepted by your invisible site.",
+                "listTitle": "Risks of framing",
+                "list": [
+                    "Unauthorized account modifications",
+                    "Unintended social media sharing",
+                    "Hidden financial transactions"
+                ]
+            },
+            {
+                "id": "xfo-directives",
+                "number": "02",
+                "title": "Choosing the Right Directive",
+                "content": "The X-Frame-Options header supports simple directives to control framing behavior. It is widely supported across legacy and modern browsers. To verify if your site currently permits framing, you can run an assessment with our <a href=\"/scan\">passive vulnerability scanner</a>.",
+                "listTitle": "Available Options",
+                "list": [
+                    "DENY: No one can embed your page, not even yourself.",
+                    "SAMEORIGIN: Only pages on your exact domain can embed your page.",
+                    "ALLOW-FROM: Deprecated and unsupported in modern browsers."
+                ]
+            },
+            {
+                "id": "csp-frame-ancestors",
+                "number": "03",
+                "title": "Modern Alternative: CSP frame-ancestors",
+                "content": "While X-Frame-Options is highly recommended for legacy support, modern browsers prefer the `frame-ancestors` directive within the Content-Security-Policy header, which allows for more complex framing rules.",
+                "listTitle": "Implementation Examples",
+                "list": [
+                    "Nginx: add_header X-Frame-Options \"SAMEORIGIN\" always;",
+                    "Apache: Header always append X-Frame-Options SAMEORIGIN",
+                    "CSP: Content-Security-Policy: frame-ancestors 'self'"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "fix-insecure-cookies",
+        "title": "How to Fix Insecure Cookie Flags: Secure, HttpOnly, SameSite",
+        "slug": "fix-insecure-cookie-flags",
+        "category": "Remediation",
+        "primaryKeyword": "insecure cookie flags",
+        "excerpt": "Session hijacking is a severe threat. Learn how to implement the Secure, HttpOnly, and SameSite flags to harden your session cookies.",
+        "content": "Cookies often contain sensitive session identifiers. If these cookies lack the proper security flags, they can be stolen via Cross-Site Scripting (XSS), intercepted over unencrypted networks, or abused in Cross-Site Request Forgery (CSRF) attacks.",
+        "sections": [
+            {
+                "id": "httponly-flag",
+                "number": "01",
+                "title": "The HttpOnly Flag",
+                "content": "When a cookie is set with the `HttpOnly` flag, the browser prevents client-side JavaScript from accessing it via `document.cookie`. This is a critical defense-in-depth measure against XSS attacks, ensuring that even if an attacker executes code in the user's browser, they cannot steal the session token.",
+                "listTitle": "Usage rule",
+                "list": [
+                    "Always apply to session IDs and authentication tokens",
+                    "Do not apply to cookies that client-side scripts legitimately need to read (e.g., UI state)"
+                ]
+            },
+            {
+                "id": "secure-flag",
+                "number": "02",
+                "title": "The Secure Flag",
+                "content": "The `Secure` flag ensures the cookie is only transmitted over encrypted HTTPS connections. Without this flag, a network-level attacker could intercept the cookie if the user inadvertently browses over plain HTTP. You can easily check if your cookies are exposed using our <a href=\"/scan\">passive scanner</a>.",
+                "listTitle": "Network constraints",
+                "list": [
+                    "Requires a valid TLS/SSL certificate",
+                    "Prevents accidental leakage over port 80",
+                    "Modern browsers increasingly enforce this securely by default"
+                ]
+            },
+            {
+                "id": "samesite-flag",
+                "number": "03",
+                "title": "The SameSite Flag",
+                "content": "The `SameSite` attribute prevents the browser from sending the cookie along with cross-site requests, mitigating Cross-Site Request Forgery (CSRF) attacks.",
+                "listTitle": "SameSite Modes",
+                "list": [
+                    "Strict: Cookie is never sent on cross-site requests.",
+                    "Lax: Cookie is sent on top-level navigations (e.g., following a link).",
+                    "None: Cookie is sent everywhere (Requires the Secure flag)."
+                ]
+            }
+        ]
+    },
+    {
+        "id": "fix-cors-misconfiguration",
+        "title": "How to Check CORS Misconfiguration Safely",
+        "slug": "fix-cors-misconfiguration",
+        "category": "Remediation",
+        "primaryKeyword": "cors misconfiguration",
+        "excerpt": "Cross-Origin Resource Sharing (CORS) is often misunderstood. Learn how a permissive CORS policy can leak private data and how to correctly restrict it.",
+        "content": "Cross-Origin Resource Sharing (CORS) is a mechanism that allows a web application running at one origin to access restricted resources from a different origin. While necessary for modern API integrations, a poorly configured CORS policy can completely undermine the Same-Origin Policy (SOP), leading to severe data leakage.",
+        "sections": [
+            {
+                "id": "dangers-of-wildcard",
+                "number": "01",
+                "title": "The Danger of the Wildcard (*)",
+                "content": "Developers often use `Access-Control-Allow-Origin: *` to bypass frustrating browser errors during development. However, leaving this in production allows any malicious website on the internet to make authenticated API requests to your server and read the responses.",
+                "listTitle": "Risks of permissive CORS",
+                "list": [
+                    "Data exfiltration of sensitive API responses",
+                    "Bypass of intranet/internal network protections",
+                    "Exposure of authenticated user details"
+                ]
+            },
+            {
+                "id": "cors-with-credentials",
+                "number": "02",
+                "title": "Credentials and CORS",
+                "content": "The real danger arises when a permissive origin policy is combined with `Access-Control-Allow-Credentials: true`. Fortunately, modern browsers prohibit using a wildcard `*` alongside credentials. To bypass this, some backends dynamically reflect whatever origin requested the resource, which is equally dangerous.",
+                "listTitle": "Best practices",
+                "list": [
+                    "Never dynamically reflect the `Origin` header without strict validation",
+                    "Maintain an explicit, hardcoded allowlist of trusted domains",
+                    "Separate public, credential-less APIs from private authenticated APIs"
+                ]
+            },
+            {
+                "id": "validating-cors",
+                "number": "03",
+                "title": "Validating Your CORS Policy",
+                "content": "You should regularly audit your API headers. While a <a href=\"/scan\">passive vulnerability scanner</a> can identify missing security headers on your frontend, deeper CORS testing requires inspecting the specific OPTIONS preflight responses of your API endpoints.",
+                "listTitle": "How to test",
+                "list": [
+                    "Send a curl request with `Origin: https://evil.com` and inspect the response",
+                    "Verify that credentials are only permitted for highly trusted subdomains"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "passive-vs-active-scanning",
+        "title": "Passive Vulnerability Scanner vs Active Penetration Testing",
+        "slug": "passive-vulnerability-scanner-vs-active-penetration-testing",
+        "category": "Concepts",
+        "primaryKeyword": "passive vulnerability scanner",
+        "excerpt": "Understand the fundamental differences between passive scanning and active penetration testing to choose the right tool for your security workflow.",
+        "content": "When building a secure application, teams must choose the right security assessment tools. The two most common approaches are passive scanning and active penetration testing. Understanding the distinction is vital for maintaining uptime while uncovering risks.",
+        "sections": [
+            {
+                "id": "passive-scanning",
+                "number": "01",
+                "title": "What is a Passive Vulnerability Scanner?",
+                "content": "A <strong>passive vulnerability scanner</strong> interacts with a target exactly like a standard web browser or search engine crawler. It evaluates the publicly accessible surface of the website without attempting to bypass authentication, inject malicious payloads, or modify state.",
+                "listTitle": "Key characteristics of passive scanning",
+                "list": [
+                    "Non-destructive and completely safe for production environments",
+                    "Analyzes HTTP headers, TLS configurations, and public DNS records",
+                    "Identifies misconfigurations rather than deep logic flaws",
+                    "Requires zero specialized authorization to run"
+                ]
+            },
+            {
+                "id": "active-testing",
+                "number": "02",
+                "title": "What is Active Penetration Testing?",
+                "content": "Active testing involves purposefully sending malicious payloads (like SQL injection strings or XSS vectors) to a web application to see if it behaves insecurely. This type of testing can alter database records, crash servers, or trigger massive error logs.",
+                "listTitle": "Key characteristics of active testing",
+                "list": [
+                    "Simulates real-world cyberattacks",
+                    "Detects complex vulnerabilities like IDOR and Command Injection",
+                    "Requires written authorization and defined rules of engagement",
+                    "Should ideally be performed in staging or highly isolated environments"
+                ]
+            },
+            {
+                "id": "how-they-work-together",
+                "number": "03",
+                "title": "How They Complement Each Other",
+                "content": "Passive scanning and active testing are not mutually exclusive; they form a layered defense strategy. You can use our <a href=\"/scan\">passive scanner</a> daily to catch immediate misconfigurations, while scheduling deep active penetration tests annually or before major architectural releases.",
+                "listTitle": "A balanced workflow",
+                "list": [
+                    "Use passive scanners in CI/CD pipelines for fast, risk-free checks",
+                    "Use active testing to validate the integrity of business logic",
+                    "Combine both to achieve comprehensive security visibility"
+                ]
+            }
+        ]
+    }
+]

@@ -54,8 +54,12 @@ class TestAPIResponseSchema(unittest.TestCase):
         self.client = TestClient(app)
 
     @patch("api.index.acquire_scan_lease")
-    def test_api_scan_returns_expected_fields(self, mock_acquire):
+    @patch("api.index.Entitlements")
+    def test_api_scan_returns_expected_fields(self, mock_entitlements, mock_acquire):
         """Verify scan endpoint returns all expected top-level fields."""
+        mock_ent_instance = mock_entitlements.return_value
+        mock_ent_instance.plan = "free"
+        mock_ent_instance.can_advanced_scan = True
         mock_acquire.return_value = "dummy-lease-id"
         with patch("api.index.scan_url") as mock_scan:
             with patch("api.index.release_scan_lease") as mock_release:

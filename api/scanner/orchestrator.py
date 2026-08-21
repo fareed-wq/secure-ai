@@ -16,7 +16,7 @@ from api.scanner.modules.network_checks import SubdomainProbingModule
 
 logger = logging.getLogger(__name__)
 
-def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive") -> dict:
+def validate_scan_target(url: str, scan_mode: str = "passive") -> dict | None:
     url = canonicalize_url(url)
     hostname = urlparse(url).hostname
     if not hostname:
@@ -28,12 +28,20 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
         return {"status": "failed", "url": url, "error": f"Invalid scan_mode: '{scan_mode}'. Must be 'passive' or 'active'."}
 
     if not check_liveness(hostname):
-        # Target is dead or blocking us. Return an explicit failed status instead of a mock report.
         return {
             "status": "failed",
             "url": url,
             "error": "Unable to complete the security scan because the target could not be reached or the connection timed out."
         }
+    return None
+
+def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive") -> dict:
+    validation_error = validate_scan_target(url, scan_mode)
+    if validation_error:
+        return validation_error
+        
+    url = canonicalize_url(url)
+    hostname = urlparse(url).hostname
 
     metadata = {}
     all_findings = []
