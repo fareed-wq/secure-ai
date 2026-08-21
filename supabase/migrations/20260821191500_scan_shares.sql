@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS public.scan_shares (
 );
 
 -- Partial unique index to enforce one active share per scan
-CREATE UNIQUE INDEX idx_scan_shares_one_active
+CREATE UNIQUE INDEX IF NOT EXISTS idx_scan_shares_one_active
 ON public.scan_shares (scan_id)
 WHERE revoked_at IS NULL;
 
@@ -35,10 +35,3 @@ WITH CHECK (
         WHERE scans.id = scan_id AND scans.user_id = auth.uid()
     )
 );
-
--- Owner can update (revoke) their own shares
-CREATE POLICY "Users can update own shares"
-ON public.scan_shares
-FOR UPDATE
-TO authenticated
-USING (auth.uid() = owner_user_id);
