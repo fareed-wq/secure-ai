@@ -15,7 +15,19 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
             {url}
           </span>
           <span className="opacity-50">•</span>
-          <span>Scanned on {new Date(timestamp).toLocaleString()}</span>
+          <span>
+            {(() => {
+              const parsed = timestamp ? new Date(timestamp) : null;
+              const valid = parsed && !Number.isNaN(parsed.getTime());
+              return valid ? `Scanned on ${parsed.toLocaleString([], {
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+              })}` : 'Date unavailable';
+            })()}
+          </span>
         </div>
       </div>
 
