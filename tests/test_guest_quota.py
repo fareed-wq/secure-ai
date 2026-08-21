@@ -75,7 +75,7 @@ def test_fourth_scan_blocked(mock_entitlements, mock_rate_limit, mock_global_lea
     with patch("api.index.check_guest_quota", return_value={"quota_remaining": 0}):
         response = client.post("/api/scan", json={"url": "https://example.com", "scan_mode": "passive", "report_mode": "simple"})
         assert response.status_code == 429
-        assert "3 free Basic scans" in response.json()["error"]
+        assert "3 free Guest scans" in response.json()["error"]
         mock_consume_quota.assert_not_called()
         mock_scan_url.assert_not_called()
 
@@ -93,7 +93,10 @@ def test_authenticated_user_bypasses_guest_quota(mock_rate_limit, mock_global_le
         mock_instance.plan = "free"  # Authenticated user
         mock_instance.can_advanced_scan = True
         
-        response = client.post("/api/scan", json={"url": "https://example.com", "scan_mode": "advanced", "report_mode": "simple"})
+        with patch("api.index.check_free_quota", return_value={"quota_remaining": 5}):
+            with patch("api.index.consume_free_quota", return_value=True):
+                response = client.post("/api/scan", json={"url": "https://example.com", "scan_mode": "advanced", "report_mode": "simple"})
+        print(response.json())
         assert response.status_code == 200
         mock_check_quota.assert_not_called()
         mock_consume_quota.assert_not_called()

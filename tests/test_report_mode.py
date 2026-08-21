@@ -9,7 +9,9 @@ client = TestClient(app)
 @patch("api.index.check_rate_limit", return_value=True)
 @patch("api.index.scan_url")
 @patch("api.index.Entitlements")
-def test_report_mode_propagation(mock_entitlements, mock_scan_url, mock_rate_limit, mock_release, mock_acquire):
+@patch("api.index.check_free_quota", return_value={"quota_remaining": 5})
+@patch("api.index.consume_free_quota", return_value=True)
+def test_report_mode_propagation(mock_consume, mock_check, mock_entitlements, mock_scan_url, mock_rate_limit, mock_release, mock_acquire):
     mock_ent_instance = mock_entitlements.return_value
     mock_ent_instance.plan = "free"
     mock_ent_instance.can_advanced_scan = True

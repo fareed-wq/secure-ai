@@ -216,7 +216,7 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
         orchestrator_module.REGISTERED_MODULES = original
 
 from fastapi import Depends
-from api.auth.entitlements import get_current_user, Entitlements, check_guest_quota, consume_guest_quota
+from api.auth.entitlements import get_current_user, Entitlements, check_guest_quota, consume_guest_quota, check_free_quota, consume_free_quota
 from api.scanner.core import acquire_scan_lease, release_scan_lease, acquire_guest_lease, release_guest_lease
 
 @app.post("/api/scan")
@@ -226,12 +226,16 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
     entitlements = Entitlements(user)
 
     if req.scan_mode == "advanced" and not entitlements.can_advanced_scan:
-        return JSONResponse(status_code=403, content={"error": "Advanced scanning is not available for Guest users.", "status": 403})
+        return JSONResponse(status_code=403, content={"error": "Advanced scanning is not available for your current plan.", "status": 403})
 
     if entitlements.plan == "guest":
         quota = check_guest_quota(ip)
         if quota["quota_remaining"] <= 0:
-            return JSONResponse(status_code=429, content={"error": "You've used your 3 free Basic scans for this week.", "status": 429})
+            return JSONResponse(status_code=429, content={"error": "You've used your 3 free Guest scans for this week.", "status": 429})
+    elif entitlements.plan == "free":
+        quota = check_free_quota(entitlements.user_id)
+        if quota["quota_remaining"] <= 0:
+            return JSONResponse(status_code=429, content={"error": "You've used your 5 free scans for this week.", "status": 429})
 
     if not check_rate_limit(ip):
         return JSONResponse(
@@ -269,7 +273,11 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
             
             # Consume quota only after all validation and leases are acquired
             if not consume_guest_quota(ip):
-                return JSONResponse(status_code=429, content={"error": "You've used your 3 free Basic scans for this week.", "status": 429})
+                return JSONResponse(status_code=429, content={"error": "You've used your 3 free Guest scans for this week.", "status": 429})
+        elif entitlements.plan == "free":
+            # Free user is constrained by global concurrency, not single-ip limit, but they still consume quota
+            if not consume_free_quota(entitlements.user_id):
+                return JSONResponse(status_code=429, content={"error": "You've used your 5 free scans for this week.", "status": 429})
 
         result = await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains, req.scan_mode), timeout=55.0)
         result["report_mode"] = req.report_mode
@@ -289,6 +297,9 @@ def get_quota(request: Request, user: dict = Depends(get_current_user)):
         ip = get_client_ip(request)
         quota = check_guest_quota(ip)
         return {"plan": "guest", "quota": quota}
+    elif entitlements.plan == "free":
+        quota = check_free_quota(entitlements.user_id)
+        return {"plan": "free", "quota": quota}
     return {"plan": entitlements.plan, "unlimited": entitlements.is_unlimited}
 
 
