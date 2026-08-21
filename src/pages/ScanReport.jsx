@@ -5,11 +5,12 @@ import { supabase } from '../lib/supabase';
 import SimpleReport from '../components/scanner/SimpleReport';
 import TechnicalReport from '../components/scanner/TechnicalReport';
 import ReportHeader from '../components/scanner/ReportHeader';
-import { generateReportPdf } from '../lib/pdfGenerator';
+import usePdfGenerator from '../hooks/usePdfGenerator';
 import { AlertCircle } from 'lucide-react';
 
 const ScanReport = () => {
   const { scanId } = useParams();
+  const { isGeneratingPdf, generatePdf } = usePdfGenerator();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -78,13 +79,8 @@ const ScanReport = () => {
     );
   }
 
-  const handleExportPdf = async () => {
-    try {
-      await generateReportPdf(reportRef.current, scan.target_url);
-    } catch (err) {
-      console.error('Failed to generate PDF:', err);
-      alert('Failed to generate PDF report.');
-    }
+  const handleExportPdf = () => {
+    generatePdf(scan.report_data, scan.scan_mode || 'basic', activeMode);
   };
 
   return (
