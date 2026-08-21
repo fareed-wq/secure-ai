@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { Loader2, ShieldAlert, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -45,6 +45,11 @@ function Scanner() {
     document.getElementById('main-scroll-container')?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   };
 
+  const fetchQuota = async () => {
+    const q = await scanApi.getQuota();
+    if (q) setQuotaInfo(q);
+  };
+
   useEffect(() => {
     // Scroll to top on mount
     scrollToTop();
@@ -52,10 +57,6 @@ function Scanner() {
 
   // Fetch quota info
   useEffect(() => {
-    const fetchQuota = async () => {
-      const q = await scanApi.getQuota();
-      if (q) setQuotaInfo(q);
-    };
     fetchQuota();
   }, [user]);
 
@@ -66,8 +67,9 @@ function Scanner() {
       setUrl('');
       setErrorMessage('');
       scrollToTop();
+      fetchQuota();
     }
-  }, [location.state?.resetScan]);
+  }, [location.state?.resetScan, user]);
 
   const handleRequireAuth = (featureName) => {
     if (!user) {
@@ -112,9 +114,18 @@ function Scanner() {
       }
     } catch (error) {
       console.error('Backend Connection Error:', error);
-      setErrorMessage(`Failed to connect to the backend scanner: ${error.message || error}`);
-    scrollToTop();
+      const msg = error.message || String(error);
+      if (msg.includes("You've used your 3 free Basic scans")) {
+        setErrorMessage(msg);
+      } else {
+        setErrorMessage(`Failed to connect to the backend scanner: ${msg}`);
+      }
+      scrollToTop();
       setScanState('error');
+    } finally {
+      if (!user) {
+        fetchQuota();
+      }
     }
   };
 
@@ -124,6 +135,7 @@ function Scanner() {
     setReportData(null);
     setErrorMessage('');
     scrollToTop();
+    if (!user) fetchQuota();
   };
 
   const handleSelectMode = (mode) => {
@@ -277,6 +289,16 @@ function Scanner() {
                   <>
                     <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Incomplete</h2>
                     <p className="text-red-200 mb-8">{errorMessage}</p>
+                    
+                    {errorMessage && errorMessage.includes("You've used your 3 free Basic scans") && !user && (
+                      <div className="mb-8">
+                        <Link to="/register" className="bg-rose-500 hover:bg-rose-600 text-white font-medium px-6 py-3 rounded-xl transition-all inline-flex items-center gap-2 shadow-lg shadow-rose-500/20">
+                          <Lock className="w-5 h-5" />
+                          Create Free Account
+                        </Link>
+                        <p className="text-red-300/80 mt-3 text-sm">Sign up for a free account to unlock unlimited basic scans.</p>
+                      </div>
+                    )}
                   </>
                 )}
 
