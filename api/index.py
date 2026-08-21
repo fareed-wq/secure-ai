@@ -74,6 +74,8 @@ from api.scanner.validation import CANONICAL_URL_REGEX, canonicalize_url, normal
 
 
 app = FastAPI(title="Website Security Posture Checker (Advanced Modular)")
+from api.auth_smoke_test import router as auth_smoke_router
+app.include_router(auth_smoke_router)
 
 app.add_middleware(
     CORSMiddleware,
