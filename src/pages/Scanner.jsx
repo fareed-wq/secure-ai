@@ -311,7 +311,7 @@ function Scanner() {
               <ReportHeader
                 url={url}
                 score={reportData.score}
-                timestamp={reportData.scan_start}
+                timestamp={reportData.created_at || reportData.scan_start}
                 activeMode={reportMode}
                 onToggleMode={setReportMode}
                 onExportPdf={handlePdfExport}

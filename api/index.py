@@ -283,6 +283,10 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
                 return JSONResponse(status_code=429, content={"error": "You've used your 5 free scans for this week.", "status": 429})
 
         result = await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains, req.scan_mode), timeout=55.0)
+        
+        import datetime
+        now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        result["created_at"] = now_iso
         result["report_mode"] = req.report_mode
         
         # Automatic Scan History Persistence for authenticated users
@@ -308,7 +312,7 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
                     "target_url": result.get("url", req.url),
                     "score": result.get("score", 0),
                     "report_data": result,
-                    "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+                    "created_at": now_iso
                 }
                 try:
                     db_res = requests.post(f"{SUPABASE_URL}/rest/v1/scans", headers=headers, json=payload, timeout=10)
