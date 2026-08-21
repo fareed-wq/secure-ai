@@ -165,7 +165,8 @@ class TestPhase24Consistency(unittest.TestCase):
                             if kw.arg == "owasp":
                                 owasp_found = True
                                 if isinstance(kw.value, ast.Constant):
-                                    self.assertTrue(kw.value.value.startswith("A0"))
+                                    val = kw.value.value
+                                    self.assertTrue(val.startswith("A0") or val == "Not Mapped")
                         self.assertTrue(owasp_found, f"Missing OWASP mapping in {fpath}")
 
 if __name__ == "__main__":

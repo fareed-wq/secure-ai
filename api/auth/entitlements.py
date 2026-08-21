@@ -145,7 +145,7 @@ def check_guest_quota(ip: str) -> dict:
     redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
     
     if not redis_url or not redis_token:
-        return {"quota_limit": limit, "quota_used": 0, "quota_remaining": limit, "reset_at": next_week_start}
+        return {"quota_limit": limit, "quota_used": limit, "quota_remaining": 0, "reset_at": next_week_start}
 
     key = f"guest_quota:{ip}:{week_start}"
     headers = {"Authorization": f"Bearer {redis_token}"}
@@ -156,9 +156,9 @@ def check_guest_quota(ip: str) -> dict:
             result = resp.json().get("result")
             used = int(result) if result else 0
         else:
-            used = 0
+            used = limit
     except Exception:
-        used = 0
+        used = limit
 
     remaining = max(0, limit - used)
     return {
@@ -182,7 +182,7 @@ def consume_guest_quota(ip: str) -> bool:
     redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
     
     if not redis_url or not redis_token:
-        return True 
+        return False 
 
     lua_script = """
     local current = redis.call('GET', KEYS[1])

@@ -240,6 +240,12 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
             headers={"Retry-After": "60", "X-RateLimit-Limit": "10", "X-RateLimit-Remaining": "0"}
         )
 
+    from api.scanner.orchestrator import validate_scan_target
+    validation_error = validate_scan_target(req.url, req.scan_mode)
+    if validation_error:
+        # Return 200 with the error dict (as scanner originally did) without consuming quota
+        return JSONResponse(status_code=200, content=validation_error)
+
     try:
         lease_id = acquire_scan_lease()
     except RuntimeError as e:
@@ -256,12 +262,6 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
 
     has_guest_lease = False
     try:
-        from api.scanner.orchestrator import validate_scan_target
-        validation_error = validate_scan_target(req.url, req.scan_mode)
-        if validation_error:
-            # Return 200 with the error dict (as scanner originally did) without consuming quota
-            return JSONResponse(status_code=200, content=validation_error)
-
         if entitlements.plan == "guest":
             has_guest_lease = acquire_guest_lease(ip)
             if not has_guest_lease:

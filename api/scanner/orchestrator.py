@@ -36,6 +36,10 @@ def validate_scan_target(url: str, scan_mode: str = "passive") -> dict | None:
     return None
 
 def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive") -> dict:
+    validation_error = validate_scan_target(url, scan_mode)
+    if validation_error:
+        return validation_error
+        
     url = canonicalize_url(url)
     hostname = urlparse(url).hostname
 

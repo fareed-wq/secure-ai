@@ -1,0 +1,67 @@
+/* ============================================
+   WHATSAPP WIDGET
+   ============================================ */
+
+/* Dark Theme (Default) */
+.whatsapp-container {
+  background-color: #0f172a !important; /* bg-slate-900 */
+  border: 1px solid #1e293b !important; /* border-slate-800 */
+}
+.whatsapp-header {
+  background-color: #4f46e5 !important; /* bg-indigo-600 */
+  color: #ffffff !important;
+}
+.whatsapp-body {
+  background-color: #020617 !important; /* bg-slate-950 */
+}
+.whatsapp-actions {
+  background-color: #0f172a !important; /* bg-slate-900 */
+}
+.whatsapp-btn {
+  background-color: #4f46e5 !important; /* bg-indigo-600 */
+  color: #ffffff !important;
+  box-shadow: 0 0 15px rgba(79, 70, 229, 0.4) !important;
+}
+.whatsapp-btn:hover {
+  background-color: #6366f1 !important; /* bg-indigo-500 */
+}
+.whatsapp-bubble {
+  background-color: #1e293b !important; /* bg-slate-800 */
+  color: #f8fafc !important; /* text-slate-50 */
+}
+.whatsapp-bubble .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+/* Light Theme */
+html.light-theme .whatsapp-container {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html.light-theme .whatsapp-header {
+  background-color: #4f46e5 !important; /* bg-indigo-600 */
+  color: #ffffff !important;
+}
+html.light-theme .whatsapp-body {
+  background-color: #f1f5f9 !important; /* bg-slate-100 */
+}
+html.light-theme .whatsapp-actions {
+  background-color: #ffffff !important;
+}
+html.light-theme .whatsapp-btn {
+  background-color: #ffffff !important;
+  color: #4f46e5 !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1) !important;
+}
+html.light-theme .whatsapp-btn:hover {
+  background-color: #f8fafc !important;
+}
+html.light-theme .whatsapp-bubble {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html.light-theme .whatsapp-bubble p {
+  color: #334155 !important;
+}
