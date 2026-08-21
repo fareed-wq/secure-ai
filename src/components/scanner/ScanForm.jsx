@@ -119,7 +119,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
             </span>
             <span className="text-slate-500 border-l border-slate-700 pl-2 ml-1">Resets Monday</span>
           </div>
-        )
+          )}
 
           {isGuest && (
             <div className={`w-full max-w-2xl bg-slate-900/90 border rounded-xl p-6 mt-2 text-center shadow-xl ${quotaReached ? 'border-rose-500/30' : 'border-indigo-500/20'}`}>
