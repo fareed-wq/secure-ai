@@ -1,7 +1,7 @@
 import React from 'react';
 import { Globe, Download, Bookmark, Share2 } from 'lucide-react';
 
-const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExportPdf, onRequireAuth, reportData }) => {
+const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExportPdf, onRequireAuth, onSaveScan, saveStatus, reportData }) => {
   const findings = reportData?.findings || [];
   const isWafBlocked = findings.length === 1 && findings[0]?.name?.includes('WAF');
   return (
@@ -42,7 +42,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
 
       {/* Right: Actions & Score */}
       <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
-        <div className="flex gap-2 print:hidden">
+        <div className="relative flex gap-2 print:hidden">
           <button
             onClick={onExportPdf}
             title="Export PDF"
@@ -51,19 +51,18 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
             <Download className="w-4 h-4" />
           </button>
           <button
-            onClick={() => onRequireAuth('save reports to your dashboard')}
+            onClick={onSaveScan}
             title="Save to Dashboard"
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
+            disabled={saveStatus === 'saving' || saveStatus === 'saved'}
+            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700 disabled:opacity-50"
           >
             <Bookmark className="w-4 h-4" />
           </button>
-          <button
-            onClick={() => onRequireAuth('share public links')}
-            title="Share Public Link"
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
-          >
-            <Share2 className="w-4 h-4" />
-          </button>
+          {saveStatus === 'saved' && (
+            <span className="text-emerald-400 text-sm font-medium animate-fade-in self-center absolute -top-8 right-0 whitespace-nowrap bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+              Saved to your dashboard
+            </span>
+          )}
         </div>
 
         <div className={`flex items-center gap-2.5 px-4 py-2.5 bg-slate-900/90 border rounded-xl backdrop-blur-md shadow-lg ${

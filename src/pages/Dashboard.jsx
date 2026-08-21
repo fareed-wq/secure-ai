@@ -180,7 +180,7 @@ const Dashboard = () => {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-slate-800">
               <h2 className="text-lg font-semibold text-slate-50">Recent Scans</h2>
-              <Link className="text-xs font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors" to="/scan-history">
+              <Link className="text-xs font-mono text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors" to="/history">
                 View Scan History →
               </Link>
             </div>
@@ -196,7 +196,7 @@ const Dashboard = () => {
                   return (
                     <div 
                       key={scan.id} 
-                      onClick={() => navigate('/scan-history')}
+                      onClick={() => navigate('/history')}
                       className="group flex items-center justify-between p-4 rounded-xl border border-slate-800/80 bg-slate-900/50 hover:bg-slate-900/90 hover:border-indigo-500/40 transition-all cursor-pointer"
                     >
                       <div className="flex items-center">
