@@ -1,0 +1,23 @@
+# Phase 32 Coverage Matrix
+
+| Requirement | Expected Behavior | Actual Implementation | Status | File | Function/Class | Action Required |
+| ----------- | ----------------- | --------------------- | ------ | ---- | -------------- | --------------- |
+| OpenAPI / Swagger | Strict validation of OpenAPI paths (e.g. /openapi.json, /swagger-ui.html) | /openapi.json, /swagger.json, /v3/api-docs, /api-docs are implemented. /swagger-ui.html is missing. | PARTIALLY_IMPLEMENTED | api/scanner/modules/discovery.py | OpenApiModule | Add /swagger-ui.html to target paths. |
+| GraphQL IDE | Strict detection of /graphiql, /playground, /graphql/console with 200/HTML markers. | Fully implemented in GraphqlIdeModule with strict markers. | IMPLEMENTED | api/scanner/modules/discovery.py | GraphqlIdeModule | None |
+| Spring Boot Actuator | Check /actuator, /actuator/env, /actuator/health distinguishing sensitive vs generic. | Fully implemented in ActuatorModule with dictionary analysis of JSON responses. | IMPLEMENTED | api/scanner/modules/discovery.py | ActuatorModule | None |
+| Sensitive Files | Strict detection of /.git/HEAD, /.env, /phpinfo.php | .git/HEAD and phpinfo.php are implemented in ExposedFilesModule. /.env is missing. | PARTIALLY_IMPLEMENTED | api/scanner/modules/discovery.py | ExposedFilesModule | Add /.env probe to ExposedFilesModule. |
+| Unauthenticated API Data | Check /api/user, /api/v1/config, /api/me, /api/settings | Missing entirely. | MISSING | N/A | N/A | Intentionally Not Implemented (Exceeds scope without active stateful scanning context) |
+| PDF Generator Detection | Check /api/generate-pdf, /api/pdf, /html-to-pdf | Missing entirely. | MISSING | N/A | N/A | Intentionally Not Implemented (Low value / too specialized) |
+| XML-RPC | Passive detection of /xmlrpc.php without POST payloads. | Implemented in XmlRpcModule. | IMPLEMENTED | api/scanner/modules/discovery.py | XmlRpcModule | None |
+| security.txt | Strict check of /.well-known/security.txt for Contact: marker. | Fully implemented in SecurityTxtModule. | IMPLEMENTED | api/scanner/modules/discovery.py | SecurityTxtModule | None |
+| robots.txt | Sensitive path filtering (e.g. /admin, /backup) not generic paths. | Fully implemented in RobotsTxtModule. | IMPLEMENTED | api/scanner/modules/discovery.py | RobotsTxtModule | None |
+| CORS Implementation | Distinguish reflected origin, credentials, and wildcard correctly. | CORSModule only checks passively without sending Origin and misses credentials check. | PARTIALLY_IMPLEMENTED | api/scanner/modules/headers.py | CORSModule | Send test Origin header; evaluate credentials flag properly. |
+| JS Security | Extract source maps, secrets, frameworks, API endpoints, internal hosts. | JSBundleSecretsModule and JavaScriptSecurityModule have overlapping logic. | DUPLICATED | api/scanner/modules/javascript_security.py, content.py | JavaScriptSecurityModule, JSBundleSecretsModule | Merge JSBundleSecretsModule into JavaScriptSecurityModule. |
+| Favicon MMH3 | Fetch /favicon.ico and calculate MMH3 hash. | Missing entirely. | MISSING | N/A | N/A | Implement in InfrastructureIntelligenceModule or new module. |
+| Management Port | Passive checks for 8080, 8443, 9000. | Missing entirely. | MISSING | N/A | N/A | Intentionally Not Implemented (Scanning non-standard ports increases latency unacceptably). |
+| Host Header Routing | Override check via X-Forwarded-Host: audit-test.local | Missing entirely. | MISSING | N/A | N/A | Implement lightweight check in headers.py or new module. |
+| CVSS Vector | Generate valid CVSS v3.1 vectors for findings. | Dictionary key exists, but no assignment mechanism exists. | PARTIALLY_IMPLEMENTED | api/scanner/base.py | make_finding | Add simple severity-to-CVSS mapping helper in make_finding. |
+| DNS / Infrastructure | CAA, DNSSEC, SPF, DMARC, DKIM, Cloud fingerprinting. | Checked in dns.py, infrastructure.py. | IMPLEMENTED | api/scanner/modules/dns.py, infrastructure.py | Various | None |
+| API / Web Security | Redirect chain, TRACE, mismatch content type, cache, versions. | Checked in api_web_security.py. | IMPLEMENTED | api/scanner/modules/api_web_security.py | ApiWebSecurityModule | None |
+| Auth / Session | Login forms, CSRF, Secure cookies, CSP, HSTS. | Checked in auth_session_security.py, http_security.py. | IMPLEMENTED | api/scanner/modules/auth_session_security.py | AuthenticationSessionSecurityModule | None |
+| Access Control | JS role logic, OpenAPI privileged endpoints, correlation. | Checked in javascript_security.py, orchestrator.py, discovery.py. | IMPLEMENTED | api/scanner/modules/javascript_security.py, discovery.py | Various | None |

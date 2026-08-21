@@ -10,7 +10,7 @@ const WhatsAppIcon = ({ className }) => (
 
 export default function WhatsAppWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const phoneNumber = "918296970075"; // WhatsApp format
 
   const openWhatsApp = () => {
@@ -18,9 +18,6 @@ export default function WhatsAppWidget() {
     window.open(`https://wa.me/${phoneNumber}?text=${message}`, '_blank');
   };
 
-  const openEmail = () => {
-    window.location.href = "mailto:support@secure-ai.com";
-  };
 
   return (
     <div className="fixed bottom-6 right-6 z-[100] font-sans">
@@ -31,33 +28,33 @@ export default function WhatsAppWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute bottom-20 right-0 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            className="absolute bottom-20 right-0 w-80 rounded-2xl shadow-2xl overflow-hidden flex flex-col whatsapp-container"
           >
             {/* Header */}
-            <div className="bg-[#25D366] p-4 flex items-center justify-between text-white">
+            <div className="p-4 flex items-center justify-between text-white whatsapp-header">
               <div className="flex items-center gap-2">
                 <WhatsAppIcon className="w-6 h-6" />
                 <span className="font-semibold text-lg">WhatsApp</span>
               </div>
-              <button 
+              <button aria-label="Close WhatsApp Chat"
                 onClick={() => setIsOpen(false)}
-                className="text-white/80 hover:text-white transition-colors"
+                className="text-slate-50/80 hover:text-slate-50 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Chat Body */}
-            <div className="bg-[#E5DDD5] p-5 relative overflow-hidden h-36">
+            <div className="p-5 relative overflow-hidden h-36 whatsapp-body">
               {/* Background Pattern (subtle) */}
               <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url('https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png')" }}></div>
-              
+
               {/* Message Bubble */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white text-slate-800 p-3 rounded-xl rounded-tl-sm shadow-sm max-w-[85%] relative z-10"
+                className="p-3 rounded-xl rounded-tl-sm shadow-sm max-w-[85%] relative z-10 whatsapp-bubble"
               >
                 <div className="text-[15px] leading-relaxed">
                   <p className="font-medium mb-1">Hello 👋</p>
@@ -67,18 +64,12 @@ export default function WhatsAppWidget() {
             </div>
 
             {/* Actions */}
-            <div className="p-4 bg-white flex flex-col gap-3">
-              <button 
+            <div className="p-4 flex flex-col gap-3 whatsapp-actions">
+              <button
                 onClick={openWhatsApp}
-                className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-medium py-3 rounded-full transition-colors flex justify-center items-center gap-2"
+                className="w-full font-medium py-3 rounded-full transition-colors flex justify-center items-center gap-2 whatsapp-btn"
               >
                 Open WhatsApp Chat
-              </button>
-              <button 
-                onClick={openEmail}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-3 rounded-full transition-colors flex justify-center items-center"
-              >
-                Email Support
               </button>
             </div>
           </motion.div>
@@ -88,31 +79,31 @@ export default function WhatsAppWidget() {
       {/* Floating Button */}
       <AnimatePresence>
         {!isOpen && (
-          <motion.button
+          <motion.button aria-label="Open WhatsApp Support"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsOpen(true)}
-            className="bg-[#25D366] hover:bg-[#20bd5a] text-white p-4 rounded-full shadow-lg flex items-center justify-center transition-colors"
+            className="p-4 rounded-full shadow-lg flex items-center justify-center transition-colors whatsapp-btn"
           >
             <WhatsAppIcon className="w-8 h-8" />
           </motion.button>
         )}
       </AnimatePresence>
-      
+
       {/* Alternate close button when open (matching the screenshot exactly) */}
       <AnimatePresence>
         {isOpen && (
-          <motion.button
+          <motion.button aria-label="Close WhatsApp Support"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsOpen(false)}
-            className="bg-[#25D366] hover:bg-[#20bd5a] text-white p-3 rounded-full shadow-lg flex items-center justify-center transition-colors absolute bottom-0 right-0"
+            className="p-3 rounded-full shadow-lg flex items-center justify-center transition-colors absolute bottom-0 right-0 whatsapp-btn"
           >
             <X className="w-6 h-6" />
           </motion.button>

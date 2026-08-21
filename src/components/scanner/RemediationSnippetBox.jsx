@@ -17,7 +17,7 @@ export const RemediationSnippetBox = ({ findingName }) => {
   };
 
   return (
-    <div className="mt-4 rounded-lg border border-slate-700 bg-slate-900/80 p-4">
+    <div className="technical-code-box mt-4 rounded-lg border border-slate-700 bg-slate-900/80 p-4">
       <div className="mb-3 flex items-center justify-between">
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
           🛠️ Quick Fix Snippets
@@ -39,7 +39,7 @@ export const RemediationSnippetBox = ({ findingName }) => {
             className={`rounded px-3 py-1 text-xs font-medium transition-colors ${
               activeTab === index
                 ? 'bg-slate-700 text-cyan-400'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-slate-50'
             }`}
           >
             {item.platform}
@@ -48,7 +48,7 @@ export const RemediationSnippetBox = ({ findingName }) => {
       </div>
 
       {/* Code Display */}
-      <pre className="overflow-x-auto rounded bg-slate-950 p-3 text-xs font-mono text-emerald-400 border border-slate-800/80">
+      <pre className="technical-code-box-pre overflow-x-auto rounded bg-slate-950 p-3 text-xs font-mono text-emerald-400 border border-slate-800/80">
         <code>{currentSnippet.code}</code>
       </pre>
 

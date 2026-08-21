@@ -12,7 +12,7 @@ const ScanHistory = () => {
   return (
     <div className="space-y-6 text-slate-200">
       <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Scan History</h1>
+        <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Scan History</h1>
         <p className="text-slate-400 mt-1">Review all your previous security assessments.</p>
       </div>
 
@@ -31,7 +31,7 @@ const ScanHistory = () => {
             <tbody className="divide-y divide-slate-800">
               {mockHistory.map((scan) => (
                 <tr key={scan.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="p-4 font-medium text-white flex items-center gap-2">
+                  <td className="p-4 font-medium text-slate-50 flex items-center gap-2">
                     {scan.target}
                   </td>
                   <td className="p-4 text-slate-400 flex items-center gap-2">

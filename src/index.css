@@ -3,11 +3,107 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-slate-50: 248 250 252;
+    --color-slate-100: 241 245 249;
+    --color-slate-200: 226 232 240;
+    --color-slate-300: 203 213 225;
+    --color-slate-400: 148 163 184;
+    --color-slate-500: 100 116 139;
+    --color-slate-600: 71 85 105;
+    --color-slate-700: 51 65 85;
+    --color-slate-800: 30 41 59;
+    --color-slate-900: 15 23 42;
+    --color-slate-950: 2 6 23;
+
+    --color-amber-200: 253 230 138;
+    --color-amber-300: 252 211 77;
+    --color-amber-400: 251 191 36;
+    --color-amber-500: 245 158 11;
+    --color-blue-200: 191 219 254;
+    --color-blue-300: 147 197 253;
+    --color-blue-400: 96 165 250;
+    --color-blue-500: 59 130 246;
+    --color-cyan-200: 165 243 252;
+    --color-cyan-300: 103 232 249;
+    --color-cyan-400: 34 211 238;
+    --color-cyan-500: 6 182 212;
+    --color-emerald-200: 167 243 208;
+    --color-emerald-300: 110 231 183;
+    --color-emerald-400: 52 211 153;
+    --color-emerald-500: 16 185 129;
+    --color-indigo-200: 199 210 254;
+    --color-indigo-300: 165 180 252;
+    --color-indigo-400: 129 140 248;
+    --color-indigo-500: 99 102 241;
+    --color-red-200: 254 202 202;
+    --color-red-300: 252 165 165;
+    --color-red-400: 248 113 113;
+    --color-red-500: 239 68 68;
+    --color-rose-200: 254 205 211;
+    --color-rose-300: 253 164 175;
+    --color-rose-400: 251 113 133;
+    --color-rose-500: 244 63 94;
+    --color-sky-200: 186 230 253;
+    --color-sky-300: 125 211 252;
+    --color-sky-400: 56 189 248;
+    --color-sky-500: 14 165 233;
+    --color-white: 255 255 255;
+    --color-black: 0 0 0;
+  }
+
+  html.light-theme {
+    --color-slate-50: 2 6 23;
+    --color-slate-100: 15 23 42;
+    --color-slate-200: 30 41 59;
+    --color-slate-300: 30 41 59;
+    --color-slate-400: 51 65 85;
+    --color-slate-500: 71 85 105;
+    --color-slate-600: 100 116 139;
+    --color-slate-700: 148 163 184;
+    --color-slate-800: 203 213 225;
+    --color-slate-900: 241 245 249;
+    --color-slate-950: 248 250 252;
+
+    --color-amber-200: 217 119 6;
+    --color-amber-300: 180 83 9;
+    --color-amber-400: 180 83 9;
+    --color-amber-500: 146 64 14;
+    --color-blue-200: 37 99 235;
+    --color-blue-300: 29 78 216;
+    --color-blue-400: 29 78 216;
+    --color-blue-500: 30 64 175;
+    --color-cyan-200: 8 145 178;
+    --color-cyan-300: 14 116 144;
+    --color-cyan-400: 14 116 144;
+    --color-cyan-500: 21 94 117;
+    --color-emerald-200: 5 150 105;
+    --color-emerald-300: 4 120 87;
+    --color-emerald-400: 4 120 87;
+    --color-emerald-500: 6 95 70;
+    --color-indigo-200: 79 70 229;
+    --color-indigo-300: 67 56 202;
+    --color-indigo-400: 67 56 202;
+    --color-indigo-500: 55 48 163;
+    --color-red-200: 220 38 38;
+    --color-red-300: 185 28 28;
+    --color-red-400: 185 28 28;
+    --color-red-500: 153 27 27;
+    --color-rose-200: 225 29 72;
+    --color-rose-300: 190 18 60;
+    --color-rose-400: 190 18 60;
+    --color-rose-500: 159 18 57;
+    --color-sky-200: 2 132 199;
+    --color-sky-300: 3 105 161;
+    --color-sky-400: 3 105 161;
+    --color-sky-500: 7 89 133;
+  }
+
   body {
     @apply bg-slate-950 text-slate-50;
   }
 
-  /* Global Dark Scrollbar */
+  /* Global Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -16,11 +112,107 @@
     @apply bg-slate-950;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-slate-800 rounded-full;
+    @apply bg-slate-700 rounded-full;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-700;
+    @apply bg-slate-500;
   }
+}
+
+/* ==========================================
+   CONTACT PAGE — LIGHT THEME ONLY
+   Scoped under html.light-theme so dark
+   mode remains completely unchanged.
+   ========================================== */
+
+/* Page background */
+html.light-theme .contact-page {
+  background-color: #f8fafc !important;
+}
+
+/* Hide dark-mode ambient glows in light theme */
+html.light-theme .contact-page > .pointer-events-none {
+  display: none;
+}
+
+/* Header text */
+html.light-theme .contact-page h1 {
+  color: #111827;
+}
+html.light-theme .contact-page header .text-lg p {
+  color: #475569;
+}
+html.light-theme .contact-page header a.text-indigo-400 {
+  color: #6366f1;
+}
+html.light-theme .contact-page header .bg-indigo-500\/10 {
+  background-color: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.2);
+  color: #4f46e5;
+}
+
+/* Form card */
+html.light-theme .contact-card {
+  background-color: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+  backdrop-filter: none;
+}
+
+/* Labels */
+html.light-theme .contact-label {
+  color: #334155;
+}
+
+/* Inputs, select, textarea */
+html.light-theme .contact-input {
+  background-color: #ffffff;
+  color: #111827;
+  border-color: #cbd5e1;
+}
+html.light-theme .contact-input::placeholder {
+  color: #64748b;
+}
+html.light-theme .contact-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+/* Select dropdown arrow */
+html.light-theme .contact-card .relative .text-slate-400 {
+  color: #475569;
+}
+
+/* Select option styling */
+html.light-theme .contact-input option {
+  background-color: #ffffff;
+  color: #111827;
+}
+
+/* Success state */
+html.light-theme .contact-card h3 {
+  color: #111827;
+}
+html.light-theme .contact-card .text-slate-400 {
+  color: #475569;
+}
+
+/* Error alert */
+html.light-theme .contact-card .bg-rose-500\/10 {
+  background-color: rgba(244, 63, 94, 0.06);
+  border-color: rgba(244, 63, 94, 0.2);
+  color: #be123c;
+}
+
+/* Response time + back button */
+html.light-theme .contact-page .mt-8 .text-slate-400 {
+  color: #475569;
+}
+html.light-theme .contact-page .mt-8 .text-slate-500 {
+  color: #64748b;
+}
+html.light-theme .contact-page .mt-8 .text-slate-500:hover {
+  color: #334155;
 }
 
 /* ==========================================
@@ -49,4 +241,813 @@
 .report-section {
   break-inside: avoid;
   page-break-inside: avoid;
+}
+
+/* ============================================
+   HOME / SCANNER — LIGHT THEME ONLY
+   ============================================ */
+
+/* 1. Scanner page */
+html.light-theme .scanner-page {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Hero text adjustments */
+html.light-theme .scanner-page h1 {
+  background-image: linear-gradient(to right, #4f46e5, #9333ea, #059669);
+}
+html.light-theme .scanner-page h1 + p {
+  color: #475569 !important;
+}
+html.light-theme .scanner-page .text-slate-400 {
+  color: #64748b;
+}
+html.light-theme .scanner-page .text-slate-500 {
+  color: #64748b;
+}
+
+/* 2. URL input */
+html.light-theme .scan-url-shell {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+html.light-theme .scan-url-shell:focus-within {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+}
+html.light-theme .scan-url-input {
+  color: #0f172a !important;
+}
+html.light-theme .scan-url-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* 3. Scan Configuration / Report Style cards */
+html.light-theme .scan-config-card {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .scan-config-card h3 {
+  color: #64748b !important;
+}
+html.light-theme .scan-option {
+  border-color: transparent;
+}
+html.light-theme .scan-option:hover {
+  background-color: #f8fafc !important;
+}
+html.light-theme .scan-option span {
+  color: #475569 !important;
+}
+html.light-theme .scan-option.scan-option-selected {
+  background-color: rgba(99, 102, 241, 0.1) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+html.light-theme .scan-option.scan-option-selected span {
+  color: #4f46e5 !important;
+}
+
+/* Passive hint text */
+html.light-theme .scanner-page form > .flex.items-center.text-xs {
+  color: #64748b !important;
+}
+html.light-theme .scanner-page form > .flex.items-center.text-xs strong {
+  color: #334155 !important;
+}
+html.light-theme .scanner-page form > .flex.items-center.text-xs span.text-indigo-400 {
+  color: #6366f1 !important;
+}
+
+/* 4. Safety comparison */
+html.light-theme .safety-section h2 {
+  color: #0f172a !important;
+}
+html.light-theme .safety-section p {
+  color: #475569 !important;
+}
+
+html.light-theme .safety-card-left {
+  background-color: #ffffff !important;
+  border-color: #a7f3d0 !important;
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.05) !important;
+}
+html.light-theme .safety-card-left h3 {
+  color: #0f172a !important;
+}
+html.light-theme .safety-card-left .text-slate-200 {
+  color: #1e293b !important;
+}
+html.light-theme .safety-card-left .text-slate-400 {
+  color: #64748b !important;
+}
+html.light-theme .safety-card-left .bg-emerald-500\/20 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  color: #059669 !important;
+}
+html.light-theme .safety-card-left .bg-slate-800 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+html.light-theme .safety-card-right {
+  background-color: #ffffff !important;
+  border-color: #fecdd3 !important;
+}
+html.light-theme .safety-card-right h3 {
+  color: #0f172a !important;
+}
+html.light-theme .safety-card-right .text-slate-400 {
+  color: #334155 !important;
+}
+html.light-theme .safety-card-right .text-slate-500 {
+  color: #64748b !important;
+}
+html.light-theme .safety-card-right .bg-rose-500\/10 {
+  background-color: rgba(244, 63, 94, 0.08) !important;
+  color: #e11d48 !important;
+}
+html.light-theme .safety-card-right .bg-rose-500\/20 {
+  background-color: rgba(244, 63, 94, 0.1) !important;
+  color: #e11d48 !important;
+}
+html.light-theme .safety-card-right .bg-slate-800\/50 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+/* 5. Reassurance strip */
+html.light-theme .safety-reassurance {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+}
+html.light-theme .safety-reassurance span.text-indigo-300 {
+  color: #4f46e5 !important;
+}
+html.light-theme .safety-reassurance .text-indigo-400 {
+  color: #4f46e5 !important;
+}
+
+/* 6. FAQ */
+html.light-theme .faq-section h3 {
+  color: #0f172a !important;
+}
+html.light-theme .faq-section p {
+  color: #475569 !important;
+}
+
+html.light-theme .faq-card {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .faq-card:hover:not(.faq-card-open) {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+html.light-theme .faq-card-open {
+  background-color: rgba(99, 102, 241, 0.05) !important;
+  border-color: rgba(99, 102, 241, 0.2) !important;
+}
+html.light-theme .faq-question {
+  color: #0f172a !important;
+}
+html.light-theme .faq-card .text-indigo-300 {
+  color: #4f46e5 !important;
+}
+html.light-theme .faq-answer {
+  color: #475569 !important;
+}
+
+/* ============================================
+   SIMPLE REPORT — LIGHT THEME ONLY
+   ============================================ */
+
+/* 1. Main Simple Report */
+html.light-theme .simple-report {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* 2. Executive Summary */
+html.light-theme .simple-executive-summary {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+html.light-theme .simple-executive-summary h2 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-executive-summary p {
+  color: #475569 !important;
+}
+
+/* 3. Score / Risk Card */
+html.light-theme .simple-score-card {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .simple-score-card .text-slate-50 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-score-card .text-slate-400 {
+  color: #64748b !important;
+}
+html.light-theme .simple-score-card .text-slate-500 {
+  color: #64748b !important;
+}
+html.light-theme .simple-score-card summary {
+  color: #475569 !important;
+}
+html.light-theme .simple-score-card .bg-slate-950\/50 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+html.light-theme .simple-score-card .bg-slate-800\/30 {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* 4. Summary Stat Cards */
+html.light-theme .simple-stat-card {
+  background-color: #ffffff !important;
+}
+html.light-theme .simple-stat-card .text-slate-50 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-stat-card .text-slate-300 {
+  color: #1e293b !important;
+}
+html.light-theme .simple-stat-card .bg-amber-500\/10 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+html.light-theme .simple-stat-card .bg-emerald-500\/10 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+html.light-theme .simple-stat-card .bg-blue-500\/10 {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+}
+html.light-theme .simple-stat-card .bg-slate-500\/10 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+html.light-theme .simple-stat-card .bg-slate-800\/40 {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+/* 5. Target Surface Breakdown */
+html.light-theme .simple-surface-section {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .simple-surface-section h2 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-surface-card {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .simple-surface-card:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+html.light-theme .simple-surface-card .text-slate-50 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-surface-card .text-slate-400 {
+  color: #475569 !important;
+}
+
+/* 6. Website Health Summary */
+html.light-theme .simple-health-section {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .simple-health-section h3 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-health-section .text-slate-300 {
+  color: #1e293b !important;
+}
+html.light-theme .simple-health-section .text-slate-500 {
+  color: #475569 !important;
+}
+html.light-theme .simple-health-section .bg-slate-500\/10 {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* 7. Top Priorities */
+html.light-theme .simple-priorities-section {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .simple-priorities-section h3 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-priorities-section p {
+  color: #475569 !important;
+}
+
+/* 8. Findings / Priority Cards */
+html.light-theme .simple-finding-card {
+  background-color: #ffffff !important;
+  border-top-color: #e2e8f0 !important;
+  border-right-color: #e2e8f0 !important;
+  border-bottom-color: #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+html.light-theme .simple-finding-card h4 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-finding-card .text-slate-100 {
+  color: #1e293b !important;
+}
+html.light-theme .simple-finding-card .text-slate-300 {
+  color: #475569 !important;
+}
+html.light-theme .simple-finding-card .bg-slate-800\/80 {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+html.light-theme .simple-finding-card .bg-slate-900\/80 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Risk Variants */
+html.light-theme .simple-risk-high {
+  background-color: #fff1f2 !important;
+  border-left-color: #e11d48 !important;
+}
+html.light-theme .simple-risk-medium {
+  background-color: #fff7ed !important;
+  border-left-color: #ea580c !important;
+}
+html.light-theme .simple-risk-low {
+  background-color: #f8fafc !important;
+  border-left-color: #fbbf24 !important;
+}
+html.light-theme .simple-risk-info {
+  background-color: #eff6ff !important;
+  border-left-color: #3b82f6 !important;
+}
+
+/* 9. All Findings */
+html.light-theme .simple-findings-section h3 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-findings-section p {
+  color: #475569 !important;
+}
+
+/* 10. Passed Checks Section */
+html.light-theme .simple-passed-section {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+html.light-theme .simple-passed-section h3 {
+  color: #064e3b !important;
+}
+html.light-theme .simple-passed-section p {
+  color: #065f46 !important;
+}
+html.light-theme .simple-passed-section h4 {
+  color: #064e3b !important;
+}
+html.light-theme .simple-passed-item {
+  background-color: #ffffff !important;
+  border-color: #a7f3d0 !important;
+}
+html.light-theme .simple-passed-item span {
+  color: #064e3b !important;
+}
+
+/* End */
+html.light-theme .simple-report .text-center h3 {
+  color: #0f172a !important;
+}
+html.light-theme .simple-report .text-center p {
+  color: #475569 !important;
+}
+
+/* ============================================
+   SIMPLE REPORT — LIGHT THEME FINAL POLISH
+   ============================================ */
+
+/* 1. Minimal Business Risk Boxes */
+html.light-theme .simple-business-risk-box {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+html.light-theme .simple-business-risk-box .text-amber-200\/90,
+html.light-theme .simple-business-risk-box .text-emerald-200\/90,
+html.light-theme .simple-business-risk-box .text-red-200\/90,
+html.light-theme .simple-business-risk-box .text-slate-300 {
+  color: #334155 !important;
+}
+
+/* 2. Top Priorities Outer Container */
+html.light-theme .simple-priorities-section {
+  background-color: #ffffff !important;
+  border-color: #fde68a !important;
+}
+
+/* 3. Secondary Text Contrast */
+html.light-theme .simple-priorities-section summary p {
+  color: #475569 !important;
+}
+html.light-theme .simple-finding-card .text-slate-300 {
+  color: #334155 !important;
+}
+html.light-theme .simple-finding-card .text-indigo-400 {
+  color: #4338ca !important;
+}
+html.light-theme .simple-finding-card .text-amber-200\/80 {
+  color: #92400e !important;
+}
+html.light-theme .simple-finding-card .text-slate-400 {
+  color: #475569 !important;
+}
+html.light-theme .simple-score-card .text-slate-500,
+html.light-theme .simple-score-card summary {
+  color: #334155 !important;
+}
+
+
+/* 4. Business Risk Colors Only */
+html.light-theme .simple-business-risk-high {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+}
+
+html.light-theme .simple-business-risk-medium {
+  background-color: #fff7ed !important;
+  border-color: #fed7aa !important;
+}
+
+html.light-theme .simple-business-risk-low {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+html.light-theme .simple-business-risk-info {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+}
+
+/* 5. Business Risk Description Contrast */
+html.light-theme .simple-business-risk-description {
+  color: #334155 !important;
+}
+
+/* ============================================
+   TECHNICAL REPORT — LIGHT THEME ONLY
+   ============================================ */
+
+/* 1. MAIN TECHNICAL REPORT */
+html.light-theme .technical-report {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* 2. MAIN FINDINGS CONTAINER & SECTIONS */
+html.light-theme .technical-section {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+html.light-theme .technical-findings-table {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* 3. TABLE HEADER */
+html.light-theme .technical-findings-table thead tr {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+/* 4. FINDING ROWS */
+html.light-theme .technical-finding-row {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .technical-finding-row:hover {
+  background-color: #f8fafc !important;
+}
+html.light-theme .technical-finding-row .text-slate-200 {
+  color: #0f172a !important;
+}
+
+/* 5. EXPANDED FINDING */
+html.light-theme .technical-finding-expanded-inner {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* 6. TECHNICAL DESCRIPTION */
+html.light-theme .technical-description {
+  color: #475569 !important;
+}
+html.light-theme .technical-finding-expanded-inner .text-slate-500 {
+  color: #1e293b !important;
+}
+
+/* 7. SECURITY IMPACT / RISK */
+html.light-theme .technical-risk-text {
+  color: #b91c1c !important;
+}
+
+/* 8. CONFIDENCE */
+html.light-theme .technical-confidence.text-emerald-400 {
+  color: #059669 !important;
+}
+html.light-theme .technical-confidence.text-amber-300 {
+  color: #b45309 !important;
+}
+html.light-theme .technical-confidence.text-slate-400 {
+  color: #475569 !important;
+}
+
+/* 9. RAW EVIDENCE */
+html.light-theme .technical-evidence {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+html.light-theme .technical-evidence .text-slate-300 {
+  color: #334155 !important;
+}
+html.light-theme .technical-evidence .text-cyan-400 {
+  color: #0369a1 !important;
+}
+
+/* 10. QUICK FIX / CODE SNIPPETS */
+html.light-theme .technical-code-box {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+html.light-theme .technical-code-box-pre {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #059669 !important;
+}
+html.light-theme .technical-code-box .text-slate-400 {
+  color: #475569 !important;
+}
+
+/* 11. REMEDIATION PANEL */
+html.light-theme .technical-remediation-panel {
+  background-color: #e0e7ff !important;
+  border-color: #c7d2fe !important;
+}
+html.light-theme .technical-remediation-panel .text-slate-300 {
+  color: #334155 !important;
+}
+html.light-theme .technical-remediation-panel .text-slate-400 {
+  color: #475569 !important;
+}
+html.light-theme .technical-remediation-panel .text-slate-500 {
+  color: #1e293b !important;
+}
+
+/* 12. METADATA / SIDE DETAILS */
+html.light-theme .technical-metadata {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .technical-metadata .text-slate-100 {
+  color: #0f172a !important;
+}
+html.light-theme .technical-metadata .text-slate-400 {
+  color: #475569 !important;
+}
+
+/* 13. PASSED ROWS */
+html.light-theme .technical-passed-row {
+  background-color: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+}
+html.light-theme .technical-passed-row:hover {
+  background-color: #dcfce7 !important;
+}
+
+/* 14. OWASP BADGES */
+html.light-theme .technical-owasp-badge {
+  background-color: #e0e7ff !important;
+  border-color: #c7d2fe !important;
+  color: #4338ca !important;
+}
+html.light-theme .technical-owasp-badge:hover {
+  background-color: #c7d2fe !important;
+}
+html.light-theme .technical-owasp-badge-none {
+  color: #475569 !important;
+}
+
+/* 15. TYPOGRAPHY */
+html.light-theme .technical-report h3 {
+  color: #0f172a !important;
+}
+html.light-theme .technical-report .text-slate-50 {
+  color: #0f172a !important;
+}
+
+/* ============================================
+   TECHNICAL REPORT — FINAL VISUAL POLISH
+   ============================================ */
+
+/* 1. COMPLIANCE STATUS BADGES */
+html.light-theme .technical-compliance-compliant {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+html.light-theme .technical-compliance-action {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #be123c !important;
+}
+
+/* 2. PASSED FINDING ROWS */
+html.light-theme .technical-passed-row {
+  background-color: #f8fffb !important;
+}
+html.light-theme .technical-passed-row:hover {
+  background-color: rgba(16,185,129,0.08) !important;
+}
+
+/* 3. REMEDIATION PANEL */
+html.light-theme .technical-remediation-panel {
+  background-color: #f8faff !important;
+  border-color: #c7d2fe !important;
+}
+
+/* 4. TECHNICAL SECTION / TABLE HEADER HIERARCHY */
+html.light-theme .technical-section {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+}
+html.light-theme .technical-findings-table thead tr {
+  background-color: #f1f5f9 !important;
+}
+
+/* 5. COMPLIANCE / METADATA CARD SEPARATION */
+html.light-theme .technical-compliance-card,
+html.light-theme .technical-metadata {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 4px rgba(15,23,42,0.04) !important;
+}
+
+/* ============================================
+   TECHNICAL REPORT — COMPLIANCE READINESS
+   ============================================ */
+
+/* 1. COMPLIANCE SECTION CONTAINER */
+html.light-theme .technical-compliance-section {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+}
+html.light-theme .technical-compliance-section .text-slate-50 {
+  color: #0f172a !important;
+}
+
+/* 2. COMPLIANCE CARDS */
+html.light-theme .technical-compliance-card {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 2px 4px rgba(15,23,42,0.04) !important;
+}
+
+/* 3. FAILED & PASSED HEADINGS */
+html.light-theme .technical-compliance-failed-heading {
+  color: #dc2626 !important;
+}
+html.light-theme .technical-compliance-passed-heading {
+  color: #059669 !important;
+}
+
+/* 4. CARD DIVIDERS */
+html.light-theme .technical-compliance-card .border-slate-800 {
+  border-color: #cbd5e1 !important;
+}
+
+/* 5. TYPOGRAPHY */
+html.light-theme .technical-compliance-card h4 {
+  color: #0f172a !important;
+}
+html.light-theme .technical-compliance-list,
+html.light-theme .technical-compliance-list-item-none {
+  color: #475569 !important;
+}
+html.light-theme .technical-compliance-list::marker,
+html.light-theme .technical-compliance-list li::marker {
+  color: #64748b !important;
+}
+
+/* ============================================
+   HOME / SCANNER PAGE WALLPAPER
+   ============================================ */
+.scanner-wallpaper {
+  background: radial-gradient(circle at top, #0b1536 0%, #000411 100%) !important;
+  background-attachment: scroll;
+}
+
+html.light-theme .scanner-wallpaper {
+  background: radial-gradient(circle at top, #ffffff 0%, #eef2fa 100%) !important;
+}
+/* Ensure the outer document background matches the fallback to prevent overscroll/bounce from showing mismatched colors */
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body,
+#root {
+  background-color: #000411;
+}
+
+html.light-theme body,
+html.light-theme #root {
+  background-color: #eef2fa;
+}
+/* ============================================
+   WHATSAPP WIDGET
+   ============================================ */
+
+/* Dark Theme (Default) */
+.whatsapp-container {
+  background-color: #0f172a !important; /* bg-slate-900 */
+  border: 1px solid #1e293b !important; /* border-slate-800 */
+}
+.whatsapp-header {
+  background-color: #4f46e5 !important; /* bg-indigo-600 */
+  color: #ffffff !important;
+}
+.whatsapp-body {
+  background-color: #020617 !important; /* bg-slate-950 */
+}
+.whatsapp-actions {
+  background-color: #0f172a !important; /* bg-slate-900 */
+}
+.whatsapp-btn {
+  background-color: #4f46e5 !important; /* bg-indigo-600 */
+  color: #ffffff !important;
+  box-shadow: 0 0 15px rgba(79, 70, 229, 0.4) !important;
+}
+.whatsapp-btn:hover {
+  background-color: #6366f1 !important; /* bg-indigo-500 */
+}
+.whatsapp-bubble {
+  background-color: #1e293b !important; /* bg-slate-800 */
+  color: #f8fafc !important; /* text-slate-50 */
+}
+.whatsapp-bubble .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+/* Light Theme */
+html.light-theme .whatsapp-container {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html.light-theme .whatsapp-header {
+  background-color: #4f46e5 !important; /* bg-indigo-600 */
+  color: #ffffff !important;
+}
+html.light-theme .whatsapp-body {
+  background-color: #f1f5f9 !important; /* bg-slate-100 */
+}
+html.light-theme .whatsapp-actions {
+  background-color: #ffffff !important;
+}
+html.light-theme .whatsapp-btn {
+  background-color: #ffffff !important;
+  color: #4f46e5 !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1) !important;
+}
+html.light-theme .whatsapp-btn:hover {
+  background-color: #f8fafc !important;
+}
+html.light-theme .whatsapp-bubble {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+}
+html.light-theme .whatsapp-bubble p {
+  color: #334155 !important;
 }

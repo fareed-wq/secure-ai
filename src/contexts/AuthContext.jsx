@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, checkInitialRecovery } from '../lib/supabase';
 
 const AuthContext = createContext({});
 
@@ -9,6 +9,8 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRecovery, setIsRecovery] = useState(checkInitialRecovery);
+  const [isRecoveryValidating, setIsRecoveryValidating] = useState(true);
 
   useEffect(() => {
     // Check active sessions and sets the user
@@ -17,12 +19,28 @@ export const AuthProvider = ({ children }) => {
       setUser(session?.user ?? null);
       setLoading(false);
     }).catch(() => {
-      // Catch errors if mock keys are used
       setLoading(false);
     });
 
+    // Definitive completion check: getUser() waits for background auth initialization
+    // (including PKCE/URL token exchange) to complete before resolving.
+    supabase.auth.getUser().finally(() => {
+      // Supabase internally emits PASSWORD_RECOVERY inside a setTimeout(0).
+      // We push validation completion to the macro-task queue to guarantee it
+      // executes strictly after the recovery event has fired.
+      setTimeout(() => {
+        setIsRecoveryValidating(false);
+      }, 0);
+    });
+
     // Listen for changes on auth state (logged in, signed out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecovery(true);
+        setIsRecoveryValidating(false);
+      } else if (event === 'SIGNED_OUT') {
+        setIsRecovery(false);
+      }
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -34,12 +52,15 @@ export const AuthProvider = ({ children }) => {
   const value = {
     session,
     user,
+    isRecovery,
+    setIsRecovery,
+    isRecoveryValidating, loading,
     signOut: () => supabase.auth.signOut(),
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 };

@@ -2,31 +2,39 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ShieldCheck, Mail, Lock, Loader2 } from 'lucide-react';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const turnstileRef = React.useRef();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
-    // For MVP demonstration, if Supabase isn't configured, we bypass
-    if (import.meta.env.VITE_SUPABASE_URL === undefined) {
-      alert("MVP Mode: Bypassing auth because Supabase keys are not set.");
-      navigate('/dashboard');
-      setLoading(false);
-      return;
-    }
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: { captchaToken }
+    });
+
+    turnstileRef.current?.reset();
+    setCaptchaToken(null);
+
     if (error) {
-      setError(error.message);
+      if (error.message === 'Email not confirmed') {
+        setError('Please check your email to verify your account before signing in.');
+      } else if (error.message === 'Invalid login credentials') {
+        setError('Incorrect email or password.');
+      } else {
+        setError('Unable to sign in. Please try again.');
+      }
     } else {
       navigate('/dashboard');
     }
@@ -37,7 +45,7 @@ const Login = () => {
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-slate-200">
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
         <ShieldCheck className="w-16 h-16 text-indigo-500 mb-4" />
-        <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-white">
+        <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-slate-50">
           Sign in to your account
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400">
@@ -56,7 +64,7 @@ const Login = () => {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-300">
                 Email address
@@ -70,7 +78,7 @@ const Login = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white placeholder-slate-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 placeholder-slate-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   placeholder="you@example.com"
                 />
               </div>
@@ -89,7 +97,7 @@ const Login = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white placeholder-slate-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 placeholder-slate-500 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   placeholder="••••••••"
                 />
               </div>
@@ -109,22 +117,37 @@ const Login = () => {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-indigo-400 hover:text-indigo-300">
+                <Link to="/forgot-password" className="font-medium text-indigo-400 hover:text-indigo-300">
                   Forgot your password?
-                </a>
+                </Link>
               </div>
             </div>
 
             <div>
+              <div className="flex justify-center mb-6">
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => setCaptchaToken(null)}
+                />
+              </div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !captchaToken}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign in'}
               </button>
             </div>
           </form>
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link to="/" className="text-sm font-medium text-slate-400 hover:text-slate-300 transition-colors">
+            &larr; Back to Home
+          </Link>
         </div>
       </div>
     </div>

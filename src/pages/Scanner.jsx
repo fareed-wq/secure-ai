@@ -1,40 +1,53 @@
-import { useState, useEffect, useRef } from 'react';
-import { Search, ArrowRight, Loader2, ShieldAlert, Lock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Loader2, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import WhatsAppWidget from '../WhatsAppWidget';
+import usePdfGenerator from '../hooks/usePdfGenerator';
 
-import ModeSelection from '../components/scanner/ModeSelection';
+import ScanForm from '../components/scanner/ScanForm';
+
 import ReportHeader from '../components/scanner/ReportHeader';
-import SimpleReport from '../components/scanner/SimpleReport';
-import AuthModal from '../components/scanner/AuthModal';
+const SimpleReport = React.lazy(() => import('../components/scanner/SimpleReport'));
+const AuthModal = React.lazy(() => import('../components/scanner/AuthModal'));
 import ErrorBoundary from '../components/ErrorBoundary';
 import SafetyComparison from '../components/scanner/SafetyComparison';
 import BottomTicker from '../components/scanner/BottomTicker';
-import TechnicalReport from '../components/scanner/TechnicalReport';
+const TechnicalReport = React.lazy(() => import('../components/scanner/TechnicalReport'));
 
-// Force relative paths in production so it hits the Vercel Serverless functions directly
-export const API_BASE_URL = 
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-    ? (import.meta.env.VITE_API_URL || 'http://localhost:5000') 
-    : '';
+import { scanApi } from '../lib/api/scanner';
+import { useSEO } from '../hooks/useSEO';
 
 function Scanner() {
+  useSEO({
+    title: 'Free Website Security Scanner',
+    description: 'Check if your website is safe instantly. Uncover hidden security risks automatically with our passive security posture checker.',
+    path: '/'
+  });
   const { user } = useAuth();
   const location = useLocation();
   const [url, setUrl] = useState('');
   const [scanState, setScanState] = useState('idle'); // idle, scanning, error, mode-select, view-report
   const [reportData, setReportData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const [validationError, setValidationError] = useState('');
   const [reportMode, setReportMode] = useState('simple'); // simple, technical
+  const [executedScanMode, setExecutedScanMode] = useState('passive');
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authFeatureName, setAuthFeatureName] = useState('');
-  const [pdfModalOpen, setPdfModalOpen] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const urlInputRef = useRef(null);
+  const { isGeneratingPdf, generatePdf } = usePdfGenerator();
   const reportRef = useRef(null);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.getElementById('main-scroll-container')?.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  };
+
+  useEffect(() => {
+    // Scroll to top on mount (e.g. normal navigation)
+    scrollToTop();
+  }, []);
 
   useEffect(() => {
     if (location.state?.resetScan) {
@@ -42,6 +55,7 @@ function Scanner() {
       setReportData(null);
       setUrl('');
       setErrorMessage('');
+      scrollToTop();
     }
   }, [location.state?.resetScan]);
 
@@ -55,52 +69,41 @@ function Scanner() {
     }
   };
 
-  const handleScan = async (e) => {
-    e.preventDefault();
-    if (!url) return;
-    
-    let parsedUrl = url.trim();
-    let cleanInput = parsedUrl.replace(/^https?:\/\//i, '').replace(/^www\./i, '');
-    const domainRegex = /^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/;
-    
-    if (!domainRegex.test(cleanInput)) {
-      setValidationError("Please enter a full domain name (e.g., google.com or site.in).");
-      urlInputRef.current?.blur();
-      return;
-    }
-
-    if (!/^https?:\/\//i.test(parsedUrl)) {
-      parsedUrl = 'https://' + parsedUrl;
-      setUrl(parsedUrl);
-    }
-    
+  const handleScan = async (parsedUrl, scanMode, reportModeValue) => {
+    setUrl(parsedUrl);
     setScanState('scanning');
     setErrorMessage('');
-    
+    setReportMode(reportModeValue);
+    setExecutedScanMode(scanMode);
+
     try {
-      const minWait = new Promise(resolve => setTimeout(resolve, 6000));
-      const fetchPromise = fetch(`${API_BASE_URL}/api/scan`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: parsedUrl }),
-      });
-      
-      const [response] = await Promise.all([fetchPromise, minWait]);
-      const data = await response.json();
-      
-      if (data.error) {
-        setErrorMessage(data.error);
+      const data = await scanApi.runScan(parsedUrl, scanMode, reportModeValue);
+
+      if (data.status === 'failed' || data.status === 'timeout') {
+        setErrorMessage(data.error || "Unable to complete the security scan because the target could not be reached or the connection timed out.");
         setScanState('error');
         return;
       }
-      
+
       setReportData(data);
-      setScanState('mode-select'); // Go to mode selection first
+      setScanState('view-report'); // Skip mode selection, go straight to report
+
+      // Save scan to Supabase if user is logged in
+      if (user) {
+        // Run asynchronously so it doesn't block the UI
+        supabase.from('scans').insert([{
+          user_id: user.id,
+          target_url: parsedUrl,
+          score: data.score || 0,
+          report_data: data
+        }]).then(({ error }) => {
+          if (error) console.error("Failed to save scan history:", error);
+        });
+      }
     } catch (error) {
       console.error('Backend Connection Error:', error);
       setErrorMessage(`Failed to connect to the backend scanner: ${error.message || error}`);
+    scrollToTop();
       setScanState('error');
     }
   };
@@ -110,6 +113,7 @@ function Scanner() {
     setUrl('');
     setReportData(null);
     setErrorMessage('');
+    scrollToTop();
   };
 
   const handleSelectMode = (mode) => {
@@ -117,79 +121,28 @@ function Scanner() {
     setScanState('view-report');
   };
 
-  const handlePdfExport = async () => {
-    if (!reportRef.current) return;
-    setIsGeneratingPdf(true);
-    
-    try {
-      const html2canvas = (await import('html2canvas')).default;
-      const { jsPDF } = await import('jspdf');
-      
-      const element = reportRef.current;
-      
-      // Temporarily hide elements not meant for print
-      const hideElements = element.querySelectorAll('.print\\:hidden');
-      hideElements.forEach(el => el.style.display = 'none');
-      
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#020617', // slate-950
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight
-      });
-      
-      hideElements.forEach(el => el.style.display = '');
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = pdfWidth / imgWidth;
-      const totalPdfHeight = imgHeight * ratio;
-
-      let heightLeft = totalPdfHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, totalPdfHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - totalPdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, totalPdfHeight);
-        heightLeft -= pdfHeight;
-      }
-      
-      pdf.save(`SecureAI-Report-${url.replace(/^https?:\/\//, '').split('/')[0]}.pdf`);
-    } catch (error) {
-      console.error('Failed to generate PDF', error);
-      alert("There was an error generating the PDF. Please try again.");
-    } finally {
-      setIsGeneratingPdf(false);
-    }
+  const handlePdfExport = () => {
+    generatePdf(reportData, executedScanMode, reportMode);
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 font-sans text-slate-50 selection:bg-indigo-500/30">
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
-      
+    <div className="scanner-page scanner-wallpaper flow-root flex-1 bg-slate-950 font-sans text-slate-50 selection:bg-indigo-500/30">
+
+
 
       {/* Auth Modal */}
-      <AuthModal 
-        isOpen={authModalOpen} 
-        onClose={() => setAuthModalOpen(false)} 
-        featureName={authFeatureName} 
-      />
+      <React.Suspense fallback={null}>
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => setAuthModalOpen(false)}
+          featureName={authFeatureName}
+        />
+      </React.Suspense>
 
       {/* Loading overlay for PDF generation */}
       <AnimatePresence>
         {isGeneratingPdf && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -197,51 +150,22 @@ function Scanner() {
           >
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 flex flex-col items-center max-w-sm w-full mx-4 text-center">
               <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">Generating PDF</h3>
+              <h2 className="text-xl font-bold text-slate-50 mb-2">Generating PDF</h2>
               <p className="text-slate-400">Please wait while we prepare your report...</p>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Validation Error Popup */}
-      <AnimatePresence>
-        {validationError && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-slate-900 border border-rose-500/30 shadow-2xl shadow-rose-500/10 rounded-2xl p-6 max-w-md w-full relative"
-            >
-              <div className="flex flex-col items-center text-center">
-                <div className="bg-rose-500/10 p-3 rounded-full mb-4">
-                  <ShieldAlert className="w-8 h-8 text-rose-400" />
-                </div>
-                <h4 className="text-white font-bold text-lg mb-2">Invalid Domain Format</h4>
-                <p className="text-slate-300 text-sm mb-6">{validationError}</p>
-                <button 
-                  onClick={() => {
-                    setValidationError('');
-                    setTimeout(() => urlInputRef.current?.focus(), 100);
-                  }}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full"
-                >
-                  Got it
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+
 
       {/* Dynamic Content */}
       <div className="relative z-10 max-w-7xl mx-auto pb-32 print:hidden">
         <AnimatePresence mode="wait">
-          
+
           {/* 1. IDLE STATE (Search Bar) */}
           {scanState === 'idle' && (
-            <motion.div 
+            <motion.div
               key="idle"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -263,38 +187,12 @@ function Scanner() {
               </div>
 
               {/* 3. Input Bar Container */}
-              <form onSubmit={handleScan} className="w-full max-w-2xl mt-4 flex flex-col items-center gap-3">
-                {/* Input Box with Glow focused ONLY on the box */}
-                <div className="relative w-full rounded-2xl p-1 bg-slate-900/80 border border-slate-700/60 shadow-[0_0_30px_rgba(124,58,237,0.25)] flex items-center focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 focus-within:shadow-[0_0_40px_rgba(124,58,237,0.4)] transition-all duration-300">
-                  <Search className="w-5 h-5 text-slate-400 ml-4 shrink-0 hidden sm:block" />
-                  <input
-                    ref={urlInputRef}
-                    type="text"
-                    required
-                    placeholder="example.com"
-                    value={url}
-                    onChange={(e) => {
-                      setUrl(e.target.value);
-                      if (validationError) setValidationError('');
-                    }}
-                    className="w-full bg-transparent px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none"
-                  />
-                  <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 shrink-0">
-                    Scan <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
+              <ScanForm onScan={handleScan} />
 
-                {/* 4. Trust Badge Outside the Glow Box (Crisp Contrast) */}
-                <div className="flex items-center justify-center flex-wrap gap-1 text-center text-xs text-slate-400 mt-2 font-medium px-2">
-                  <span className="text-indigo-400">🔒</span>
-                  <span><strong className="text-slate-300">100% Safe & Non-Intrusive</strong> • No invasive payloads, exploits, or database risks.</span>
-                </div>
-              </form>
-
-              <div className="flex justify-center text-sm text-slate-400 mt-8 font-medium">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-slate-400 mt-8 font-medium">
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
               </div>
-              
+
               <div className="w-full mt-12 pb-16">
                 <SafetyComparison />
               </div>
@@ -311,7 +209,7 @@ function Scanner() {
               className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-slate-900/50 border border-slate-800 backdrop-blur-xl shadow-2xl overflow-hidden relative"
             >
               <div className="absolute inset-0 bg-slate-800/[0.2] bg-[size:20px_20px]" style={{backgroundImage: 'radial-gradient(circle, #334155 1px, transparent 1px)'}}></div>
-              
+
               <div className="flex flex-col items-center justify-center space-y-8 py-12 relative z-10">
                 <div className="relative">
                   <div className="absolute inset-0 border-4 border-indigo-500/30 rounded-full blur-xl animate-pulse"></div>
@@ -319,7 +217,7 @@ function Scanner() {
                   <div className="absolute inset-0 border-2 border-purple-500/20 rounded-full animate-[spin_4s_linear_infinite_reverse] scale-150"></div>
                   <Loader2 className="w-20 h-20 text-indigo-400 animate-spin relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
                 </div>
-                
+
                 <div className="space-y-4 text-center w-full">
                   <h2 className="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-emerald-300">
                     Establishing Secure Uplink to {url}...
@@ -331,27 +229,53 @@ function Scanner() {
           )}
 
           {/* 3. ERROR STATE */}
-          {scanState === 'error' && (
-            <motion.div
-              key="error"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-red-900/20 border border-red-800 backdrop-blur-xl shadow-2xl text-center"
-            >
-              <ShieldAlert className="w-20 h-20 text-red-500 mx-auto mb-6" />
-              <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Failed</h2>
-              <p className="text-red-200 mb-8">{errorMessage}</p>
-              <button onClick={resetScan} className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl transition-all">
-                Try Again
-              </button>
-            </motion.div>
-          )}
+          {scanState === 'error' && (() => {
+            const isTlsError = errorMessage && (
+              errorMessage.includes('SSLError') ||
+              errorMessage.includes('SSL:') ||
+              errorMessage.includes('TLSV1_ALERT') ||
+              errorMessage.includes('certificate verify failed') ||
+              errorMessage.includes('CERTIFICATE_VERIFY_FAILED')
+            );
 
-          {/* 4. MODE SELECTION STATE */}
-          {scanState === 'mode-select' && (
-            <ModeSelection key="mode-select" onSelectMode={handleSelectMode} />
-          )}
+            return (
+              <motion.div
+                key="error"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 1.05 }}
+                className="max-w-2xl mx-auto mt-20 p-8 rounded-3xl bg-red-900/20 border border-red-800 backdrop-blur-xl shadow-2xl text-center"
+              >
+                <ShieldAlert className="w-20 h-20 text-red-500 mx-auto mb-6" />
+
+                {isTlsError ? (
+                  <>
+                    <h2 className="text-2xl font-bold text-red-400 mb-4 uppercase tracking-wider">SCAN INCOMPLETE</h2>
+                    <p className="text-red-200 mb-4 font-medium">
+                      We couldn't establish a secure HTTPS connection with the target website.<br/>
+                      The target server terminated the TLS connection before the scan could begin.
+                    </p>
+                    <p className="text-red-300/80 mb-6 text-sm">
+                      No security score was generated because the website could not be reached securely.
+                    </p>
+                    <details className="text-left mb-8 bg-red-950/50 p-4 rounded-lg border border-red-900/50">
+                      <summary className="text-xs text-red-400/80 cursor-pointer hover:text-red-300 font-mono">View Technical Details</summary>
+                      <pre className="mt-3 text-xs text-red-300 whitespace-pre-wrap font-mono break-all overflow-x-auto">{errorMessage}</pre>
+                    </details>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Incomplete</h2>
+                    <p className="text-red-200 mb-8">{errorMessage}</p>
+                  </>
+                )}
+
+                <button onClick={resetScan} className="bg-slate-800 hover:bg-slate-700 text-slate-50 px-6 py-3 rounded-xl transition-all">
+                  Run Another Scan
+                </button>
+              </motion.div>
+            );
+          })()}
 
           {/* 5. VIEW REPORT STATE */}
           {scanState === 'view-report' && reportData && (
@@ -362,27 +286,29 @@ function Scanner() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-6xl mx-auto"
             >
-              <ReportHeader 
-                url={url} 
-                score={reportData.score} 
-                timestamp={reportData.scan_start} 
-                activeMode={reportMode} 
+              <ReportHeader
+                url={url}
+                score={reportData.score}
+                timestamp={reportData.scan_start}
+                activeMode={reportMode}
                 onToggleMode={setReportMode}
                 onExportPdf={handlePdfExport}
                 onRequireAuth={handleRequireAuth}
                 reportData={reportData}
               />
-              
+
               <ErrorBoundary>
-                {reportMode === 'simple' ? (
-                  <SimpleReport reportData={reportData} />
-                ) : (
-                  <TechnicalReport reportData={reportData} />
-                )}
+                <React.Suspense fallback={<div className="py-12 flex justify-center text-slate-500"><Loader2 className="animate-spin h-8 w-8" /></div>}>
+                  {reportMode === 'simple' ? (
+                    <SimpleReport reportData={reportData} />
+                  ) : (
+                    <TechnicalReport reportData={reportData} />
+                  )}
+                </React.Suspense>
               </ErrorBoundary>
 
               <div className="mt-12 flex justify-center">
-                <button onClick={resetScan} className="text-slate-400 hover:text-white transition-colors underline underline-offset-4">
+                <button onClick={resetScan} className="text-slate-400 hover:text-slate-50 transition-colors underline underline-offset-4">
                   Run another scan
                 </button>
               </div>
@@ -391,67 +317,9 @@ function Scanner() {
 
         </AnimatePresence>
       </div>
-      
-      {/* DEDICATED PRINT CONTAINER */}
-      {scanState === 'view-report' && reportData && (
-        <div className="hidden print:block print:w-full bg-white text-black p-8 font-sans">
-          {/* CLEAN DOCUMENT HEADER */}
-          <div className="border-b-2 border-slate-900 pb-4 mb-6">
-            <h1 className="text-xl font-bold tracking-wide text-slate-900">
-              REPORT GENERATED BY URLSCANONLINE.COM
-            </h1>
-            <p className="text-sm text-slate-600 mt-1">
-              Target Domain: {url} | Date: {new Date(reportData.scan_start || Date.now()).toLocaleString()} | Overall Security Score: {reportData.score}/100
-            </p>
-          </div>
 
-          {/* EXECUTIVE SUMMARY */}
-          <div className="mb-6">
-            <h2 className="text-lg font-bold text-slate-900 border-b border-slate-300 pb-1 mb-2">
-              1. Executive Summary
-            </h2>
-            <p className="text-sm text-slate-800">
-              Scan completed for {url}. Total checks evaluated: {reportData.findings?.length || 0}. 
-              High Priority: {reportData.severity_counts?.High || 0} | Medium Priority: {reportData.severity_counts?.Medium || 0} | Low Priority: {reportData.severity_counts?.Low || 0} | Passed: {reportData.severity_counts?.Passed || 0}
-            </p>
-          </div>
 
-          {/* DETECTED VULNERABILITIES */}
-          <div className="mb-6">
-            <h2 className="text-lg font-bold text-slate-900 border-b border-slate-300 pb-1 mb-3">
-              2. Detected Vulnerabilities & Action Items
-            </h2>
-            {(reportData.findings || []).filter(f => f.severity !== 'Passed').map((f, index) => (
-              <div key={index} className="mb-4 break-inside-avoid">
-                <h3 className="font-bold text-sm text-slate-900">
-                  • Finding {index + 1}: {f.name} [{f.severity.toUpperCase()}]
-                </h3>
-                <p className="text-xs text-slate-700 ml-4 mt-1">
-                  <strong>OWASP:</strong> {f.owasp || 'N/A'} | <strong>Confidence:</strong> {f.confidence || '100%'}
-                </p>
-                {f.remediation_snippets?.nginx && (
-                  <div className="ml-4 mt-2 p-3 bg-slate-100 border border-slate-300 rounded font-mono text-xs text-slate-900 break-all whitespace-pre-wrap">
-                    {f.remediation_snippets.nginx}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
 
-          {/* PASSED CHECKS */}
-          <div className="mb-6 break-inside-avoid">
-            <h2 className="text-lg font-bold text-slate-900 border-b border-slate-300 pb-1 mb-2">
-              3. Passed Security Checks
-            </h2>
-            <ul className="list-disc list-inside text-xs text-slate-800 space-y-1">
-              {(reportData.findings || []).filter(f => f.severity === 'Passed').map((p, i) => (
-                <li key={i}>{p.name}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-      
       {/* Floating Elements (e.g. WhatsApp Widget) preserved for UX */}
       <div className="print:hidden">
         <WhatsAppWidget />

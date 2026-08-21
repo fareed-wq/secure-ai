@@ -11,7 +11,7 @@ const SavedReports = () => {
     <div className="space-y-6 text-slate-200">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight">Saved Reports</h1>
+          <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Saved Reports</h1>
           <p className="text-slate-400 mt-1">Bookmarked snapshots for compliance and review.</p>
         </div>
       </div>
@@ -25,7 +25,7 @@ const SavedReports = () => {
                   <Bookmark className="w-6 h-6 text-indigo-400" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-white">{report.name}</h3>
+                  <h3 className="font-bold text-lg text-slate-50">{report.name}</h3>
                   <p className="text-sm text-slate-400">{report.target}</p>
                 </div>
               </div>
@@ -35,10 +35,10 @@ const SavedReports = () => {
             <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-800">
               <span className="text-xs text-slate-500">Saved on {new Date(report.date).toLocaleDateString()}</span>
               <div className="flex gap-2">
-                <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors" title="View">
+                <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-50 transition-colors" title="View" aria-label="View">
                   <FileText className="w-4 h-4" />
                 </button>
-                <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-400 transition-colors" title="Export PDF">
+                <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-indigo-400 transition-colors" title="Export PDF" aria-label="Export PDF">
                   <Download className="w-4 h-4" />
                 </button>
               </div>

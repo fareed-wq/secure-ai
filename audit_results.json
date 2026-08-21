@@ -1,0 +1,1298 @@
+[
+  {
+    "file": "content.py",
+    "class": "MixedContentModule",
+    "line": 75,
+    "args": [
+      "Mixed Content Detected",
+      "Medium",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Update all resource links (scripts, styles, images) to use relative paths or HTTPS URLs.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "content.py",
+    "class": "MixedContentModule",
+    "line": 86,
+    "args": [
+      "Insecure Form Action (HTTP)",
+      "High",
+      "An HTML form on this HTTPS page submits data to an unencrypted HTTP endpoint.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Ensure all form 'action' attributes use relative paths or explicit 'https://' URLs.",
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "content.py",
+    "class": "MixedContentModule",
+    "line": 97,
+    "args": [
+      "No Mixed Content Detected",
+      "Passed",
+      "All front-end resources and form actions are safely served over HTTPS.",
+      "Clean HTML subresources"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "content.py",
+    "class": "JSBundleSecretsModule",
+    "line": 261,
+    "args": [
+      "Exposed Secret in JS Bundle",
+      "High",
+      "Lightweight JS surface probe detected hardcoded private API keys or credentials in front-end JavaScript bundles.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Move secrets to backend environment variables and re-issue compromised credentials immediately.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "content.py",
+    "class": "JSBundleSecretsModule",
+    "line": 272,
+    "args": [
+      "Client-Side API Key Detected",
+      "Informational",
+      "Lightweight JS surface probe detected public client-side keys (e.g., Firebase/Google Maps). Verify domain referrer restrictions are active on cloud console.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Ensure public API keys have HTTP Referrer restrictions configured in Google Cloud Console / Firebase.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "content.py",
+    "class": "JSBundleSecretsModule",
+    "line": 283,
+    "args": [
+      "Source Map Leak Detected",
+      "Medium",
+      "Source maps (.map files) are publicly accessible, allowing attackers to reconstruct original unminified source code.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Disable source maps in production builds or restrict access to .map files via WAF/server rules.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "content.py",
+    "class": "JSBundleSecretsModule",
+    "line": 294,
+    "args": [
+      "No Secrets Found in Main JS Bundles",
+      "Passed",
+      "Lightweight JS surface probe completed on primary bundles; no exposed credentials, unflagged keys, or source maps detected.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "content.py",
+    "class": "SensitivePathsModule",
+    "line": 376,
+    "args": [
+      "Administrative Interface Exposed",
+      "Low",
+      "An administrative interface or API specification is publicly accessible. Exposure alone does not prove broken access control, but it increases the attack surface.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Ensure the interface requires strong authentication (MFA) and rate-limiting, or restrict access to internal IP ranges.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "content.py",
+    "class": "SensitivePathsModule",
+    "line": 386,
+    "args": [
+      "No Exposed Admin or API Endpoints",
+      "Passed",
+      "Targeted surface probe completed on primary high-risk endpoints (/admin, /swagger.json); no exposed administrative interfaces or API specifications were detected.",
+      "Non-intrusive check on primary paths (/admin, /swagger.json) with SPA catch-all validation"
+    ],
+    "kwargs": {
+      "owasp": "A01: Broken Access Control",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "ExposedFilesModule",
+    "line": 47,
+    "args": [
+      "Exposed .git Repository",
+      "High",
+      "The Git source code repository is publicly exposed, allowing source code downloading.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Configure the web server to block access to the /.git directory.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "ExposedFilesModule",
+    "line": 31,
+    "args": [
+      "Exposed .env Configuration File",
+      "Critical",
+      "A .env file containing sensitive credentials or API keys is publicly accessible.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Restrict web server access to dotfiles or move .env outside the web root immediately.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "ExposedFilesModule",
+    "line": 74,
+    "args": [
+      "<dynamic>",
+      "Medium",
+      "Web server is configured to display raw directory file listings when an index page is missing.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "impact": "Allows unauthenticated users to browse and download internal media uploads, unlinked assets, and temporary server files.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "ExposedFilesModule",
+    "line": 108,
+    "args": [
+      "<dynamic>",
+      "High",
+      "Publicly accessible application log file discovered at {path}.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "impact": "Log files frequently expose unhandled stack traces, database query parameters, internal file paths, user emails, and API session tokens.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "ExposedFilesModule",
+    "line": 147,
+    "args": [
+      "<dynamic>",
+      "Critical",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "impact": "Grants unauthenticated attackers immediate access to the full application database, hashed user passwords, internal tables, and raw source code.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "InformationDisclosureModule",
+    "line": 182,
+    "args": [
+      "Verbose Server Banner",
+      "Low",
+      "Server header leaks exact version numbers.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Configure server to only return generic names (e.g., 'nginx').",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "RobotsTxtModule",
+    "line": 215,
+    "args": [
+      "robots.txt Found",
+      "Informational",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "RobotsTxtModule",
+    "line": 224,
+    "args": [
+      "robots.txt Missing",
+      "Informational",
+      "No robots.txt found.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "SitemapModule",
+    "line": 255,
+    "args": [
+      "sitemap.xml Found",
+      "Informational",
+      "Found XML sitemap.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "SitemapModule",
+    "line": 264,
+    "args": [
+      "sitemap.xml Missing",
+      "Informational",
+      "No sitemap.xml found.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "SecurityTxtModule",
+    "line": 295,
+    "args": [
+      "security.txt Found",
+      "Passed",
+      "Organization has published security.txt.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "discovery.py",
+    "class": "SecurityTxtModule",
+    "line": 304,
+    "args": [
+      "security.txt Missing",
+      "Informational",
+      "No standard security.txt found.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Publish a security.txt file at /.well-known/security.txt.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSCAAModule",
+    "line": 27,
+    "args": [
+      "CAA Records Configured",
+      "Passed",
+      "Certificate Authority Authorization (CAA) DNS records restrict which CAs can issue certificates.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A02: Cryptographic Failures",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSCAAModule",
+    "line": 36,
+    "args": [
+      "Missing CAA Record",
+      "Low",
+      "No CAA DNS records found. Any valid Certificate Authority can issue SSL certificates for this domain.",
+      "CAA DNS record absent."
+    ],
+    "kwargs": {
+      "remediation": "Add CAA records in DNS specifying authorized CAs (e.g., 'issue letsencrypt.org').",
+      "owasp": "A02: Cryptographic Failures",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSCAAModule",
+    "line": 55,
+    "args": [
+      "DNSSEC Security Enabled",
+      "Passed",
+      "Domain Name System Security Extensions (DNSSEC) is enabled.",
+      "DS record found"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "dns_security"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSCAAModule",
+    "line": 64,
+    "args": [
+      "DNSSEC Not Enabled for Domain",
+      "Informational",
+      "Domain Name System Security Extensions (DNSSEC) records are not published for this domain.",
+      ""
+    ],
+    "kwargs": {
+      "impact": "The domain is more vulnerable to DNS spoofing, cache poisoning, and BGP hijacking attacks.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "dns_security"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSEmailSecurityModule",
+    "line": 120,
+    "args": [
+      "Missing SPF Record",
+      "Medium",
+      "No SPF TXT record found. The domain is exposed to email spoofing and phishing attacks.",
+      "TXT record absent."
+    ],
+    "kwargs": {
+      "remediation": "Publish a valid SPF TXT record (e.g., 'v=spf1 include:_spf.google.com ~all').",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSEmailSecurityModule",
+    "line": 162,
+    "args": [
+      "Missing DMARC Policy",
+      "Medium",
+      "<dynamic>",
+      "_dmarc TXT record absent."
+    ],
+    "kwargs": {
+      "remediation": "<dynamic>",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSEmailSecurityModule",
+    "line": 193,
+    "args": [
+      "Missing MTA-STS Record",
+      "Informational",
+      "No MTA-STS DNS record found.",
+      ""
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSEmailSecurityModule",
+    "line": 183,
+    "args": [
+      "MTA-STS Mail Transport Security Configured",
+      "Passed",
+      "MTA-STS policy is configured to enforce TLS for email transport.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSEmailSecurityModule",
+    "line": 211,
+    "args": [
+      "TLS-RPT Email Reporting Configured",
+      "Passed",
+      "TLS Reporting (TLS-RPT) is configured.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSEmailSecurityModule",
+    "line": 99,
+    "args": [
+      "Weak SPF Record (+all)",
+      "High",
+      "SPF record explicitly allows any IP address to spoof emails for this domain.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Change '+all' to '~all' or '-all' in your SPF TXT record.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSEmailSecurityModule",
+    "line": 109,
+    "args": [
+      "SPF Record Configured",
+      "Passed",
+      "Sender Policy Framework (SPF) record is validly configured.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSEmailSecurityModule",
+    "line": 141,
+    "args": [
+      "Weak DMARC Policy (p=none)",
+      "Low",
+      "DMARC policy is set to 'none', which monitors but does not block spoofed emails.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Upgrade DMARC policy from 'p=none' to 'p=quarantine' or 'p=reject'.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "dns.py",
+    "class": "DNSEmailSecurityModule",
+    "line": 151,
+    "args": [
+      "Strong DMARC Policy Configured",
+      "Passed",
+      "DMARC record is enforced with quarantine or reject policy.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "headers.py",
+    "class": "TechFingerprintModule",
+    "line": 16,
+    "args": [
+      "Server Header Exposed",
+      "Informational",
+      "The server software and version might be exposed.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Configure server to return generic names.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "headers.py",
+    "class": "TechFingerprintModule",
+    "line": 27,
+    "args": [
+      "X-Powered-By Header Exposed",
+      "Informational",
+      "Backend technology is explicitly declared. This is typically a harmless defense-in-depth issue unless obsolete versions are exposed.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Remove X-Powered-By header to obscure backend technology details.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "headers.py",
+    "class": "CORSModule",
+    "line": 76,
+    "args": [
+      "Strict CORS Policy Enforced",
+      "Passed",
+      "CORS headers are omitted or strictly configured.",
+      "No open Access-Control-Allow-Origin header detected."
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "headers.py",
+    "class": "CORSModule",
+    "line": 52,
+    "args": [
+      "Potential CORS Misconfiguration",
+      "Medium",
+      "The API passively responded with a wildcard CORS policy (*). This allows any origin to read responses, though browsers block credentialed wildcard requests. Passive detection cannot confirm dynamic reflection.",
+      "Access-Control-Allow-Origin: *"
+    ],
+    "kwargs": {
+      "remediation": "Restrict CORS to specific trusted origins if the endpoint handles sensitive authenticated data.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "headers.py",
+    "class": "CORSModule",
+    "line": 62,
+    "args": [
+      "CORS Enabled",
+      "Informational",
+      "Cross-Origin Resource Sharing is enabled. Passive scan cannot confirm if dynamic origin reflection is permitted.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "headers.py",
+    "class": "PermissionsPolicyModule",
+    "line": 111,
+    "args": [
+      "Permissions-Policy Configured",
+      "Passed",
+      "Permissions-Policy header is active.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "headers.py",
+    "class": "PermissionsPolicyModule",
+    "line": 101,
+    "args": [
+      "Missing Permissions-Policy",
+      "Low",
+      "The Permissions-Policy header is missing, allowing web pages to access browser feature APIs unconditionally.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Apply recommended server configuration headers and verify compliance against baseline security standards.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "AdvancedCookieModule",
+    "line": 97,
+    "args": [
+      "<dynamic>",
+      "<dynamic>",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Add HttpOnly, Secure, and SameSite=Lax/Strict flags to all session cookies.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "session_cookies"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "HTTPSRedirectModule",
+    "line": 122,
+    "args": [
+      "HTTPS Redirection Configured",
+      "Passed",
+      "HTTP traffic is correctly redirected to HTTPS.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "HTTPSRedirectModule",
+    "line": 131,
+    "args": [
+      "Missing HTTPS Redirection",
+      "High",
+      "The server accepts cleartext HTTP connections without redirecting to HTTPS.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Configure the server to redirect all port 80 traffic to 443 (HTTPS).",
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 190,
+    "args": [
+      "Missing Strict-Transport-Security (HSTS)",
+      "High",
+      "The HTTP Strict-Transport-Security response header is missing, leaving the application vulnerable to SSL-stripping attacks.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Enable HTTP Strict Transport Security (HSTS) with a long max-age directive and includeSubDomains flag.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 200,
+    "args": [
+      "Strict-Transport-Security Configured",
+      "Passed",
+      "HSTS is present.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 268,
+    "args": [
+      "Missing X-Permitted-Cross-Domain-Policies",
+      "Informational",
+      "The X-Permitted-Cross-Domain-Policies header is missing.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 279,
+    "args": [
+      "Missing X-DNS-Prefetch-Control",
+      "Informational",
+      "The X-DNS-Prefetch-Control header is missing.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 290,
+    "args": [
+      "Missing X-Frame-Options",
+      "Medium",
+      "The X-Frame-Options header is missing, leaving the application vulnerable to clickjacking attacks.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 301,
+    "args": [
+      "Missing X-Content-Type-Options",
+      "Low",
+      "The X-Content-Type-Options header is missing, which allows browsers to perform MIME-sniffing.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 313,
+    "args": [
+      "Missing Referrer-Policy",
+      "Low",
+      "The Referrer-Policy header is missing, which allows leaking the referring URL.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 323,
+    "args": [
+      "Referrer-Policy Configured",
+      "Passed",
+      "Referrer-Policy is present.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 374,
+    "args": [
+      "No Web Application Firewall (WAF) / Rate-Limiting Headers Detected",
+      "Informational",
+      "The target application does not expose active WAF or rate-limiting response headers.",
+      ""
+    ],
+    "kwargs": {
+      "impact": "Leaves public endpoints and login portals more susceptible to automated brute-force, credential stuffing, or Layer 7 DoS attacks.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 154,
+    "args": [
+      "HTTP Request Failed (Timeout)",
+      "High",
+      "Connection timed out while fetching HTTP headers.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 164,
+    "args": [
+      "HTTP Request Failed (Connection Error)",
+      "High",
+      "Connection refused or DNS failure while fetching HTTP headers.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 174,
+    "args": [
+      "HTTP Request Failed",
+      "High",
+      "Failed to fetch HTTP headers.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 212,
+    "args": [
+      "Missing Content-Security-Policy (CSP)",
+      "High",
+      "The HTTP Content-Security-Policy (CSP) response header is missing, leaving the application vulnerable to Cross-Site Scripting (XSS) and data injection attacks.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Configure your web server to issue strict Content-Security-Policy HTTP headers to restrict script execution sources to trusted domains.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 344,
+    "args": [
+      "Missing Subresource Integrity (SRI) on CDN Assets",
+      "Low",
+      "Third-party JavaScript or CSS resources are loaded from external CDNs without cryptographic integrity hashes.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "impact": "If an external CDN is compromised, attackers can tamper with the hosted script files to inject malicious code into your website.",
+      "remediation": "Add integrity='sha384-...' and crossorigin='anonymous' attributes to all external CDN script tags.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 384,
+    "args": [
+      "Web Application Firewall (WAF) Active",
+      "Passed",
+      "WAF or CDN headers were detected.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 248,
+    "args": [
+      "Weak Content-Security-Policy (CSP)",
+      "<dynamic>",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Remove unsafe-inline/unsafe-eval or strictly define object-src 'none' and base-uri 'self'.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "SecurityHeadersModule",
+    "line": 258,
+    "args": [
+      "Content-Security-Policy Configured",
+      "Passed",
+      "CSP is present and strict.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "AdvancedSecurityHeadersModule",
+    "line": 406,
+    "args": [
+      "Missing COOP Header",
+      "Informational",
+      "The Cross-Origin-Opener-Policy header is missing.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "AdvancedSecurityHeadersModule",
+    "line": 416,
+    "args": [
+      "Missing COEP Header",
+      "Informational",
+      "The Cross-Origin-Embedder-Policy header is missing.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "http_security.py",
+    "class": "AdvancedSecurityHeadersModule",
+    "line": 426,
+    "args": [
+      "Missing CORP Header",
+      "Informational",
+      "The Cross-Origin-Resource-Policy header is missing.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "http_headers"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "SubdomainProbingModule",
+    "line": 29,
+    "args": [
+      "<dynamic>",
+      "Informational",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "SubdomainTakeoverModule",
+    "line": 71,
+    "args": [
+      "No Subdomain Takeover Risk Detected",
+      "Passed",
+      "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "SubdomainTakeoverModule",
+    "line": 116,
+    "args": [
+      "No Subdomain Takeover Risk Detected",
+      "Passed",
+      "DNS records were analyzed; no dangling CNAME targets or unclaimed cloud resources were found.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "SubdomainTakeoverModule",
+    "line": 97,
+    "args": [
+      "Subdomain Takeover Vulnerability (Dangling CNAME)",
+      "High",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Remove the stale DNS CNAME record immediately or reclaim the resource on the third-party service.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "SubdomainTakeoverModule",
+    "line": 107,
+    "args": [
+      "CNAME Alias Configured",
+      "Passed",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "domain_email"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "TLSCipherStrengthModule",
+    "line": 183,
+    "args": [
+      "Deprecated or Weak TLS Cipher Suite Detected",
+      "High",
+      "<dynamic>",
+      "legacy_weak_cipher_detected"
+    ],
+    "kwargs": {
+      "impact": "Exposes encrypted traffic to passive eavesdropping and man-in-the-middle decryption.",
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "TLSCipherStrengthModule",
+    "line": 207,
+    "args": [
+      "Legacy Weak TLS Ciphers Supported",
+      "Medium",
+      "Server accepts connections configured with deprecated weak ciphers (e.g. 3DES / RC4).",
+      "Handshake accepted weak cipher list"
+    ],
+    "kwargs": {
+      "remediation": "Reconfigure server TLS cipher order to forbid 3DES, RC4, and EXPORT suites.",
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "TLSCipherStrengthModule",
+    "line": 172,
+    "args": [
+      "Insecure or Obsolete TLS Ciphers Enforced",
+      "High",
+      "<dynamic>",
+      "Handshake Error"
+    ],
+    "kwargs": {
+      "remediation": "Disable weak SSLv3/TLS1.0/1.1 protocols and legacy RC4/3DES ciphers in server configuration.",
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "TLSCipherStrengthModule",
+    "line": 151,
+    "args": [
+      "Weak TLS Cipher Negotiated",
+      "Medium",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Disable weak ciphers (3DES, RC4) in server configuration and enforce AES-GCM or CHACHA20.",
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "TLSCipherStrengthModule",
+    "line": 161,
+    "args": [
+      "Strong TLS Cipher Suite Enforced",
+      "Passed",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "GraphQLIntrospectionModule",
+    "line": 245,
+    "args": [
+      "Public GraphQL Introspection Enabled",
+      "Informational",
+      "GraphQL endpoint is publicly accessible and accepts schema introspection queries.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "impact": "Public schema discovery allows developers and auditors to map available backend queries and data fields.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "VerboseStackTraceModule",
+    "line": 277,
+    "args": [
+      "Verbose Backend Error / Stack Trace Disclosure",
+      "Medium",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "impact": "Exposes sensitive backend logic, database structures, or framework versions.",
+      "remediation": "Configure production environment to mask verbose error stack traces.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "network_checks.py",
+    "class": "PassiveSubdomainDiscoveryModule",
+    "line": 367,
+    "args": [
+      "Subdomains Discovered",
+      "Informational",
+      "We found publicly visible hostnames associated with this domain. These do not necessarily represent vulnerabilities, but they increase the organization's observable attack surface.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A05: Security Misconfiguration",
+      "category": "information_exposure"
+    }
+  },
+  {
+    "file": "tls.py",
+    "class": "EnhancedTLSModule",
+    "line": 93,
+    "args": [
+      "Deprecated TLS 1.0/1.1 Supported",
+      "Medium",
+      "The server allows connections using deprecated TLS 1.0 or 1.1 protocols.",
+      ""
+    ],
+    "kwargs": {
+      "remediation": "Disable TLS 1.0 and TLS 1.1 on the server.",
+      "owasp": "A05: Security Misconfiguration",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "tls.py",
+    "class": "EnhancedTLSModule",
+    "line": 103,
+    "args": [
+      "Legacy TLS Protocols Disabled",
+      "Passed",
+      "Server correctly rejects TLS 1.0/1.1 connections.",
+      "TLS 1.2+ Only"
+    ],
+    "kwargs": {
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "tls.py",
+    "class": "EnhancedTLSModule",
+    "line": 68,
+    "args": [
+      "SSL/TLS Connection Failure",
+      "High",
+      "Failed to establish a secure TLS connection.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Ensure the server supports standard TLS protocols.",
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "tls.py",
+    "class": "EnhancedTLSModule",
+    "line": 26,
+    "args": [
+      "Valid SSL/TLS Certificate",
+      "Passed",
+      "The server presents a valid TLS certificate.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "tls.py",
+    "class": "EnhancedTLSModule",
+    "line": 38,
+    "args": [
+      "Wildcard Certificate in Use",
+      "Informational",
+      "Wildcard certificates carry broader risk if compromised.",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Consider using specific SANs instead of wildcards.",
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  },
+  {
+    "file": "tls.py",
+    "class": "EnhancedTLSModule",
+    "line": 58,
+    "args": [
+      "Certificate Expiring Soon",
+      "Medium",
+      "<dynamic>",
+      "<dynamic>"
+    ],
+    "kwargs": {
+      "remediation": "Renew the TLS certificate immediately.",
+      "owasp": "A02: Cryptographic Failures",
+      "category": "encryption_tls"
+    }
+  }
+]

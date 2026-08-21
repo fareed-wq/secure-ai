@@ -1,0 +1,281 @@
+import ipaddress
+import logging
+import socket
+from http.cookiejar import DefaultCookiePolicy
+from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin, urlparse
+
+import requests
+from requests.adapters import HTTPAdapter
+from requests.structures import CaseInsensitiveDict
+
+from urllib3.connection import HTTPConnection, HTTPSConnection
+from urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool
+from urllib3.poolmanager import PoolManager
+from urllib3.exceptions import NewConnectionError
+
+from api.scanner.core import Config
+from api.scanner.socket_helper import safe_create_connection
+
+logger = logging.getLogger(__name__)
+
+def is_public_hostname(hostname: str, session: Optional[requests.Session] = None) -> bool:
+    if not hostname:
+        return False
+        
+    if session and hasattr(session, '_dns_cache'):
+        if hostname in session._dns_cache:
+            return session._dns_cache[hostname]
+
+    try:
+        infos = socket.getaddrinfo(hostname, None)
+    except socket.gaierror:
+        if session and hasattr(session, '_dns_cache'):
+            session._dns_cache[hostname] = False
+        return False
+
+    is_public = True
+    for info in infos:
+        try:
+            ip = ipaddress.ip_address(info[4][0])
+            
+            if ip.version == 6 and ip.ipv4_mapped:
+                ip = ip.ipv4_mapped
+                
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
+                is_public = False
+                break
+                
+            # Explicitly block 0.0.0.0/8 and CGNAT (100.64.0.0/10)
+            if ip.version == 4:
+                if ip in ipaddress.ip_network('100.64.0.0/10') or ip in ipaddress.ip_network('0.0.0.0/8'):
+                    is_public = False
+                    break
+        except ValueError:
+            is_public = False
+            break
+            
+    if session and hasattr(session, '_dns_cache'):
+        session._dns_cache[hostname] = is_public
+    return is_public
+
+
+# Custom policy to block all cookies during scanning
+class BlockAllCookies(DefaultCookiePolicy):
+    def set_ok(self, cookie, request):
+        return False
+
+    def return_ok(self, cookie, request):
+        return False
+
+    def domain_return_ok(self, cookie, request):
+        return False
+
+    def path_return_ok(self, cookie, request):
+        return False
+
+
+class SafeHTTPConnection(HTTPConnection):
+    def _new_conn(self):
+        extra_kw = {}
+        if getattr(self, "source_address", None):
+            extra_kw["source_address"] = self.source_address
+        if getattr(self, "socket_options", None):
+            extra_kw["socket_options"] = self.socket_options
+        try:
+            conn = safe_create_connection((self.host, self.port), self.timeout, **extra_kw)
+        except Exception as e:
+            raise NewConnectionError(self, f"Failed to establish a new connection: {e}") from e
+        return conn
+
+
+class SafeHTTPSConnection(HTTPSConnection):
+    def _new_conn(self):
+        extra_kw = {}
+        if getattr(self, "source_address", None):
+            extra_kw["source_address"] = self.source_address
+        if getattr(self, "socket_options", None):
+            extra_kw["socket_options"] = self.socket_options
+        try:
+            conn = safe_create_connection((self.host, self.port), self.timeout, **extra_kw)
+        except Exception as e:
+            raise NewConnectionError(self, f"Failed to establish a new connection: {e}") from e
+        return conn
+
+
+class SafeHTTPConnectionPool(HTTPConnectionPool):
+    ConnectionCls = SafeHTTPConnection
+
+
+class SafeHTTPSConnectionPool(HTTPSConnectionPool):
+    ConnectionCls = SafeHTTPSConnection
+
+
+class SafePoolManager(PoolManager):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pool_classes_by_scheme = {
+            "http": SafeHTTPConnectionPool,
+            "https": SafeHTTPSConnectionPool,
+        }
+
+
+class SafeHTTPAdapter(HTTPAdapter):
+    def init_poolmanager(self, connections, maxsize, block=False, **pool_kwargs):
+        self.poolmanager = SafePoolManager(
+            num_pools=connections, maxsize=maxsize, block=block, **pool_kwargs
+        )
+
+
+def get_http_session() -> requests.Session:
+    session = requests.Session()
+    session._request_cache = {}
+    session._dns_cache = {}
+    session.headers.update({
+        "User-Agent": Config.USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Sec-Ch-Ua": '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Windows"',
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "none",
+        "Sec-Fetch-User": "?1",
+        "Upgrade-Insecure-Requests": "1"
+    })
+    session.cookies.set_policy(BlockAllCookies())
+
+    adapter = SafeHTTPAdapter(pool_connections=25, pool_maxsize=25, max_retries=0)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
+
+
+def get_all_headers(resp: Optional[requests.Response]) -> Dict[str, Any]:
+    if not resp:
+        return {}
+    return getattr(resp, 'all_headers', None) or getattr(resp, 'headers', {})
+
+
+def get_header(resp: Optional[requests.Response], header_name: str, default: Any = None) -> Any:
+    headers = get_all_headers(resp)
+    if hasattr(headers, 'get'):
+        return headers.get(header_name, default)
+    return default
+
+
+# --- SSRF-SAFE REQUEST WRAPPER ---
+def safe_request(
+    method: str,
+    url: str,
+    session: Optional[requests.Session] = None,
+    max_redirects: int = Config.MAX_REDIRECTS,
+    timeout: float = Config.REQUEST_TIMEOUT,
+    max_attempts: int = 2,
+    **kwargs
+) -> Optional[requests.Response]:
+    current_url = url
+    own_session = False
+
+    if session is None:
+        session = get_http_session()
+        own_session = True
+
+    is_cacheable = method.upper() in ("GET", "HEAD") and not kwargs.get("stream", False)
+    cache_key = None
+    
+    if is_cacheable and hasattr(session, "_request_cache"):
+        # We need a hashable key for headers
+        headers_tuple = tuple(sorted(kwargs.get("headers", {}).items())) if "headers" in kwargs else ()
+        cache_key = (method, url, headers_tuple)
+        if cache_key in session._request_cache:
+            cached_result = session._request_cache[cache_key]
+            if isinstance(cached_result, Exception):
+                logger.error(f"safe_request cached error for {url}: {cached_result}")
+                raise cached_result
+            return cached_result
+
+    kwargs["allow_redirects"] = False
+    accumulated_headers = CaseInsensitiveDict()
+    resp = None
+    
+    req_kwargs = kwargs.copy()
+    req_kwargs["stream"] = True
+
+    try:
+        for attempt in range(max_attempts):
+            current_url = url
+            try:
+                for _ in range(max_redirects + 1):
+                    parsed = urlparse(current_url)
+                    hostname = parsed.hostname
+                    scheme = parsed.scheme.lower()
+                    
+                    if scheme not in ("http", "https"):
+                        raise requests.exceptions.RequestException(f"Unsupported scheme: {scheme}")
+
+                    if not is_public_hostname(hostname, session=session):
+                        raise requests.exceptions.RequestException(
+                            f"SSRF Protection blocked request to non-public host: {hostname}"
+                        )
+
+                    resp = session.request(method, current_url, timeout=timeout, **req_kwargs)
+
+                    if hasattr(resp, 'headers') and resp.headers:
+                        accumulated_headers.update(resp.headers)
+
+                    if resp.is_redirect or resp.status_code in (301, 302, 303, 307, 308):
+                        location = resp.headers.get("Location")
+                        if not location:
+                            break
+                        current_url = urljoin(current_url, location)
+                    else:
+                        break
+
+                if resp is not None:
+                    resp.all_headers = accumulated_headers
+                    
+                    orig_iter_content = resp.iter_content
+                    def bounded_iter_content(chunk_size=1, decode_unicode=False):
+                        bytes_read = 0
+                        for chunk in orig_iter_content(chunk_size=chunk_size, decode_unicode=decode_unicode):
+                            if chunk:
+                                chunk_len = len(chunk)
+                                if bytes_read + chunk_len > 5 * 1024 * 1024:
+                                    allowed = (5 * 1024 * 1024) - bytes_read
+                                    if allowed > 0:
+                                        yield chunk[:allowed]
+                                    resp.close()
+                                    break
+                                bytes_read += chunk_len
+                                yield chunk
+
+                    resp.iter_content = bounded_iter_content
+                    
+                    if not kwargs.get("stream", False):
+                        if not getattr(resp, '_content_consumed', False) and getattr(resp, 'raw', None) is None:
+                            pass
+                        else:
+                            chunks = []
+                            for chunk in resp.iter_content(chunk_size=8192):
+                                chunks.append(chunk)
+                            resp._content = b"".join(chunks)
+                            resp._content_consumed = True
+                    
+                if is_cacheable and hasattr(session, "_request_cache"):
+                    session._request_cache[cache_key] = resp
+                    
+                return resp
+            except Exception as e:
+                if attempt == 0:
+                    import time
+                    time.sleep(0.5)
+                    continue
+                logger.error(f"safe_request error for {url}: {e}")
+                if is_cacheable and hasattr(session, "_request_cache"):
+                    session._request_cache[cache_key] = e
+                raise e
+    finally:
+        if own_session and session:
+            session.close()

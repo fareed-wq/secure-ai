@@ -2,35 +2,45 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ShieldCheck, Mail, Lock, User, Loader2, Building } from 'lucide-react';
+import { validatePassword } from '../lib/utils/passwordPolicy';
+import { PasswordChecklist } from '../components/auth/PasswordChecklist';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 const Register = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    confirmPassword: '',
     fullName: '',
     company: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [captchaToken, setCaptchaToken] = useState(null);
+  const turnstileRef = React.useRef();
   const navigate = useNavigate();
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    // MVP Bypass
-    if (import.meta.env.VITE_SUPABASE_URL === undefined) {
-      alert("MVP Mode: Bypassing auth because Supabase keys are not set.");
-      navigate('/dashboard');
-      setLoading(false);
+    const { isValid } = validatePassword(formData.password);
+    if (!isValid) {
+      setError('Password does not meet all requirements.');
       return;
     }
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
 
     const { error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
       options: {
+        captchaToken,
+        emailRedirectTo: `${window.location.origin}/email-confirmed`,
         data: {
           full_name: formData.fullName,
           company: formData.company
@@ -38,8 +48,16 @@ const Register = () => {
       }
     });
 
+    turnstileRef.current?.reset();
+    setCaptchaToken(null);
+
     if (error) {
-      setError(error.message);
+      // Keep generic auth errors to prevent user enumeration
+      if (error.message === 'User already registered') {
+        navigate('/email-confirmed', { state: { email } });
+      } else {
+        setError('Unable to create account. Please try again.');
+      }
     } else {
       alert("Registration successful! Check your email to confirm.");
       navigate('/login');
@@ -53,8 +71,8 @@ const Register = () => {
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-slate-200">
       <div className="sm:mx-auto sm:w-full sm:max-w-md flex flex-col items-center">
         <ShieldCheck className="w-16 h-16 text-emerald-500 mb-4" />
-        <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-white">
-          Create an account
+        <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-slate-50">
+          Sign Up
         </h2>
         <p className="mt-2 text-center text-sm text-slate-400">
           Already have an account?{' '}
@@ -72,7 +90,7 @@ const Register = () => {
                 {error}
               </div>
             )}
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-300">Full Name</label>
               <div className="mt-1 relative rounded-md shadow-sm">
@@ -85,7 +103,7 @@ const Register = () => {
                   required
                   value={formData.fullName}
                   onChange={handleChange}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="John Doe"
                 />
               </div>
@@ -102,7 +120,7 @@ const Register = () => {
                   name="company"
                   value={formData.company}
                   onChange={handleChange}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="Acme Corp"
                 />
               </div>
@@ -120,7 +138,7 @@ const Register = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="you@example.com"
                 />
               </div>
@@ -136,21 +154,52 @@ const Register = () => {
                   type="password"
                   name="password"
                   required
+                  maxLength={72}
                   value={formData.password}
                   onChange={handleChange}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-white focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="••••••••"
                 />
               </div>
             </div>
 
             <div>
+              <label className="block text-sm font-medium text-slate-300">Confirm Password</label>
+              <div className="mt-1 relative rounded-md shadow-sm">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-slate-500" />
+                </div>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  required
+                  maxLength={72}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
+
+            <PasswordChecklist password={formData.password} confirmPassword={formData.confirmPassword} showConfirm={true} />
+
+            <div>
+              <div className="flex justify-center mb-6">
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => setCaptchaToken(null)}
+                />
+              </div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !captchaToken || !formData.password || !validatePassword(formData.password).isValid || formData.password !== formData.confirmPassword}
                 className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-slate-900 bg-emerald-500 hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 transition-colors"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Account'}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign Up'}
               </button>
             </div>
           </form>
