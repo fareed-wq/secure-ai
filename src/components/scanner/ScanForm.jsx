@@ -121,22 +121,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
           </div>
           )}
 
-          {isGuest && (
-            <div className={`w-full max-w-2xl bg-slate-900/90 border rounded-xl p-6 mt-2 text-center shadow-xl ${quotaReached ? 'border-rose-500/30' : 'border-indigo-500/20'}`}>
-              {quotaReached && (
-                <h3 className="text-rose-400 font-bold text-lg mb-2">You've used your 3 free Guest scans for this week.</h3>
-              )}
-              <p className="text-slate-300 text-sm mb-5 font-medium">Create a free account to unlock Advanced Scan, get 5 scans every week, download PDF reports, and access your scan history.</p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto shadow-lg shadow-indigo-500/20">
-                  Create Free Account
-                </Link>
-                <Link to="/login" className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto border border-slate-700">
-                  Sign In
-                </Link>
-              </div>
-            </div>
-          )}
+
 
         
 
@@ -178,7 +163,26 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-center flex-wrap gap-1 text-center text-xs text-slate-400 mt-2 font-medium px-2">
+        
+
+          {isGuest && (
+            <div className={`w-full max-w-2xl bg-slate-900/90 border rounded-xl p-6 mt-4 text-center shadow-xl ${quotaReached ? 'border-rose-500/30' : 'border-indigo-500/20'}`}>
+              {quotaReached && (
+                <h3 className="text-rose-400 font-bold text-lg mb-2">You've used your 3 free Guest scans for this week.</h3>
+              )}
+              <p className="text-slate-300 text-sm mb-5 font-medium">Create a free account to unlock Advanced Scan, get 5 scans every week, download PDF reports, and access your scan history.</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto shadow-lg shadow-indigo-500/20">
+                  Create Free Account
+                </Link>
+                <Link to="/login" className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto border border-slate-700">
+                  Sign In
+                </Link>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-center flex-wrap gap-1 text-center text-xs text-slate-400 mt-2 font-medium px-2">
           <span className="text-indigo-400">🔒</span>
           <span><strong className="text-slate-300">Passive Mode — Non-Intrusive</strong> • Read-only security checks designed to minimize impact on live websites.</span>
         </div>
