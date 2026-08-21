@@ -207,20 +207,7 @@ function Scanner() {
                             {/* 3. Input Bar Container */}
               <ScanForm onScan={handleScan} quotaInfo={quotaInfo} user={user} />
 
-              {quotaInfo && quotaInfo.quota_remaining <= 0 && user === null && (
-                <div className="w-full bg-slate-900/90 border border-rose-500/30 rounded-xl p-6 mt-6 text-center max-w-2xl mx-auto shadow-2xl">
-                  <h3 className="text-slate-50 font-bold text-lg mb-2">You've used your 3 free Guest scans for this week.</h3>
-                  <p className="text-slate-400 text-sm mb-6">Create a free account to unlock Advanced Scan, get 5 scans every week, download PDF reports, and access your scan history.</p>
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto shadow-lg shadow-indigo-500/20">
-                      Create Free Account
-                    </Link>
-                    <Link to="/login" className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto border border-slate-700">
-                      Sign In
-                    </Link>
-                  </div>
-                </div>
-              )}
+              
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-slate-400 mt-8 font-medium">
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
@@ -301,17 +288,7 @@ function Scanner() {
                       <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Incomplete</h2>
                       <p className="text-red-200 mb-8">{errorMessage}</p>
                       
-                      {errorMessage && errorMessage.includes("You've used your 3 free Guest scans") && !user && (
-                        <div className="mb-8 flex flex-col gap-3 max-w-sm mx-auto">
-                          <p className="text-red-300/80 mb-2 text-sm">Create a free account to unlock Advanced Scan, get 5 scans every week, download PDF reports, and access your scan history.</p>
-                          <Link to="/register" className="bg-rose-500 hover:bg-rose-600 text-white font-medium px-6 py-3 rounded-xl transition-all shadow-lg shadow-rose-500/20 text-center w-full">
-                            Create Free Account
-                          </Link>
-                          <Link to="/login" className="bg-transparent border border-red-500/30 text-red-300 hover:bg-red-950 px-6 py-3 rounded-xl transition-all text-center w-full">
-                            Sign In
-                          </Link>
-                        </div>
-                      )}
+                      
                     </>
                 )}
 
