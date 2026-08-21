@@ -132,6 +132,7 @@ function Scanner() {
   };
 
   const [saveStatus, setSaveStatus] = useState('');
+  const [savedScanId, setSavedScanId] = useState(null);
 
   const handlePdfExport = () => {
     if (!user) {
@@ -144,28 +145,37 @@ function Scanner() {
   const handleSaveScan = async () => {
     if (!user) {
       handleRequireAuth('save reports to your dashboard');
-      return;
+      return null;
+    }
+    
+    if (savedScanId) {
+        return savedScanId;
     }
     
     setSaveStatus('saving');
     try {
-      const { error } = await supabase.from('scans').insert([{
+      const { data, error } = await supabase.from('scans').insert([{
         user_id: user.id,
         target_url: reportData.url,
         score: reportData.score || 0,
         report_data: reportData
-      }]);
+      }]).select();
       
       if (error) {
         console.error("Failed to save scan:", error);
         setSaveStatus('error');
-      } else {
+        return null;
+      } else if (data && data.length > 0) {
+        const newId = data[0].id;
+        setSavedScanId(newId);
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus(''), 3000);
+        return newId;
       }
     } catch (error) {
       console.error("Failed to save scan:", error);
       setSaveStatus('error');
+      return null;
     }
   };
 
@@ -351,6 +361,7 @@ function Scanner() {
                 onExportPdf={handlePdfExport}
                 onRequireAuth={handleRequireAuth}
                 onSaveScan={handleSaveScan}
+                savedScanId={savedScanId}
                 saveStatus={saveStatus}
                 reportData={reportData}
               />
