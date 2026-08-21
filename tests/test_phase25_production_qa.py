@@ -70,7 +70,10 @@ class TestAPIResponseSchema(unittest.TestCase):
                     "severity_counts": {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0},
                     "status": "completed",
                 }
-                response = self.client.post("/api/scan", json={"url": "https://example.com"})
+                with patch("api.index.check_free_quota", return_value={"quota_remaining": 5}):
+                    with patch("api.index.consume_free_quota", return_value=True):
+                        response = self.client.post("/api/scan", json={"url": "https://example.com"})
+                print(response.json())
                 self.assertEqual(response.status_code, 200)
                 data = response.json()
                 self.assertIn("score", data)

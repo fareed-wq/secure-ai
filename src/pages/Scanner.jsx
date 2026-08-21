@@ -144,6 +144,10 @@ function Scanner() {
   };
 
   const handlePdfExport = () => {
+    if (!user) {
+      handleRequireAuth('download PDF reports');
+      return;
+    }
     generatePdf(reportData, executedScanMode, reportMode);
   };
 

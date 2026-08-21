@@ -114,8 +114,32 @@ class Entitlements:
         return self.role == "admin"
 
     @property
+    def can_basic_scan(self) -> bool:
+        return True
+        
+    @property
     def can_advanced_scan(self) -> bool:
-        return self.is_admin or self.plan == "professional"
+        return self.is_admin or self.plan in ["free", "professional"]
+
+    @property
+    def can_save_scan(self) -> bool:
+        return self.is_admin or self.plan in ["free", "professional"]
+
+    @property
+    def can_share_scan(self) -> bool:
+        return self.is_admin or self.plan in ["free", "professional"]
+
+    @property
+    def can_export_report(self) -> bool:
+        return self.is_admin or self.plan in ["free", "professional"]
+        
+    @property
+    def can_download_pdf(self) -> bool:
+        return self.is_admin or self.plan in ["free", "professional"]
+
+    @property
+    def can_view_scan_history(self) -> bool:
+        return self.is_admin or self.plan in ["free", "professional"]
 
     @property
     def is_unlimited(self) -> bool:
@@ -206,6 +230,83 @@ def consume_guest_quota(ip: str) -> bool:
             return True
     except Exception as e:
         logger.error(f"Redis quota consume failed: {e}")
+        return False
+    return False
+
+def check_free_quota(user_id: str) -> dict:
+    """
+    Fixed calendar week quota (Monday 00:00 UTC) for Free users.
+    Returns dict: quota_limit, quota_used, quota_remaining, reset_at
+    """
+    limit = 5
+    week_start, next_week_start = get_monday_utc_boundaries()
+
+    redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
+    redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+    
+    if not redis_url or not redis_token:
+        # FAIL CLOSED
+        return {"quota_limit": limit, "quota_used": limit, "quota_remaining": 0, "reset_at": next_week_start}
+
+    key = f"free_quota:{user_id}:{week_start}"
+    headers = {"Authorization": f"Bearer {redis_token}"}
+    
+    try:
+        resp = requests.get(f"{redis_url}/get/{key}", headers=headers, timeout=1.0)
+        if resp.status_code == 200:
+            result = resp.json().get("result")
+            used = int(result) if result else 0
+        else:
+            used = limit
+    except Exception:
+        used = limit
+
+    remaining = max(0, limit - used)
+    return {
+        "quota_limit": limit,
+        "quota_used": used,
+        "quota_remaining": remaining,
+        "reset_at": next_week_start
+    }
+
+def consume_free_quota(user_id: str) -> bool:
+    """Atomic consume free quota. Should be called ONLY after scan executes successfully."""
+    limit = 5
+    week_start, next_week_start = get_monday_utc_boundaries()
+    ttl_seconds = next_week_start - int(time.time())
+    if ttl_seconds <= 0:
+        ttl_seconds = 604800 # Fallback
+
+    key = f"free_quota:{user_id}:{week_start}"
+    
+    redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
+    redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+    
+    if not redis_url or not redis_token:
+        return False 
+
+    lua_script = """
+    local current = redis.call('GET', KEYS[1])
+    if current and tonumber(current) >= tonumber(ARGV[1]) then
+        return -1
+    end
+    local new_val = redis.call('INCR', KEYS[1])
+    if tonumber(new_val) == 1 then
+        redis.call('EXPIRE', KEYS[1], ARGV[2])
+    end
+    return new_val
+    """
+    headers = {"Authorization": f"Bearer {redis_token}"}
+    payload = ["EVAL", lua_script, 1, key, limit, ttl_seconds]
+    try:
+        resp = requests.post(redis_url, json=payload, headers=headers, timeout=1.5)
+        if resp.status_code == 200:
+            result = resp.json().get("result")
+            if result == -1:
+                return False
+            return True
+    except Exception as e:
+        logger.error(f"Redis free quota consume failed: {e}")
         return False
     return False
 

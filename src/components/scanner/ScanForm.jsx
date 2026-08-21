@@ -11,17 +11,22 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
   const urlInputRef = useRef(null);
 
   const isGuest = !user;
-  const quotaReached = isGuest && quotaInfo?.quota?.quota_remaining <= 0;
+  const quotaReached = quotaInfo?.quota?.quota_remaining <= 0;
   const quotaUsed = quotaInfo?.quota?.quota_used || 0;
-  const quotaLimit = quotaInfo?.quota?.quota_limit || 3;
+  const quotaLimit = quotaInfo?.quota?.quota_limit || (isGuest ? 3 : 5);
   const quotaRemaining = quotaInfo?.quota?.quota_remaining || 0;
+  const plan = quotaInfo?.plan || (isGuest ? 'guest' : 'free');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!url) return;
     
     if (quotaReached) {
-      setValidationError("You've used your 3 free Basic scans for this week.");
+      if (isGuest) {
+        setValidationError("You've used your 3 free Guest scans for this week.");
+      } else {
+        setValidationError("You've used your 5 free scans for this week.");
+      }
       return;
     }
 
@@ -68,10 +73,27 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
                 </div>
                 <h4 className="text-slate-50 font-bold text-lg mb-2">Scan Blocked</h4>
                 <p className="text-slate-300 text-sm mb-6">{validationError}</p>
-                {quotaReached ? (
-                  <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full mb-3 block">
-                    Create Free Account
-                  </Link>
+                
+                {quotaReached && isGuest && validationError.includes('3 free Guest scans') ? (
+                  <>
+                    <p className="text-slate-400 text-sm mb-6">Create a free account to unlock Advanced Scan, get 5 scans every week, save reports, download PDF reports, and access your scan history.</p>
+                    <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full mb-3 block">
+                      Create Free Account
+                    </Link>
+                    <Link to="/login" className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-6 rounded-xl transition-all w-full mb-3 block">
+                      Sign In
+                    </Link>
+                  </>
+                ) : quotaReached && !isGuest && validationError.includes('5 free scans') ? (
+                  <>
+                    <p className="text-slate-400 text-sm mb-6">You have reached your weekly limit. Upgrade to Professional for unlimited scans.</p>
+                    <button
+                      onClick={() => setValidationError('')}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full"
+                    >
+                      Got it
+                    </button>
+                  </>
                 ) : (
                   <button
                     onClick={() => {
@@ -115,11 +137,13 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
           </button>
         </div>
 
-        {isGuest && quotaInfo && (
+        {quotaInfo && (plan === 'guest' || plan === 'free') && (
           <div className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-900 border border-slate-700/50 mt-1">
             <AlertCircle className={`w-3.5 h-3.5 ${quotaReached ? 'text-rose-400' : 'text-indigo-400'}`} />
             <span className="text-slate-300">
-              Guest Quota: {quotaUsed}/{quotaLimit} used — {quotaRemaining} remaining.
+              {plan === 'guest' ? 'Guest Quota: ' : 'Free Quota: '}
+              {quotaUsed}/{quotaLimit} used — {quotaRemaining} remaining.
+              {quotaReached && ' weekly limit reached.'}
             </span>
             <span className="text-slate-500 border-l border-slate-700 pl-2 ml-1">Resets Monday</span>
           </div>

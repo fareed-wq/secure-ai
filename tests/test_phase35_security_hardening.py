@@ -313,7 +313,9 @@ class TestBatchConcurrency(unittest.TestCase):
         mock_acquire.return_value = "lease-1"
         mock_scan_url.return_value = {"url": "https://example.com", "findings": []}
     
-        res = client.post("/api/scan", json={"url": "https://example.com"})
+        with patch("api.index.check_free_quota", return_value={"quota_remaining": 5}):
+            with patch("api.index.consume_free_quota", return_value=True):
+                res = client.post("/api/scan", json={"url": "https://example.com"})
     
         self.assertEqual(res.status_code, 200)
         mock_acquire.assert_called_once()
@@ -392,7 +394,9 @@ class TestBatchConcurrency(unittest.TestCase):
         mock_acquire.return_value = "lease-fail"
         mock_scan_url.side_effect = Exception("Boom")
     
-        res = client.post("/api/scan", json={"url": "https://example.com"})
+        with patch("api.index.check_free_quota", return_value={"quota_remaining": 5}):
+            with patch("api.index.consume_free_quota", return_value=True):
+                res = client.post("/api/scan", json={"url": "https://example.com"})
     
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()["status"], "INCOMPLETE")
