@@ -106,6 +106,7 @@ const ScanHistory = () => {
                 <tr>
                   <th className="p-4 font-medium">Target URL</th>
                   <th className="p-4 font-medium">Date</th>
+                  <th className="p-4 font-medium">Time</th>
                   <th className="p-4 font-medium">Score</th>
                   <th className="p-4 font-medium text-right">Action</th>
                 </tr>
@@ -123,11 +124,14 @@ const ScanHistory = () => {
                           <span className="text-xs text-slate-400 mt-1">{modeLabel}</span>
                         </div>
                       </td>
-                      <td className="p-4 text-slate-400">
+                      <td className="p-4 text-slate-400 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
                           {new Date(scan.created_at).toLocaleDateString()}
                         </div>
+                      </td>
+                      <td className="p-4 text-slate-400 whitespace-nowrap">
+                        {new Date(scan.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </td>
                       <td className="p-4">
                         <div className={`inline-flex px-2 py-1 rounded text-xs font-bold ${scan.score >= 85 ? 'bg-emerald-500/10 text-emerald-400' : scan.score >= 70 ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-400'}`}>
