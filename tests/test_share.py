@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from api.index import app
+from api.auth.entitlements import get_current_user, Entitlements
 from unittest.mock import patch, MagicMock
 
 client = TestClient(app)
@@ -31,13 +32,9 @@ def mock_db_env():
          patch('api.auth.entitlements.SUPABASE_SECRET_KEY', 'mock-secret-key'):
         yield
 
-@pytest.fixture
-def mock_get_current_user():
-    with patch('api.index.get_current_user', return_value={'sub': 'user-123'}):
-        yield
-
 def test_create_share_success(mock_entitlements_free, mock_db_env):
-    with patch('api.index.get_current_user', return_value={'sub': 'user-123'}):
+    app.dependency_overrides[get_current_user] = lambda: {'sub': 'user-123'}
+    try:
         with patch('api.index.requests.get') as mock_get, \
              patch('api.index.requests.post') as mock_post:
             
@@ -53,9 +50,12 @@ def test_create_share_success(mock_entitlements_free, mock_db_env):
             response = client.post("/api/share/create", json={"scan_id": "scan-123"})
             assert response.status_code == 200
             assert response.json() == {"share_token": "mock-token", "created_at": "2023-01-01T00:00:00Z"}
+    finally:
+        app.dependency_overrides.clear()
 
 def test_create_share_existing_active(mock_entitlements_free, mock_db_env):
-    with patch('api.index.get_current_user', return_value={'sub': 'user-123'}):
+    app.dependency_overrides[get_current_user] = lambda: {'sub': 'user-123'}
+    try:
         with patch('api.index.requests.get') as mock_get:
             
             mock_get.side_effect = [
@@ -66,9 +66,12 @@ def test_create_share_existing_active(mock_entitlements_free, mock_db_env):
             response = client.post("/api/share/create", json={"scan_id": "scan-123"})
             assert response.status_code == 200
             assert response.json() == {"share_token": "existing-token", "created_at": "2023-01-01"}
+    finally:
+        app.dependency_overrides.clear()
 
 def test_create_share_not_owner(mock_entitlements_free, mock_db_env):
-    with patch('api.index.get_current_user', return_value={'sub': 'user-123'}):
+    app.dependency_overrides[get_current_user] = lambda: {'sub': 'user-123'}
+    try:
         with patch('api.index.requests.get') as mock_get:
             
             # Scan does not belong to user (returns empty)
@@ -77,20 +80,28 @@ def test_create_share_not_owner(mock_entitlements_free, mock_db_env):
             response = client.post("/api/share/create", json={"scan_id": "scan-123"})
             assert response.status_code == 404
             assert "access denied" in response.json()["error"]
+    finally:
+        app.dependency_overrides.clear()
 
 def test_create_share_guest_blocked(mock_entitlements_guest):
-    with patch('api.index.get_current_user', return_value={}):
+    app.dependency_overrides[get_current_user] = lambda: {}
+    try:
         response = client.post("/api/share/create", json={"scan_id": "scan-123"})
         assert response.status_code == 403
+    finally:
+        app.dependency_overrides.clear()
 
 def test_revoke_share_success(mock_entitlements_free, mock_db_env):
-    with patch('api.index.get_current_user', return_value={'sub': 'user-123'}):
+    app.dependency_overrides[get_current_user] = lambda: {'sub': 'user-123'}
+    try:
         with patch('api.index.requests.patch') as mock_patch:
             mock_patch.return_value = MagicMock(status_code=200, json=lambda: [])
             
             response = client.post("/api/share/revoke", json={"share_token": "mock-token"})
             assert response.status_code == 200
             assert response.json()["status"] == "success"
+    finally:
+        app.dependency_overrides.clear()
 
 def test_get_shared_report_success(mock_db_env):
     with patch('api.index.requests.get') as mock_get:

@@ -1,3 +1,4 @@
+import requests
 import asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
@@ -365,7 +366,7 @@ class ShareRevokeRequest(BaseModel):
 @app.post("/api/share/create")
 async def create_share(req: ShareCreateRequest, user: dict = Depends(get_current_user)):
     entitlements = Entitlements(user)
-    if not entitlements.can_share_scan or not user.get("sub"):
+    if not entitlements.can_share_scan or not user or not user.get("sub"):
         return JSONResponse(status_code=403, content={"error": "Not authorized to share scans."})
 
     from api.auth.entitlements import SUPABASE_URL, SUPABASE_SECRET_KEY
@@ -411,7 +412,7 @@ async def create_share(req: ShareCreateRequest, user: dict = Depends(get_current
 @app.post("/api/share/revoke")
 async def revoke_share(req: ShareRevokeRequest, user: dict = Depends(get_current_user)):
     entitlements = Entitlements(user)
-    if not user.get("sub"):
+    if not user or not user.get("sub"):
         return JSONResponse(status_code=403, content={"error": "Not authorized."})
 
     from api.auth.entitlements import SUPABASE_URL, SUPABASE_SECRET_KEY
