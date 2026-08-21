@@ -80,7 +80,8 @@ const ScanReport = () => {
   }
 
   const handleExportPdf = () => {
-    generatePdf(scan.report_data, scan.scan_mode || 'basic', activeMode);
+    const executedScanMode = scan.report_data?.scan_mode || 'basic';
+    generatePdf(scan.report_data, executedScanMode, activeMode);
   };
 
   return (

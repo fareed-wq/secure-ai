@@ -286,17 +286,23 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
         result["report_mode"] = req.report_mode
         
         # Automatic Scan History Persistence for authenticated users
-        if entitlements.plan != "guest" and user and user.get("sub"):
+        if entitlements.plan != "guest" and user and user.get("sub") and result.get("status") != "failed":
             from api.auth.entitlements import SUPABASE_URL, SUPABASE_SECRET_KEY
             if SUPABASE_URL and SUPABASE_SECRET_KEY:
                 import requests
                 import datetime
+                import logging
                 headers = {
                     "apikey": SUPABASE_SECRET_KEY,
                     "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
                     "Content-Type": "application/json",
                     "Prefer": "return=representation"
                 }
+                
+                # Make sure the scan_mode is recorded in report_data so PDF generator works correctly
+                if "scan_mode" not in result:
+                    result["scan_mode"] = req.scan_mode
+                    
                 payload = {
                     "user_id": user["sub"],
                     "target_url": result.get("url", req.url),
@@ -305,11 +311,16 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
                     "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
                 }
                 try:
-                    db_res = requests.post(f"{SUPABASE_URL}/rest/v1/scans", headers=headers, json=payload)
+                    db_res = requests.post(f"{SUPABASE_URL}/rest/v1/scans", headers=headers, json=payload, timeout=10)
                     if db_res.status_code in (200, 201) and db_res.json():
                         result["id"] = db_res.json()[0].get("id")
+                        result["history_saved"] = True
+                    else:
+                        logging.error(f"Failed to persist scan history. Status code: {db_res.status_code}")
+                        result["history_saved"] = False
                 except Exception as e:
-                    pass
+                    logging.error("Exception occurred while persisting scan history.")
+                    result["history_saved"] = False
                     
         return result
     except Exception as e:
