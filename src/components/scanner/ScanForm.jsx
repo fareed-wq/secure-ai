@@ -149,6 +149,8 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
           </div>
         )}
 
+        
+
         <div className="flex flex-col sm:flex-row gap-4 w-full mt-4 text-left">
           <div className="scan-config-card flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors relative overflow-hidden">
             <h2 className="text-xs font-bold text-slate-400 mb-2.5 tracking-widest uppercase">Scan Configuration</h2>
