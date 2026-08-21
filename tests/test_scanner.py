@@ -192,7 +192,11 @@ class TestScannerModules(unittest.TestCase):
         # Override the global REGISTERED_MODULES for this test
         with patch('api.index.REGISTERED_MODULES', [DummyModule()]), \
              patch('api.scanner.data.registry.REGISTERED_MODULES', [DummyModule()]), \
-             patch('api.scanner.orchestrator.REGISTERED_MODULES', [DummyModule()]):
+             patch('api.scanner.data.registry.PASSIVE_MODULES', [DummyModule()]), \
+             patch('api.scanner.data.registry.ACTIVE_MODULES', [DummyModule()]), \
+             patch('api.scanner.orchestrator.REGISTERED_MODULES', [DummyModule()]), \
+             patch('api.scanner.orchestrator.PASSIVE_MODULES', [DummyModule()]), \
+             patch('api.scanner.orchestrator.ACTIVE_MODULES', [DummyModule()]):
             result = scan_url("https://example.com")
     
             self.assertEqual(result['score'], 90) # 100 - 10 (High)
