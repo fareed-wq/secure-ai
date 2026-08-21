@@ -76,7 +76,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
                 
                 {quotaReached && isGuest && validationError.includes('3 free Guest scans') ? (
                   <>
-                    <p className="text-slate-400 text-sm mb-6">Create a free account to unlock Advanced Scan, get 5 scans every week, save reports, download PDF reports, and access your scan history.</p>
+                    <p className="text-slate-400 text-sm mb-6">Create a free account to unlock Advanced Scan, get 5 scans every week, download PDF reports, and access your scan history.</p>
                     <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full mb-3 block">
                       Create Free Account
                     </Link>

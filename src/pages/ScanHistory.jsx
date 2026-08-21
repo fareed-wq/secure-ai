@@ -45,7 +45,7 @@ const ScanHistory = () => {
                   </td>
                   <td className="p-4 text-slate-400">{scan.status}</td>
                   <td className="p-4 text-right">
-                    <Link to={`/scan?url=${scan.target}`} className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300">
+                    <Link to={`/history/${scan.id}`} className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300">
                       View Report <ExternalLink className="w-4 h-4" />
                     </Link>
                   </td>
