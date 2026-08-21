@@ -131,8 +131,8 @@ function Scanner() {
     setScanState('view-report');
   };
 
-  const [saveStatus, setSaveStatus] = useState('');
-  const [savedScanId, setSavedScanId] = useState(null);
+  
+  
 
   const handlePdfExport = () => {
     if (!user) {
@@ -142,43 +142,7 @@ function Scanner() {
     generatePdf(reportData, executedScanMode, reportMode);
   };
 
-  const handleSaveScan = async () => {
-    if (!user) {
-      handleRequireAuth('save reports to your dashboard');
-      return null;
-    }
-    
-    if (savedScanId) {
-        return savedScanId;
-    }
-    
-    setSaveStatus('saving');
-    try {
-      const { data, error } = await supabase.from('scans').insert([{
-        user_id: user.id,
-        target_url: reportData.url,
-        score: reportData.score || 0,
-        report_data: reportData
-      }]).select();
-      
-      if (error) {
-        console.error("Failed to save scan:", error);
-        setSaveStatus('error');
-        return null;
-      } else if (data && data.length > 0) {
-        const newId = data[0].id;
-        setSavedScanId(newId);
-        setSaveStatus('saved');
-        setTimeout(() => setSaveStatus(''), 3000);
-        return newId;
-      }
-    } catch (error) {
-      console.error("Failed to save scan:", error);
-      setSaveStatus('error');
-      return null;
-    }
-  };
-
+  
   return (
     <div className="scanner-page scanner-wallpaper flow-root flex-1 bg-slate-950 font-sans text-slate-50 selection:bg-indigo-500/30">
 
@@ -324,7 +288,7 @@ function Scanner() {
                       
                       {errorMessage && errorMessage.includes("You've used your 3 free Guest scans") && !user && (
                         <div className="mb-8 flex flex-col gap-3 max-w-sm mx-auto">
-                          <p className="text-red-300/80 mb-2 text-sm">Create a free account to unlock Advanced Scan, get 5 scans every week, save reports, download PDF reports, and access your scan history.</p>
+                          <p className="text-red-300/80 mb-2 text-sm">Create a free account to unlock Advanced Scan, get 5 scans every week, download PDF reports, and access your scan history.</p>
                           <Link to="/register" className="bg-rose-500 hover:bg-rose-600 text-white font-medium px-6 py-3 rounded-xl transition-all shadow-lg shadow-rose-500/20 text-center w-full">
                             Create Free Account
                           </Link>
@@ -360,10 +324,7 @@ function Scanner() {
                 onToggleMode={setReportMode}
                 onExportPdf={handlePdfExport}
                 onRequireAuth={handleRequireAuth}
-                onSaveScan={handleSaveScan}
-                savedScanId={savedScanId}
-                saveStatus={saveStatus}
-                reportData={reportData}
+                                                                reportData={reportData}
               />
 
               <ErrorBoundary>

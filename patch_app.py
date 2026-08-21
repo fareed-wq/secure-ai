@@ -2,12 +2,18 @@ def patch_file():
     with open('src/App.jsx', 'r') as f:
         content = f.read()
 
-    # Import
-    content = content.replace("const Dashboard = React.lazy(() => import('./pages/Dashboard'));", "const Dashboard = React.lazy(() => import('./pages/Dashboard'));\nconst SharedReport = React.lazy(() => import('./pages/SharedReport'));")
+    # Remove SharedReport and SavedReports imports
+    content = content.replace("const SharedReport = React.lazy(() => import('./pages/SharedReport'));\n", "")
+    content = content.replace("const SavedReports = React.lazy(() => import('./pages/SavedReports'));\n", "")
+    content = content.replace("const ScanHistory = React.lazy(() => import('./pages/ScanHistory'));", "const ScanHistory = React.lazy(() => import('./pages/ScanHistory'));\nconst ScanReport = React.lazy(() => import('./pages/ScanReport'));")
 
-    # Route
-    content = content.replace('<Route path="/services" element={<Services />} />', '<Route path="/services" element={<Services />} />\n                <Route path="/shared/:token" element={<SharedReport />} />')
-    
+    # Remove Routes
+    content = content.replace("                <Route path=\"/shared/:token\" element={<SharedReport />} />\n", "")
+    content = content.replace("                <Route path=\"/reports\" element={<SavedReports />} />\n", "")
+
+    # Add /history/:scanId
+    content = content.replace("<Route path=\"/history\" element={<ScanHistory />} />", "<Route path=\"/history\" element={<ScanHistory />} />\n                <Route path=\"/history/:scanId\" element={<ScanReport />} />")
+
     with open('src/App.jsx', 'w') as f:
         f.write(content)
 
