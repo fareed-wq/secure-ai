@@ -8,7 +8,11 @@ client = TestClient(app)
 @patch("api.index.release_scan_lease")
 @patch("api.index.check_rate_limit", return_value=True)
 @patch("api.index.scan_url")
-def test_report_mode_propagation(mock_scan_url, mock_rate_limit, mock_release, mock_acquire):
+@patch("api.index.Entitlements")
+def test_report_mode_propagation(mock_entitlements, mock_scan_url, mock_rate_limit, mock_release, mock_acquire):
+    mock_ent_instance = mock_entitlements.return_value
+    mock_ent_instance.plan = "free"
+    mock_ent_instance.can_advanced_scan = True
     # Mock the return value of the underlying scan_url (which doesn't know about report_mode)
     mock_scan_url.return_value = {"status": "success", "score": 100}
 

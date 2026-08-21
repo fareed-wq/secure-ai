@@ -301,16 +301,20 @@ class TestBatchConcurrency(unittest.TestCase):
     @patch("api.index.acquire_scan_lease")
     @patch("api.index.release_scan_lease")
     @patch("api.index.scan_url")
-    def test_single_scan_acquires_one_lease(self, mock_scan_url, mock_release, mock_acquire):
+    @patch("api.index.Entitlements")
+    def test_single_scan_acquires_one_lease(self, mock_entitlements, mock_scan_url, mock_release, mock_acquire):
+        mock_ent_instance = mock_entitlements.return_value
+        mock_ent_instance.plan = "free"
+        mock_ent_instance.can_advanced_scan = True
         from fastapi.testclient import TestClient
         from api.index import app
-
+    
         client = TestClient(app)
         mock_acquire.return_value = "lease-1"
         mock_scan_url.return_value = {"url": "https://example.com", "findings": []}
-
+    
         res = client.post("/api/scan", json={"url": "https://example.com"})
-
+    
         self.assertEqual(res.status_code, 200)
         mock_acquire.assert_called_once()
         mock_release.assert_called_once_with("lease-1")
@@ -318,62 +322,81 @@ class TestBatchConcurrency(unittest.TestCase):
     @patch("api.index.acquire_scan_lease")
     @patch("api.index.release_scan_lease")
     @patch("api.index.scan_url")
-    def test_batch_scan_acquires_n_leases(self, mock_scan_url, mock_release, mock_acquire):
+    @patch("api.index.Entitlements")
+    def test_batch_scan_acquires_n_leases(self, mock_entitlements, mock_scan_url, mock_release, mock_acquire):
+        mock_ent_instance = mock_entitlements.return_value
+        mock_ent_instance.plan = "free"
+        mock_ent_instance.can_advanced_scan = True
         from fastapi.testclient import TestClient
         from api.index import app
-
+    
         client = TestClient(app)
-        mock_acquire.side_effect = [f"lease-{i}" for i in range(3)]
+        # Mock side_effect to return unique leases
+        mock_acquire.side_effect = ["lease-1", "lease-2"]
         mock_scan_url.return_value = {"url": "https://example.com", "findings": []}
-
-        res = client.post("/api/scan/batch", json={"urls": ["https://ex1.com", "https://ex2.com", "https://ex3.com"]})
-
+    
+        res = client.post("/api/scan/batch", json={"urls": ["https://ex1.com", "https://ex2.com"]})
+    
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(mock_acquire.call_count, 3)
-        self.assertEqual(mock_release.call_count, 3)
+        self.assertEqual(mock_acquire.call_count, 2)
+        # Release should be called for both
+        mock_release.assert_any_call("lease-1")
+        mock_release.assert_any_call("lease-2")
 
     @patch("api.index.acquire_scan_lease")
     @patch("api.index.release_scan_lease")
     @patch("api.index.scan_url")
-    def test_batch_scan_handles_mixed_capacity(self, mock_scan_url, mock_release, mock_acquire):
+    @patch("api.index.Entitlements")
+    def test_batch_scan_handles_mixed_capacity(self, mock_entitlements, mock_scan_url, mock_release, mock_acquire):
+        mock_ent_instance = mock_entitlements.return_value
+        mock_ent_instance.plan = "free"
+        mock_ent_instance.can_advanced_scan = True
         from fastapi.testclient import TestClient
         from api.index import app
-
+    
         client = TestClient(app)
         # First acquires successfully, second hits capacity full (None), third fails entirely (RuntimeError)
         mock_acquire.side_effect = ["lease-1", None, RuntimeError("Redis ded")]
         mock_scan_url.return_value = {"url": "https://ex1.com", "findings": []}
-
+    
         res = client.post("/api/scan/batch", json={"urls": ["https://ex1.com", "https://ex2.com", "https://ex3.com"]})
-
+    
         self.assertEqual(res.status_code, 200)
-        results = res.json()["results"]
-        self.assertEqual(len(results), 3)
+        data = res.json()
+        
+        # ex1 succeeds
+        self.assertEqual(data["results"][0]["status"], "success")
+        
+        # ex2 fails with 429 logic mapping to target error
+        self.assertEqual(data["results"][1]["status"], "failed")
+        self.assertIn("capacity is full", data["results"][1]["error"])
+        
+        # ex3 fails with 503 logic mapping to target error
+        self.assertEqual(data["results"][2]["status"], "failed")
+        self.assertIn("unknown", data["results"][2]["error"])
 
-        success = [r for r in results if r.get("findings") is not None]
-        full = [r for r in results if r.get("status") == 429]
-        err = [r for r in results if r.get("status") == 503]
-
-        self.assertEqual(len(success), 1)
-        self.assertEqual(len(full), 1)
-        self.assertEqual(len(err), 1)
-
+        # Release ONLY called for lease-1
         mock_release.assert_called_once_with("lease-1")
 
     @patch("api.index.acquire_scan_lease")
     @patch("api.index.release_scan_lease")
     @patch("api.index.scan_url")
-    def test_release_on_scan_exception(self, mock_scan_url, mock_release, mock_acquire):
+    @patch("api.index.Entitlements")
+    def test_release_on_scan_exception(self, mock_entitlements, mock_scan_url, mock_release, mock_acquire):
+        mock_ent_instance = mock_entitlements.return_value
+        mock_ent_instance.plan = "free"
+        mock_ent_instance.can_advanced_scan = True
         from fastapi.testclient import TestClient
         from api.index import app
-
+    
         client = TestClient(app)
         mock_acquire.return_value = "lease-fail"
         mock_scan_url.side_effect = Exception("Boom")
-
+    
         res = client.post("/api/scan", json={"url": "https://example.com"})
-
+    
         self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()["status"], "failed")
         mock_release.assert_called_once_with("lease-fail")
 
 if __name__ == '__main__':

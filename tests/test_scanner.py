@@ -175,10 +175,12 @@ class TestScannerModules(unittest.TestCase):
             mock_dns.return_value = [(2, 1, 6, '', ('8.8.8.8', 0))]
             self.assertTrue(is_public_hostname("example.com"))
 
+    @patch('api.scanner.orchestrator.validate_scan_target')
     @patch('api.index.is_public_hostname')
-    def test_scan_url_orchestration(self, mock_public):
+    def test_scan_url_orchestration(self, mock_public, mock_validate):
         mock_public.return_value = True
-        
+        mock_validate.return_value = None
+    
         # Create a dummy module that always returns a known finding
         class DummyModule(ScannerModule):
             module_name = "Dummy"
@@ -186,13 +188,13 @@ class TestScannerModules(unittest.TestCase):
             timeout = 1.0
             def run(self, url, hostname, session):
                 return [{"name": "Test Finding", "severity": "High", "description": "Test", "evidence": "None", "owasp": "A01"}]
-        
+    
         # Override the global REGISTERED_MODULES for this test
         with patch('api.index.REGISTERED_MODULES', [DummyModule()]), \
              patch('api.scanner.data.registry.REGISTERED_MODULES', [DummyModule()]), \
              patch('api.scanner.orchestrator.REGISTERED_MODULES', [DummyModule()]):
             result = scan_url("https://example.com")
-            
+    
             self.assertEqual(result['score'], 90) # 100 - 10 (High)
             self.assertEqual(result['severity_counts']['High'], 1)
             self.assertTrue("A01" in result['owasp_coverage'])
