@@ -5,7 +5,7 @@ export const API_BASE_URL =
     ? (import.meta.env.VITE_API_URL || 'http://localhost:5000') 
     : '';
 
-import { supabase } from './supabase';
+import { supabase } from '../supabase';
 
 class ScanApiClient {
   async getAuthHeader() {
