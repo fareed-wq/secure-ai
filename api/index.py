@@ -237,7 +237,9 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
     if req.scan_mode == "advanced" and not entitlements.can_advanced_scan:
         return JSONResponse(status_code=403, content={"error": "Advanced scanning is not available for your current plan.", "status": 403})
 
-    if entitlements.plan == "guest":
+    if entitlements.is_admin == True:
+        pass
+    elif entitlements.plan == "guest":
         quota = check_guest_quota(ip)
         if quota["quota_remaining"] <= 0:
             return JSONResponse(status_code=429, content={"error": "You've used your 3 free Guest scans for this week.", "status": 429})
@@ -275,7 +277,9 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
 
     has_guest_lease = False
     try:
-        if entitlements.plan == "guest":
+        if entitlements.is_admin == True:
+            pass
+        elif entitlements.plan == "guest":
             has_guest_lease = acquire_guest_lease(ip)
             if not has_guest_lease:
                 return JSONResponse(status_code=429, content={"error": "You already have a scan in progress.", "status": 429})
@@ -345,6 +349,15 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
 @app.get("/api/quota")
 def get_quota(request: Request, user: dict = Depends(get_current_user)):
     entitlements = Entitlements(user)
+    if entitlements.is_admin == True:
+        return {
+            "plan": "free",
+            "role": "admin",
+            "is_unlimited": True,
+            "quota_limit": None,
+            "quota_used": None,
+            "quota_remaining": None
+        }
     if entitlements.plan == "guest":
         ip = get_client_ip(request)
         quota = check_guest_quota(ip)
