@@ -231,6 +231,9 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
     ip = get_client_ip(request)
     entitlements = Entitlements(user)
 
+    if entitlements.status == "suspended":
+        return JSONResponse(status_code=403, content={"error": "Account suspended.", "status": 403})
+
     if req.scan_mode == "advanced" and not entitlements.can_advanced_scan:
         return JSONResponse(status_code=403, content={"error": "Advanced scanning is not available for your current plan.", "status": 403})
 
@@ -356,6 +359,10 @@ def get_quota(request: Request, user: dict = Depends(get_current_user)):
 @app.post("/scan/batch")
 async def scan_batch(req: BatchScanRequest, request: Request, user: dict = Depends(get_current_user)):
     entitlements = Entitlements(user)
+
+    if entitlements.status == "suspended":
+        return JSONResponse(status_code=403, content={"error": "Account suspended.", "status": 403})
+
     if entitlements.plan == "guest":
         return JSONResponse(status_code=403, content={"error": "Batch scanning requires an account.", "status": 403})
 

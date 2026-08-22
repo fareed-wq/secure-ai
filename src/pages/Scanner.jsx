@@ -117,6 +117,35 @@ function Scanner() {
     }
   };
 
+  const handleVerifySuspension = async () => {
+    setErrorMessage('Suspension verification checking...');
+    setScanState('error');
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            setErrorMessage('Suspension enforcement: FAIL\nError: No active session');
+            return;
+        }
+        const response = await fetch('/api/scan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ url: 'https://example.com', scan_mode: 'basic' })
+        });
+        const status = response.status;
+        const text = await response.text();
+        if (status === 403 && text.includes('suspended')) {
+            setErrorMessage(`Suspension enforcement: PASS\nHTTP: 403\nDetail: ${text}`);
+        } else {
+            setErrorMessage(`Suspension enforcement: FAIL\nHTTP: ${status}\nReason: ${text}`);
+        }
+    } catch (e) {
+        setErrorMessage(`Suspension enforcement: FAIL\nError: ${e.message}`);
+    }
+  };
+
   const resetScan = () => {
     setScanState('idle');
     setUrl('');
@@ -206,6 +235,14 @@ function Scanner() {
 
                             {/* 3. Input Bar Container */}
               <ScanForm onScan={handleScan} quotaInfo={quotaInfo} user={user} />
+
+              {user && (
+                <div className="flex justify-center mt-4">
+                  <button onClick={handleVerifySuspension} className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded font-bold">
+                    Dev: Verify Suspension
+                  </button>
+                </div>
+              )}
 
               
 
