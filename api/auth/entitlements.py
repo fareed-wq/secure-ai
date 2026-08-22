@@ -362,6 +362,10 @@ def audit_log(admin_user_id: str, action: str, resource_type: str, resource_id: 
         payload["after_state"] = after_state
         
     try:
-        requests.post(url, json=payload, headers=headers, timeout=2.0)
-    except Exception:
-        pass
+        resp = requests.post(url, json=payload, headers=headers, timeout=2.0)
+        if resp.status_code not in (200, 201, 204):
+            import sys
+            print(f"Audit log failure: HTTP {resp.status_code} {resp.text}", file=sys.stderr)
+    except Exception as e:
+        import sys
+        print(f"Audit log failure: {e}", file=sys.stderr)

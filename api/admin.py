@@ -3,10 +3,10 @@ from typing import Optional, List, Dict
 import requests
 import os
 import json
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class AdminMutationRequest(BaseModel):
-    reason: Optional[str] = None
+    reason: Optional[str] = Field(None, max_length=500)
 
 from api.auth.entitlements import get_current_user, get_user_role, get_user_plan_and_status, audit_log
 
@@ -169,8 +169,23 @@ def upsert_user_plan(user_id: str, new_plan: str, new_status: str):
     if resp.status_code not in (200, 201, 204):
         raise HTTPException(status_code=500, detail="Failed to update user_plans")
 
+def verify_user_exists(user_id: str):
+    if not os.environ.get('SUPABASE_URL') or not os.environ.get('SUPABASE_SECRET_KEY'):
+        return
+    url = f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/auth/v1/admin/users/{user_id}"
+    headers = {
+        "apikey": os.environ.get("SUPABASE_SECRET_KEY", ""),
+        "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}"
+    }
+    resp = requests.get(url, headers=headers, timeout=5.0)
+    if resp.status_code == 404:
+        raise HTTPException(status_code=404, detail="User not found.")
+    elif resp.status_code != 200:
+        raise HTTPException(status_code=500, detail="Error verifying user existence.")
+
 @admin_router.post("/users/{user_id}/grant-professional")
 def grant_professional(user_id: str, payload: Optional[AdminMutationRequest] = None, user: dict = Depends(require_admin)):
+    verify_user_exists(user_id)
     current_role = get_user_role(user_id)
     current_plan, current_status = get_user_plan_and_status(user_id)
     before_state = {"role": current_role, "plan": current_plan, "status": current_status}
@@ -183,6 +198,7 @@ def grant_professional(user_id: str, payload: Optional[AdminMutationRequest] = N
 
 @admin_router.post("/users/{user_id}/remove-professional")
 def remove_professional(user_id: str, payload: Optional[AdminMutationRequest] = None, user: dict = Depends(require_admin)):
+    verify_user_exists(user_id)
     current_role = get_user_role(user_id)
     current_plan, current_status = get_user_plan_and_status(user_id)
     before_state = {"role": current_role, "plan": current_plan, "status": current_status}
@@ -195,6 +211,7 @@ def remove_professional(user_id: str, payload: Optional[AdminMutationRequest] = 
 
 @admin_router.post("/users/{user_id}/suspend")
 def suspend_user(user_id: str, payload: Optional[AdminMutationRequest] = None, user: dict = Depends(require_admin)):
+    verify_user_exists(user_id)
     if user.get("sub") == user_id:
         raise HTTPException(status_code=400, detail="You cannot suspend your own Admin account.")
         
@@ -210,6 +227,7 @@ def suspend_user(user_id: str, payload: Optional[AdminMutationRequest] = None, u
 
 @admin_router.post("/users/{user_id}/reactivate")
 def reactivate_user(user_id: str, payload: Optional[AdminMutationRequest] = None, user: dict = Depends(require_admin)):
+    verify_user_exists(user_id)
     current_role = get_user_role(user_id)
     current_plan, current_status = get_user_plan_and_status(user_id)
     before_state = {"role": current_role, "plan": current_plan, "status": current_status}
