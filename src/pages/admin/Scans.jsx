@@ -6,11 +6,14 @@ export default function Scans() {
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(0);
+  const limit = 50;
 
   useEffect(() => {
     const fetchScans = async () => {
+      setLoading(true);
       try {
-        const data = await adminApi.getScans(50, 0);
+        const data = await adminApi.getScans(limit, page * limit);
         setScans(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message || 'Failed to load scans');
@@ -19,9 +22,9 @@ export default function Scans() {
       }
     };
     fetchScans();
-  }, []);
+  }, [page]);
 
-  if (loading) {
+  if (loading && scans.length === 0) {
     return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>;
   }
 
@@ -33,46 +36,76 @@ export default function Scans() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Scans</h1>
       
-      {scans.length === 0 ? (
+      {scans.length === 0 && page === 0 ? (
         <div className="p-8 text-center text-slate-400 border border-slate-800 rounded bg-slate-900">
           No scans found.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded border border-slate-800">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-slate-900 border-b border-slate-800 text-slate-400">
-              <tr>
-                <th className="px-4 py-3 font-medium">TARGET</th>
-                <th className="px-4 py-3 font-medium">USER</th>
-                <th className="px-4 py-3 font-medium">MODE</th>
-                <th className="px-4 py-3 font-medium">SCORE</th>
-                <th className="px-4 py-3 font-medium">STATUS</th>
-                <th className="px-4 py-3 font-medium">DATE</th>
-                <th className="px-4 py-3 font-medium">TIME</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800">
-              {scans.map(scan => {
-                const date = new Date(scan.created_at);
-                return (
-                  <tr key={scan.id} className="hover:bg-slate-800/50">
-                    <td className="px-4 py-3 truncate max-w-[200px]" title={scan.url}>{scan.url}</td>
-                    <td className="px-4 py-3 font-mono text-xs truncate max-w-[150px]" title={scan.user_id}>{scan.user_id}</td>
-                    <td className="px-4 py-3 capitalize">{scan.scan_mode || 'Unknown'}</td>
-                    <td className="px-4 py-3">{scan.score !== undefined && scan.score !== null ? scan.score : '-'}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs ${scan.status === 'completed' ? 'bg-green-500/20 text-green-300' : scan.status === 'failed' ? 'bg-red-500/20 text-red-300' : 'bg-blue-500/20 text-blue-300'}`}>
-                        {scan.status || 'unknown'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">{date.toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-slate-400">{date.toLocaleTimeString()}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <div className="overflow-x-auto rounded border border-slate-800 relative">
+            {loading && <div className="absolute inset-0 bg-slate-950/50 flex items-center justify-center z-10"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>}
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-slate-900 border-b border-slate-800 text-slate-400">
+                <tr>
+                  <th className="px-4 py-3 font-medium">TARGET</th>
+                  <th className="px-4 py-3 font-medium">USER</th>
+                  <th className="px-4 py-3 font-medium">MODE</th>
+                  <th className="px-4 py-3 font-medium">SCORE</th>
+                  <th className="px-4 py-3 font-medium">STATUS</th>
+                  <th className="px-4 py-3 font-medium">DATE</th>
+                  <th className="px-4 py-3 font-medium">TIME</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {scans.map(scan => {
+                  let dateStr = 'Date unavailable';
+                  let timeStr = '';
+                  if (scan.created_at) {
+                    const date = new Date(scan.created_at);
+                    if (!isNaN(date.getTime())) {
+                       dateStr = date.toLocaleDateString();
+                       timeStr = date.toLocaleTimeString();
+                    }
+                  }
+                  
+                  return (
+                    <tr key={scan.id} className="hover:bg-slate-800/50">
+                      <td className="px-4 py-3 truncate max-w-[200px]" title={scan.url}>{scan.url}</td>
+                      <td className="px-4 py-3 font-mono text-xs truncate max-w-[150px]" title={scan.user_id}>{scan.user_id}</td>
+                      <td className="px-4 py-3 capitalize">{scan.scan_mode || 'Unknown'}</td>
+                      <td className="px-4 py-3">{scan.score !== undefined && scan.score !== null ? scan.score : '-'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded text-xs ${scan.status === 'completed' ? 'bg-green-500/20 text-green-300' : scan.status === 'failed' ? 'bg-red-500/20 text-red-300' : 'bg-blue-500/20 text-blue-300'}`}>
+                          {scan.status || 'unknown'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">{dateStr}</td>
+                      <td className="px-4 py-3 text-slate-400">{timeStr}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="flex justify-between items-center pt-4">
+             <button 
+               disabled={page === 0 || loading} 
+               onClick={() => setPage(p => p - 1)}
+               className="px-4 py-2 bg-slate-800 rounded disabled:opacity-50"
+             >
+               Previous
+             </button>
+             <span className="text-slate-400">Page {page + 1}</span>
+             <button 
+               disabled={scans.length < limit || loading} 
+               onClick={() => setPage(p => p + 1)}
+               className="px-4 py-2 bg-slate-800 rounded disabled:opacity-50"
+             >
+               Next
+             </button>
+          </div>
+        </>
       )}
     </div>
   );
