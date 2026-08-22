@@ -35,16 +35,17 @@ export default function Scans() {
     setSelectedScans([]);
   }, [searchTermUrl, searchTermUser, scanTypeFilter, page]);
 
-  const getScanModeLabel = (mode) => {
-    if (mode === 'active') return 'Advanced';
-    if (mode === 'passive' || mode === 'basic') return 'Basic';
+  const getScanModeLabel = (mode, rawMode) => {
+    if (mode === 'Advanced' || mode === 'Basic') return mode;
+    if (rawMode === 'active') return 'Advanced';
+    if (rawMode === 'passive' || rawMode === 'basic') return 'Basic';
     return 'Unknown';
   };
 
   const filteredScans = scans.filter(s => {
     const matchesUrl = searchTermUrl === '' || (s.target_url || s.url || '').toLowerCase().includes(searchTermUrl.toLowerCase());
     const matchesUser = searchTermUser === '' || (s.user_id || '').toLowerCase().includes(searchTermUser.toLowerCase());
-    const sType = getScanModeLabel(s.report_data?.scan_mode);
+    const sType = getScanModeLabel(s.scan_mode, s.report_data?.scan_mode);
     const matchesType = scanTypeFilter === 'all' || sType.toLowerCase() === scanTypeFilter.toLowerCase();
     return matchesUrl && matchesUser && matchesType;
   });
@@ -52,7 +53,7 @@ export default function Scans() {
   const getBaseScan = () => selectedScans.length > 0 ? selectedScans[0] : null;
 
   const isScanSelectable = (scan) => {
-    const scanType = getScanModeLabel(scan.report_data?.scan_mode);
+    const scanType = getScanModeLabel(scan.scan_mode, scan.report_data?.scan_mode);
     if (scanType === 'Unknown') return false; // Unknowns can never be compared
     
     if (selectedScans.some(s => s.id === scan.id)) return true; // Already selected
@@ -62,7 +63,7 @@ export default function Scans() {
     const baseScan = getBaseScan();
     if (!baseScan) return true; // If no base, can select any valid scan
 
-    const baseType = getScanModeLabel(baseScan.report_data?.scan_mode);
+    const baseType = getScanModeLabel(baseScan.scan_mode, baseScan.report_data?.scan_mode);
     const sameTarget = (baseScan.target_url || baseScan.url) === (scan.target_url || scan.url);
     const sameType = baseType === scanType;
     
@@ -157,7 +158,7 @@ export default function Scans() {
                       </td>
                       <td className="px-4 py-3 truncate max-w-[200px]" title={scan.url || scan.target_url}>{scan.url || scan.target_url}</td>
                       <td className="px-4 py-3 font-mono text-xs truncate max-w-[150px]" title={scan.user_id}>{scan.user_id}</td>
-                      <td className="px-4 py-3">{getScanModeLabel(scan.report_data?.scan_mode)}</td>
+                      <td className="px-4 py-3">{getScanModeLabel(scan.scan_mode, scan.report_data?.scan_mode)}</td>
                       <td className="px-4 py-3">{scan.score !== undefined && scan.score !== null ? scan.score : '-'}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded text-xs ${scan.status === 'completed' ? 'bg-green-500/20 text-green-300' : scan.status === 'failed' ? 'bg-red-500/20 text-red-300' : 'bg-blue-500/20 text-blue-300'}`}>
