@@ -77,5 +77,6 @@ export const adminApi = {
   suspendUser: (userId, reason) => adminPost(`/users/${userId}/suspend`, { reason }),
   reactivateUser: (userId, reason) => adminPost(`/users/${userId}/reactivate`, { reason }),
   getUserQuota: (userId) => adminFetch(`/users/${userId}/quota`),
-  resetQuota: (userId, reason) => adminPost(`/users/${userId}/reset-quota`, { reason })
+  resetQuota: (userId, reason) => adminPost(`/users/${userId}/reset-quota`, { reason }),
+  compareScans: (scan1, scan2) => adminFetch(`/scans/compare?scan_id_1=${scan1}&scan_id_2=${scan2}`)
 };

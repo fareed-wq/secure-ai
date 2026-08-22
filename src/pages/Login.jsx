@@ -48,12 +48,6 @@ const Login = () => {
         <h2 className="mt-2 text-center text-3xl font-extrabold tracking-tight text-slate-50">
           Sign in to your account
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-400">
-          Or{' '}
-          <Link to="/register" className="font-medium text-indigo-400 hover:text-indigo-300">
-            start your 14-day free trial
-          </Link>
-        </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

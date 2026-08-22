@@ -204,6 +204,12 @@ const Register = () => {
             </div>
           </form>
         </div>
+
+        <div className="mt-6 text-center">
+          <Link to="/" className="text-sm font-medium text-slate-400 hover:text-slate-300 transition-colors">
+            &larr; Back to Home
+          </Link>
+        </div>
       </div>
     </div>
   );

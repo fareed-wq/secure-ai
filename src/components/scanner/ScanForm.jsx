@@ -108,7 +108,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
             </span>
             <span className="text-slate-500 border-l border-slate-700 pl-2 ml-1">Resets Monday</span>
           </div>
-          )}
+        )}
 
         <div className="scan-url-shell relative w-full rounded-2xl p-1 bg-slate-900/80 border border-slate-700/60 shadow-[0_0_30px_rgba(124,58,237,0.25)] flex items-center focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 focus-within:shadow-[0_0_40px_rgba(124,58,237,0.4)] transition-all duration-300">
           <Search className="w-5 h-5 text-slate-400 ml-4 shrink-0 hidden sm:block" />
@@ -134,12 +134,6 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
           <span className="text-indigo-400">🔒</span>
           <span><strong className="text-slate-300">Passive Mode & Non-Intrusive</strong> • Read-only security checks designed to minimize impact on live websites.</span>
         </div>
-
-        
-
-
-
-        
 
         <div className="flex flex-col sm:flex-row gap-4 w-full mt-4 text-left">
           <div className="scan-config-card flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors relative overflow-hidden">

@@ -400,3 +400,45 @@ def admin_reset_quota(user_id: str, req: Optional[AdminMutationRequest] = None, 
     )
     return {"status": "success", "message": "Free quota reset"}
 
+
+from api.scanner.compare import compare_reports
+
+@admin_router.get("/scans/compare")
+def compare_admin_scans(scan_id_1: str, scan_id_2: str, user: dict = Depends(require_admin)):
+    import os
+    import requests
+    from fastapi import HTTPException
+    
+    supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
+    supabase_key = os.environ.get('SUPABASE_SECRET_KEY', '')
+    if not supabase_url or not supabase_key:
+        raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
+        
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}"
+    }
+    
+    # Fetch scan 1
+    resp1 = requests.get(f"{supabase_url}/rest/v1/scans?id=eq.{scan_id_1}&select=*", headers=headers, timeout=5.0)
+    if resp1.status_code != 200 or not resp1.json():
+        raise HTTPException(status_code=404, detail="Scan 1 not found.")
+    scan1 = resp1.json()[0]
+    
+    # Fetch scan 2
+    resp2 = requests.get(f"{supabase_url}/rest/v1/scans?id=eq.{scan_id_2}&select=*", headers=headers, timeout=5.0)
+    if resp2.status_code != 200 or not resp2.json():
+        raise HTTPException(status_code=404, detail="Scan 2 not found.")
+    scan2 = resp2.json()[0]
+    
+    # Sort scans chronologically
+    s1_time = scan1.get("created_at", "")
+    s2_time = scan2.get("created_at", "")
+    if s1_time and s2_time and s1_time > s2_time:
+        scan1, scan2 = scan2, scan1
+    
+    try:
+        result = compare_reports(scan1, scan2)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
