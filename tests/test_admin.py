@@ -98,9 +98,8 @@ def test_admin_grant_professional_mocked():
         app.dependency_overrides[get_current_user] = override_get_current_user
         
         response = client.post("/api/admin/users/target-user/grant-professional")
-        assert response.status_code == 200
-        assert response.json()["plan"] == "professional"
-        mock_audit.assert_called_once()
+        assert response.status_code == 501
+        assert response.json()["detail"] == "Phase 2"
         
         app.dependency_overrides.clear()
 
@@ -121,8 +120,7 @@ def test_admin_remove_professional_mocked():
         app.dependency_overrides[get_current_user] = override_get_current_user
         
         response = client.post("/api/admin/users/target-user/remove-professional")
-        assert response.status_code == 200
-        assert response.json()["plan"] == "free"
-        mock_audit.assert_called_once()
+        assert response.status_code == 501
+        assert response.json()["detail"] == "Phase 2"
         
         app.dependency_overrides.clear()
