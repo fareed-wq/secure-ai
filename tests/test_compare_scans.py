@@ -17,7 +17,8 @@ def test_compare_reports_logic():
             "scan_mode": "passive",
             "findings": [
                 {"name": "Missing Headers", "severity": "Medium", "evidence": "old"},
-                {"name": "No CSP", "severity": "Low", "evidence": "old"}
+                {"name": "No CSP", "severity": "Low", "evidence": "old"},
+                {"name": "Outdated TLS", "severity": "High"}
             ]
         }
     }
@@ -28,6 +29,8 @@ def test_compare_reports_logic():
             "scan_mode": "passive",
             "findings": [
                 {"name": "Missing Headers", "severity": "Medium", "evidence": "new"},
+                {"name": "No CSP", "severity": "Info", "evidence": "new"}, # Improved!
+                {"name": "Outdated TLS", "severity": "Critical"}, # Regressed!
                 {"name": "New Issue", "severity": "High", "evidence": "new"}
             ]
         }
@@ -37,14 +40,17 @@ def test_compare_reports_logic():
     assert result["old_score"] == 80
     assert result["new_score"] == 90
     assert result["score_change"] == 10
-    assert result["improved"] is True
-    assert result["regressed"] is False
+    
+    assert len(result["improved"]) == 1
+    assert result["improved"][0]["name"] == "No CSP"
+    
+    assert len(result["regressed"]) == 1
+    assert result["regressed"][0]["name"] == "Outdated TLS"
     
     assert len(result["added"]) == 1
     assert result["added"][0]["name"] == "New Issue"
     
-    assert len(result["removed"]) == 1
-    assert result["removed"][0]["name"] == "No CSP"
+    assert len(result["removed"]) == 0
     
     assert len(result["unchanged"]) == 1
     assert result["unchanged"][0]["name"] == "Missing Headers"
@@ -60,6 +66,12 @@ def test_compare_reports_different_modes():
     old_scan = {"target_url": "https://example.com", "report_data": {"scan_mode": "passive"}}
     new_scan = {"target_url": "https://example.com", "report_data": {"scan_mode": "active"}}
     with pytest.raises(ValueError, match="Cannot compare scans with different scan modes."):
+        compare_reports(old_scan, new_scan)
+
+def test_compare_reports_unknown_mode():
+    old_scan = {"target_url": "https://example.com", "report_data": {"scan_mode": "unknown_string"}}
+    new_scan = {"target_url": "https://example.com", "report_data": {"scan_mode": "unknown_string"}}
+    with pytest.raises(ValueError, match="Cannot compare scans with unknown scan modes."):
         compare_reports(old_scan, new_scan)
 
 @patch.dict(os.environ, {"SUPABASE_URL": "http://mock", "SUPABASE_SECRET_KEY": "mock"})
@@ -94,6 +106,39 @@ def test_admin_compare_endpoint(mock_requests_get):
         assert data["old_score"] == 80
         assert data["new_score"] == 90
         assert data["score_change"] == 10
-        assert data["improved"] is True
     finally:
         app.dependency_overrides.clear()
+
+def test_compare_reports_score_increase_only():
+    old_scan = {
+        "target_url": "https://example.com",
+        "score": 80,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [
+                {"name": "Issue", "severity": "Medium"}
+            ]
+        }
+    }
+    new_scan = {
+        "target_url": "https://example.com",
+        "score": 90,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [
+                {"name": "Issue", "severity": "Medium"}
+            ]
+        }
+    }
+    
+    from api.scanner.compare import compare_reports
+    result = compare_reports(old_scan, new_scan)
+    assert result["old_score"] == 80
+    assert result["new_score"] == 90
+    assert result["score_change"] == 10
+    
+    assert len(result["improved"]) == 0
+    assert len(result["regressed"]) == 0
+    assert len(result["added"]) == 0
+    assert len(result["removed"]) == 0
+    assert len(result["unchanged"]) == 1
