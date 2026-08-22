@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { adminApi } from '../../lib/api/admin';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        setSearchTerm(searchInput);
+        setPage(0);
+      }, 300);
+      return () => clearTimeout(handler);
+    }, [searchInput]);
+
   const [roleFilter, setRoleFilter] = useState('all');
   const [planFilter, setPlanFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -18,7 +27,7 @@ export default function Users() {
     const fetchUsers = async () => {
       setLoading(true);
       try {
-        const data = await adminApi.getUsers(limit, page * limit);
+        const data = await adminApi.getUsers(limit, page * limit, searchTerm);
         setUsers(data);
       } catch (err) {
         setError(err.message || 'Failed to load users');
@@ -27,7 +36,7 @@ export default function Users() {
       }
     };
     fetchUsers();
-  }, [page]);
+  }, [page, searchTerm]);
 
 
   const filteredUsers = users.filter(u => {
@@ -49,7 +58,26 @@ export default function Users() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Users</h1>
-      
+        <div className="flex gap-4 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by email or User ID..."
+              className="w-full bg-slate-900 border border-slate-700 rounded pl-10 pr-10 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => { if(e.key === "Enter") { setSearchTerm(searchInput); setPage(0); } }}
+            />
+            {searchInput && (
+              <button onClick={() => { setSearchInput(''); setSearchTerm(''); setPage(0); }} className="absolute right-3 top-2.5">
+                <X className="h-4 w-4 text-slate-400 hover:text-white" />
+              </button>
+            )}
+          </div>
+        </div>
+
+
       {users.length === 0 && page === 0 ? (
         <div className="p-8 text-center text-slate-400 border border-slate-800 rounded bg-slate-900">
           No users found.
@@ -76,7 +104,7 @@ export default function Users() {
                     const date = new Date(u.created_at);
                     if (!isNaN(date.getTime())) dateStr = date.toLocaleString();
                   }
-                  
+
                   return (
                     <tr key={u.user_id} className="hover:bg-slate-800/50">
                       <td className="px-4 py-3">{u.email || 'Unknown'}</td>
@@ -103,18 +131,18 @@ export default function Users() {
               </tbody>
             </table>
           </div>
-          
+
           <div className="flex justify-between items-center pt-4">
-             <button 
-               disabled={page === 0 || loading} 
+             <button
+               disabled={page === 0 || loading}
                onClick={() => setPage(p => p - 1)}
                className="px-4 py-2 bg-slate-800 rounded disabled:opacity-50"
              >
                Previous
              </button>
              <span className="text-slate-400">Page {page + 1}</span>
-             <button 
-               disabled={users.length < limit || loading} 
+             <button
+               disabled={users.length < limit || loading}
                onClick={() => setPage(p => p + 1)}
                className="px-4 py-2 bg-slate-800 rounded disabled:opacity-50"
              >
