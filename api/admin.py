@@ -61,26 +61,30 @@ def get_overview(user: dict = Depends(require_admin)):
             req_params["select"] = "id"
             
         resp = requests.get(f"{supabase_url}{endpoint}", params=req_params, headers=count_headers, timeout=5.0)
-        if resp.status_code != 200:
+        if resp.status_code not in (200, 206):
             logger.error(f"Overview: {label} returned HTTP {resp.status_code}")
-            raise HTTPException(status_code=502, detail=f"Failed to fetch {label}")
+            raise HTTPException(status_code=502, detail=f"Overview metric failed: {label}")
         cr = resp.headers.get("Content-Range", "")
         if "/" not in cr:
             logger.error(f"Overview: {label} missing Content-Range header")
-            raise HTTPException(status_code=502, detail=f"Failed to fetch {label}")
+            raise HTTPException(status_code=502, detail=f"Overview metric failed: {label}")
         try:
             return int(cr.split("/")[-1])
         except (ValueError, IndexError):
             logger.error(f"Overview: {label} unparseable Content-Range: {cr}")
-            raise HTTPException(status_code=502, detail=f"Failed to fetch {label}")
+            raise HTTPException(status_code=502, detail=f"Overview metric failed: {label}")
 
     try:
         # Total users from Auth Admin API
         resp_users = requests.get(f"{supabase_url}/auth/v1/admin/users", headers=headers, timeout=5.0)
         if resp_users.status_code != 200:
             logger.error(f"Overview: Auth users returned HTTP {resp_users.status_code}")
-            raise HTTPException(status_code=502, detail="Failed to fetch users from Supabase")
-        total_users = len(resp_users.json().get("users", []))
+            raise HTTPException(status_code=502, detail="Overview metric failed: auth users")
+        
+        users_data = resp_users.json()
+        total_users = users_data.get("total")
+        if total_users is None:
+            total_users = len(users_data.get("users", []))
         
         # Counts from PostgREST via GET with limit=0
         professional_users = get_count("/rest/v1/user_plans", {"plan": "eq.professional"}, "professional users")
