@@ -73,6 +73,10 @@ def compare_reports(old_scan: Dict[str, Any], new_scan: Dict[str, Any]) -> Dict[
     score_change = new_score - old_score
 
     return {
+        "target_url": old_scan.get("target_url"),
+        "scan_mode": old_mode,
+        "old_date": old_scan.get("created_at"),
+        "new_date": new_scan.get("created_at"),
         "old_score": old_score,
         "new_score": new_score,
         "score_change": score_change,

@@ -431,6 +431,12 @@ def compare_admin_scans(scan_id_1: str, scan_id_2: str, user: dict = Depends(req
         raise HTTPException(status_code=404, detail="Scan 2 not found.")
     scan2 = resp2.json()[0]
     
+    # Sort scans chronologically
+    s1_time = scan1.get("created_at", "")
+    s2_time = scan2.get("created_at", "")
+    if s1_time and s2_time and s1_time > s2_time:
+        scan1, scan2 = scan2, scan1
+    
     try:
         result = compare_reports(scan1, scan2)
         return result
