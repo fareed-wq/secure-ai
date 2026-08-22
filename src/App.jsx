@@ -14,6 +14,7 @@ const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const ScanHistory = React.lazy(() => import('./pages/ScanHistory'));
 const ScanReport = React.lazy(() => import('./pages/ScanReport'));
+const HistoryCompare = React.lazy(() => import('./pages/HistoryCompare'));
 const Compare = React.lazy(() => import('./pages/Compare'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const Services = React.lazy(() => import('./pages/Services'));
@@ -94,6 +95,7 @@ const App = () => {
               <Route element={<SaaSLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/history" element={<ScanHistory />} />
+                <Route path="/history/compare" element={<HistoryCompare />} />
                 <Route path="/history/:scanId" element={<ScanReport />} />
                 <Route path="/compare" element={<Compare />} />
                 <Route path="/settings" element={<Settings />} />

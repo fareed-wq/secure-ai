@@ -306,3 +306,106 @@ def test_compare_reports_qa_mixed():
     
     assert len(result["unchanged"]) == 1
     assert result["unchanged"][0]["name"] == "Unchanged Finding"
+
+import pytest
+from fastapi.testclient import TestClient
+from api.index import app, get_current_user
+
+def test_history_compare_endpoint_owner(monkeypatch):
+    monkeypatch.setenv("SUPABASE_URL", "http://mock")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "mock")
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_URL", "http://mock")
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_SECRET_KEY", "mock")
+    app.dependency_overrides[get_current_user] = lambda: {"sub": "user-123"}
+    client = TestClient(app)
+
+    scan1_data = {
+        "id": "scan-1",
+        "target_url": "https://example.com",
+        "user_id": "user-123",
+        "report_data": {"scan_mode": "basic", "score": 80, "findings": []}
+    }
+    scan2_data = {
+        "id": "scan-2",
+        "target_url": "https://example.com",
+        "user_id": "user-123",
+        "report_data": {"scan_mode": "basic", "score": 90, "findings": []}
+    }
+
+    # Entitlements requires professional for non-admin to compare
+    def mock_get(*args, **kwargs):
+        class MockResp:
+            status_code = 200
+            def json(self):
+                url = args[0]
+                if "user_roles" in url:
+                    return [{"role": "free"}]
+                if "user_plans" in url:
+                    return [{"plan": "professional", "status": "active"}]
+                if "scan-1" in url and "user-123" in url:
+                    return [scan1_data]
+                if "scan-2" in url and "user-123" in url:
+                    return [scan2_data]
+                return []
+        return MockResp()
+
+    monkeypatch.setattr("requests.get", mock_get)
+
+    resp = client.get("/api/scans/compare?scan_id_1=scan-1&scan_id_2=scan-2")
+    assert resp.status_code == 200
+    assert resp.json()["score_change"] == 10
+
+    app.dependency_overrides = {}
+
+def test_history_compare_endpoint_non_owner(monkeypatch):
+    monkeypatch.setenv("SUPABASE_URL", "http://mock")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "mock")
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_URL", "http://mock")
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_SECRET_KEY", "mock")
+    app.dependency_overrides[get_current_user] = lambda: {"sub": "user-hacker"}
+    client = TestClient(app)
+
+    def mock_get(*args, **kwargs):
+        class MockResp:
+            status_code = 200
+            def json(self):
+                url = args[0]
+                if "user_roles" in url:
+                    return [{"role": "free"}]
+                if "user_plans" in url:
+                    return [{"plan": "professional", "status": "active"}]
+                return []
+        return MockResp()
+    monkeypatch.setattr("requests.get", mock_get)
+
+    resp = client.get("/api/scans/compare?scan_id_1=scan-1&scan_id_2=scan-2")
+    assert resp.status_code == 404
+
+    app.dependency_overrides = {}
+
+def test_history_compare_endpoint_free_blocked(monkeypatch):
+    monkeypatch.setenv("SUPABASE_URL", "http://mock")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "mock")
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_URL", "http://mock")
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_SECRET_KEY", "mock")
+    app.dependency_overrides[get_current_user] = lambda: {"sub": "user-free"}
+    client = TestClient(app)
+
+    def mock_get(*args, **kwargs):
+        class MockResp:
+            status_code = 200
+            def json(self):
+                url = args[0]
+                if "user_roles" in url:
+                    return [{"role": "free"}]
+                if "user_plans" in url:
+                    return [{"plan": "free", "status": "active"}]
+                return []
+        return MockResp()
+    monkeypatch.setattr("requests.get", mock_get)
+
+    resp = client.get("/api/scans/compare?scan_id_1=scan-1&scan_id_2=scan-2")
+    assert resp.status_code == 403
+    assert "Professional" in resp.json()["error"]
+
+    app.dependency_overrides = {}

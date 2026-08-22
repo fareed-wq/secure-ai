@@ -159,7 +159,8 @@ const ScanHistory = () => {
               <thead className="bg-slate-800/50 border-b border-slate-700 text-slate-400 uppercase tracking-wider">
                 <tr>
                   <th className="p-4 font-medium w-12 text-center"></th>
-                    <th className="p-4 font-medium">Target URL</th>
+                  <th className="p-4 font-medium">Target URL</th>
+                  <th className="p-4 font-medium">Scan Type</th>
                   <th className="p-4 font-medium">Date</th>
                   <th className="p-4 font-medium">Time</th>
                   <th className="p-4 font-medium">Score</th>
@@ -188,11 +189,11 @@ const ScanHistory = () => {
                           )}
                         </td>
                         <td className="p-4 font-medium text-slate-50">
-                        <div className="flex flex-col">
                           <span className="flex items-center gap-2">{scan.target_url}</span>
-                          <span className="text-xs text-slate-400 mt-1">{modeLabel}</span>
-                        </div>
-                      </td>
+                        </td>
+                        <td className="p-4 text-slate-400 whitespace-nowrap">
+                          {modeLabel}
+                        </td>
                       <td className="p-4 text-slate-400 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
