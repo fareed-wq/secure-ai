@@ -75,5 +75,7 @@ export const adminApi = {
   grantProfessional: (userId, reason) => adminPost(`/users/${userId}/grant-professional`, { reason }),
   removeProfessional: (userId, reason) => adminPost(`/users/${userId}/remove-professional`, { reason }),
   suspendUser: (userId, reason) => adminPost(`/users/${userId}/suspend`, { reason }),
-  reactivateUser: (userId, reason) => adminPost(`/users/${userId}/reactivate`, { reason })
+  reactivateUser: (userId, reason) => adminPost(`/users/${userId}/reactivate`, { reason }),
+  getUserQuota: (userId) => adminFetch(`/users/${userId}/quota`),
+  resetQuota: (userId, reason) => adminPost(`/users/${userId}/reset-quota`, { reason })
 };
