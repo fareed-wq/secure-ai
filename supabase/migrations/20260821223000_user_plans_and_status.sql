@@ -1,7 +1,7 @@
 -- Migration: User Plans and Status (Suspension)
 CREATE TABLE IF NOT EXISTS public.user_plans (
     user_id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    plan text NOT NULL CHECK (plan IN ('free', 'professional')),
+    plan text NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'professional')),
     status text NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended')),
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
