@@ -4,6 +4,9 @@ import { Loader2 } from 'lucide-react';
 
 export default function Scans() {
   const [scans, setScans] = useState([]);
+  const [searchTermUrl, setSearchTermUrl] = useState('');
+  const [searchTermUser, setSearchTermUser] = useState('');
+  const [scanTypeFilter, setScanTypeFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
@@ -23,6 +26,21 @@ export default function Scans() {
     };
     fetchScans();
   }, [page]);
+
+
+  const getScanModeLabel = (mode) => {
+    if (mode === 'active') return 'Advanced';
+    if (mode === 'passive' || mode === 'basic') return 'Basic';
+    return 'Unknown';
+  };
+
+  const filteredScans = scans.filter(s => {
+    const matchesUrl = searchTermUrl === '' || (s.target_url || '').toLowerCase().includes(searchTermUrl.toLowerCase());
+    const matchesUser = searchTermUser === '' || (s.user_id || '').toLowerCase().includes(searchTermUser.toLowerCase());
+    const sType = getScanModeLabel(s.report_data?.scan_mode);
+    const matchesType = scanTypeFilter === 'all' || sType.toLowerCase() === scanTypeFilter.toLowerCase();
+    return matchesUrl && matchesUser && matchesType;
+  });
 
   if (loading && scans.length === 0) {
     return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>;
@@ -57,7 +75,7 @@ export default function Scans() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {scans.map(scan => {
+                {filteredScans.map(scan => {
                   let dateStr = 'Date unavailable';
                   let timeStr = '';
                   if (scan.created_at) {

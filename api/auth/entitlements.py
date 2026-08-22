@@ -187,6 +187,9 @@ def get_monday_utc_boundaries() -> tuple[int, int]:
     next_week_start = ((current_week + 1) * 7 + 3) * 86400
     return week_start, next_week_start
 
+def get_free_quota_key(user_id: str, week_start: int) -> str:
+    return f"free_quota:{user_id}:{week_start}"
+
 def check_guest_quota(ip: str) -> dict:
     """
     Fixed calendar week quota (Monday 00:00 UTC).
@@ -278,7 +281,7 @@ def check_free_quota(user_id: str) -> dict:
         # FAIL CLOSED
         return {"quota_limit": limit, "quota_used": limit, "quota_remaining": 0, "reset_at": next_week_start}
 
-    key = f"free_quota:{user_id}:{week_start}"
+    key = get_free_quota_key(user_id, week_start)
     headers = {"Authorization": f"Bearer {redis_token}"}
     
     try:
@@ -307,7 +310,7 @@ def consume_free_quota(user_id: str) -> bool:
     if ttl_seconds <= 0:
         ttl_seconds = 604800 # Fallback
 
-    key = f"free_quota:{user_id}:{week_start}"
+    key = get_free_quota_key(user_id, week_start)
     
     redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
     redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
@@ -369,3 +372,22 @@ def audit_log(admin_user_id: str, action: str, resource_type: str, resource_id: 
     except Exception as e:
         import sys
         print(f"Audit log failure: {e}", file=sys.stderr)
+
+
+def reset_free_quota(user_id: str) -> bool:
+    import requests, os
+    redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
+    redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
+    if not redis_url or not redis_token:
+        return False
+    week_start, _ = get_monday_utc_boundaries()
+    key = get_free_quota_key(user_id, week_start)
+    headers = {"Authorization": f"Bearer {redis_token}"}
+    try:
+        resp = requests.get(f"{redis_url}/del/{key}", headers=headers, timeout=1.5)
+        # Idempotent success: if usage was zero, the key didn't exist, which is fine.
+        return resp.status_code == 200
+    except Exception as e:
+        import sys
+        print(f"Redis reset_free_quota error: {e}", file=sys.stderr)
+        return False

@@ -32,6 +32,7 @@ def get_me(user: dict = Depends(require_admin)):
         "role": "admin"
     }
 
+
 @admin_router.get("/overview")
 def get_overview(user: dict = Depends(require_admin)):
     supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
@@ -46,29 +47,71 @@ def get_overview(user: dict = Depends(require_admin)):
 
     try:
         resp_users = requests.get(f"{supabase_url}/auth/v1/admin/users", headers=headers, timeout=5.0)
-        total_users = len(resp_users.json().get("users", [])) if resp_users.status_code == 200 else 0
+        if resp_users.status_code != 200:
+            raise HTTPException(status_code=502, detail="Failed to fetch users from Supabase")
+        total_users = len(resp_users.json().get("users", []))
         
+        # Free vs Professional
         resp_pro = requests.head(f"{supabase_url}/rest/v1/user_plans?plan=eq.professional&select=*", headers={'Prefer': 'count=exact', **headers}, timeout=5.0)
-        professional_users = 0
-        if resp_pro.status_code == 200:
-            cr = resp_pro.headers.get("Content-Range", "0-0/0")
-            try:
-                professional_users = int(cr.split("/")[-1])
-            except:
-                pass
-                
+        if resp_pro.status_code != 200:
+             raise HTTPException(status_code=502, detail="Failed to fetch user_plans from Supabase")
+        cr = resp_pro.headers.get("Content-Range", "0-0/0")
+        try: professional_users = int(cr.split("/")[-1])
+        except: professional_users = 0
         free_users = total_users - professional_users
+        
+        # Suspended
+        resp_sus = requests.head(f"{supabase_url}/rest/v1/user_plans?status=eq.suspended&select=*", headers={'Prefer': 'count=exact', **headers}, timeout=5.0)
+        if resp_sus.status_code != 200:
+             raise HTTPException(status_code=502, detail="Failed to fetch suspended users from Supabase")
+        cr = resp_sus.headers.get("Content-Range", "0-0/0")
+        try: suspended_users = int(cr.split("/")[-1])
+        except: suspended_users = 0
+        active_users = total_users - suspended_users
+        
+        # Scans
+        resp_scans = requests.head(f"{supabase_url}/rest/v1/scans?select=*", headers={'Prefer': 'count=exact', **headers}, timeout=5.0)
+        if resp_scans.status_code != 200:
+             raise HTTPException(status_code=502, detail="Failed to fetch scans from Supabase")
+        cr = resp_scans.headers.get("Content-Range", "0-0/0")
+        try: total_scans = int(cr.split("/")[-1])
+        except: total_scans = 0
+            
+        import datetime
+        today = datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        monday = today - datetime.timedelta(days=today.weekday())
+        
+        resp_today = requests.head(f"{supabase_url}/rest/v1/scans?created_at=gte.{today.isoformat()}&select=*", headers={'Prefer': 'count=exact', **headers}, timeout=5.0)
+        if resp_today.status_code != 200:
+             raise HTTPException(status_code=502, detail="Failed to fetch today scans from Supabase")
+        cr = resp_today.headers.get("Content-Range", "0-0/0")
+        try: scans_today = int(cr.split("/")[-1])
+        except: scans_today = 0
+            
+        resp_week = requests.head(f"{supabase_url}/rest/v1/scans?created_at=gte.{monday.isoformat()}&select=*", headers={'Prefer': 'count=exact', **headers}, timeout=5.0)
+        if resp_week.status_code != 200:
+             raise HTTPException(status_code=502, detail="Failed to fetch week scans from Supabase")
+        cr = resp_week.headers.get("Content-Range", "0-0/0")
+        try: scans_this_week = int(cr.split("/")[-1])
+        except: scans_this_week = 0
         
         return {
             "total_users": total_users,
             "free_users": free_users,
             "professional_users": professional_users,
-            "scans_today": None,
-            "scans_this_week": None,
-            "recent_failures": None
+            "active_users": active_users,
+            "suspended_users": suspended_users,
+            "total_scans": total_scans,
+            "scans_today": scans_today,
+            "scans_this_week": scans_this_week
         }
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=502, detail=f"Upstream API failure: {e}")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @admin_router.get("/users")
 def get_users(limit: int = Query(50), offset: int = Query(0), user: dict = Depends(require_admin)):
@@ -296,3 +339,48 @@ def get_audit_logs(limit: int = Query(50), offset: int = Query(0), user: dict = 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return []
+
+
+from .auth.entitlements import check_free_quota, reset_free_quota
+
+@admin_router.get("/users/{user_id}/quota")
+def get_user_quota(user_id: str, user: dict = Depends(require_admin)):
+    verify_user_exists(user_id)
+    # Check if they are admin or pro
+    from .auth.entitlements import get_user_role, get_user_plan_and_status
+    role = get_user_role(user_id)
+    plan, _ = get_user_plan_and_status(user_id)
+    
+    if role == "admin":
+        return {"limit": "Unlimited", "used": 0, "remaining": "Unlimited", "reset_time": None}
+    
+    if plan == "professional":
+        return {"limit": "Professional", "used": 0, "remaining": "Unlimited", "reset_time": None}
+        
+    # Free
+    quota = check_free_quota(user_id)
+    return {
+        "limit": quota.get("limit", 5),
+        "used": quota.get("used", 0),
+        "remaining": quota.get("remaining", 5),
+        "reset_time": quota.get("reset_time")
+    }
+
+@admin_router.post("/users/{user_id}/reset-quota")
+def admin_reset_quota(user_id: str, req: Optional[AdminMutationRequest] = None, user: dict = Depends(require_admin)):
+    verify_user_exists(user_id)
+    success = reset_free_quota(user_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to reset quota in Redis")
+        
+    reason = req.reason if req else "Admin requested quota reset"
+    audit_log(
+        admin_user_id=user["sub"],
+        action="reset_free_quota",
+        resource_type="user",
+        resource_id=user_id,
+        reason=reason,
+        before_state={"quota": "unknown"},
+        after_state={"quota": "reset"}
+    )
+    return {"status": "success", "message": "Free quota reset"}
