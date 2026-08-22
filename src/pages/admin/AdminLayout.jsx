@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { adminApi } from '../../lib/api/admin';
-import { ShieldAlert, Users, Activity, List, LayoutDashboard, Loader2 } from 'lucide-react';
+import { ShieldAlert, Users, Activity, List, LayoutDashboard, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function AdminLayout() {
   const { session, loading: authLoading } = useAuth();
@@ -73,14 +73,14 @@ export default function AdminLayout() {
 
   return (
     <div className="flex-1 flex flex-col md:flex-row bg-slate-950 text-slate-50 min-h-screen">
-      <aside className="w-full md:w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0">
+      <aside className="w-full md:w-64 bg-slate-900 border-r border-slate-800 flex-shrink-0 flex flex-col">
         <div className="p-4 border-b border-slate-800">
           <h2 className="text-lg font-bold flex items-center gap-2">
             <ShieldAlert className="w-5 h-5 text-indigo-500" />
             Admin Dashboard
           </h2>
         </div>
-        <nav className="p-4 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible">
+        <nav className="p-4 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-visible flex-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path || (item.path !== '/admin' && location.pathname.startsWith(item.path));
@@ -98,6 +98,18 @@ export default function AdminLayout() {
             );
           })}
         </nav>
+        <div className="p-4 border-t border-slate-800 hidden md:block mt-auto">
+          <Link to="/" className="flex items-center gap-3 px-3 py-2 rounded text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+            <ArrowLeft className="w-4 h-4 flex-shrink-0" />
+            <span className="font-medium text-sm">Exit Admin</span>
+          </Link>
+        </div>
+        <div className="p-2 md:hidden">
+          <Link to="/" className="flex items-center gap-2 px-3 py-2 rounded text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors justify-center">
+            <ArrowLeft className="w-4 h-4 flex-shrink-0" />
+            <span className="font-medium text-sm">Exit Admin</span>
+          </Link>
+        </div>
       </aside>
       <main className="flex-1 overflow-x-hidden p-4 md:p-8 bg-slate-950">
         <Outlet />

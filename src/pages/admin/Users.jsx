@@ -7,11 +7,14 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(0);
+  const limit = 50;
 
   useEffect(() => {
     const fetchUsers = async () => {
+      setLoading(true);
       try {
-        const data = await adminApi.getUsers(50, 0);
+        const data = await adminApi.getUsers(limit, page * limit);
         setUsers(data);
       } catch (err) {
         setError(err.message || 'Failed to load users');
@@ -20,9 +23,9 @@ export default function Users() {
       }
     };
     fetchUsers();
-  }, []);
+  }, [page]);
 
-  if (loading) {
+  if (loading && users.length === 0) {
     return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>;
   }
 
@@ -34,49 +37,78 @@ export default function Users() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Users</h1>
       
-      {users.length === 0 ? (
+      {users.length === 0 && page === 0 ? (
         <div className="p-8 text-center text-slate-400 border border-slate-800 rounded bg-slate-900">
           No users found.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded border border-slate-800">
-          <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-slate-900 border-b border-slate-800 text-slate-400">
-              <tr>
-                <th className="px-4 py-3 font-medium">EMAIL</th>
-                <th className="px-4 py-3 font-medium">ROLE</th>
-                <th className="px-4 py-3 font-medium">PLAN</th>
-                <th className="px-4 py-3 font-medium">STATUS</th>
-                <th className="px-4 py-3 font-medium">CREATED</th>
-                <th className="px-4 py-3 font-medium">ACTION</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800">
-              {users.map(u => (
-                <tr key={u.user_id} className="hover:bg-slate-800/50">
-                  <td className="px-4 py-3">{u.email || 'Unknown'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded text-xs ${u.role === 'admin' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-700 text-slate-300'}`}>
-                      {u.role || 'user'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 capitalize">{u.plan || 'free'}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded text-xs ${u.status === 'suspended' ? 'bg-red-500/20 text-red-300' : 'bg-green-500/20 text-green-300'}`}>
-                      {u.status || 'active'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">{new Date(u.created_at).toLocaleString()}</td>
-                  <td className="px-4 py-3">
-                    <Link to={`/admin/users/${u.user_id}`} className="text-indigo-400 hover:text-indigo-300">
-                      View
-                    </Link>
-                  </td>
+        <>
+          <div className="overflow-x-auto rounded border border-slate-800 relative">
+            {loading && <div className="absolute inset-0 bg-slate-950/50 flex items-center justify-center z-10"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>}
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-slate-900 border-b border-slate-800 text-slate-400">
+                <tr>
+                  <th className="px-4 py-3 font-medium">EMAIL</th>
+                  <th className="px-4 py-3 font-medium">ROLE</th>
+                  <th className="px-4 py-3 font-medium">PLAN</th>
+                  <th className="px-4 py-3 font-medium">STATUS</th>
+                  <th className="px-4 py-3 font-medium">CREATED</th>
+                  <th className="px-4 py-3 font-medium">ACTION</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-800">
+                {users.map(u => {
+                  let dateStr = 'Date unavailable';
+                  if (u.created_at) {
+                    const date = new Date(u.created_at);
+                    if (!isNaN(date.getTime())) dateStr = date.toLocaleString();
+                  }
+                  
+                  return (
+                    <tr key={u.user_id} className="hover:bg-slate-800/50">
+                      <td className="px-4 py-3">{u.email || 'Unknown'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded text-xs ${u.role === 'admin' ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-700 text-slate-300'}`}>
+                          {u.role || 'user'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 capitalize">{u.plan || 'free'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded text-xs ${u.status === 'suspended' ? 'bg-red-500/20 text-red-300' : 'bg-green-500/20 text-green-300'}`}>
+                          {u.status || 'active'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">{dateStr}</td>
+                      <td className="px-4 py-3">
+                        <Link to={`/admin/users/${u.user_id}`} className="text-indigo-400 hover:text-indigo-300">
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="flex justify-between items-center pt-4">
+             <button 
+               disabled={page === 0 || loading} 
+               onClick={() => setPage(p => p - 1)}
+               className="px-4 py-2 bg-slate-800 rounded disabled:opacity-50"
+             >
+               Previous
+             </button>
+             <span className="text-slate-400">Page {page + 1}</span>
+             <button 
+               disabled={users.length < limit || loading} 
+               onClick={() => setPage(p => p + 1)}
+               className="px-4 py-2 bg-slate-800 rounded disabled:opacity-50"
+             >
+               Next
+             </button>
+          </div>
+        </>
       )}
     </div>
   );
