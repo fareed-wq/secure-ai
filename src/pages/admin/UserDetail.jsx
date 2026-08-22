@@ -3,6 +3,7 @@ import { adminApi } from '../../lib/api/admin';
 import { Loader2, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 export default function UserDetail() {
   const { userId } = useParams();
@@ -15,16 +16,22 @@ export default function UserDetail() {
   const [modalConfig, setModalConfig] = useState(null);
   const [reason, setReason] = useState('');
 
-  const fetchUser = async () => {
-    try {
-      const data = await adminApi.getUserDetail(userId);
-      setUser(data);
-    } catch (err) {
-      setError(err.message || 'Failed to load user details');
-    } finally {
-      setLoading(false);
-    }
-  };
+  
+    const fetchUser = async () => {
+      setLoading(true);
+      try {
+        const data = await adminApi.getUser(userId);
+        setUser(data);
+        const quotaData = await fetch(`/api/admin/users/${id}/quota`, {
+            headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` }
+        }).then(r => r.json());
+        setQuota(quotaData);
+      } catch (err) {
+        setError(err.message || 'Failed to load user');
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
     fetchUser();

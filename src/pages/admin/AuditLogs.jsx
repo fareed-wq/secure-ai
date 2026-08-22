@@ -63,6 +63,9 @@ const ExpandableRow = ({ log }) => {
 
 export default function AuditLogs() {
   const [logs, setLogs] = useState([]);
+  const [searchAction, setSearchAction] = useState('');
+  const [searchAdmin, setSearchAdmin] = useState('');
+  const [searchTarget, setSearchTarget] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
@@ -82,6 +85,14 @@ export default function AuditLogs() {
     };
     fetchLogs();
   }, [page]);
+
+
+  const filteredLogs = logs.filter(l => {
+    const matchesAction = searchAction === '' || (l.action || '').toLowerCase().includes(searchAction.toLowerCase());
+    const matchesAdmin = searchAdmin === '' || (l.admin_user_id || '').toLowerCase().includes(searchAdmin.toLowerCase());
+    const matchesTarget = searchTarget === '' || (l.resource_id || '').toLowerCase().includes(searchTarget.toLowerCase());
+    return matchesAction && matchesAdmin && matchesTarget;
+  });
 
   if (loading && logs.length === 0) {
     return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>;

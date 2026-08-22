@@ -5,6 +5,10 @@ import { Link } from 'react-router-dom';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [planFilter, setPlanFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
@@ -24,6 +28,15 @@ export default function Users() {
     };
     fetchUsers();
   }, [page]);
+
+
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = searchTerm === '' || (u.email || '').toLowerCase().includes(searchTerm.toLowerCase()) || (u.user_id || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = roleFilter === 'all' || (u.role || 'user') === roleFilter;
+    const matchesPlan = planFilter === 'all' || (u.plan || 'free') === planFilter;
+    const matchesStatus = statusFilter === 'all' || (u.status || 'active') === statusFilter;
+    return matchesSearch && matchesRole && matchesPlan && matchesStatus;
+  });
 
   if (loading && users.length === 0) {
     return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>;
@@ -57,7 +70,7 @@ export default function Users() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {users.map(u => {
+                {filteredUsers.map(u => {
                   let dateStr = 'Date unavailable';
                   if (u.created_at) {
                     const date = new Date(u.created_at);
