@@ -3,7 +3,20 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Plus, Minus, Equal } from 'lucide-react';
 import { adminApi } from '../../lib/api/admin';
 
+
+const safeRender = (val) => {
+  if (val === null || val === undefined) return 'None';
+  if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') return String(val);
+  if (Array.isArray(val)) return val.map(v => safeRender(v)).join(', ');
+  if (typeof val === 'object') {
+    if (val.raw) return String(val.raw);
+    return JSON.stringify(val);
+  }
+  return 'Unknown';
+};
+
 const FindingCard = ({ item, type }) => {
+
   const isImproved = type === 'improved';
   const isRegressed = type === 'regressed';
   const isAdded = type === 'added';
@@ -37,13 +50,13 @@ const FindingCard = ({ item, type }) => {
       </div>
       {(isImproved || isRegressed) && (
         <div className="text-sm text-slate-400 space-y-2 mt-3 pt-3 border-t border-slate-800/50">
-          <div><span className="text-slate-500 text-xs uppercase block mb-1">Old Evidence</span><span className="font-mono text-xs">{item.old.evidence || 'None'}</span></div>
-          <div><span className="text-slate-500 text-xs uppercase block mb-1">New Evidence</span><span className="font-mono text-xs">{item.new.evidence || 'None'}</span></div>
+          <div><span className="text-slate-500 text-xs uppercase block mb-1">Old Evidence</span><span className="font-mono text-xs">{safeRender(item.old.evidence)}</span></div>
+          <div><span className="text-slate-500 text-xs uppercase block mb-1">New Evidence</span><span className="font-mono text-xs">{safeRender(item.new.evidence)}</span></div>
         </div>
       )}
       {(isAdded || isRemoved || isUnchanged) && f.evidence && (
         <div className="text-sm text-slate-400 mt-2 font-mono text-xs">
-          {f.evidence}
+          {safeRender(f.evidence)}
         </div>
       )}
     </div>
