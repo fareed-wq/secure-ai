@@ -124,3 +124,37 @@ def test_admin_remove_professional_mocked():
         assert response.json()["detail"] == "Phase 2"
         
         app.dependency_overrides.clear()
+
+@patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
+def test_admin_get_scans_mapping():
+    def override_get_current_user():
+        return {"sub": "admin-123"}
+        
+    with patch('api.admin.get_user_role', return_value="admin"), \
+         patch('requests.get') as mock_get:
+        
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = [
+            {"id": "1", "report_data": {"scan_mode": "active"}},
+            {"id": "2", "report_data": {"scan_mode": "passive"}},
+            {"id": "3", "report_data": {"scan_mode": "basic"}},
+            {"id": "4", "report_data": {}},
+            {"id": "5"}
+        ]
+        mock_get.return_value = mock_resp
+        
+        from api.auth.entitlements import get_current_user
+        app.dependency_overrides[get_current_user] = override_get_current_user
+        
+        response = client.get("/api/admin/scans")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 5
+        assert data[0]["scan_mode"] == "Advanced"
+        assert data[1]["scan_mode"] == "Basic"
+        assert data[2]["scan_mode"] == "Basic"
+        assert data[3]["scan_mode"] == "Unknown"
+        assert data[4]["scan_mode"] == "Unknown"
+        
+        app.dependency_overrides.clear()

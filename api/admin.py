@@ -182,11 +182,19 @@ def get_scans(limit: int = Query(50), offset: int = Query(0), user: dict = Depen
             safe_scans = []
             for row in data:
                 report = row.get("report_data") or {}
+                raw_mode = report.get("scan_mode")
+                
+                product_mode = "Unknown"
+                if raw_mode == "active":
+                    product_mode = "Advanced"
+                elif raw_mode in ("passive", "basic"):
+                    product_mode = "Basic"
+                    
                 safe_scans.append({
                     "id": row.get("id"),
                     "user_id": row.get("user_id"),
                     "url": row.get("target_url"),
-                    "scan_mode": report.get("scan_mode", "Unknown"),
+                    "scan_mode": product_mode,
                     "score": row.get("score"),
                     "status": "completed",
                     "created_at": row.get("created_at")
