@@ -65,18 +65,7 @@ export default function UserDetail() {
     }
   };
 
-  const handleResetQuota = async () => {
-    setQuotaLoading(true);
-    setQuotaError(null);
-    try {
-      await adminApi.resetQuota(userId);
-      await fetchQuota();
-    } catch (err) {
-      setQuotaError(err.message || 'Failed to reset quota');
-    } finally {
-      setQuotaLoading(false);
-    }
-  };
+
 
   if (loading) {
     return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>;
@@ -162,7 +151,13 @@ export default function UserDetail() {
             )}
             {plan === 'free' && (
               <button
-                onClick={handleResetQuota}
+                onClick={() => setModalConfig({
+                  title: 'Reset Quota',
+                  description: "Reset this user's current Free quota? This resets the current week's Free scan usage to 0.",
+                  action: adminApi.resetQuota,
+                  confirmText: 'Reset Quota',
+                  confirmClass: 'bg-amber-600 hover:bg-amber-700 text-white'
+                })}
                 disabled={quotaLoading}
                 className="mt-2 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-sm font-medium transition-colors disabled:opacity-50"
               >

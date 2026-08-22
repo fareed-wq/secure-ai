@@ -20,18 +20,20 @@ def test_overview_metrics(mock_verify_jwt, mock_get, mock_env):
     def get_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 200
+        params = kwargs.get("params", {})
+        
         if "/auth/v1/admin/users" in url:
             resp.json.return_value = {"users": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-        elif "plan=eq.professional" in url:
+        elif params.get("plan") == "eq.professional":
             resp.headers = {"Content-Range": "0-1/2"}
             resp.json.return_value = []
-        elif "status=eq.suspended" in url:
+        elif params.get("status") == "eq.suspended":
             resp.headers = {"Content-Range": "0-0/1"}
             resp.json.return_value = []
-        elif "created_at=gte" in url:
+        elif "created_at" in params and "gte" in params["created_at"]:
             resp.headers = {"Content-Range": "0-4/5"}
             resp.json.return_value = []
-        elif "/scans?" in url:
+        elif "/rest/v1/scans" in url:
             resp.headers = {"Content-Range": "0-19/20"}
             resp.json.return_value = []
         else:

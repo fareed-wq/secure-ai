@@ -52,10 +52,15 @@ def get_overview(user: dict = Depends(require_admin)):
         "Prefer": "count=exact"
     }
 
-    def get_count(url: str, label: str) -> int:
+    def get_count(endpoint: str, params: dict, label: str) -> int:
         """GET with limit=0 to retrieve only the Content-Range count header."""
-        separator = "&" if "?" in url else "?"
-        resp = requests.get(f"{url}{separator}limit=0", headers=count_headers, timeout=5.0)
+        # Always set limit=0 for counts
+        req_params = {**params, "limit": "0"}
+        # If select is not provided, default to id to minimize data transfer overhead if limit=0 fails
+        if "select" not in req_params:
+            req_params["select"] = "id"
+            
+        resp = requests.get(f"{supabase_url}{endpoint}", params=req_params, headers=count_headers, timeout=5.0)
         if resp.status_code != 200:
             logger.error(f"Overview: {label} returned HTTP {resp.status_code}")
             raise HTTPException(status_code=502, detail=f"Failed to fetch {label}")
@@ -78,20 +83,20 @@ def get_overview(user: dict = Depends(require_admin)):
         total_users = len(resp_users.json().get("users", []))
         
         # Counts from PostgREST via GET with limit=0
-        professional_users = get_count(f"{supabase_url}/rest/v1/user_plans?plan=eq.professional&select=*", "professional users")
+        professional_users = get_count("/rest/v1/user_plans", {"plan": "eq.professional"}, "professional users")
         free_users = total_users - professional_users
         
-        suspended_users = get_count(f"{supabase_url}/rest/v1/user_plans?status=eq.suspended&select=*", "suspended users")
+        suspended_users = get_count("/rest/v1/user_plans", {"status": "eq.suspended"}, "suspended users")
         active_users = total_users - suspended_users
         
-        total_scans = get_count(f"{supabase_url}/rest/v1/scans?select=*", "total scans")
+        total_scans = get_count("/rest/v1/scans", {}, "total scans")
             
         import datetime
         today = datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         monday = today - datetime.timedelta(days=today.weekday())
         
-        scans_today = get_count(f"{supabase_url}/rest/v1/scans?created_at=gte.{today.isoformat()}&select=*", "scans today")
-        scans_this_week = get_count(f"{supabase_url}/rest/v1/scans?created_at=gte.{monday.isoformat()}&select=*", "scans this week")
+        scans_today = get_count("/rest/v1/scans", {"created_at": f"gte.{today.isoformat()}"}, "scans today")
+        scans_this_week = get_count("/rest/v1/scans", {"created_at": f"gte.{monday.isoformat()}"}, "scans this week")
         
         return {
             "total_users": total_users,
