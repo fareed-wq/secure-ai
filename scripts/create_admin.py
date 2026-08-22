@@ -95,6 +95,26 @@ def main():
 
     print("Admin role successfully assigned in public.user_roles.")
 
+    # Ensure user_plans row exists (preserve existing, or create default free/active)
+    plans_url = f"{supabase_url.rstrip('/')}/rest/v1/user_plans"
+    plans_headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=ignore-duplicates"
+    }
+    plan_payload = {
+        "user_id": user_id,
+        "plan": "free",
+        "status": "active"
+    }
+    plan_resp = requests.post(plans_url, headers=plans_headers, json=plan_payload, timeout=5.0)
+    if plan_resp.status_code not in [200, 201, 204]:
+        print(f"Failed to ensure user_plans row: {plan_resp.status_code} {plan_resp.text}")
+        sys.exit(1)
+        
+    print("User plans row safely verified/created.")
+
     if is_new:
         print("\n========================================================")
         print("TEMPORARY CREDENTIALS (STORE SECURELY):")
