@@ -1,8 +1,8 @@
 import { normalizeScanResult } from '../models/scanResult';
 
-export const API_BASE_URL = 
-  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') 
-    ? (import.meta.env.VITE_API_URL || 'http://localhost:5000') 
+export const API_BASE_URL =
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? (import.meta.env.VITE_API_URL || 'http://localhost:5000')
     : '';
 
 import { supabase } from '../supabase';
@@ -15,7 +15,7 @@ class ScanApiClient {
 
   async runScan(url, scanMode = 'passive', reportMode = 'simple') {
     const minWait = new Promise(resolve => setTimeout(resolve, 6000));
-    
+
     const headers = {
       'Content-Type': 'application/json',
       ...(await this.getAuthHeader())
@@ -29,9 +29,23 @@ class ScanApiClient {
 
     const [response] = await Promise.all([fetchPromise, minWait]);
     const data = await response.json();
-    
+
     if (data.error) throw new Error(data.error);
     return normalizeScanResult(data);
+  }
+
+
+  async compareScans(scan1Id, scan2Id) {
+    const headers = await this.getAuthHeader();
+    const response = await fetch(`${API_BASE_URL}/api/scans/compare?scan_id_1=${scan1Id}&scan_id_2=${scan2Id}`, {
+      headers
+    });
+    if (!response.ok) {
+      let err;
+      try { err = await response.json(); } catch(e){}
+      throw new Error((err && err.detail) || err?.error || 'Failed to compare scans');
+    }
+    return await response.json();
   }
 
   async getQuota() {

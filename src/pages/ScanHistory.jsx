@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { History, ExternalLink, Calendar, ShieldAlert, Trash2, X } from 'lucide-react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -12,6 +12,51 @@ const ScanHistory = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [deleteMessage, setDeleteMessage] = useState(null);
+  const [selectedScans, setSelectedScans] = useState([]);
+  const navigate = useNavigate();
+
+
+
+  const getScanModeLabel = (mode) => {
+    if (mode === 'active') return 'Advanced';
+    if (mode === 'passive' || mode === 'basic') return 'Basic';
+    return 'Unknown';
+  };
+
+  const getBaseScan = () => selectedScans.length > 0 ? selectedScans[0] : null;
+
+  const isScanSelectable = (scan) => {
+    const scanType = getScanModeLabel(scan.report_data?.scan_mode);
+    if (scanType === 'Unknown') return false;
+
+    if (selectedScans.some(s => s.id === scan.id)) return true;
+    if (selectedScans.length >= 2) return false;
+
+    const baseScan = getBaseScan();
+    if (!baseScan) return true;
+
+    const baseType = getScanModeLabel(baseScan.report_data?.scan_mode);
+    const sameTarget = baseScan.target_url === scan.target_url;
+    const sameType = baseType === scanType;
+
+    return sameTarget && sameType;
+  };
+
+  const toggleSelection = (scan) => {
+    if (selectedScans.some(s => s.id === scan.id)) {
+      setSelectedScans(selectedScans.filter(s => s.id !== scan.id));
+    } else {
+      if (selectedScans.length < 2 && isScanSelectable(scan)) {
+        setSelectedScans([...selectedScans, scan]);
+      }
+    }
+  };
+
+  const handleCompare = () => {
+    if (selectedScans.length === 2) {
+      navigate(`/history/compare?scan1=${selectedScans[0].id}&scan2=${selectedScans[1].id}`);
+    }
+  };
 
   const fetchHistory = async () => {
     try {
@@ -46,9 +91,9 @@ const ScanHistory = () => {
         .from('scans')
         .delete()
         .eq('id', id);
-        
+
       if (error) throw error;
-      
+
       setScans(scans.filter(scan => scan.id !== id));
       setDeleteMessage({ type: 'success', text: 'Scan deleted.' });
       setTimeout(() => setDeleteMessage(null), 3000);
@@ -104,7 +149,8 @@ const ScanHistory = () => {
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-800/50 border-b border-slate-700 text-slate-400 uppercase tracking-wider">
                 <tr>
-                  <th className="p-4 font-medium">Target URL</th>
+                  <th className="p-4 font-medium w-12 text-center"></th>
+                    <th className="p-4 font-medium">Target URL</th>
                   <th className="p-4 font-medium">Date</th>
                   <th className="p-4 font-medium">Time</th>
                   <th className="p-4 font-medium">Score</th>
@@ -115,7 +161,7 @@ const ScanHistory = () => {
                 {scans.map((scan) => {
                   const mode = scan.report_data?.scan_mode;
                   const modeLabel = mode === 'active' ? 'Advanced Scan' : (mode === 'passive' || mode === 'basic' ? 'Basic Scan' : 'Unknown');
-                  
+
                   return (
                     <tr key={scan.id} className="hover:bg-slate-800/30 transition-colors">
                       <td className="p-4 font-medium text-slate-50">
