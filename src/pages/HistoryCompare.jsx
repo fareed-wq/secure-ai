@@ -4,7 +4,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 
 import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Plus, Minus, Equal } from 'lucide-react';
 
-import { adminApi } from '../../lib/api/admin';
+import { scanApi } from '../lib/api/scanner';
+import { useAuth } from '../contexts/AuthContext';
 
 
 
@@ -128,7 +129,8 @@ const FindingCard = ({ item, type }) => {
 
 
 
-export default function Compare() {
+export default function HistoryCompare() {
+  const { user } = useAuth();
 
   const [searchParams] = useSearchParams();
 
@@ -152,7 +154,7 @@ export default function Compare() {
 
     if (!scan1 || !scan2) {
 
-      setError('Missing scan IDs. Please select two scans from the Scans page.');
+      setError('Missing scan IDs. Please select two scans from History.');
 
       setLoading(false);
 
@@ -166,7 +168,7 @@ export default function Compare() {
 
       try {
 
-        const res = await adminApi.compareScans(scan1, scan2);
+        const res = await scanApi.compareScans(scan1, scan2);
 
         setData(res);
 
@@ -214,7 +216,7 @@ export default function Compare() {
 
         <button 
 
-          onClick={() => navigate('/admin/scans')}
+          onClick={() => navigate('/history')}
 
           className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
 

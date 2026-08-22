@@ -142,3 +142,167 @@ def test_compare_reports_score_increase_only():
     assert len(result["added"]) == 0
     assert len(result["removed"]) == 0
     assert len(result["unchanged"]) == 1
+
+def test_compare_reports_qa_improvement():
+    old_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 80,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [{"name": "Header Issue", "severity": "High"}]
+        }
+    }
+    new_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 90,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [{"name": "Header Issue", "severity": "Info"}]
+        }
+    }
+    result = compare_reports(old_scan, new_scan)
+    assert result["score_change"] == 10
+    assert len(result["improved"]) == 1
+    assert result["improved"][0]["name"] == "Header Issue"
+    assert len(result["added"]) == 0
+    assert len(result["removed"]) == 0
+
+def test_compare_reports_qa_regression():
+    old_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 90,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [{"name": "Header Issue", "severity": "Info"}]
+        }
+    }
+    new_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 80,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [{"name": "Header Issue", "severity": "High"}]
+        }
+    }
+    result = compare_reports(old_scan, new_scan)
+    assert result["score_change"] == -10
+    assert len(result["regressed"]) == 1
+    assert result["regressed"][0]["name"] == "Header Issue"
+    assert len(result["added"]) == 0
+    assert len(result["removed"]) == 0
+
+def test_compare_reports_qa_added():
+    old_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 90,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": []
+        }
+    }
+    new_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 80,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [{"name": "New Finding", "severity": "High"}]
+        }
+    }
+    result = compare_reports(old_scan, new_scan)
+    assert len(result["added"]) == 1
+    assert result["added"][0]["name"] == "New Finding"
+    assert len(result["removed"]) == 0
+    assert len(result["improved"]) == 0
+    assert len(result["regressed"]) == 0
+
+def test_compare_reports_qa_removed():
+    old_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 80,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [{"name": "Old Finding", "severity": "High"}]
+        }
+    }
+    new_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 90,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": []
+        }
+    }
+    result = compare_reports(old_scan, new_scan)
+    assert len(result["removed"]) == 1
+    assert result["removed"][0]["name"] == "Old Finding"
+    assert len(result["added"]) == 0
+    assert len(result["improved"]) == 0
+    assert len(result["regressed"]) == 0
+
+def test_compare_reports_qa_unchanged():
+    old_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 80,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [{"name": "Same Finding", "severity": "High"}]
+        }
+    }
+    new_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 80,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [{"name": "Same Finding", "severity": "High"}]
+        }
+    }
+    result = compare_reports(old_scan, new_scan)
+    assert len(result["unchanged"]) == 1
+    assert result["unchanged"][0]["name"] == "Same Finding"
+    assert len(result["added"]) == 0
+    assert len(result["removed"]) == 0
+    assert len(result["improved"]) == 0
+    assert len(result["regressed"]) == 0
+
+def test_compare_reports_qa_mixed():
+    old_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 80,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [
+                {"name": "Improved Finding", "severity": "High"},
+                {"name": "Regressed Finding", "severity": "Info"},
+                {"name": "Removed Finding", "severity": "Medium"},
+                {"name": "Unchanged Finding", "severity": "Low"}
+            ]
+        }
+    }
+    new_scan = {
+        "target_url": "https://qa.example.com",
+        "score": 80,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [
+                {"name": "Improved Finding", "severity": "Info"},
+                {"name": "Regressed Finding", "severity": "Critical"},
+                {"name": "Added Finding", "severity": "Medium"},
+                {"name": "Unchanged Finding", "severity": "Low"}
+            ]
+        }
+    }
+    result = compare_reports(old_scan, new_scan)
+    assert len(result["improved"]) == 1
+    assert result["improved"][0]["name"] == "Improved Finding"
+    
+    assert len(result["regressed"]) == 1
+    assert result["regressed"][0]["name"] == "Regressed Finding"
+    
+    assert len(result["added"]) == 1
+    assert result["added"][0]["name"] == "Added Finding"
+    
+    assert len(result["removed"]) == 1
+    assert result["removed"][0]["name"] == "Removed Finding"
+    
+    assert len(result["unchanged"]) == 1
+    assert result["unchanged"][0]["name"] == "Unchanged Finding"

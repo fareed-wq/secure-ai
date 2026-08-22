@@ -283,7 +283,7 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
             has_guest_lease = acquire_guest_lease(ip)
             if not has_guest_lease:
                 return JSONResponse(status_code=429, content={"error": "You already have a scan in progress.", "status": 429})
-            
+
             # Consume quota only after all validation and leases are acquired
             if not consume_guest_quota(ip):
                 return JSONResponse(status_code=429, content={"error": "You've used your 3 free Guest scans for this week.", "status": 429})
@@ -294,12 +294,12 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
         # Note: If plan == "professional" or is_admin == True, no quota restriction is applied here
 
         result = await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains, req.scan_mode), timeout=55.0)
-        
+
         import datetime
         now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
         result["created_at"] = now_iso
         result["report_mode"] = req.report_mode
-        
+
         # Automatic Scan History Persistence for authenticated users
         if entitlements.plan != "guest" and user and user.get("sub") and result.get("status") != "failed":
             from api.auth.entitlements import SUPABASE_URL, SUPABASE_SECRET_KEY
@@ -313,11 +313,11 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
                     "Content-Type": "application/json",
                     "Prefer": "return=representation"
                 }
-                
+
                 # Make sure the scan_mode is recorded in report_data so PDF generator works correctly
                 if "scan_mode" not in result:
                     result["scan_mode"] = req.scan_mode
-                    
+
                 payload = {
                     "user_id": user["sub"],
                     "target_url": result.get("url", req.url),
@@ -336,7 +336,7 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
                 except Exception as e:
                     logging.error("Exception occurred while persisting scan history.")
                     result["history_saved"] = False
-                    
+
         return result
     except Exception as e:
         return JSONResponse(status_code=200, content=get_waf_fallback_payload(req.url))
@@ -423,3 +423,59 @@ async def scan_batch(req: BatchScanRequest, request: Request, user: dict = Depen
 
 
 
+
+
+from api.scanner.compare import compare_reports
+
+@app.get("/api/scans/compare")
+def compare_user_scans(scan_id_1: str, scan_id_2: str, user: dict = Depends(require_current_user)):
+    entitlements = Entitlements(user)
+
+    # Restrict to Admin (and eventually Pro). Block Free/Guest.
+    if not entitlements.is_admin and entitlements.plan != "professional":
+        return JSONResponse(status_code=403, content={"error": "Scan comparison requires a Professional plan or Admin access."})
+
+    import os
+    import requests
+    from fastapi import HTTPException
+
+    supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
+    supabase_key = os.environ.get('SUPABASE_SECRET_KEY', '')
+    if not supabase_url or not supabase_key:
+        raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
+
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+        "Content-Type": "application/json"
+    }
+
+    # Verify ownership of scan 1
+    query_1 = f"{supabase_url}/rest/v1/scans?id=eq.{scan_id_1}&select=*"
+    if not entitlements.is_admin:
+        query_1 += f"&user_id=eq.{user['sub']}"
+    resp1 = requests.get(query_1, headers=headers)
+    if resp1.status_code != 200 or not resp1.json():
+        raise HTTPException(status_code=404, detail="Scan 1 not found or unauthorized.")
+    scan1 = resp1.json()[0]
+
+    # Verify ownership of scan 2
+    query_2 = f"{supabase_url}/rest/v1/scans?id=eq.{scan_id_2}&select=*"
+    if not entitlements.is_admin:
+        query_2 += f"&user_id=eq.{user['sub']}"
+    resp2 = requests.get(query_2, headers=headers)
+    if resp2.status_code != 200 or not resp2.json():
+        raise HTTPException(status_code=404, detail="Scan 2 not found or unauthorized.")
+    scan2 = resp2.json()[0]
+
+    # Sort scans chronologically
+    s1_time = scan1.get("created_at", "")
+    s2_time = scan2.get("created_at", "")
+    if s1_time and s2_time and s1_time > s2_time:
+        scan1, scan2 = scan2, scan1
+
+    try:
+        result = compare_reports(scan1, scan2)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
