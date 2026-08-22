@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(true);
   const [isRecovery, setIsRecovery] = useState(checkInitialRecovery);
   const [isRecoveryValidating, setIsRecoveryValidating] = useState(true);
 
@@ -54,8 +55,10 @@ export const AuthProvider = ({ children }) => {
     const checkAdmin = async () => {
       if (!session?.access_token) {
         setIsAdmin(false);
+        setIsAdminLoading(false);
         return;
       }
+      setIsAdminLoading(true);
       try {
         const response = await fetch('/api/admin/me', {
           headers: { 'Authorization': `Bearer ${session.access_token}` }
@@ -68,10 +71,12 @@ export const AuthProvider = ({ children }) => {
         }
       } catch (e) {
         setIsAdmin(false);
+      } finally {
+        setIsAdminLoading(false);
       }
     };
     checkAdmin();
-  }, [session]);
+  }, [session?.access_token]);
 
   const value = {
     session,
