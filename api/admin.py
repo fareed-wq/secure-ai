@@ -35,6 +35,9 @@ def get_me(user: dict = Depends(require_admin)):
 
 @admin_router.get("/overview")
 def get_overview(user: dict = Depends(require_admin)):
+    import logging
+    logger = logging.getLogger(__name__)
+    
     supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
     supabase_key = os.environ.get('SUPABASE_SECRET_KEY', '')
     if not supabase_url or not supabase_key:
@@ -44,56 +47,51 @@ def get_overview(user: dict = Depends(require_admin)):
         "apikey": supabase_key,
         "Authorization": f"Bearer {supabase_key}"
     }
+    count_headers = {
+        **headers,
+        "Prefer": "count=exact"
+    }
+
+    def get_count(url: str, label: str) -> int:
+        """GET with limit=0 to retrieve only the Content-Range count header."""
+        separator = "&" if "?" in url else "?"
+        resp = requests.get(f"{url}{separator}limit=0", headers=count_headers, timeout=5.0)
+        if resp.status_code != 200:
+            logger.error(f"Overview: {label} returned HTTP {resp.status_code}")
+            raise HTTPException(status_code=502, detail=f"Failed to fetch {label}")
+        cr = resp.headers.get("Content-Range", "")
+        if "/" not in cr:
+            logger.error(f"Overview: {label} missing Content-Range header")
+            raise HTTPException(status_code=502, detail=f"Failed to fetch {label}")
+        try:
+            return int(cr.split("/")[-1])
+        except (ValueError, IndexError):
+            logger.error(f"Overview: {label} unparseable Content-Range: {cr}")
+            raise HTTPException(status_code=502, detail=f"Failed to fetch {label}")
 
     try:
+        # Total users from Auth Admin API
         resp_users = requests.get(f"{supabase_url}/auth/v1/admin/users", headers=headers, timeout=5.0)
         if resp_users.status_code != 200:
+            logger.error(f"Overview: Auth users returned HTTP {resp_users.status_code}")
             raise HTTPException(status_code=502, detail="Failed to fetch users from Supabase")
         total_users = len(resp_users.json().get("users", []))
         
-        # Free vs Professional
-        resp_pro = requests.head(f"{supabase_url}/rest/v1/user_plans?plan=eq.professional&select=*", headers={'Prefer': 'count=exact', **headers}, timeout=5.0)
-        if resp_pro.status_code != 200:
-             raise HTTPException(status_code=502, detail="Failed to fetch user_plans from Supabase")
-        cr = resp_pro.headers.get("Content-Range", "0-0/0")
-        try: professional_users = int(cr.split("/")[-1])
-        except: professional_users = 0
+        # Counts from PostgREST via GET with limit=0
+        professional_users = get_count(f"{supabase_url}/rest/v1/user_plans?plan=eq.professional&select=*", "professional users")
         free_users = total_users - professional_users
         
-        # Suspended
-        resp_sus = requests.head(f"{supabase_url}/rest/v1/user_plans?status=eq.suspended&select=*", headers={'Prefer': 'count=exact', **headers}, timeout=5.0)
-        if resp_sus.status_code != 200:
-             raise HTTPException(status_code=502, detail="Failed to fetch suspended users from Supabase")
-        cr = resp_sus.headers.get("Content-Range", "0-0/0")
-        try: suspended_users = int(cr.split("/")[-1])
-        except: suspended_users = 0
+        suspended_users = get_count(f"{supabase_url}/rest/v1/user_plans?status=eq.suspended&select=*", "suspended users")
         active_users = total_users - suspended_users
         
-        # Scans
-        resp_scans = requests.head(f"{supabase_url}/rest/v1/scans?select=*", headers={'Prefer': 'count=exact', **headers}, timeout=5.0)
-        if resp_scans.status_code != 200:
-             raise HTTPException(status_code=502, detail="Failed to fetch scans from Supabase")
-        cr = resp_scans.headers.get("Content-Range", "0-0/0")
-        try: total_scans = int(cr.split("/")[-1])
-        except: total_scans = 0
+        total_scans = get_count(f"{supabase_url}/rest/v1/scans?select=*", "total scans")
             
         import datetime
         today = datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
         monday = today - datetime.timedelta(days=today.weekday())
         
-        resp_today = requests.head(f"{supabase_url}/rest/v1/scans?created_at=gte.{today.isoformat()}&select=*", headers={'Prefer': 'count=exact', **headers}, timeout=5.0)
-        if resp_today.status_code != 200:
-             raise HTTPException(status_code=502, detail="Failed to fetch today scans from Supabase")
-        cr = resp_today.headers.get("Content-Range", "0-0/0")
-        try: scans_today = int(cr.split("/")[-1])
-        except: scans_today = 0
-            
-        resp_week = requests.head(f"{supabase_url}/rest/v1/scans?created_at=gte.{monday.isoformat()}&select=*", headers={'Prefer': 'count=exact', **headers}, timeout=5.0)
-        if resp_week.status_code != 200:
-             raise HTTPException(status_code=502, detail="Failed to fetch week scans from Supabase")
-        cr = resp_week.headers.get("Content-Range", "0-0/0")
-        try: scans_this_week = int(cr.split("/")[-1])
-        except: scans_this_week = 0
+        scans_today = get_count(f"{supabase_url}/rest/v1/scans?created_at=gte.{today.isoformat()}&select=*", "scans today")
+        scans_this_week = get_count(f"{supabase_url}/rest/v1/scans?created_at=gte.{monday.isoformat()}&select=*", "scans this week")
         
         return {
             "total_users": total_users,
@@ -105,12 +103,14 @@ def get_overview(user: dict = Depends(require_admin)):
             "scans_today": scans_today,
             "scans_this_week": scans_this_week
         }
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=502, detail=f"Upstream API failure: {e}")
     except HTTPException:
         raise
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Overview upstream failure: {e}")
+        raise HTTPException(status_code=502, detail="Upstream API failure")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Overview unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @admin_router.get("/users")

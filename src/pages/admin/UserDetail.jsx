@@ -3,7 +3,6 @@ import { adminApi } from '../../lib/api/admin';
 import { Loader2, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
 
 export default function UserDetail() {
   const { userId } = useParams();
@@ -11,30 +10,42 @@ export default function UserDetail() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [quota, setQuota] = useState(null);
+  const [quotaError, setQuotaError] = useState(null);
+  const [quotaLoading, setQuotaLoading] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [modalConfig, setModalConfig] = useState(null);
   const [reason, setReason] = useState('');
 
-  
-    const fetchUser = async () => {
-      setLoading(true);
-      try {
-        const data = await adminApi.getUser(userId);
-        setUser(data);
-        const quotaData = await fetch(`/api/admin/users/${id}/quota`, {
-            headers: { 'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}` }
-        }).then(r => r.json());
-        setQuota(quotaData);
-      } catch (err) {
-        setError(err.message || 'Failed to load user');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchUser = async () => {
+    setLoading(true);
+    try {
+      const data = await adminApi.getUserDetail(userId);
+      setUser(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchQuota = async () => {
+    setQuotaLoading(true);
+    setQuotaError(null);
+    try {
+      const data = await adminApi.getUserQuota(userId);
+      setQuota(data);
+    } catch (err) {
+      setQuotaError(err.message || 'Failed to load quota');
+    } finally {
+      setQuotaLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchUser();
+    fetchQuota();
   }, [userId]);
 
   const handleAction = async () => {
@@ -44,12 +55,26 @@ export default function UserDetail() {
     try {
       await modalConfig.action(userId, reason);
       await fetchUser();
+      await fetchQuota();
       setModalConfig(null);
       setReason('');
     } catch (err) {
       setActionError(err.message || 'Action failed');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleResetQuota = async () => {
+    setQuotaLoading(true);
+    setQuotaError(null);
+    try {
+      await adminApi.resetQuota(userId);
+      await fetchQuota();
+    } catch (err) {
+      setQuotaError(err.message || 'Failed to reset quota');
+    } finally {
+      setQuotaLoading(false);
     }
   };
 
@@ -106,16 +131,49 @@ export default function UserDetail() {
               <div>{new Date(user.created_at).toLocaleString()}</div>
             </div>
           )}
-          {user.scan_usage !== undefined && (
-            <div>
-              <div className="text-sm text-slate-400 mb-1">Scan Usage</div>
-              <div>{user.scan_usage}</div>
-            </div>
-          )}
         </div>
       </div>
 
-      <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 max-w-2xl mt-6">
+      {/* Quota Panel — loads independently, errors are isolated */}
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 max-w-2xl">
+        <h2 className="text-lg font-semibold mb-4">QUOTA</h2>
+        {quotaLoading && <div className="flex items-center gap-2 text-slate-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading quota...</div>}
+        {quotaError && <div className="p-3 bg-red-500/10 border border-red-500/50 rounded text-red-400 text-sm">{quotaError}</div>}
+        {quota && !quotaLoading && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <div className="text-slate-400">Limit</div>
+                <div className="font-semibold">{quota.limit}</div>
+              </div>
+              <div>
+                <div className="text-slate-400">Used</div>
+                <div className="font-semibold">{quota.used}</div>
+              </div>
+              <div>
+                <div className="text-slate-400">Remaining</div>
+                <div className="font-semibold">{quota.remaining}</div>
+              </div>
+            </div>
+            {quota.reset_time && (
+              <div className="text-xs text-slate-500">
+                Resets: {new Date(quota.reset_time * 1000).toLocaleString()}
+              </div>
+            )}
+            {plan === 'free' && (
+              <button
+                onClick={handleResetQuota}
+                disabled={quotaLoading}
+                className="mt-2 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                Reset Current Quota
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 max-w-2xl">
         <h2 className="text-lg font-semibold mb-4">ADMIN ACTIONS</h2>
         <div className="flex flex-wrap gap-4">
           {plan === 'free' && (

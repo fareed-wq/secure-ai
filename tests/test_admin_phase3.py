@@ -7,10 +7,9 @@ from api.index import app
 client = TestClient(app)
 
 @patch("api.admin.os.environ.get")
-@patch("api.admin.requests.head")
 @patch("api.admin.requests.get")
 @patch("api.auth.entitlements.verify_jwt")
-def test_overview_metrics(mock_verify_jwt, mock_get, mock_head, mock_env):
+def test_overview_metrics(mock_verify_jwt, mock_get, mock_env):
     mock_verify_jwt.return_value = {"sub": "admin123"}
     def env_side_effect(key, default=""):
         if key == "SUPABASE_URL": return "https://mock.supabase.co"
@@ -18,24 +17,27 @@ def test_overview_metrics(mock_verify_jwt, mock_get, mock_head, mock_env):
         return default
     mock_env.side_effect = env_side_effect
 
-    mock_resp_users = MagicMock()
-    mock_resp_users.status_code = 200
-    mock_resp_users.json.return_value = {"users": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-    mock_get.return_value = mock_resp_users
-
-    def head_side_effect(url, **kwargs):
+    def get_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 200
-        if "plan=eq.professional" in url:
+        if "/auth/v1/admin/users" in url:
+            resp.json.return_value = {"users": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+        elif "plan=eq.professional" in url:
             resp.headers = {"Content-Range": "0-1/2"}
+            resp.json.return_value = []
         elif "status=eq.suspended" in url:
             resp.headers = {"Content-Range": "0-0/1"}
+            resp.json.return_value = []
         elif "created_at=gte" in url:
             resp.headers = {"Content-Range": "0-4/5"}
-        else:
+            resp.json.return_value = []
+        elif "/scans?" in url:
             resp.headers = {"Content-Range": "0-19/20"}
+            resp.json.return_value = []
+        else:
+            resp.json.return_value = []
         return resp
-    mock_head.side_effect = head_side_effect
+    mock_get.side_effect = get_side_effect
     
     with patch("api.admin.get_user_role", return_value="admin"):
         response = client.get("/api/admin/overview", headers={"Authorization": "Bearer admin_token"})
@@ -49,6 +51,35 @@ def test_overview_metrics(mock_verify_jwt, mock_get, mock_head, mock_env):
     assert data["active_users"] == 9
     assert data["total_scans"] == 20
     assert data["scans_today"] == 5
+
+@patch("api.admin.os.environ.get")
+@patch("api.admin.requests.get")
+@patch("api.auth.entitlements.verify_jwt")
+def test_overview_upstream_failure_not_fake_zero(mock_verify_jwt, mock_get, mock_env):
+    """Failed upstream must produce an error, not a fake zero."""
+    mock_verify_jwt.return_value = {"sub": "admin123"}
+    def env_side_effect(key, default=""):
+        if key == "SUPABASE_URL": return "https://mock.supabase.co"
+        if key == "SUPABASE_SECRET_KEY": return "mock_key"
+        return default
+    mock_env.side_effect = env_side_effect
+
+    def get_side_effect(url, **kwargs):
+        resp = MagicMock()
+        if "/auth/v1/admin/users" in url:
+            resp.status_code = 200
+            resp.json.return_value = {"users": [1, 2]}
+        else:
+            # All PostgREST count queries fail
+            resp.status_code = 500
+        return resp
+    mock_get.side_effect = get_side_effect
+    
+    with patch("api.admin.get_user_role", return_value="admin"):
+        response = client.get("/api/admin/overview", headers={"Authorization": "Bearer admin_token"})
+    
+    # Must NOT return 200 with fake zeros
+    assert response.status_code == 502
 
 @patch("api.admin.verify_user_exists", return_value=None)
 def test_quota_visibility(mock_verify):
