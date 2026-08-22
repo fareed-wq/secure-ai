@@ -360,15 +360,23 @@ def get_user_quota(user_id: str, user: dict = Depends(require_admin)):
     # Free
     quota = check_free_quota(user_id)
     return {
-        "limit": quota.get("limit", 5),
-        "used": quota.get("used", 0),
-        "remaining": quota.get("remaining", 5),
-        "reset_time": quota.get("reset_time")
+        "limit": quota.get("quota_limit", 5),
+        "used": quota.get("quota_used", 0),
+        "remaining": quota.get("quota_remaining", 5),
+        "reset_time": quota.get("reset_at")
     }
 
 @admin_router.post("/users/{user_id}/reset-quota")
 def admin_reset_quota(user_id: str, req: Optional[AdminMutationRequest] = None, user: dict = Depends(require_admin)):
     verify_user_exists(user_id)
+    # Capture quota state before reset for audit
+    quota_before = check_free_quota(user_id)
+    before_state = {
+        "quota_used": quota_before.get("quota_used", 0),
+        "quota_limit": quota_before.get("quota_limit", 5),
+        "quota_remaining": quota_before.get("quota_remaining", 5)
+    }
+    
     success = reset_free_quota(user_id)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to reset quota in Redis")
@@ -380,7 +388,8 @@ def admin_reset_quota(user_id: str, req: Optional[AdminMutationRequest] = None, 
         resource_type="user",
         resource_id=user_id,
         reason=reason,
-        before_state={"quota": "unknown"},
-        after_state={"quota": "reset"}
+        before_state=before_state,
+        after_state={"quota_used": 0, "quota_remaining": before_state["quota_limit"]}
     )
     return {"status": "success", "message": "Free quota reset"}
+

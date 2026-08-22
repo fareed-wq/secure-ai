@@ -55,7 +55,7 @@ def test_quota_visibility(mock_verify):
     
     with patch("api.admin.get_user_role", return_value="user"), \
          patch("api.admin.get_user_plan_and_status", return_value=("free", "active")), \
-         patch("api.admin.check_free_quota", return_value={"limit": 5, "used": 2, "remaining": 3, "reset_time": 1000}):
+         patch("api.admin.check_free_quota", return_value={"quota_limit": 5, "quota_used": 2, "quota_remaining": 3, "reset_at": 1000}):
         
         from api.admin import require_admin
         app.dependency_overrides[require_admin] = lambda: {"sub": "admin123"}
@@ -72,7 +72,8 @@ def test_quota_visibility(mock_verify):
 @patch("api.admin.audit_log")
 def test_quota_reset_exact_key_admin_only(mock_audit, mock_verify):
     
-    with patch("api.admin.reset_free_quota", return_value=True) as mock_reset:
+    with patch("api.admin.reset_free_quota", return_value=True) as mock_reset, \
+         patch("api.admin.check_free_quota", return_value={"quota_limit": 5, "quota_used": 3, "quota_remaining": 2, "reset_at": 1000}):
         
         from api.admin import require_admin
         app.dependency_overrides[require_admin] = lambda: {"sub": "admin123"}
@@ -85,6 +86,8 @@ def test_quota_reset_exact_key_admin_only(mock_audit, mock_verify):
         args, kwargs = mock_audit.call_args
         assert kwargs["action"] == "reset_free_quota"
         assert kwargs["resource_id"] == "testuser"
+        assert kwargs["before_state"]["quota_used"] == 3
+        assert kwargs["after_state"]["quota_used"] == 0
 
 def test_quota_reset_not_admin():
     with patch("api.auth.entitlements.verify_jwt", return_value={"sub": "user123"}), \
@@ -116,4 +119,4 @@ def test_redis_quota_reset_exact_key(mock_env, mock_get):
     assert result == True
     
     # Assert exact key was deleted via REST
-    mock_get.assert_called_once_with(f"https://mock.redis.co/del/free_quota:{week_start}:testuser1", headers={"Authorization": "Bearer mock_token"}, timeout=1.5)
+    mock_get.assert_called_once_with(f"https://mock.redis.co/del/free_quota:testuser1:{week_start}", headers={"Authorization": "Bearer mock_token"}, timeout=1.5)
