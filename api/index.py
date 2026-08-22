@@ -221,6 +221,9 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
 
 from api.auth.entitlements import get_current_user, require_current_user, Entitlements, check_guest_quota, consume_guest_quota, check_free_quota, consume_free_quota
 from api.scanner.core import acquire_scan_lease, release_scan_lease, acquire_guest_lease, release_guest_lease
+from api.admin import admin_router
+
+app.include_router(admin_router)
 
 @app.post("/api/scan")
 @app.post("/scan")
@@ -254,7 +257,7 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
         return JSONResponse(status_code=200, content=validation_error)
 
     try:
-        lease_id = acquire_scan_lease()
+        lease_id = acquire_scan_lease(is_admin=entitlements.is_admin)
     except RuntimeError as e:
         return JSONResponse(
             status_code=503,
@@ -281,6 +284,7 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
             # Free user is constrained by global concurrency, not single-ip limit, but they still consume quota
             if not consume_free_quota(entitlements.user_id):
                 return JSONResponse(status_code=429, content={"error": "You've used your 5 free scans for this week.", "status": 429})
+        # Note: If plan == "professional" or is_admin == True, no quota restriction is applied here
 
         result = await asyncio.wait_for(asyncio.to_thread(scan_url, req.url, req.probe_subdomains, req.scan_mode), timeout=55.0)
         
@@ -330,7 +334,7 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
     except Exception as e:
         return JSONResponse(status_code=200, content=get_waf_fallback_payload(req.url))
     finally:
-        release_scan_lease(lease_id)
+        release_scan_lease(lease_id, is_admin=entitlements.is_admin)
         if has_guest_lease:
             release_guest_lease(ip)
 
@@ -366,7 +370,7 @@ async def scan_batch(req: BatchScanRequest, request: Request, user: dict = Depen
 
     def process_one_target(u):
         try:
-            lease_id = acquire_scan_lease()
+            lease_id = acquire_scan_lease(is_admin=entitlements.is_admin)
         except RuntimeError:
             return {"error": "Scanner capacity status unknown. Please try again later.", "status": 503, "url": u}
 
@@ -376,7 +380,7 @@ async def scan_batch(req: BatchScanRequest, request: Request, user: dict = Depen
         try:
             return scan_url(u)
         finally:
-            release_scan_lease(lease_id)
+            release_scan_lease(lease_id, is_admin=entitlements.is_admin)
 
     def process_batch():
         results = []
