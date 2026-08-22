@@ -115,10 +115,7 @@ def require_admin(user: dict = Security(require_current_user)) -> dict:
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid user subject.")
         
-    role = user.get("role")
-    if role != "admin":
-        role = get_user_role(user_id)
-        
+    role = get_user_role(user_id)
     if role != "admin":
         raise HTTPException(status_code=403, detail="Admin privileges required.")
         
@@ -132,13 +129,7 @@ def require_admin(user: dict = Security(require_current_user)) -> dict:
 class Entitlements:
     def __init__(self, user: Optional[dict]):
         self.user_id = user.get("sub") if user else None
-        
-        jwt_role = user.get("role") if user else None
-        if jwt_role == "admin":
-            self.role = "admin"
-        else:
-            self.role = get_user_role(self.user_id) if self.user_id else "guest"
-            
+        self.role = get_user_role(self.user_id) if self.user_id else "guest"
         if self.user_id:
             self.plan, self.status = get_user_plan_and_status(self.user_id)
         else:

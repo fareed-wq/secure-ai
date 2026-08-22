@@ -221,29 +221,40 @@ from api.auth.entitlements import get_current_user
 client = TestClient(app)
 
 def test_admin_role_resolution_consistency():
-    """
-    Test that both /api/quota and /api/admin/me recognize a user with role='admin' in their JWT
-    consistently, without relying on get_user_role database calls if the JWT provides it.
-    """
-    def override_get_current_user():
-        # The JWT payload contains "role": "admin" (e.g. assigned in GoTrue)
+    app.dependency_overrides.clear()
+    from api.auth.entitlements import get_current_user, require_current_user
+    # 1. JWT with role='admin', DB says 'user' -> BLOCKED
+    def override_get_current_user_jwt_admin():
         return {"sub": "admin-123", "role": "admin"}
 
-    app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_current_user] = override_get_current_user_jwt_admin
+    app.dependency_overrides[require_current_user] = override_get_current_user_jwt_admin
 
-    # We mock get_user_role to return "user" (i.e. the DB doesn't know they are admin)
+    from unittest.mock import patch
     with patch('api.auth.entitlements.get_user_role', return_value="user"):
-        # 1. /api/quota should recognize them as admin based on JWT
+        res_me = client.get("/api/admin/me")
+        assert res_me.status_code == 403
+        
         res_quota = client.get("/api/quota")
         assert res_quota.status_code == 200
-        data_quota = res_quota.json()
-        assert data_quota.get("role") == "admin"
-        assert data_quota.get("is_unlimited") is True
+        assert res_quota.json().get("role") != "admin"
+        assert res_quota.json().get("is_unlimited") != True
 
-        # 2. /api/admin/me should recognize them as admin based on JWT
+    # 2. JWT with normal role, DB says 'admin' -> ALLOWED
+    def override_get_current_user_jwt_normal():
+        return {"sub": "admin-123", "role": "authenticated"}
+
+    app.dependency_overrides[get_current_user] = override_get_current_user_jwt_normal
+    app.dependency_overrides[require_current_user] = override_get_current_user_jwt_normal
+
+    with patch('api.auth.entitlements.get_user_role', return_value="admin"):
         res_me = client.get("/api/admin/me")
         assert res_me.status_code == 200
-        data_me = res_me.json()
-        assert data_me.get("role") == "admin"
+        assert res_me.json().get("role") == "admin"
+        
+        res_quota = client.get("/api/quota")
+        assert res_quota.status_code == 200
+        assert res_quota.json().get("role") == "admin"
+        assert res_quota.json().get("is_unlimited") is True
 
     app.dependency_overrides.clear()
