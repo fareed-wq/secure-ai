@@ -41,7 +41,7 @@ def test_overview_metrics(mock_verify_jwt, mock_get, mock_env):
         return resp
     mock_get.side_effect = get_side_effect
     
-    with patch("api.admin.get_user_role", return_value="admin"):
+    with patch("api.auth.entitlements.get_user_role", return_value="admin"):
         response = client.get("/api/admin/overview", headers={"Authorization": "Bearer admin_token"})
         
     assert response.status_code == 200
@@ -58,7 +58,7 @@ def test_overview_metrics(mock_verify_jwt, mock_get, mock_env):
 @patch("api.admin.verify_user_exists", return_value=None)
 def test_quota_visibility(mock_verify):
     
-    with patch("api.admin.get_user_role", return_value="user"), \
+    with patch("api.auth.entitlements.get_user_role", return_value="user"), \
          patch("api.admin.get_user_plan_and_status", return_value=("free", "active")), \
          patch("api.admin.check_free_quota", return_value={"quota_limit": 5, "quota_used": 2, "quota_remaining": 3, "reset_at": 1000}):
         
@@ -161,7 +161,7 @@ def test_overview_accepts_206(mock_verify_jwt, mock_get, mock_env):
         return resp
     mock_get.side_effect = get_side_effect
     
-    with patch("api.admin.get_user_role", return_value="admin"):
+    with patch("api.auth.entitlements.get_user_role", return_value="admin"):
         response = client.get("/api/admin/overview", headers={"Authorization": "Bearer admin_token"})
         
     assert response.status_code == 200
@@ -193,7 +193,7 @@ def test_overview_missing_content_range(mock_verify_jwt, mock_get, mock_env):
         return resp
     mock_get.side_effect = get_side_effect
     
-    with patch("api.admin.get_user_role", return_value="admin"):
+    with patch("api.auth.entitlements.get_user_role", return_value="admin"):
         response = client.get("/api/admin/overview", headers={"Authorization": "Bearer admin_token"})
         
     assert response.status_code == 502
