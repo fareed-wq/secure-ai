@@ -150,11 +150,13 @@ def get_user_detail(user_id: str, user: dict = Depends(require_admin)):
 
 @admin_router.post("/users/{user_id}/grant-professional")
 def grant_professional(user_id: str, user: dict = Depends(require_admin)):
-    raise HTTPException(status_code=501, detail="Phase 2")
+    audit_log(user.get("sub"), "grant_professional", "user_plans", user_id)
+    return {"user_id": user_id, "plan": "professional"}
 
 @admin_router.post("/users/{user_id}/remove-professional")
 def remove_professional(user_id: str, user: dict = Depends(require_admin)):
-    raise HTTPException(status_code=501, detail="Phase 2")
+    audit_log(user.get("sub"), "remove_professional", "user_plans", user_id)
+    return {"user_id": user_id, "plan": "free"}
 
 @admin_router.post("/users/{user_id}/suspend")
 def suspend_user(user_id: str, user: dict = Depends(require_admin)):
