@@ -11,7 +11,8 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
   const urlInputRef = useRef(null);
 
   const isGuest = !user;
-  const quotaReached = quotaInfo?.quota?.quota_remaining <= 0;
+  const isAdmin = quotaInfo?.role === 'admin' || quotaInfo?.is_unlimited || user?.role === 'admin';
+  const quotaReached = !isAdmin && quotaInfo?.quota?.quota_remaining <= 0;
   const quotaUsed = quotaInfo?.quota?.quota_used || 0;
   const quotaLimit = quotaInfo?.quota?.quota_limit || (isGuest ? 3 : 5);
   const quotaRemaining = quotaInfo?.quota?.quota_remaining || 0;
@@ -89,7 +90,15 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
       </AnimatePresence>
 
       <form onSubmit={handleSubmit} className="w-full max-w-2xl mt-4 flex flex-col items-center gap-3">
-        {quotaInfo && (plan === 'guest' || plan === 'free') && (
+        {isAdmin && (
+          <div className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-900 border border-emerald-500/30 mt-1">
+            <ShieldAlert className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="text-slate-300">
+              Admin Access — Unlimited scan quota
+            </span>
+          </div>
+        )}
+        {quotaInfo && !isAdmin && (plan === 'guest' || plan === 'free') && (
           <div className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-900 border border-slate-700/50 mt-1">
             <AlertCircle className={`w-3.5 h-3.5 ${quotaReached ? 'text-rose-400' : 'text-indigo-400'}`} />
             <span className="text-slate-300">
