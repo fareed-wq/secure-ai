@@ -142,6 +142,69 @@ function Scanner() {
     generatePdf(reportData, executedScanMode, reportMode);
   };
 
+  const TempAdminVerify = () => {
+    const [result, setResult] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    const handleVerify = async () => {
+      setLoading(true);
+      setResult(null);
+      try {
+        const { data } = await supabase.auth.getSession();
+        const token = data?.session?.access_token;
+        
+        // 1. Missing token check
+        const r1 = await fetch('/api/admin/me');
+        const s1 = r1.status;
+
+        if (!token) {
+           setResult(`No session. Missing token check returned HTTP ${s1}`);
+           setLoading(false);
+           return;
+        }
+
+        // 2. Real verify
+        const r2 = await fetch('/api/admin/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const s2 = r2.status;
+        
+        if (s2 === 200) {
+           const j = await r2.json();
+           const uuidMatch = j.user_id === data.session.user.id;
+           setResult(`PASS | HTTP: ${s2} | Role: ${j.role} | UUID Match: ${uuidMatch} | Missing-token HTTP: ${s1}`);
+        } else {
+           setResult(`FAIL | HTTP: ${s2} | Missing-token HTTP: ${s1}`);
+        }
+      } catch (e) {
+        setResult(`Error: ${e.message}`);
+      }
+      setLoading(false);
+    };
+
+    if (!user) return null;
+
+    return (
+      <div className="fixed bottom-4 right-4 z-50 bg-slate-900 border border-slate-700 p-4 rounded-lg shadow-xl max-w-sm">
+        <h3 className="text-sm font-bold text-slate-200 mb-2">Dev: Admin Verify</h3>
+        <button 
+          onClick={handleVerify} 
+          disabled={loading}
+          className="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded text-sm transition-colors"
+        >
+          {loading ? 'Verifying...' : 'Verify Admin Session'}
+        </button>
+        {result && (
+          <div className="mt-3 text-xs p-2 bg-slate-950 rounded text-green-400 break-words font-mono">
+            {result}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+
+
   
   return (
     <div className="scanner-page scanner-wallpaper flow-root flex-1 bg-slate-950 font-sans text-slate-50 selection:bg-indigo-500/30">
@@ -175,7 +238,7 @@ function Scanner() {
         )}
       </AnimatePresence>
 
-
+      <TempAdminVerify />
 
       {/* Dynamic Content */}
       <div className="relative z-10 max-w-7xl mx-auto pb-32 print:hidden">
