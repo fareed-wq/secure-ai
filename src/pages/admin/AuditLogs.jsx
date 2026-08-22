@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { adminApi } from '../../lib/api/admin';
-import { Loader2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronRight, Search, X } from 'lucide-react';
 
 const ExpandableRow = ({ log }) => {
   const [expanded, setExpanded] = useState(false);
