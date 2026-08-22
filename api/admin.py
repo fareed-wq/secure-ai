@@ -3,6 +3,10 @@ from typing import Optional, List, Dict
 import requests
 import os
 import json
+from pydantic import BaseModel
+
+class AdminMutationRequest(BaseModel):
+    reason: Optional[str] = None
 
 from api.auth.entitlements import get_current_user, get_user_role, get_user_plan_and_status, audit_log
 
@@ -148,21 +152,73 @@ def get_user_detail(user_id: str, user: dict = Depends(require_admin)):
         "status": status
     }
 
+def upsert_user_plan(user_id: str, new_plan: str, new_status: str):
+    url = f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/user_plans"
+    headers = {
+        "apikey": os.environ.get("SUPABASE_SECRET_KEY", ""),
+        "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates"
+    }
+    payload = {
+        "user_id": user_id,
+        "plan": new_plan,
+        "status": new_status
+    }
+    resp = requests.post(url, json=payload, headers=headers, timeout=5.0)
+    if resp.status_code not in (200, 201, 204):
+        raise HTTPException(status_code=500, detail="Failed to update user_plans")
+
 @admin_router.post("/users/{user_id}/grant-professional")
-def grant_professional(user_id: str, user: dict = Depends(require_admin)):
-    raise HTTPException(status_code=501, detail="Phase 2")
+def grant_professional(user_id: str, payload: Optional[AdminMutationRequest] = None, user: dict = Depends(require_admin)):
+    current_role = get_user_role(user_id)
+    current_plan, current_status = get_user_plan_and_status(user_id)
+    before_state = {"role": current_role, "plan": current_plan, "status": current_status}
+    
+    upsert_user_plan(user_id, "professional", current_status)
+    
+    after_state = {"role": current_role, "plan": "professional", "status": current_status}
+    audit_log(user.get("sub"), "grant_professional", "user", user_id, payload.reason if payload else None, before_state, after_state)
+    return {"user_id": user_id, "plan": "professional", "status": current_status}
 
 @admin_router.post("/users/{user_id}/remove-professional")
-def remove_professional(user_id: str, user: dict = Depends(require_admin)):
-    raise HTTPException(status_code=501, detail="Phase 2")
+def remove_professional(user_id: str, payload: Optional[AdminMutationRequest] = None, user: dict = Depends(require_admin)):
+    current_role = get_user_role(user_id)
+    current_plan, current_status = get_user_plan_and_status(user_id)
+    before_state = {"role": current_role, "plan": current_plan, "status": current_status}
+    
+    upsert_user_plan(user_id, "free", current_status)
+    
+    after_state = {"role": current_role, "plan": "free", "status": current_status}
+    audit_log(user.get("sub"), "remove_professional", "user", user_id, payload.reason if payload else None, before_state, after_state)
+    return {"user_id": user_id, "plan": "free", "status": current_status}
 
 @admin_router.post("/users/{user_id}/suspend")
-def suspend_user(user_id: str, user: dict = Depends(require_admin)):
-    raise HTTPException(status_code=501, detail="Phase 2")
+def suspend_user(user_id: str, payload: Optional[AdminMutationRequest] = None, user: dict = Depends(require_admin)):
+    if user.get("sub") == user_id:
+        raise HTTPException(status_code=400, detail="You cannot suspend your own Admin account.")
+        
+    current_role = get_user_role(user_id)
+    current_plan, current_status = get_user_plan_and_status(user_id)
+    before_state = {"role": current_role, "plan": current_plan, "status": current_status}
+    
+    upsert_user_plan(user_id, current_plan, "suspended")
+    
+    after_state = {"role": current_role, "plan": current_plan, "status": "suspended"}
+    audit_log(user.get("sub"), "suspend_user", "user", user_id, payload.reason if payload else None, before_state, after_state)
+    return {"user_id": user_id, "plan": current_plan, "status": "suspended"}
 
 @admin_router.post("/users/{user_id}/reactivate")
-def reactivate_user(user_id: str, user: dict = Depends(require_admin)):
-    raise HTTPException(status_code=501, detail="Phase 2")
+def reactivate_user(user_id: str, payload: Optional[AdminMutationRequest] = None, user: dict = Depends(require_admin)):
+    current_role = get_user_role(user_id)
+    current_plan, current_status = get_user_plan_and_status(user_id)
+    before_state = {"role": current_role, "plan": current_plan, "status": current_status}
+    
+    upsert_user_plan(user_id, current_plan, "active")
+    
+    after_state = {"role": current_role, "plan": current_plan, "status": "active"}
+    audit_log(user.get("sub"), "reactivate_user", "user", user_id, payload.reason if payload else None, before_state, after_state)
+    return {"user_id": user_id, "plan": current_plan, "status": "active"}
 
 @admin_router.get("/scans")
 def get_scans(limit: int = Query(50), offset: int = Query(0), user: dict = Depends(require_admin)):

@@ -82,50 +82,6 @@ def test_admin_me_admin_user():
         app.dependency_overrides.clear()
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
-def test_admin_grant_professional_mocked():
-    def override_get_current_user():
-        return {"sub": "admin-123"}
-        
-    with patch('api.admin.get_user_role', return_value="admin"), \
-         patch('requests.post') as mock_post, \
-         patch('api.admin.audit_log') as mock_audit:
-        
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_post.return_value = mock_resp
-        
-        from api.auth.entitlements import get_current_user
-        app.dependency_overrides[get_current_user] = override_get_current_user
-        
-        response = client.post("/api/admin/users/target-user/grant-professional")
-        assert response.status_code == 501
-        assert response.json()["detail"] == "Phase 2"
-        
-        app.dependency_overrides.clear()
-
-@patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
-def test_admin_remove_professional_mocked():
-    def override_get_current_user():
-        return {"sub": "admin-123"}
-        
-    with patch('api.admin.get_user_role', return_value="admin"), \
-         patch('requests.post') as mock_post, \
-         patch('api.admin.audit_log') as mock_audit:
-        
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_post.return_value = mock_resp
-        
-        from api.auth.entitlements import get_current_user
-        app.dependency_overrides[get_current_user] = override_get_current_user
-        
-        response = client.post("/api/admin/users/target-user/remove-professional")
-        assert response.status_code == 501
-        assert response.json()["detail"] == "Phase 2"
-        
-        app.dependency_overrides.clear()
-
-@patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_admin_get_scans_mapping():
     def override_get_current_user():
         return {"sub": "admin-123"}
