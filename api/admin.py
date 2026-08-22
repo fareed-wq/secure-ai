@@ -8,21 +8,10 @@ from pydantic import BaseModel, Field
 class AdminMutationRequest(BaseModel):
     reason: Optional[str] = Field(None, max_length=500)
 
-from api.auth.entitlements import get_current_user, get_user_role, get_user_plan_and_status, audit_log
+from api.auth.entitlements import get_current_user, get_user_role, get_user_plan_and_status, audit_log, require_admin
 
 admin_router = APIRouter(prefix="/api/admin", tags=["admin"])
 
-def require_admin(user: Optional[dict] = Depends(get_current_user)) -> dict:
-    if not user:
-        raise HTTPException(status_code=401, detail="Authentication required.")
-    user_id = user.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid user subject.")
-    role = get_user_role(user_id)
-    if role != "admin":
-        raise HTTPException(status_code=403, detail="Admin privileges required.")
-    user["role"] = "admin"
-    return user
 
 @admin_router.get("/me")
 def get_me(user: dict = Depends(require_admin)):

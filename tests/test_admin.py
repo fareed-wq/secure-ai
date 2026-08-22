@@ -21,13 +21,13 @@ def mock_get_current_user_admin():
 
 @pytest.fixture
 def mock_get_user_role_normal():
-    with patch('api.admin.get_user_role') as m:
+    with patch('api.auth.entitlements.get_user_role') as m:
         m.return_value = "user"
         yield m
 
 @pytest.fixture
 def mock_get_user_role_admin():
-    with patch('api.admin.get_user_role') as m:
+    with patch('api.auth.entitlements.get_user_role') as m:
         m.return_value = "admin"
         yield m
 
@@ -55,7 +55,7 @@ def test_admin_me_normal_user_override():
 
     # We patch the function directly
     with patch('api.admin.get_current_user', return_value={"sub": "user-123"}), \
-         patch('api.admin.get_user_role', return_value="user"):
+         patch('api.auth.entitlements.get_user_role', return_value="user"):
 
         app.dependency_overrides[require_admin] = require_admin
         # If we use dependency_overrides for get_current_user:
@@ -71,7 +71,7 @@ def test_admin_me_admin_user():
     def override_get_current_user():
         return {"sub": "admin-123"}
 
-    with patch('api.admin.get_user_role', return_value="admin"):
+    with patch('api.auth.entitlements.get_user_role', return_value="admin"):
         from api.auth.entitlements import get_current_user
         app.dependency_overrides[get_current_user] = override_get_current_user
 
@@ -86,7 +86,7 @@ def test_admin_get_scans_mapping():
     def override_get_current_user():
         return {"sub": "admin-123"}
 
-    with patch('api.admin.get_user_role', return_value="admin"), \
+    with patch('api.auth.entitlements.get_user_role', return_value="admin"), \
          patch('requests.get') as mock_get:
 
         mock_resp = MagicMock()
@@ -211,3 +211,39 @@ def test_admin_audit_logs_search(mock_get_current_user_admin, mock_get_user_role
     resp2 = client.get("/api/admin/audit-logs?search=login")
     assert resp2.status_code == 200
     assert "action=ilike.*login*" in resp2.json()[0]["action"]
+import pytest
+from fastapi.testclient import TestClient
+from unittest.mock import patch
+
+from api.index import app
+from api.auth.entitlements import get_current_user
+
+client = TestClient(app)
+
+def test_admin_role_resolution_consistency():
+    """
+    Test that both /api/quota and /api/admin/me recognize a user with role='admin' in their JWT
+    consistently, without relying on get_user_role database calls if the JWT provides it.
+    """
+    def override_get_current_user():
+        # The JWT payload contains "role": "admin" (e.g. assigned in GoTrue)
+        return {"sub": "admin-123", "role": "admin"}
+
+    app.dependency_overrides[get_current_user] = override_get_current_user
+
+    # We mock get_user_role to return "user" (i.e. the DB doesn't know they are admin)
+    with patch('api.auth.entitlements.get_user_role', return_value="user"):
+        # 1. /api/quota should recognize them as admin based on JWT
+        res_quota = client.get("/api/quota")
+        assert res_quota.status_code == 200
+        data_quota = res_quota.json()
+        assert data_quota.get("role") == "admin"
+        assert data_quota.get("is_unlimited") is True
+
+        # 2. /api/admin/me should recognize them as admin based on JWT
+        res_me = client.get("/api/admin/me")
+        assert res_me.status_code == 200
+        data_me = res_me.json()
+        assert data_me.get("role") == "admin"
+
+    app.dependency_overrides.clear()
