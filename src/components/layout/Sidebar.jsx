@@ -26,7 +26,7 @@ import { useAuth } from '../../contexts/AuthContext';
 const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { signOut, user, isAdmin } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const [isLightMode, setIsLightMode] = useState(() => {
@@ -53,6 +53,10 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     { label: "API Docs", href: "/docs", icon: <Code size={18} /> },
     { label: "Trust & Policy", href: "/trust-policy", icon: <Shield size={18} /> },
   ];
+
+  if (isAdmin) {
+    navItems.push({ label: "Admin", href: "/admin", icon: <Shield size={18} className="text-red-400" /> });
+  }
 
 
 
