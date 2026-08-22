@@ -1,27 +1,50 @@
 import React, { useEffect, useState } from 'react';
 import { adminApi } from '../../lib/api/admin';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, AlertTriangle } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function UserDetail() {
   const { userId } = useParams();
+  const { user: currentUser } = useAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [modalConfig, setModalConfig] = useState(null);
+  const [reason, setReason] = useState('');
+
+  const fetchUser = async () => {
+    try {
+      const data = await adminApi.getUserDetail(userId);
+      setUser(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load user details');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const data = await adminApi.getUserDetail(userId);
-        setUser(data);
-      } catch (err) {
-        setError(err.message || 'Failed to load user details');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchUser();
   }, [userId]);
+
+  const handleAction = async () => {
+    if (!modalConfig) return;
+    setActionLoading(true);
+    setActionError(null);
+    try {
+      await modalConfig.action(userId, reason);
+      await fetchUser();
+      setModalConfig(null);
+      setReason('');
+    } catch (err) {
+      setActionError(err.message || 'Action failed');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   if (loading) {
     return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>;
@@ -32,6 +55,10 @@ export default function UserDetail() {
   }
 
   if (!user) return <div className="p-4">User not found</div>;
+
+  const status = user.account_status || user.status || 'active';
+  const plan = user.plan || 'free';
+  const isSelf = currentUser && currentUser.id === user.user_id;
 
   return (
     <div className="space-y-6">
@@ -60,11 +87,11 @@ export default function UserDetail() {
           </div>
           <div>
             <div className="text-sm text-slate-400 mb-1">Plan</div>
-            <div className="capitalize">{user.plan || 'free'}</div>
+            <div className="capitalize">{plan}</div>
           </div>
           <div>
             <div className="text-sm text-slate-400 mb-1">Status</div>
-            <div className="capitalize">{user.account_status || user.status || 'active'}</div>
+            <div className="capitalize">{status}</div>
           </div>
           {user.created_at && (
             <div>
@@ -80,6 +107,119 @@ export default function UserDetail() {
           )}
         </div>
       </div>
+
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 max-w-2xl mt-6">
+        <h2 className="text-lg font-semibold mb-4">ADMIN ACTIONS</h2>
+        <div className="flex flex-wrap gap-4">
+          {plan === 'free' && (
+            <button
+              onClick={() => setModalConfig({
+                title: 'Grant Professional',
+                description: 'Grant Professional plan to this user?',
+                action: adminApi.grantProfessional,
+                confirmText: 'Grant Professional',
+                confirmClass: 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              })}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-sm font-medium transition-colors"
+            >
+              Grant Professional
+            </button>
+          )}
+
+          {plan === 'professional' && (
+            <button
+              onClick={() => setModalConfig({
+                title: 'Remove Professional',
+                description: 'Remove Professional plan and return this user to Free?',
+                action: adminApi.removeProfessional,
+                confirmText: 'Remove Professional',
+                confirmClass: 'bg-orange-600 hover:bg-orange-700 text-white'
+              })}
+              className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded text-sm font-medium transition-colors"
+            >
+              Remove Professional
+            </button>
+          )}
+
+          {status === 'active' && !isSelf && (
+            <button
+              onClick={() => setModalConfig({
+                title: 'Suspend User',
+                description: 'Suspend this user? They will be blocked from protected account and scan actions.',
+                action: adminApi.suspendUser,
+                confirmText: 'Suspend User',
+                confirmClass: 'bg-red-600 hover:bg-red-700 text-white'
+              })}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-sm font-medium transition-colors"
+            >
+              Suspend User
+            </button>
+          )}
+
+          {status === 'suspended' && (
+            <button
+              onClick={() => setModalConfig({
+                title: 'Reactivate User',
+                description: 'Reactivate this user?',
+                action: adminApi.reactivateUser,
+                confirmText: 'Reactivate',
+                confirmClass: 'bg-green-600 hover:bg-green-700 text-white'
+              })}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-sm font-medium transition-colors"
+            >
+              Reactivate User
+            </button>
+          )}
+        </div>
+      </div>
+
+      {modalConfig && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-700 rounded-lg max-w-md w-full p-6 space-y-4">
+            <h3 className="text-xl font-semibold flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              {modalConfig.title}
+            </h3>
+            <p className="text-slate-300">{modalConfig.description}</p>
+            
+            {actionError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/50 rounded text-red-400 text-sm">
+                {actionError}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm text-slate-400 mb-1">Reason (optional)</label>
+              <textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                maxLength={500}
+                className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                placeholder="Enter reason for this action..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4">
+              <button
+                disabled={actionLoading}
+                onClick={() => { setModalConfig(null); setActionError(null); setReason(''); }}
+                className="px-4 py-2 text-slate-300 hover:text-white disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={actionLoading}
+                onClick={handleAction}
+                className={`px-4 py-2 rounded font-medium disabled:opacity-50 flex items-center gap-2 ${modalConfig.confirmClass}`}
+              >
+                {actionLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                {modalConfig.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

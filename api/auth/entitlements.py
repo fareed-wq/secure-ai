@@ -340,7 +340,7 @@ def consume_free_quota(user_id: str) -> bool:
         return False
     return False
 
-def audit_log(admin_user_id: str, action: str, resource_type: str, resource_id: str = None, reason: str = None):
+def audit_log(admin_user_id: str, action: str, resource_type: str, resource_id: str = None, reason: str = None, before_state: dict = None, after_state: dict = None):
     if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
         return
     url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/audit_logs"
@@ -356,7 +356,16 @@ def audit_log(admin_user_id: str, action: str, resource_type: str, resource_id: 
         "resource_id": resource_id,
         "reason": reason
     }
+    if before_state is not None:
+        payload["before_state"] = before_state
+    if after_state is not None:
+        payload["after_state"] = after_state
+        
     try:
-        requests.post(url, json=payload, headers=headers, timeout=2.0)
-    except Exception:
-        pass
+        resp = requests.post(url, json=payload, headers=headers, timeout=2.0)
+        if resp.status_code not in (200, 201, 204):
+            import sys
+            print(f"Audit log failure: HTTP {resp.status_code} {resp.text}", file=sys.stderr)
+    except Exception as e:
+        import sys
+        print(f"Audit log failure: {e}", file=sys.stderr)

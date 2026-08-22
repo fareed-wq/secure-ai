@@ -49,7 +49,7 @@ export default function Scans() {
                 <tr>
                   <th className="px-4 py-3 font-medium">TARGET</th>
                   <th className="px-4 py-3 font-medium">USER</th>
-                  <th className="px-4 py-3 font-medium">MODE</th>
+                  <th className="px-4 py-3 font-medium">SCAN TYPE</th>
                   <th className="px-4 py-3 font-medium">SCORE</th>
                   <th className="px-4 py-3 font-medium">STATUS</th>
                   <th className="px-4 py-3 font-medium">DATE</th>
@@ -72,7 +72,7 @@ export default function Scans() {
                     <tr key={scan.id} className="hover:bg-slate-800/50">
                       <td className="px-4 py-3 truncate max-w-[200px]" title={scan.url}>{scan.url}</td>
                       <td className="px-4 py-3 font-mono text-xs truncate max-w-[150px]" title={scan.user_id}>{scan.user_id}</td>
-                      <td className="px-4 py-3 capitalize">{scan.scan_mode || 'Unknown'}</td>
+                      <td className="px-4 py-3">{scan.scan_mode}</td>
                       <td className="px-4 py-3">{scan.score !== undefined && scan.score !== null ? scan.score : '-'}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded text-xs ${scan.status === 'completed' ? 'bg-green-500/20 text-green-300' : scan.status === 'failed' ? 'bg-red-500/20 text-red-300' : 'bg-blue-500/20 text-blue-300'}`}>
