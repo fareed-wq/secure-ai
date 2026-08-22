@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isRecovery, setIsRecovery] = useState(checkInitialRecovery);
   const [isRecoveryValidating, setIsRecoveryValidating] = useState(true);
 
@@ -49,9 +50,33 @@ export const AuthProvider = ({ children }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!session?.access_token) {
+        setIsAdmin(false);
+        return;
+      }
+      try {
+        const response = await fetch('/api/admin/me', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setIsAdmin(data.role === 'admin');
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (e) {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [session]);
+
   const value = {
     session,
     user,
+    isAdmin,
     isRecovery,
     setIsRecovery,
     isRecoveryValidating, loading,

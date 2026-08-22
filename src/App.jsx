@@ -29,6 +29,14 @@ const ApiDocs = React.lazy(() => import('./pages/ApiDocs'));
 const Pricing = React.lazy(() => import('./pages/Pricing'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 
+// Admin Routes
+const AdminLayout = React.lazy(() => import('./pages/admin/AdminLayout'));
+const AdminOverview = React.lazy(() => import('./pages/admin/Overview'));
+const AdminUsers = React.lazy(() => import('./pages/admin/Users'));
+const AdminUserDetail = React.lazy(() => import('./pages/admin/UserDetail'));
+const AdminScans = React.lazy(() => import('./pages/admin/Scans'));
+const AdminAuditLogs = React.lazy(() => import('./pages/admin/AuditLogs'));
+
 const PlaceholderPage = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
     <h2 className="text-2xl font-bold text-slate-50 mb-2">{title}</h2>
@@ -88,6 +96,15 @@ const App = () => {
                 <Route path="/history/:scanId" element={<ScanReport />} />
                 <Route path="/compare" element={<Compare />} />
                 <Route path="/settings" element={<Settings />} />
+              </Route>
+
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminOverview />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="users/:userId" element={<AdminUserDetail />} />
+                <Route path="scans" element={<AdminScans />} />
+                <Route path="audit-logs" element={<AdminAuditLogs />} />
               </Route>
 
               {/* Redirect root to dashboard (if we were previously doing that globally, wait, let's keep * to NotFound inside RootLayout or outside) */}

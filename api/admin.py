@@ -77,12 +77,37 @@ def get_users(limit: int = Query(50), offset: int = Query(0), user: dict = Depen
 
 @admin_router.get("/users/{user_id}")
 def get_user_detail(user_id: str, user: dict = Depends(require_admin)):
-    # Return mock or real data
+    if not os.environ.get('SUPABASE_URL') or not os.environ.get('SUPABASE_SECRET_KEY'):
+        raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
+        
+    url = f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/auth/v1/admin/users/{user_id}"
+    headers = {
+        "apikey": os.environ.get("SUPABASE_SECRET_KEY", ""),
+        "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}",
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        resp = requests.get(url, headers=headers, timeout=5.0)
+        if resp.status_code == 200:
+            u = resp.json()
+            return {
+                "user_id": u.get("id"),
+                "email": u.get("email"),
+                "role": get_user_role(user_id),
+                "plan": "free",
+                "status": "active",
+                "created_at": u.get("created_at")
+            }
+    except Exception as e:
+        pass
+
+    # Fallback if request fails
     return {
         "user_id": user_id,
         "role": get_user_role(user_id),
         "plan": "free",
-        "account_status": "active"
+        "status": "active"
     }
 
 @admin_router.post("/users/{user_id}/grant-professional")
