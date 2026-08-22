@@ -282,8 +282,8 @@ class TestGlobalScanAdmissionAndIP(unittest.TestCase):
         release_scan_lease("test-uuid")
         mock_post.assert_called_once()
         called_json = mock_post.call_args[1]['json']
-        self.assertEqual(called_json[0], "ZREM")
-        self.assertEqual(called_json[2], "test-uuid")
+        self.assertEqual(called_json[0], "EVAL")
+        self.assertEqual(called_json[5], "test-uuid")
 
     @patch('api.scanner.core.requests.post')
     @patch.dict('os.environ', {'UPSTASH_REDIS_REST_URL': 'http://mock', 'UPSTASH_REDIS_REST_TOKEN': 'token'})
@@ -319,7 +319,7 @@ class TestBatchConcurrency(unittest.TestCase):
     
         self.assertEqual(res.status_code, 200)
         mock_acquire.assert_called_once()
-        mock_release.assert_called_once_with("lease-1")
+        mock_release.assert_called_once_with("lease-1", is_admin=unittest.mock.ANY)
 
     @patch("api.index.acquire_scan_lease")
     @patch("api.index.release_scan_lease")
@@ -342,8 +342,8 @@ class TestBatchConcurrency(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(mock_acquire.call_count, 2)
         # Release should be called for both
-        mock_release.assert_any_call("lease-1")
-        mock_release.assert_any_call("lease-2")
+        mock_release.assert_any_call("lease-1", is_admin=unittest.mock.ANY)
+        mock_release.assert_any_call("lease-2", is_admin=unittest.mock.ANY)
 
     @patch("api.index.acquire_scan_lease")
     @patch("api.index.release_scan_lease")
@@ -377,7 +377,7 @@ class TestBatchConcurrency(unittest.TestCase):
         self.assertEqual(len(err), 1)
 
         # Release ONLY called for lease-1
-        mock_release.assert_called_once_with("lease-1")
+        mock_release.assert_called_once_with("lease-1", is_admin=unittest.mock.ANY)
 
     @patch("api.index.acquire_scan_lease")
     @patch("api.index.release_scan_lease")
@@ -400,7 +400,7 @@ class TestBatchConcurrency(unittest.TestCase):
     
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()["status"], "INCOMPLETE")
-        mock_release.assert_called_once_with("lease-fail")
+        mock_release.assert_called_once_with("lease-fail", is_admin=unittest.mock.ANY)
 
 if __name__ == '__main__':
     unittest.main()

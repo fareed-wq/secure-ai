@@ -91,6 +91,25 @@ def get_user_role(user_id: str) -> str:
         logger.error(f"Failed to fetch user role: {e}")
     return "user"
 
+def get_user_plan_and_status(user_id: str) -> tuple[str, str]:
+    if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
+        return "free", "active"
+    
+    url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/user_plans?user_id=eq.{user_id}&select=plan,status"
+    headers = {
+        "apikey": SUPABASE_SECRET_KEY,
+        "Authorization": f"Bearer {SUPABASE_SECRET_KEY}"
+    }
+    try:
+        resp = requests.get(url, headers=headers, timeout=2.0)
+        if resp.status_code == 200:
+            data = resp.json()
+            if len(data) > 0:
+                return data[0].get("plan", "free"), data[0].get("status", "active")
+    except Exception as e:
+        logger.error(f"Failed to fetch user plan/status: {e}")
+    return "free", "active"
+
 def require_admin(user: dict = Security(require_current_user)) -> dict:
     user_id = user.get("sub")
     if not user_id:
@@ -100,6 +119,10 @@ def require_admin(user: dict = Security(require_current_user)) -> dict:
     if role != "admin":
         raise HTTPException(status_code=403, detail="Admin privileges required.")
         
+    _, status = get_user_plan_and_status(user_id)
+    if status == "suspended":
+        raise HTTPException(status_code=403, detail="Account suspended.")
+        
     user["role"] = "admin"
     return user
 
@@ -107,7 +130,11 @@ class Entitlements:
     def __init__(self, user: Optional[dict]):
         self.user_id = user.get("sub") if user else None
         self.role = get_user_role(self.user_id) if self.user_id else "guest"
-        self.plan = "free" if self.user_id else "guest"
+        if self.user_id:
+            self.plan, self.status = get_user_plan_and_status(self.user_id)
+        else:
+            self.plan = "guest"
+            self.status = "active"
 
     @property
     def is_admin(self) -> bool:
@@ -146,7 +173,10 @@ class Entitlements:
         return self.is_admin
 
 def get_entitlements(user: Optional[dict] = Security(get_current_user)) -> Entitlements:
-    return Entitlements(user)
+    entitlements = Entitlements(user)
+    if entitlements.status == "suspended":
+        raise HTTPException(status_code=403, detail="Account suspended.")
+    return entitlements
 
 def get_monday_utc_boundaries() -> tuple[int, int]:
     """Returns (current_week_start_timestamp, next_week_start_timestamp) for Monday 00:00 UTC."""

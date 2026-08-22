@@ -3,7 +3,7 @@ import os
 
 def test_delete_does_not_consume_quota():
     from api.index import app
-    routes = [r.path for r in app.routes]
+    routes = [getattr(r, 'path', '') for r in app.routes]
     assert "/api/scan/delete" not in routes
 
 def test_rls_migration_exists():

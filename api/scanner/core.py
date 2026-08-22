@@ -83,7 +83,7 @@ def check_rate_limit(ip: str) -> bool:
     IN_MEMORY_LIMITS[ip] = history
     return True
 
-def acquire_scan_lease() -> str | None:
+def acquire_scan_lease(is_admin: bool = False) -> str | None:
     """
     Acquires an atomic global scan lease using a Lua ZSET semaphore via Upstash REST.
     Returns:
@@ -103,20 +103,31 @@ def acquire_scan_lease() -> str | None:
     now = int(time.time())
     ttl = now + 65
     max_active = 10
+    max_admin = 5
 
     lua_script = """
     redis.call('ZREMRANGEBYSCORE', KEYS[1], '-inf', ARGV[1])
+    redis.call('ZREMRANGEBYSCORE', KEYS[2], '-inf', ARGV[1])
     local count = redis.call('ZCARD', KEYS[1])
+    local admin_count = redis.call('ZCARD', KEYS[2])
+    
     if count >= tonumber(ARGV[2]) then
         return 0
-    else
-        redis.call('ZADD', KEYS[1], ARGV[3], ARGV[4])
-        return 1
     end
+    
+    if tonumber(ARGV[4]) == 1 then
+        if admin_count >= tonumber(ARGV[5]) then
+            return 0
+        end
+        redis.call('ZADD', KEYS[2], ARGV[3], ARGV[6])
+    end
+    
+    redis.call('ZADD', KEYS[1], ARGV[3], ARGV[6])
+    return 1
     """
 
     headers = {"Authorization": f"Bearer {redis_token}"}
-    payload = ["EVAL", lua_script, 1, "active_scans", now, max_active, ttl, lease_id]
+    payload = ["EVAL", lua_script, 2, "active_scans", "admin_active_scans", now, max_active, ttl, 1 if is_admin else 0, max_admin, lease_id]
 
     try:
         resp = requests.post(redis_url, json=payload, headers=headers, timeout=1.5)
@@ -131,7 +142,7 @@ def acquire_scan_lease() -> str | None:
         logger.error(f"Failed to acquire scan lease: {e}")
         raise RuntimeError("Failed to acquire global active-scan lease due to Redis error.")
 
-def release_scan_lease(lease_id: str):
+def release_scan_lease(lease_id: str, is_admin: bool = False):
     """
     Idempotently releases a global scan lease via Upstash REST.
     """
@@ -145,7 +156,15 @@ def release_scan_lease(lease_id: str):
         return
 
     headers = {"Authorization": f"Bearer {redis_token}"}
-    payload = ["ZREM", "active_scans", lease_id]
+    
+    lua_script = """
+    redis.call('ZREM', KEYS[1], ARGV[1])
+    if tonumber(ARGV[2]) == 1 then
+        redis.call('ZREM', KEYS[2], ARGV[1])
+    end
+    return 1
+    """
+    payload = ["EVAL", lua_script, 2, "active_scans", "admin_active_scans", lease_id, 1 if is_admin else 0]
 
     try:
         # Fire and forget idempotently

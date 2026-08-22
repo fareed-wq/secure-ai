@@ -89,6 +89,18 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
       </AnimatePresence>
 
       <form onSubmit={handleSubmit} className="w-full max-w-2xl mt-4 flex flex-col items-center gap-3">
+        {quotaInfo && (plan === 'guest' || plan === 'free') && (
+          <div className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-900 border border-slate-700/50 mt-1">
+            <AlertCircle className={`w-3.5 h-3.5 ${quotaReached ? 'text-rose-400' : 'text-indigo-400'}`} />
+            <span className="text-slate-300">
+              {plan === 'guest' ? 'Guest Quota: ' : 'Free Quota: '}
+              {quotaUsed}/{quotaLimit} used — {quotaRemaining} remaining.
+              {quotaReached && ' weekly limit reached.'}
+            </span>
+            <span className="text-slate-500 border-l border-slate-700 pl-2 ml-1">Resets Monday</span>
+          </div>
+          )}
+
         <div className="scan-url-shell relative w-full rounded-2xl p-1 bg-slate-900/80 border border-slate-700/60 shadow-[0_0_30px_rgba(124,58,237,0.25)] flex items-center focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 focus-within:shadow-[0_0_40px_rgba(124,58,237,0.4)] transition-all duration-300">
           <Search className="w-5 h-5 text-slate-400 ml-4 shrink-0 hidden sm:block" />
           <input
@@ -109,17 +121,12 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
           </button>
         </div>
 
-        {quotaInfo && (plan === 'guest' || plan === 'free') && (
-          <div className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-900 border border-slate-700/50 mt-1">
-            <AlertCircle className={`w-3.5 h-3.5 ${quotaReached ? 'text-rose-400' : 'text-indigo-400'}`} />
-            <span className="text-slate-300">
-              {plan === 'guest' ? 'Guest Quota: ' : 'Free Quota: '}
-              {quotaUsed}/{quotaLimit} used — {quotaRemaining} remaining.
-              {quotaReached && ' weekly limit reached.'}
-            </span>
-            <span className="text-slate-500 border-l border-slate-700 pl-2 ml-1">Resets Monday</span>
-          </div>
-          )}
+        <div className="flex items-center justify-center flex-wrap gap-1 text-center text-xs text-slate-400 mt-2 font-medium px-2">
+          <span className="text-indigo-400">🔒</span>
+          <span><strong className="text-slate-300">Passive Mode & Non-Intrusive</strong> • Read-only security checks designed to minimize impact on live websites.</span>
+        </div>
+
+        
 
 
 
@@ -182,10 +189,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
             </div>
           )}
 
-          <div className="flex items-center justify-center flex-wrap gap-1 text-center text-xs text-slate-400 mt-2 font-medium px-2">
-          <span className="text-indigo-400">🔒</span>
-          <span><strong className="text-slate-300">Passive Mode — Non-Intrusive</strong> • Read-only security checks designed to minimize impact on live websites.</span>
-        </div>
+          
       </form>
     </>
   );
