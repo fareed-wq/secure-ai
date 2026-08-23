@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { History, ExternalLink, Calendar, ShieldAlert, Trash2, X } from 'lucide-react';
+import { History, ExternalLink, Calendar, ShieldAlert, Trash2, X, Search } from 'lucide-react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,13 +15,35 @@ const ScanHistory = () => {
   const [selectedScans, setSelectedScans] = useState([]);
   const navigate = useNavigate();
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
+
+
+
+  
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setSearchTerm(searchInput);
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchInput]);
 
   const getScanModeLabel = (mode) => {
     if (mode === 'active') return 'Advanced';
     if (mode === 'passive' || mode === 'basic') return 'Basic';
     return 'Unknown';
   };
+
+  
+  const filteredScans = scans.filter(scan => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    const typeLabel = getScanModeLabel(scan.report_data?.scan_mode).toLowerCase();
+    const targetUrl = (scan.target_url || '').toLowerCase();
+    const scoreStr = (scan.score || '').toString();
+    return targetUrl.includes(term) || typeLabel.includes(term) || scoreStr.includes(term);
+  });
 
   const getBaseScan = () => selectedScans.length > 0 ? selectedScans[0] : null;
 
@@ -148,9 +170,9 @@ const ScanHistory = () => {
           <ShieldAlert className="w-5 h-5" />
           {error}
         </div>
-      ) : scans.length === 0 ? (
+      ) : filteredScans.length === 0 ? (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-400">
-          You have no scan history yet. Try running your first scan!
+          {searchTerm ? 'No results found for your search.' : 'You have no scan history yet. Try running your first scan!'}
         </div>
       ) : (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">

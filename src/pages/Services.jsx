@@ -53,7 +53,7 @@ const Services = () => {
   const categoryCount = Object.keys(categoryCounts).length;
 
   // Group translations by category (with filters applied)
-  const servicesByCategory = Object.values(TRANSLATIONS).reduce((acc, service) => {
+  const servicesByCategory = allUniqueChecks.reduce((acc, service) => {
     // If category filter is active, skip if not match
     if (activeCategory !== 'all' && service.category !== activeCategory) {
       return acc;
