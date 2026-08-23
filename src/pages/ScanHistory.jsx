@@ -79,8 +79,9 @@ const ScanHistory = () => {
     try {
       const { data, error: err } = await supabase
         .from('scans')
-        .select('*')
-        .order('created_at', { ascending: false });
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
       if (err) throw err;
       setScans(data || []);
@@ -207,7 +208,7 @@ const ScanHistory = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {scans.map((scan) => {
+                {filteredScans.map((scan) => {
                   const mode = scan.report_data?.scan_mode;
                   const modeLabel = mode === 'active' ? 'Advanced Scan' : (mode === 'passive' || mode === 'basic' ? 'Basic Scan' : 'Unknown');
 
