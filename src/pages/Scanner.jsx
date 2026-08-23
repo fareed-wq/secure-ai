@@ -124,7 +124,7 @@ function Scanner() {
       } catch (error) {
       console.error('Backend Connection Error:', error);
       const msg = error.message || String(error);
-      if (msg.includes("You've used your 3 free Guest scans")) {
+      if (msg.includes("You've used your") || msg.includes("Rate limit exceeded") || msg.includes("Global scanner capacity") || msg.includes("already have a scan")) {
         setErrorMessage(msg);
       } else {
         setErrorMessage(`Failed to connect to the backend scanner: ${msg}`);

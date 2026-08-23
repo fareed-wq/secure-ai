@@ -40,10 +40,11 @@ class Config:
 IN_MEMORY_LIMITS = defaultdict(list)
 
 def get_client_ip(request: Request) -> str:
-    # 1. Prefer Vercel's immutable edge header
-    vercel_ip = request.headers.get("x-vercel-forwarded-for")
-    if vercel_ip:
-        return vercel_ip.split(",")[0].strip()
+    # 1. Prefer standard proxy headers
+    for header in ["x-vercel-forwarded-for", "cf-connecting-ip", "x-forwarded-for", "x-real-ip"]:
+        ip = request.headers.get(header)
+        if ip:
+            return ip.split(",")[0].strip()
 
     # 2. Local development fallback
     if getattr(request.client, "host", None):

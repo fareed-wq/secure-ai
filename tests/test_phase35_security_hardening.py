@@ -207,7 +207,7 @@ class TestGlobalScanAdmissionAndIP(unittest.TestCase):
         mock_req = MagicMock()
         mock_req.headers.get.side_effect = lambda k, d=None: "1.2.3.4" if k.lower() == "x-forwarded-for" else d
         mock_req.client.host = "127.0.0.1"
-        self.assertEqual(get_client_ip(mock_req), "127.0.0.1")
+        self.assertEqual(get_client_ip(mock_req), "1.2.3.4")
 
     def test_get_client_ip_local_fallback(self):
         from api.scanner.core import get_client_ip
