@@ -154,6 +154,28 @@ const ScanHistory = () => {
           )}
         </div>
 
+
+      {scans.length > 0 || searchTerm ? (
+        <div className="mb-6 relative max-w-md">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-9 pr-10 py-2 text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
+            placeholder="Search history by target or scan type..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          {searchInput && (
+            <button
+              onClick={() => { setSearchInput(''); setSearchTerm(''); }}
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      ) : null}
+
       {deleteMessage && (
         <div className={`p-4 rounded-xl flex items-center gap-2 ${deleteMessage.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'}`}>
           {deleteMessage.text}
