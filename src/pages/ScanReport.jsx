@@ -54,8 +54,27 @@ const ScanReport = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[60vh]">
-        <div className="text-slate-400">Loading report...</div>
+      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 animate-pulse">
+        <div className="h-10 w-48 bg-slate-800 rounded-lg mb-8"></div>
+
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-4 flex-1 w-full">
+              <div className="h-8 w-3/4 bg-slate-800 rounded"></div>
+              <div className="h-4 w-1/2 bg-slate-800 rounded"></div>
+            </div>
+            <div className="w-24 h-24 rounded-full bg-slate-800 shrink-0 md:w-32 md:h-32"></div>
+          </div>
+        </div>
+
+        <div className="bg-slate-950 p-6 sm:p-8 rounded-2xl border border-slate-800 shadow-2xl space-y-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-24 bg-slate-900 rounded-xl border border-slate-800"></div>
+            ))}
+          </div>
+          <div className="h-64 bg-slate-900 rounded-xl border border-slate-800"></div>
+        </div>
       </div>
     );
   }
@@ -86,7 +105,7 @@ const ScanReport = () => {
 
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-      
+
       <div className="mb-4">
         <button
           type="button"
@@ -107,9 +126,9 @@ const ScanReport = () => {
         onExportPdf={handleExportPdf}
         reportData={scan.report_data}
       />
-      
+
       <div ref={reportRef} className="bg-slate-950 p-6 sm:p-8 rounded-2xl border border-slate-800 shadow-2xl relative overflow-hidden">
-        
+
 
         {activeMode === 'simple' ? (
           <SimpleReport
