@@ -196,18 +196,28 @@ class TestPhase35SecurityHardening(unittest.TestCase):
 class TestGlobalScanAdmissionAndIP(unittest.TestCase):
 
     # --- Client IP Tests ---
-    def test_get_client_ip_vercel_header(self):
+    @patch.dict('os.environ', {'VERCEL': '1'})
+    def test_get_client_ip_trusted_vercel_runtime(self):
         from api.scanner.core import get_client_ip
         mock_req = MagicMock()
-        mock_req.headers.get.side_effect = lambda k, d=None: "9.9.9.9" if k.lower() == "x-vercel-forwarded-for" else ("1.2.3.4, 9.9.9.9" if k.lower() == "x-forwarded-for" else d)
+        mock_req.headers.get.side_effect = lambda k, d=None: "9.9.9.9" if k.lower() == "x-vercel-forwarded-for" else d
         self.assertEqual(get_client_ip(mock_req), "9.9.9.9")
 
-    def test_get_client_ip_spoofed_xff_ignored(self):
+    @patch.dict('os.environ', {'VERCEL': '1'})
+    def test_get_client_ip_trusted_vercel_xff(self):
+        from api.scanner.core import get_client_ip
+        mock_req = MagicMock()
+        mock_req.headers.get.side_effect = lambda k, d=None: "8.8.8.8, 1.2.3.4" if k.lower() == "x-forwarded-for" else d
+        self.assertEqual(get_client_ip(mock_req), "8.8.8.8")
+
+    @patch.dict('os.environ', clear=True)
+    def test_get_client_ip_spoofed_xff_ignored_untrusted(self):
         from api.scanner.core import get_client_ip
         mock_req = MagicMock()
         mock_req.headers.get.side_effect = lambda k, d=None: "1.2.3.4" if k.lower() == "x-forwarded-for" else d
         mock_req.client.host = "127.0.0.1"
-        self.assertEqual(get_client_ip(mock_req), "1.2.3.4")
+        # Since VERCEL is not set, we do not trust x-forwarded-for
+        self.assertEqual(get_client_ip(mock_req), "127.0.0.1")
 
     def test_get_client_ip_local_fallback(self):
         from api.scanner.core import get_client_ip
@@ -216,11 +226,20 @@ class TestGlobalScanAdmissionAndIP(unittest.TestCase):
         mock_req.client.host = "192.168.1.100"
         self.assertEqual(get_client_ip(mock_req), "192.168.1.100")
 
-    def test_get_client_ip_malformed_vercel_header(self):
+    @patch.dict('os.environ', {'VERCEL': '1'})
+    def test_get_client_ip_malformed_trusted_header(self):
         from api.scanner.core import get_client_ip
         mock_req = MagicMock()
         mock_req.headers.get.side_effect = lambda k, d=None: " 10.0.0.1 , 1.2.3.4 " if k.lower() == "x-vercel-forwarded-for" else d
         self.assertEqual(get_client_ip(mock_req), "10.0.0.1")
+
+    @patch.dict('os.environ', {'VERCEL': '1'})
+    def test_get_client_ip_invalid_ip_skipped(self):
+        from api.scanner.core import get_client_ip
+        mock_req = MagicMock()
+        mock_req.headers.get.side_effect = lambda k, d=None: "not_an_ip" if k.lower() == "x-forwarded-for" else d
+        mock_req.client.host = "192.168.1.100"
+        self.assertEqual(get_client_ip(mock_req), "192.168.1.100")
 
     # --- Lease Acquisition Tests ---
     @patch('api.scanner.core.requests.post')
