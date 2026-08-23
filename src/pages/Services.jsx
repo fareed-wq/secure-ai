@@ -62,7 +62,7 @@ const Services = () => {
     // If search term is active, filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      if (!service.name.toLowerCase().includes(searchLower) && 
+      if (!service.name.toLowerCase().includes(searchLower) &&
           !service.problem.toLowerCase().includes(searchLower) &&
           !service.category.toLowerCase().includes(searchLower)) {
         return acc;
@@ -72,13 +72,13 @@ const Services = () => {
     if (!acc[service.category]) {
       acc[service.category] = [];
     }
-    
+
     // De-duplicate by name
     const exists = acc[service.category].find(s => s.name === service.name);
     if (!exists) {
       acc[service.category].push(service);
     }
-    
+
     return acc;
   }, {});
 
@@ -94,21 +94,21 @@ const Services = () => {
         <div className="absolute top-0 right-0 -mt-16 -mr-16 text-indigo-500/10">
           <Shield className="w-64 h-64" />
         </div>
-        
+
         <div className="relative z-10 max-w-3xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-mono text-indigo-400 mb-4">
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
             ⚡ {totalAuditCount} Active Audits across {categoryCount} Security Domains
           </div>
-          
+
           <h1 className="text-4xl md:text-5xl font-black text-slate-50 mb-6 tracking-tight">
             Security Audits
           </h1>
           <p className="text-lg text-slate-400 mb-10 max-w-2xl">
-            Our automated scanner checks your website and infrastructure for common security risks. 
+            Our automated scanner checks your website and infrastructure for common security risks.
             Below are the security checks our scanner performs.
           </p>
-          
+
           <div className="relative max-w-xl mb-6">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-slate-500" />
@@ -127,8 +127,8 @@ const Services = () => {
             <button
               onClick={() => setActiveCategory('all')}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                activeCategory === 'all' 
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' 
+                activeCategory === 'all'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
                   : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-50 hover:border-slate-700'
               }`}
             >
@@ -139,8 +139,8 @@ const Services = () => {
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  activeCategory === cat 
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20' 
+                  activeCategory === cat
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
                     : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-50 hover:border-slate-700'
                 }`}
               >
@@ -153,7 +153,7 @@ const Services = () => {
 
       {/* Dynamic Categories & Empty State */}
       {Object.keys(servicesByCategory).length === 0 ? (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center justify-center py-24 px-4 bg-slate-900/50 border border-slate-800/80 rounded-2xl text-center"
@@ -165,7 +165,7 @@ const Services = () => {
           <p className="text-slate-400 max-w-md mb-8">
             We couldn't find any audits matching "{searchTerm}" in the selected category. Try adjusting your search terms.
           </p>
-          <button 
+          <button
             onClick={handleClearFilters}
             className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors"
           >
@@ -177,16 +177,16 @@ const Services = () => {
         <div className="space-y-8">
           <AnimatePresence mode="popLayout">
             {Object.keys(servicesByCategory).map((categoryKey) => {
-              const meta = CATEGORY_METADATA[categoryKey] || { 
-                title: categoryKey, 
-                icon: "Shield", 
+              const meta = CATEGORY_METADATA[categoryKey] || {
+                title: categoryKey,
+                icon: "Shield",
                 description: "Security checks and verifications."
               };
               const CategoryIcon = IconMap[meta.icon] || Shield;
               const services = servicesByCategory[categoryKey];
 
               return (
-                <motion.section 
+                <motion.section
                   key={categoryKey}
                   layout
                   initial={{ opacity: 0, y: 20 }}
@@ -212,8 +212,8 @@ const Services = () => {
                   {/* Cards Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {services.map((service, i) => (
-                      <div 
-                        key={i} 
+                      <div
+                        key={i}
                         className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/90 hover:shadow-xl hover:shadow-indigo-500/5 flex flex-col justify-between group"
                       >
                         <div>
@@ -229,7 +229,7 @@ const Services = () => {
                             {service.why}
                           </p>
                         </div>
-                        
+
                         <div className="pt-4 mt-auto border-t border-slate-800/50">
                           <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider block mb-1">
                             Scanner Inspection:

@@ -18,10 +18,6 @@ const ScanHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
 
-
-
-
-  
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       setSearchTerm(searchInput);
@@ -35,7 +31,6 @@ const ScanHistory = () => {
     return 'Unknown';
   };
 
-  
   const filteredScans = scans.filter(scan => {
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();

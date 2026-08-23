@@ -23,7 +23,6 @@ export default function Scans() {
 
   const limit = 50;
 
-  
   useEffect(() => {
     const fetchScans = async () => {
       setLoading(true);
@@ -39,7 +38,6 @@ export default function Scans() {
     fetchScans();
   }, [page, searchTerm]);
 
-  
   const getScanModeLabel = (mode, rawMode) => {
     if (mode === 'Advanced' || mode === 'Basic') return mode;
     if (rawMode === 'active') return 'Advanced';
@@ -55,9 +53,6 @@ export default function Scans() {
     return matchesUrl && matchesUser && matchesType;
   });
 
-  
-  
-  
   if (loading && scans.length === 0) {
     return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>;
   }
@@ -89,7 +84,6 @@ export default function Scans() {
           </div>
         </div>
 
-        
       </div>
 
       {scans.length === 0 && page === 0 ? (
@@ -103,7 +97,7 @@ export default function Scans() {
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-slate-900 border-b border-slate-800 text-slate-400">
                 <tr>
-                  
+
                   <th className="px-4 py-3 font-medium">TARGET</th>
                   <th className="px-4 py-3 font-medium">USER</th>
                   <th className="px-4 py-3 font-medium">SCAN TYPE</th>
@@ -125,10 +119,9 @@ export default function Scans() {
                     }
                   }
 
-                  
                   return (
                     <tr key={scan.id} className="hover:bg-slate-800/50 transition-colors">
-                      
+
                       <td className="px-4 py-3 truncate max-w-[200px]" title={scan.url || scan.target_url}>{scan.url || scan.target_url}</td>
                       <td className="px-4 py-3 font-mono text-xs truncate max-w-[150px]" title={scan.user_id}>{scan.user_id}</td>
                       <td className="px-4 py-3">{getScanModeLabel(scan.scan_mode, scan.report_data?.scan_mode)}</td>
