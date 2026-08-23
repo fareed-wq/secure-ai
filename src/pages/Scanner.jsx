@@ -60,33 +60,35 @@ function Scanner() {
   useEffect(() => {
     fetchQuota();
   }, [user]);
-    useEffect(() => {
-      if (location.state?.resetScan) {
-        setScanState('idle');
-        setReportData(null);
-        setUrl('');
-        setErrorMessage('');
-        sessionStorage.removeItem('guestScanResult');
-        scrollToTop();
-        fetchQuota();
-      } else {
-        const stored = sessionStorage.getItem('guestScanResult');
-        if (stored && scanState === 'idle') {
-          try {
-            const data = JSON.parse(stored);
-            if (data && data.status !== 'failed') {
-              setReportData(data);
-              setUrl(data.url || data.target_url || '');
-              setScanState('view-report');
-              setReportMode(data.report_mode || 'simple');
-              setExecutedScanMode(data.scan_mode || 'passive');
-            }
-          } catch(e) {
-            sessionStorage.removeItem('guestScanResult');
+  useEffect(() => {
+    if (location.state?.resetScan) {
+      setScanState('idle');
+      setReportData(null);
+      setUrl('');
+      setErrorMessage('');
+      sessionStorage.removeItem('guestScanResult');
+      scrollToTop();
+      fetchQuota();
+    } else if (!user) {
+      // Guest only: restore previous scan result from sessionStorage on mount/refresh
+      const stored = sessionStorage.getItem('guestScanResult');
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          if (data && data.status !== 'failed') {
+            setReportData(data);
+            setUrl(data.url || data.target_url || '');
+            setScanState('view-report');
+            setReportMode(data.report_mode || 'simple');
+            setExecutedScanMode(data.scan_mode || 'passive');
           }
+        } catch(e) {
+          sessionStorage.removeItem('guestScanResult');
         }
       }
-    }, [location.state?.resetScan, user, scanState]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.resetScan]);
 
   const handleRequireAuth = (featureName) => {
     if (!user) {

@@ -250,7 +250,7 @@ const ScanHistory = () => {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-4">
-                          <Link to={`/history/${scan.id}`} className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors">
+                          <Link to={`/history/${scan.id}?from=history`} className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors">
                             View Report <ExternalLink className="w-4 h-4" />
                           </Link>
                           <button
