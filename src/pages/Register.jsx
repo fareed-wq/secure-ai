@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ShieldCheck, Mail, Lock, User, Loader2, Building } from 'lucide-react';
+import { ShieldCheck, Mail, Lock, User, Loader2, Building, Eye, EyeOff } from 'lucide-react';
 import { validatePassword } from '../lib/utils/passwordPolicy';
 import { PasswordChecklist } from '../components/auth/PasswordChecklist';
 import { Turnstile } from '@marsidev/react-turnstile';
@@ -16,6 +16,8 @@ const Register = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
   const turnstileRef = React.useRef();
   const navigate = useNavigate();
@@ -135,6 +137,7 @@ const Register = () => {
                 <input
                   type="email"
                   name="email"
+                  autoComplete="email"
                   required
                   value={formData.email}
                   onChange={handleChange}
@@ -151,15 +154,24 @@ const Register = () => {
                   <Lock className="h-5 w-5 text-slate-500" />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
+                  autoComplete="new-password"
                   required
                   maxLength={72}
                   value={formData.password}
                   onChange={handleChange}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full pl-10 pr-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 focus:outline-none"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
 
@@ -170,15 +182,24 @@ const Register = () => {
                   <Lock className="h-5 w-5 text-slate-500" />
                 </div>
                 <input
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
+                  autoComplete="new-password"
                   required
                   maxLength={72}
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                  className="block w-full pl-10 pr-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-50 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                   placeholder="••••••••"
                 />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 focus:outline-none"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
 
