@@ -3,6 +3,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from api.scanner.base import ScannerModule
 from api.scanner.socket_helper import safe_create_connection
+import logging
+import time
+
+logger = logging.getLogger(__name__)
+
 
 class NetworkServiceExposureModule(ScannerModule):
     module_name = "NetworkServiceExposureModule"
@@ -44,10 +49,13 @@ class NetworkServiceExposureModule(ScannerModule):
     }
 
     def _check_port(self, hostname: str, port: int, service: str, severity: str, finding_name: str, desc: str, impact: str) -> Optional[dict]:
+        start_time = time.time()
         try:
             # Short timeout per port, safe_create_connection includes SSRF protection
             sock = safe_create_connection((hostname, port), timeout=1.5)
             sock.close()
+            elapsed = time.time() - start_time
+            logger.info(f"NetworkServiceExposure port={port} host={hostname} succeeded after {elapsed:.2f}s")
 
             return self.make_finding(
                 name=finding_name,
@@ -60,7 +68,9 @@ class NetworkServiceExposureModule(ScannerModule):
                 confidence="High",
                 owasp="Not Mapped"
             )
-        except Exception:
+        except Exception as e:
+            elapsed = time.time() - start_time
+            logger.info(f"NetworkServiceExposure port={port} host={hostname} failed {type(e).__name__} after {elapsed:.2f}s - {str(e)}")
             # Timeout, connection refused, unreachable, unexpected errors -> No finding
             return None
 
