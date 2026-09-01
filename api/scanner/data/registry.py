@@ -1,3 +1,4 @@
+from api.scanner.modules.network_services import NetworkServiceExposureModule
 from api.scanner.modules.headers import TechFingerprintModule, CORSModule, PermissionsPolicyModule
 from api.scanner.modules.discovery import (
     ExposedFilesModule,
@@ -62,6 +63,8 @@ DOMAIN_MAP = {
     "XmlRpcModule": "api_surface",
     "PassiveSubdomainDiscoveryModule": "api_surface",
     "AuthenticationSessionSecurityModule": "api_surface",
+    "NetworkServiceExposureModule": "network_services",
+
 }
 
 PASSIVE_MODULES = [
@@ -96,6 +99,8 @@ ACTIVE_MODULES = [
     JavaScriptSecurityModule(),
     InfrastructureIntelligenceModule(),
     ApiWebSecurityModule(),
+    NetworkServiceExposureModule(),
+
 ]
 
 REGISTERED_MODULES = PASSIVE_MODULES + ACTIVE_MODULES

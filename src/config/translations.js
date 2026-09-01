@@ -42,6 +42,36 @@ export const CATEGORY_METADATA = {
 };
 
 export const TRANSLATIONS = {
+  "Port 21 Publicly Reachable (FTP-associated)": {
+    name: "Port 21 Publicly Reachable (FTP-associated)",
+    category: "Network Services",
+    problem: "TCP port 21, commonly associated with FTP, is publicly reachable.",
+    why: "If FTP is actually running, its exposure should be reviewed. It may allow unauthorized access or brute-force attacks if not properly secured."
+  },
+  "Port 22 Publicly Reachable (SSH-associated)": {
+    name: "Port 22 Publicly Reachable (SSH-associated)",
+    category: "Network Services",
+    problem: "TCP port 22, commonly associated with SSH, is publicly reachable.",
+    why: "If SSH is actually running, public management exposure increases the attack surface, though SSH itself is not automatically vulnerable."
+  },
+  "Port 23 Publicly Reachable (Telnet-associated)": {
+    name: "Port 23 Publicly Reachable (Telnet-associated)",
+    category: "Network Services",
+    problem: "TCP port 23 is commonly associated with Telnet, a legacy unencrypted protocol.",
+    why: "If Telnet is actually running, public exposure should be avoided."
+  },
+  "Port 25 Publicly Reachable (SMTP-associated)": {
+    name: "Port 25 Publicly Reachable (SMTP-associated)",
+    category: "Network Services",
+    problem: "TCP port 25, commonly associated with SMTP, is publicly reachable.",
+    why: "If a mail service is actually running, public exposure may be intentional, but can be targeted by spammers or attackers if misconfigured."
+  },
+  "Database-Associated Port Publicly Reachable": {
+    name: "Database-Associated Port Publicly Reachable",
+    category: "Network Services",
+    problem: "A TCP port commonly associated with a database is publicly reachable.",
+    why: "If a database is actually running, direct Internet reachability should be reviewed and normally restricted when the database is intended to be private."
+  },
   "Missing Strict-Transport-Security Header": {
     name: "Insecure Connection Fallback",
     category: "Encryption",

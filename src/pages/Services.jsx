@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Search, Lock, EyeOff, Mail, Globe, FileCheck, Key, XCircle } from 'lucide-react';
+import { Shield, Search, Lock, EyeOff, Mail, Globe, FileCheck, Key, Activity, XCircle } from 'lucide-react';
 import { TRANSLATIONS, CATEGORY_METADATA } from '../config/translations';
 
 // Map icon strings to actual Lucide components
