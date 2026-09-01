@@ -55,7 +55,7 @@ class EnhancedTLSModule(ScannerModule):
                             remediation="Consider using specific SANs instead of wildcards.",
                             owasp="Not Mapped",
                             category="encryption_tls",
-                            impact="If a hacker manages to steal this certificate, they can create fake secure pages for any of your subdomains, putting your entire brand at risk."
+                            impact="A compromised wildcard certificate affects all subdomains, expanding the potential impact of key material disclosure."
                         ))
 
                     not_after = cert.get("notAfter")
@@ -160,7 +160,7 @@ class EnhancedTLSModule(ScannerModule):
                 remediation="Disable TLS 1.0 and TLS 1.1 on the server.",
                 owasp="A05: Security Misconfiguration",
                 category="encryption_tls",
-                impact="These old connection methods have known flaws. Hackers could potentially break the encryption and steal sensitive data like passwords or credit card numbers from your visitors."
+                impact="Legacy TLS protocols have known cryptographic weaknesses and should be disabled to ensure secure transit."
             ))
         else:
             findings.append(self.make_finding(

@@ -284,7 +284,7 @@ class JavaScriptSecurityModule(ScannerModule):
                         "Medium",
                         "Your website's code reveals internal setup details that are normally hidden.",
                         "Configuration object found in HTML source with debug/staging indicators.",
-                        impact="Hackers can use this behind-the-scenes information to better understand your website and plan an attack.",
+                        impact="This exposes information that may assist reconnaissance.",
                         confidence="Medium",
                         category="information_exposure",
                         owasp="A05: Security Misconfiguration"
@@ -297,7 +297,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "High",
                     "A highly sensitive password or secret key for another service was found left inside your website's code.",
                     "\\n".join(list(secrets_found)[:5]),
-                    impact="Attackers can steal this key to access your accounts, steal data, or run up charges on services you use.",
+                    impact="Exposed credentials could allow unauthorized access to the associated service.",
                     confidence="High",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
@@ -319,9 +319,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Internal Infrastructure References Disclosed in Client-Side Code",
                     "Low",
-                    "Your website's code accidentally mentions private servers or internal test addresses.",
+                    "Client-side code exposes references that may reveal details about internal infrastructure.",
                     "\\n".join(list(internal_hosts)[:5]),
-                    impact="This gives attackers clues about how your private network is set up, which helps them find weaker targets.",
+                    impact="This does not necessarily mean those systems are externally reachable, but it may provide unnecessary context to external observers.",
                     confidence="Medium",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
@@ -333,7 +333,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Low",
                     "Leftover testing or debugging code was found on your live website.",
                     "\\n".join(list(debug_artifacts)[:5]),
-                    impact="This extra code can reveal details about how your website was built, giving hackers hints on where to look for weaknesses.",
+                    impact="Source maps expose the original application structure and logic, assisting external reconnaissance.",
                     confidence="Medium",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
@@ -345,7 +345,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Informational",
                     "We can easily see which tools and frameworks were used to build your website.",
                     ", ".join(frameworks),
-                    impact="Knowing the exact tools you use allows hackers to search for specific flaws related to those tools.",
+                    impact="Exposing technology details provides reconnaissance information to external observers.",
                     confidence="High",
                     category="technology_detection",
                     owasp="Not Mapped"
@@ -357,7 +357,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Informational",
                     "Your website is using older versions of some software libraries.",
                     ", ".join(outdated_libs),
-                    impact="Older software often contains known security flaws that hackers can easily exploit to compromise your site.",
+                    impact="Using outdated dependencies may expose the application to known vulnerabilities.",
                     confidence="Medium",
                     category="technology_detection",
                     owasp="A06: Vulnerable and Outdated Components"
@@ -374,7 +374,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Informational",
                     "Your website's code contains a list of direct paths (API endpoints) to your backend system.",
                     evidence,
-                    impact="This provides a complete map of your application for attackers to explore and find hidden vulnerabilities.",
+                    impact="Exposed API endpoints provide additional context about the applications backend structure.",
                     confidence="High",
                     category="api_surface",
                     owasp="Not Mapped"
@@ -386,7 +386,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Medium",
                     "Your website appears to use simple, predictable numbers (like 1, 2, 3) to identify users or records.",
                     "\\n".join(list(seq_id_routes)[:3]),
-                    impact="If permissions aren't perfectly configured, hackers can easily guess the numbers to view other people's private information.",
+                    impact="Predictable identifiers can increase the risk of Insecure Direct Object Reference (IDOR) vulnerabilities.",
                     confidence="Low",
                     category="api_surface",
                     owasp="A01: Broken Access Control"
@@ -410,7 +410,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Medium",
                     "Special files used by developers to debug code are publicly accessible on your live website.",
                     "\\n".join(source_maps[:3]),
-                    impact="This allows anyone to read your original, uncompressed source code, making it much easier for hackers to find hidden flaws.",
+                    impact="Source maps expose the original application structure and logic.",
                     confidence="High",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
@@ -422,7 +422,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Informational",
                     "The code that checks if a user is an admin or has special permissions is visible in your public website files.",
                     "\\n".join(list(auth_logic_found)[:5]),
-                    impact="Hackers can study this code to understand how your security works and try to trick the system into giving them admin access.",
+                    impact="Exposed authentication logic assists external reconnaissance of the security model.",
                     owasp="Not Mapped",
                     category="authentication",
                     confidence="Medium"
@@ -434,7 +434,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Informational",
                     "The list of user roles and permissions (like 'admin' or 'editor') is exposed in your website's code.",
                     "\\n".join(list(role_models_found)[:5]),
-                    impact="This helps attackers understand exactly what permissions exist, giving them a target list of roles to try and steal.",
+                    impact="Exposed role configurations provide insight into the application authorization model.",
                     owasp="Not Mapped",
                     category="authentication",
                     confidence="High"
@@ -446,7 +446,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Informational",
                     "Paths to restricted administrative areas were found in the public code of your website.",
                     "\\n".join(list(privileged_apis)[:5]),
-                    impact="Attackers can use these paths to find your private admin login pages or try to access restricted functions directly.",
+                    impact="Exposed administrative endpoints provide targets for unauthorized access attempts.",
                     owasp="Not Mapped",
                     category="api_surface",
                     confidence="High"
@@ -458,7 +458,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Informational",
                     "Your website reveals the exact version number of the backend services it communicates with.",
                     f"Versions observed: {', '.join(api_versions)}",
-                    impact="Knowing the exact version helps hackers quickly look up known weaknesses for that specific system.",
+                    impact="Version disclosure assists external reconnaissance by highlighting specific software versions.",
                     owasp="Not Mapped",
                     category="api_surface",
                     confidence="High"

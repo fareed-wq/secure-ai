@@ -68,7 +68,7 @@ class DNSCAAModule(ScannerModule):
                     findings.append(self.make_finding(
                         "DNSSEC Security Enabled",
                         "Passed",
-                        "Your domain has advanced security protections enabled to prevent hackers from tampering with your website's internet address.",
+                        "Your domain has advanced security protections enabled to provide authenticity and integrity validation for DNS responses.",
                         "DS record found",
                         owasp="Not Mapped",
                         category="dns_security"
@@ -79,7 +79,7 @@ class DNSCAAModule(ScannerModule):
                         "Informational",
                         "Your domain does not have advanced security protections to verify its internet address.",
                         "DNSSEC validation records not observed",
-                        impact="Hackers might be able to redirect your visitors to a fake copy of your website to steal their passwords or payment info.",
+                        impact="Weak or missing DNS protections can reduce resilience against certain DNS-based attacks, depending on the broader DNS and registrar configuration.",
                         owasp="Not Mapped",
                         category="dns_security"
                     ))
@@ -164,7 +164,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         "Medium",
                         "We found conflicting email rules for your domain, which makes the rules invalid.",
                         "\\n".join(spf_records[:3]),
-                        impact="Hackers can easily send fake emails that look exactly like they came from you, potentially scamming your customers.",
+                        impact="Without strong SPF/DMARC, the domain is more susceptible to email spoofing, which could be used in phishing campaigns.",
                         confidence="High",
                         remediation="Consolidate multiple SPF records into a single valid TXT record.",
                         owasp="A05: Security Misconfiguration",
@@ -193,7 +193,7 @@ class DNSEmailSecurityModule(ScannerModule):
                             "Low",
                             "Your SPF record contains multiple conflicting 'all' mechanisms, which may cause email delivery issues or security bypasses.",
                             data_str,
-                            impact="Email receivers may ignore the policy, leaving the domain vulnerable to spoofing.",
+                            impact="Email receivers may ignore the policy, reducing its effectiveness against spoofing.",
                             owasp="A05: Security Misconfiguration",
                             category="domain_email"
                         ))
@@ -319,7 +319,7 @@ class DNSEmailSecurityModule(ScannerModule):
                     findings.append(self.make_finding(
                         "Potential Infrastructure Information Disclosure",
                         "Medium",
-                        "The domain's publicly retrievable DNS TXT data appears to disclose potentially internal infrastructure information. This may provide useful reconnaissance information to an attacker.",
+                        "The domain's publicly retrievable DNS TXT data appears to disclose potentially internal infrastructure information, assisting reconnaissance.",
                         "\n".join(evidence_lines),
                         confidence=confidence,
                         remediation="Remove internal infrastructure details from public DNS records.",

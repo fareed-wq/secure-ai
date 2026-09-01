@@ -31,7 +31,7 @@ class SubdomainProbingModule(ScannerModule):
                         "Informational",
                         "We discovered an active subdomain related to your website.",
                         sub_url,
-                        impact="Unused or forgotten subdomains often have weaker security and can provide an easy back door for hackers.",
+                        impact="Unused or forgotten subdomains may increase the attack surface if they lack standard security controls.",
                         owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                     ))
@@ -74,7 +74,7 @@ class SubdomainTakeoverModule(ScannerModule):
                     "Passed",
                     "We checked your domain records and found no abandoned cloud resources.",
                     f"[-] DNS & CNAME Audit\n[!] Target: {hostname} -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records.",
-                    impact="Your domains are properly managed, preventing hackers from hijacking them to host malicious content.",
+                    impact="Your domains are properly managed, reducing the risk of subdomain takeover.",
                     owasp="Not Mapped",
                     category="domain_email"
                 ))
@@ -113,7 +113,7 @@ class SubdomainTakeoverModule(ScannerModule):
                         "Passed",
                         f"Your domain correctly points to an active third-party service.",
                         f"Target: {cname_target}",
-                        impact="Properly configured domain records ensure visitors are safely directed to the right place without risk of hijacking.",
+                        impact="Properly configured domain records ensure visitors are safely directed to the right place without risk of subdomain takeover.",
                         owasp="Not Mapped",
                         category="domain_email"
                     ))
@@ -123,7 +123,7 @@ class SubdomainTakeoverModule(ScannerModule):
                     "Passed",
                     "We checked your domain records and found no abandoned cloud resources.",
                     f"[-] DNS & CNAME Audit\n[!] Target: {hostname} -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records.",
-                    impact="Your domains are properly managed, preventing hackers from hijacking them to host malicious content.",
+                    impact="Your domains are properly managed, reducing the risk of subdomain takeover.",
                     owasp="Not Mapped",
                     category="domain_email"
                 ))
@@ -162,7 +162,7 @@ class TLSCipherStrengthModule(ScannerModule):
                                 "Medium",
                                 "Your server allows connections using outdated and weak encryption methods.",
                                 f"Cipher: {cipher_name} ({tls_ver})",
-                                impact="Hackers could potentially break this weak encryption to spy on sensitive data passing between your users and your website.",
+                                impact="Weak cryptography provides insufficient protection for sensitive data in transit.",
                                 remediation="Disable weak ciphers (3DES, RC4) in server configuration and enforce AES-GCM or CHACHA20.",
                                 owasp="A02: Cryptographic Failures",
                                 category="encryption_tls"
@@ -197,7 +197,7 @@ class TLSCipherStrengthModule(ScannerModule):
                 "High",
                 "Your server uses highly outdated and insecure encryption methods.",
                 "legacy_weak_cipher_detected",
-                impact="Hackers can intercept and read the 'secure' traffic between your users and your website.",
+                impact="Weak protocols are vulnerable to interception and downgrade attacks.",
                 owasp="A02: Cryptographic Failures",
                 category="encryption_tls"
             ))
@@ -228,7 +228,7 @@ class TLSCipherStrengthModule(ScannerModule):
                     "Medium",
                     "Your server still supports outdated encryption methods, even if they aren't the default.",
                     f"Server negotiated: {cipher_str}",
-                    impact="An attacker could force a user's browser to use these weak methods, allowing them to spy on their connection.",
+                    impact="Legacy protocols may be vulnerable to downgrade attacks.",
                     remediation="Reconfigure server TLS cipher order to forbid 3DES, RC4, and EXPORT suites.",
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"
@@ -267,7 +267,7 @@ class GraphQLIntrospectionModule(ScannerModule):
                                     "Informational",
                                     "Your database interface (GraphQL) is publicly answering questions about how it is structured.",
                                     target_url,
-                                    impact="Hackers can ask your database for a complete map of all your data fields, making it much easier to find and steal private information.",
+                                    impact="Exposed GraphQL introspection provides a complete schema map, assisting reconnaissance.",
                                     owasp="Not Mapped",
                                     category="information_exposure"
                                 ))
@@ -293,7 +293,7 @@ class VerboseStackTraceModule(ScannerModule):
                         "Low",
                         "Your website reveals detailed internal programming errors when something goes wrong.",
                         "Traceback (most recent call last):",
-                        impact="Hackers can use these internal error messages to understand how your website is built and find vulnerabilities to exploit.",
+                        impact="Verbose error messages expose internal application state and structure.",
                         remediation="Configure your web framework to hide detailed error messages in production and show a generic error page instead.",
                         owasp="A05: Security Misconfiguration",
                         category="information_disclosure",
@@ -392,7 +392,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
                 "Informational",
                 "We found publicly visible addresses (subdomains) connected to your main website.",
                 evidence_str,
-                impact="Each of these addresses is another potential doorway into your network that hackers might try to break into.",
+                impact="Exposed internal IPs reveal network topology and may assist reconnaissance.",
                 owasp="Not Mapped",
                 category="information_exposure"
             )

@@ -38,7 +38,7 @@ class ExposedFilesModule(ScannerModule):
                         "Critical",
                         "A configuration file containing sensitive passwords and secret keys is publicly visible on your website.",
                         env_url,
-                        impact="Hackers can use these passwords to take full control of your website, access your database, and steal customer data.",
+                        impact="Exposed credentials could allow unauthorized access to the associated service or database.",
                         remediation="Restrict web server access to dotfiles or move .env outside the web root immediately.",
                         owasp="A05: Security Misconfiguration",
                         category="information_exposure",
@@ -56,7 +56,7 @@ class ExposedFilesModule(ScannerModule):
                     "High",
                     "A folder containing the entire blueprint and source code of your website is publicly accessible.",
                     git_url,
-                    impact="Anyone can download your website's exact source code, making it easy for hackers to find hidden flaws and bypass your security.",
+                    impact="Source code exposure provides external observers with detailed insight into application logic.",
                     remediation="Configure the web server to block access to the /.git directory.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure",
@@ -75,7 +75,7 @@ class ExposedFilesModule(ScannerModule):
                         "Medium",
                         "A test file revealing technical details about your web server is left public.",
                         phpinfo_url,
-                        impact="Hackers can use this detailed technical information to identify outdated software and plan a highly targeted attack against your website.",
+                        impact="Verbose technical disclosures assist external reconnaissance by highlighting specific software versions.",
                         remediation="Remove or restrict access to the phpinfo.php file.",
                         owasp="A05: Security Misconfiguration",
                         category="information_exposure",
@@ -104,7 +104,7 @@ class ExposedFilesModule(ScannerModule):
                                 "Medium",
                                 "Your website allows anyone to see a raw list of all the files and folders stored in this directory.",
                                 target_url,
-                                impact="Hackers can browse these folders like a file manager to find hidden files, backups, and sensitive documents that were not meant to be public.",
+                                impact="Directory listing exposes file and directory structure, potentially revealing sensitive files.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
@@ -136,7 +136,7 @@ class ExposedFilesModule(ScannerModule):
                                 "High",
                                 f"A system log file recording background activity for your website is publicly readable at {path}.",
                                 target_url,
-                                impact="These logs often contain sensitive user information, error messages, and secret tokens that hackers can use to bypass security.",
+                                impact="Exposed logs can reveal sensitive application state, internal errors, or session data.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
@@ -174,7 +174,7 @@ class ExposedFilesModule(ScannerModule):
                                 "Critical",
                                 f"A complete backup of your website or database is publicly available for anyone to download at {path}.",
                                 target_url,
-                                impact="Hackers can instantly download all your customer data, passwords, and private files, leading to a massive data breach.",
+                                impact="Exposed database backups can lead to full disclosure of stored application data.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
@@ -203,7 +203,7 @@ class ExposedFilesModule(ScannerModule):
                                 "Critical",
                                 f"A configuration file containing sensitive passwords and secret keys is publicly visible at {path}.",
                                 target_url,
-                                impact="Hackers can use these passwords to take full control of your website, access your database, and steal customer data.",
+                                impact="Exposed credentials could allow unauthorized access to the associated service or database.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
@@ -229,7 +229,7 @@ class ExposedFilesModule(ScannerModule):
                                 "Low",
                                 "A private admin login page for managing your website is open to the public.",
                                 target_url,
-                                impact="Hackers can attempt to guess passwords or exploit vulnerabilities on this login page to take over your website.",
+                                impact="Exposed login portals provide targets for brute-force or credential stuffing attacks.",
                                 confidence="Medium",
                                 owasp="A01: Broken Access Control",
                                 category="api_surface"
@@ -264,7 +264,7 @@ class InformationDisclosureModule(ScannerModule):
                     "Low",
                     "Your web server publicly announces its exact software name and version.",
                     server,
-                    impact="Hackers can easily look up the exact version of your server to find known security flaws and launch a targeted attack against your website.",
+                    impact="Exposing detailed server/version information gives external observers additional information that may assist reconnaissance.",
                     remediation="Configure server to only return generic names (e.g., 'nginx').",
                     owasp="Not Mapped",
                     category="information_exposure"
@@ -312,7 +312,7 @@ class InformationDisclosureModule(ScannerModule):
                         "Low",
                         "Your website is leaking internal network addresses.",
                         ", ".join(unique_ips[:3]),
-                        impact="Attackers can use these internal addresses to map out your private network and launch targeted attacks.",
+                        impact="Exposed internal IPs reveal network topology and may assist reconnaissance.",
                         remediation="Remove internal IP addresses from the public response.",
                         owasp="Not Mapped",
                         category="information_exposure"
@@ -328,7 +328,7 @@ class InformationDisclosureModule(ScannerModule):
                             "Low",
                             "Your website displays highly detailed technical crash reports or stack traces.",
                             sig,
-                            impact="These detailed reports reveal exactly how your system is built, giving attackers a blueprint for finding weaknesses.",
+                            impact="Verbose system reports provide reconnaissance information to external observers.",
                             remediation="Configure production environment to mask verbose error stack traces.",
                             owasp="A05: Security Misconfiguration",
                             category="information_exposure"
@@ -385,7 +385,7 @@ class RobotsTxtModule(ScannerModule):
                         "Low",
                         "Your website's search engine configuration file reveals hidden internal folders.",
                         "\\n".join(interesting_paths[:10]),
-                        impact="Hackers can read this file to discover secret administrative or development areas of your website that were supposed to be hidden.",
+                        impact="Robots.txt can inadvertently disclose the location of administrative or sensitive paths.",
                         owasp="A05: Security Misconfiguration",
                         category="information_exposure"
                     ))
@@ -396,7 +396,7 @@ class RobotsTxtModule(ScannerModule):
                         "Informational",
                         "Your website publicly lists the addresses of administrative login pages or control panels.",
                         "\\n".join(privileged_paths[:10]),
-                        impact="Hackers can easily find where to launch attacks to try and guess passwords and take control of your website.",
+                        impact="Exposed administrative endpoints provide targets for unauthorized access attempts.",
                         confidence="High",
                         owasp="Not Mapped",
                         category="api_surface"
@@ -670,7 +670,7 @@ class OpenApiModule(ScannerModule):
                                 "Informational",
                                 "Your website publicly exposes technical documentation about its inner workings and data connections.",
                                 target,
-                                impact="Hackers can use this documentation as a blueprint to understand exactly how your website works and find ways to attack it.",
+                                impact="Exposed API documentation assists external reconnaissance of application interfaces.",
                                 confidence="High",
                                 category="information_exposure",
                                 owasp="Not Mapped"
@@ -700,7 +700,7 @@ class OpenApiModule(ScannerModule):
                                     "Informational",
                                     "Your website publicly reveals how it handles security logins and authentication methods.",
                                     f"Authorization scheme(s): {', '.join(list(schemes_found)[:5])}",
-                                    impact="Hackers can use this information to focus their attacks on your specific security mechanisms.",
+                                    impact="Security policies provide operational context that may assist reconnaissance.",
                                     confidence="High",
                                     category="authentication",
                                     owasp="Not Mapped"
@@ -735,7 +735,7 @@ class OpenApiModule(ScannerModule):
                                     "Informational",
                                     "Your website publicly documents secret administrative connections and data channels.",
                                     "\\n".join(list(privileged_routes)[:5]),
-                                    impact="Hackers can use these details to try to bypass security and access sensitive administrative functions.",
+                                    impact="Exposed administrative endpoints provide targets for unauthorized access attempts.",
                                     confidence="High",
                                     category="api_surface",
                                     owasp="A01: Broken Access Control"
@@ -759,7 +759,7 @@ class OpenApiModule(ScannerModule):
                                     "Informational",
                                     "Your website publicly reveals the version numbers of its internal data connections.",
                                     f"Versions observed: {', '.join(api_versions)}",
-                                    impact="Hackers can check if you are using outdated versions and target older, potentially vulnerable features of your website.",
+                                    impact="Version disclosure assists external reconnaissance by highlighting specific software versions.",
                                     confidence="High",
                                     category="api_surface",
                                     owasp="Not Mapped"
@@ -802,7 +802,7 @@ class GraphqlIdeModule(ScannerModule):
                             "Informational",
                             "A developer tool used to test data connections is left publicly accessible on your live website.",
                             target,
-                            impact="Hackers can use this interactive tool to easily explore and extract hidden data from your database.",
+                            impact="Exposed database management interfaces provide high-value targets for unauthorized access.",
                             confidence="High",
                             category="information_exposure",
                             owasp="Not Mapped"
@@ -847,7 +847,7 @@ class ActuatorModule(ScannerModule):
                                     "High",
                                     "Detailed configuration settings for your website's framework are publicly accessible.",
                                     target,
-                                    impact="Hackers can read these settings to uncover secret passwords, database credentials, and internal network details.",
+                                    impact="Exposed configuration files can reveal sensitive credentials and internal settings.",
                                     confidence="High",
                                     category="information_exposure",
                                     owasp="A05: Security Misconfiguration",
@@ -859,7 +859,7 @@ class ActuatorModule(ScannerModule):
                                     "Informational",
                                     "Diagnostic tools for your website's framework are publicly accessible.",
                                     target,
-                                    impact="Hackers can use these tools to monitor your server's health and gather intelligence to plan an attack.",
+                                    impact="Exposed monitoring tools provide reconnaissance information about system performance and architecture.",
                                     confidence="High",
                                     category="information_exposure",
                                     owasp="Not Mapped"
@@ -902,7 +902,7 @@ class XmlRpcModule(ScannerModule):
                     "Low",
                     "An outdated remote access feature is enabled on your website.",
                     target,
-                    impact="Hackers often use this feature to launch massive automated attacks to guess passwords and bring down your website.",
+                    impact="Exposed XML-RPC interfaces can be targeted for brute-force or amplification attacks.",
                     confidence="High",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration",

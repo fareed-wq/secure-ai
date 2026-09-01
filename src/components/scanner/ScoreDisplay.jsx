@@ -111,6 +111,8 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
               <div className="text-xs text-slate-500 bg-slate-800/30 p-3 rounded-lg border border-slate-800/50 leading-relaxed">
                 <div className="font-bold text-slate-400 mb-1">Score Methodology</div>
                 The score starts at 100. Points are deducted based on finding severity: High-risk issues deduct up to 15 points each, Medium-risk up to 10 points, and Low-risk up to 5 points. Deductions are capped per category to prevent a single issue type from disproportionately tanking the score.
+                  <br /><br />
+                  The URLScanOnline score reflects externally observable security posture based on the checks performed. It is not a probability of compromise and does not certify that a website is secure, insecure, compliant, or non-compliant.
               </div>
             </div>
           </details>

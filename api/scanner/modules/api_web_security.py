@@ -53,7 +53,7 @@ class ApiWebSecurityModule(ScannerModule):
                         remediation="Ensure all redirects maintain or upgrade to HTTPS.",
                         category="encryption_tls",
                         owasp="A02: Cryptographic Failures",
-                        impact="Hackers can intercept this unencrypted traffic to steal sensitive user data like passwords or personal information."
+                        impact="Unencrypted traffic can expose sensitive user data to network interception."
                     ))
 
                 # Excessive redirect chain
@@ -68,7 +68,7 @@ class ApiWebSecurityModule(ScannerModule):
                         remediation="Minimize redirect hops to a single redirect where possible.",
                         category="misconfiguration",
                         owasp="A05: Security Misconfiguration",
-                        impact="This makes your website load slowly and can make it easier for attackers to hide malicious links from your users."
+                        impact="Unnecessarily large responses can obscure malicious payloads and impact performance."
                     ))
 
                 # Cross-domain redirect
@@ -93,7 +93,7 @@ class ApiWebSecurityModule(ScannerModule):
                                 remediation="Ensure cross-domain redirects only point to trusted external services.",
                                 category="misconfiguration",
                                 owasp="A05: Security Misconfiguration",
-                                impact="Attackers could exploit this to trick your users into visiting a fake website to steal their login details."
+                                impact="Open redirects may facilitate phishing attacks by redirecting users to untrusted domains."
                             ))
 
             # 3. HTTP Method Posture
@@ -109,7 +109,7 @@ class ApiWebSecurityModule(ScannerModule):
                     remediation="Disable TRACE method to prevent Cross-Site Tracing (XST).",
                     category="misconfiguration",
                     owasp="A05: Security Misconfiguration",
-                    impact="Hackers can sometimes use this feature to bypass security controls and steal user session cookies."
+                    impact="Trace methods may be abused to bypass HttpOnly cookies or expose request headers."
                 ))
 
             # 4. API Content-Type Mismatch
@@ -138,7 +138,7 @@ class ApiWebSecurityModule(ScannerModule):
                         remediation="Ensure API endpoints return application/json Content-Type.",
                         category="http_headers",
                         owasp="A05: Security Misconfiguration",
-                        impact="This confusion can sometimes be tricked by hackers into running malicious scripts on your website."
+                        impact="Content-type inconsistencies can occasionally lead to unexpected MIME-sniffing behavior."
                     ))
 
             # 5. API Cache Security
@@ -238,7 +238,7 @@ class ApiWebSecurityModule(ScannerModule):
                             remediation="Configure the application to display generic error messages in production.",
                             category="information_exposure",
                             owasp="A05: Security Misconfiguration",
-                            impact="Hackers can read these error messages to understand how your website is built and find weak spots to attack."
+                            impact="Verbose error messages expose internal application state and structure."
                         ))
                         break
 
@@ -255,7 +255,7 @@ class ApiWebSecurityModule(ScannerModule):
                         confidence="High",
                         category="information_exposure",
                         owasp="Not Mapped",
-                        impact="If not properly secured, hackers might be able to intercept or send fake messages through this real-time connection."
+                        impact="Unauthenticated WebSockets may be vulnerable to Cross-Site WebSocket Hijacking (CSWSH)."
                     ))
                 elif "new WebSocket(" in body or 'WebSocket("' in body or "WebSocket('" in body:
                     findings.append(self.make_finding(
@@ -266,7 +266,7 @@ class ApiWebSecurityModule(ScannerModule):
                         confidence="High",
                         category="information_exposure",
                         owasp="Not Mapped",
-                        impact="Without proper security checks, hackers could manipulate this connection to steal data or attack your site."
+                        impact="Unauthenticated Server-Sent Events may expose data streams to unauthorized origins."
                     ))
 
                 # API Versions
@@ -280,7 +280,7 @@ class ApiWebSecurityModule(ScannerModule):
                         confidence="High",
                         category="information_exposure",
                         owasp="Not Mapped",
-                        impact="Hackers can look up this exact version to find known security flaws and use them against your website."
+                        impact="Exposing exact version information gives external observers additional context that may assist reconnaissance."
                     ))
 
                 # Auth Portals
@@ -294,7 +294,7 @@ class ApiWebSecurityModule(ScannerModule):
                         confidence="High",
                         category="information_exposure",
                         owasp="Not Mapped",
-                        impact="If left unprotected or hidden weakly, hackers can try to guess passwords and gain control over your website."
+                        impact="Exposed management interfaces provide targets for unauthorized access attempts."
                     ))
 
                 # GraphQL refs
@@ -308,7 +308,7 @@ class ApiWebSecurityModule(ScannerModule):
                         confidence="Medium",
                         category="information_exposure",
                         owasp="Not Mapped",
-                        impact="Hackers often target these systems to pull large amounts of sensitive data if they aren't fully locked down."
+                        impact="Unauthenticated API endpoints can lead to bulk data exposure."
                     ))
 
                 # API Docs
@@ -322,7 +322,7 @@ class ApiWebSecurityModule(ScannerModule):
                         confidence="High",
                         category="information_exposure",
                         owasp="Not Mapped",
-                        impact="This gives hackers a complete map of how your website works, making it much easier for them to plan an attack."
+                        impact="Exposed API documentation assists external reconnaissance by providing detailed interface maps."
                     ))
 
         except requests.exceptions.RequestException:
@@ -350,7 +350,7 @@ class ApiWebSecurityModule(ScannerModule):
                                 confidence="High",
                                 category="information_exposure",
                                 owasp="Not Mapped",
-                                impact="While normally safe, any misconfiguration here could help hackers figure out how to bypass your login system."
+                                impact="Verbose configuration files may inadvertently disclose sensitive application details."
                             ))
                     except Exception:
                         pass

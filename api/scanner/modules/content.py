@@ -63,7 +63,7 @@ class MixedContentModule(ScannerModule):
                     "Medium",
                     f"Your secure webpage is loading {sample_count} file(s) over an insecure connection.",
                     f"Examples: {samples}",
-                    impact="Hackers can intercept these insecure files to steal sensitive user data or secretly alter the appearance and behavior of your website.",
+                    impact="Insecure content delivery can expose data to interception or modification.",
                     remediation="Update all resource links (scripts, styles, images) to use relative paths or HTTPS URLs.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
@@ -75,7 +75,7 @@ class MixedContentModule(ScannerModule):
                     "High",
                     "A form on your secure website is sending user information over an unencrypted connection.",
                     f"Form action: {', '.join(parser.insecure_forms[:2])}",
-                    impact="Any information submitted through this form, such as passwords or personal details, can be easily intercepted and read by hackers.",
+                    impact="Unencrypted form submissions can expose transmitted data to network interception.",
                     remediation="Ensure all form 'action' attributes use relative paths or explicit 'https://' URLs.",
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"
