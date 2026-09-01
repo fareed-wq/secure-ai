@@ -19,6 +19,8 @@ class AdvancedCookieModule(ScannerModule):
 
     def is_session_cookie(self, name: str) -> bool:
         nl = name.lower()
+        if "csrf" in nl or "xsrf" in nl:
+            return False
         session_keywords = {
             "session", "sessionid", "sess", "sid", "auth", "token",
             "access_token", "refresh_token", "jwt", "connect.sid",
@@ -614,7 +616,18 @@ class SecurityHeadersModule(ScannerModule):
                 category="http_headers"
             ))
 
-        if not is_api_response and not self.get_header_safe(resp, "X-Frame-Options"):
+        has_xfo = bool(self.get_header_safe(resp, "X-Frame-Options"))
+        has_effective_fa = False
+        if csp:
+            for directive in csp.split(';'):
+                directive = directive.strip()
+                if directive.startswith("frame-ancestors"):
+                    val = directive[len("frame-ancestors"):].strip()
+                    if val and val != "*":
+                        has_effective_fa = True
+                        break
+
+        if not is_api_response and not has_xfo and not has_effective_fa:
             findings.append(self.make_finding(
                 "Missing X-Frame-Options",
                 "Medium",

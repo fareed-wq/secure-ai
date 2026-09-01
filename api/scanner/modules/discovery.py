@@ -100,7 +100,7 @@ class ExposedFilesModule(ScannerModule):
                     if resp and resp.status_code == 200 and 'text/html' in resp.headers.get('Content-Type', '').lower():
                         if "Index of /" in resp.text or "<title>Index of" in resp.text:
                             return self.make_finding(
-                                f"Directory Indexing Enabled ({path})",
+                                "Directory Indexing Enabled",
                                 "Medium",
                                 "Your website allows anyone to see a raw list of all the files and folders stored in this directory.",
                                 target_url,
@@ -270,27 +270,7 @@ class InformationDisclosureModule(ScannerModule):
                     category="information_exposure"
                 ))
 
-            # Technology Exposure Headers
-            tech_headers = ["x-powered-by", "x-aspnet-version", "x-aspnetmvc-version", "x-generator"]
-            disclosed = []
-            for header, value in resp.headers.items():
-                if header.lower() in tech_headers and value.strip():
-                    val_str = value.strip()
-                    if len(val_str) > 100:
-                        val_str = val_str[:97] + "..."
-                    disclosed.append(f"{header}: {val_str}")
 
-            if disclosed:
-                findings.append(self.make_finding(
-                    "Technology Information Disclosure",
-                    "Low",
-                    "The response exposes technology/framework information through an HTTP response header. This information can assist reconnaissance and help an attacker identify the application's underlying platform or version.",
-                    "\n".join(disclosed),
-                    confidence="High",
-                    remediation="Remove these headers in your web server or framework configuration to reduce your attack surface.",
-                    owasp="Not Mapped",
-                    category="information_exposure"
-                ))
 
             if resp.text:
                 import re
