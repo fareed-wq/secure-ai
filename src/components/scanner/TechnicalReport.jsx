@@ -207,7 +207,7 @@ const TechnicalReport = ({ reportData }) => {
           onClick={() => setActiveView('compliance')}
           className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'compliance' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
         >
-          Compliance Readiness
+          Framework Mapping
         </button>
       </div>
 
@@ -439,13 +439,14 @@ const TechnicalReport = ({ reportData }) => {
                   </div>
 
                   <div className="space-y-4">
-                    <div>
-                      <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
-                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData?.technical_compliance?.pci_dss_4_0?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.pci_dss_4_0?.failed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
-                      </ul>
-                    </div>
+                    {reportData?.technical_compliance?.pci_dss_4_0?.failed_controls?.length > 0 && (
+                      <div>
+                        <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
+                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                          {(reportData?.technical_compliance?.pci_dss_4_0?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                        </ul>
+                      </div>
+                    )}
                     <div>
                       <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
                       <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
@@ -466,13 +467,14 @@ const TechnicalReport = ({ reportData }) => {
                   </div>
 
                   <div className="space-y-4">
-                    <div>
-                      <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
-                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData?.technical_compliance?.nist_sp_800_53?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.nist_sp_800_53?.failed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
-                      </ul>
-                    </div>
+                    {reportData?.technical_compliance?.nist_sp_800_53?.failed_controls?.length > 0 && (
+                      <div>
+                        <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
+                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                          {(reportData?.technical_compliance?.nist_sp_800_53?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                        </ul>
+                      </div>
+                    )}
                     <div>
                       <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
                       <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
@@ -493,13 +495,14 @@ const TechnicalReport = ({ reportData }) => {
                   </div>
 
                   <div className="space-y-4">
-                    <div>
-                      <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
-                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData?.technical_compliance?.iso_27001?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.iso_27001?.failed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
-                      </ul>
-                    </div>
+                    {reportData?.technical_compliance?.iso_27001?.failed_controls?.length > 0 && (
+                      <div>
+                        <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
+                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                          {(reportData?.technical_compliance?.iso_27001?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                        </ul>
+                      </div>
+                    )}
                     <div>
                       <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
                       <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
@@ -510,6 +513,9 @@ const TechnicalReport = ({ reportData }) => {
                   </div>
                 </div>
 
+                <div className="mt-6 text-xs text-slate-500 leading-relaxed">
+                  Framework mappings show how externally observable findings may relate to selected security controls. They are not a formal compliance assessment, audit, or certification.
+                </div>
               </div>
             </div>
             </div>
