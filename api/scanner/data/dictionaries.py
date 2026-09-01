@@ -81,12 +81,10 @@ COMPLIANCE_MAP = {
     },
     "Missing Strict-Transport-Security (HSTS)": {
         "pci_dss": "6.4.1 (Public Web Application Protection)",
-        "nist": "SC-28 (Protection of Information at Rest/Transit)",
         "iso27001": "A.8.20 (Network Security)"
     },
     "Missing Content-Security-Policy (CSP)": {
         "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
-        "nist": "SC-28 (Protection of Information at Rest/Transit)",
         "iso27001": "A.8.20 (Network Security)"
     },
     "Weak Content-Security-Policy (CSP)": {
@@ -175,12 +173,10 @@ COMPLIANCE_MAP = {
     },
     "Strict-Transport-Security Configured": {
         "pci_dss": "6.4.1 (Public Web Application Protection)",
-        "nist": "SC-28 (Protection of Information at Rest/Transit)",
         "iso27001": "A.8.20 (Network Security)"
     },
     "Content-Security-Policy Configured": {
         "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
-        "nist": "SC-28 (Protection of Information at Rest/Transit)",
         "iso27001": "A.8.20 (Network Security)"
     },
     "Referrer-Policy Configured": {

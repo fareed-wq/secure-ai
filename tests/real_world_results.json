@@ -333,7 +333,6 @@
         "owasp": "A05: Security Misconfiguration",
         "compliance": {
           "pci_dss": "6.4.1 (Public Web Application Protection)",
-          "nist": "SC-28 (Protection of Information at Rest/Transit)",
           "iso27001": "A.8.20 (Network Security)"
         },
         "module": "SecurityHeaders",
@@ -360,7 +359,6 @@
         "owasp": "A05: Security Misconfiguration",
         "compliance": {
           "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
-          "nist": "SC-28 (Protection of Information at Rest/Transit)",
           "iso27001": "A.8.20 (Network Security)"
         },
         "module": "SecurityHeaders",
@@ -1209,7 +1207,6 @@
         "owasp": "A05: Security Misconfiguration",
         "compliance": {
           "pci_dss": "6.4.1 (Public Web Application Protection)",
-          "nist": "SC-28 (Protection of Information at Rest/Transit)",
           "iso27001": "A.8.20 (Network Security)"
         },
         "module": "SecurityHeaders",
@@ -1236,7 +1233,6 @@
         "owasp": "A05: Security Misconfiguration",
         "compliance": {
           "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
-          "nist": "SC-28 (Protection of Information at Rest/Transit)",
           "iso27001": "A.8.20 (Network Security)"
         },
         "module": "SecurityHeaders",
@@ -1945,7 +1941,6 @@
         "owasp": "A05: Security Misconfiguration",
         "compliance": {
           "pci_dss": "6.4.1 (Public Web Application Protection)",
-          "nist": "SC-28 (Protection of Information at Rest/Transit)",
           "iso27001": "A.8.20 (Network Security)"
         },
         "module": "SecurityHeaders",
@@ -1972,7 +1967,6 @@
         "owasp": "A05: Security Misconfiguration",
         "compliance": {
           "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
-          "nist": "SC-28 (Protection of Information at Rest/Transit)",
           "iso27001": "A.8.20 (Network Security)"
         },
         "module": "SecurityHeaders",
@@ -2695,7 +2689,6 @@
         "owasp": "A02: Cryptographic Failures",
         "compliance": {
           "pci_dss": "6.4.1 (Public Web Application Protection)",
-          "nist": "SC-28 (Protection of Information at Rest/Transit)",
           "iso27001": "A.8.20 (Network Security)"
         },
         "module": "SecurityHeaders",
@@ -2722,7 +2715,6 @@
         "owasp": "A05: Security Misconfiguration",
         "compliance": {
           "pci_dss": "6.4.3 (Manage Payment Page Scripts)",
-          "nist": "SC-28 (Protection of Information at Rest/Transit)",
           "iso27001": "A.8.20 (Network Security)"
         },
         "module": "SecurityHeaders",

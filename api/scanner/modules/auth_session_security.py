@@ -51,7 +51,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     evidence=www_auth,
                     owasp="Not Mapped",
                     category="authentication",
-                    impact="This information helps hackers understand how to target your login systems more effectively."
+                    impact="Exposed authentication logic assists external reconnaissance of the security model."
                 ))
                 if "basic" in www_auth.lower() and url.startswith("http://"):
                     findings.append(self.make_finding(
@@ -179,7 +179,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     owasp="Not Mapped",
                     category="session_cookies",
                     confidence="High",
-                    impact="Hackers can use this information to search for specific flaws in that software and launch targeted attacks."
+                    impact="Exposing technology details provides reconnaissance information to external observers."
                 ))
 
             # HTML Parsing
@@ -197,7 +197,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             owasp="Not Mapped",
                             category="authentication",
                             confidence="High",
-                            impact="These pages are frequent targets for hackers trying to break into user accounts, so they must be heavily protected."
+                            impact="Publicly accessible authentication interfaces are common targets for credential attacks and should be protected with appropriate authentication controls, rate limiting, and monitoring."
                         ))
                         break # One finding is enough
 
@@ -223,7 +223,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         owasp="Not Mapped",
                         category="authentication",
                         confidence="Medium",
-                        impact="If these external services have security flaws or are misconfigured, hackers might be able to bypass your login process."
+                        impact="Integration with vulnerable third-party services may introduce authentication bypass vectors."
                     ))
 
                 # Forms Analysis
@@ -252,7 +252,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             owasp="Not Mapped",
                             category="authentication",
                             confidence="High",
-                            impact="This is the front door to your users' accounts and is a primary target for hackers trying to break in."
+                            impact="Publicly accessible authentication interfaces are common targets for credential attacks and should be protected with appropriate authentication controls, rate limiting, and monitoring."
                         ))
 
                         # Password Form Over HTTP
@@ -266,7 +266,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                 owasp="A02: Cryptographic Failures",
                                 category="authentication",
                                 confidence="High",
-                                impact="Anyone watching the network can read the passwords in plain text and steal user accounts."
+                                impact="Unencrypted authentication endpoints expose credentials to network interception."
                             ))
 
                         # External Authentication Action
@@ -281,7 +281,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                     owasp="Not Mapped",
                                     category="authentication",
                                     confidence="High",
-                                    impact="If this other website is compromised or untrusted, hackers could easily steal all of your users' passwords."
+                                    impact="Sending credentials to third-party domains increases the risk of credential interception if those domains are compromised."
                                 ))
 
                         # Password Autocomplete Policy
@@ -295,7 +295,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                         evidence="autocomplete='off' present on password field.",
                                         owasp="Not Mapped",
                                         category="authentication",
-                                        impact="This makes it harder for users to use strong, complex passwords saved in password managers, leading them to choose weaker passwords."
+                                        impact="Disabling autocomplete can interfere with password managers, inadvertently encouraging weaker user-memorized passwords."
                                     ))
 
                     # CSRF Posture (Passive Only)
@@ -318,7 +318,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                 owasp="A01: Broken Access Control",
                                 category="authentication",
                                 confidence="Low",
-                                impact="Hackers could trick your users into clicking a malicious link that changes their account settings or password without their permission."
+                                impact="Without Anti-CSRF tokens, authenticated sessions may be susceptible to Cross-Site Request Forgery (CSRF)."
                             ))
 
                 if privileged_surface_links:
@@ -330,7 +330,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         confidence="Medium",
                         owasp="Not Mapped",
                         category="api_surface",
-                        impact="Hackers look for these hidden areas to find ways to take complete control over your website."
+                        impact="Exposed administrative interfaces provide targets for unauthorized access attempts."
                     ))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
