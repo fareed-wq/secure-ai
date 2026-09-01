@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { adminApi } from '../../lib/api/admin';
-import { Loader2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronRight, Search, X } from 'lucide-react';
 
 const ExpandableRow = ({ log }) => {
   const [expanded, setExpanded] = useState(false);
-  
+
   let dateStr = 'Date unavailable';
   let timeStr = '';
   if (log.created_at) {
@@ -14,7 +14,7 @@ const ExpandableRow = ({ log }) => {
       timeStr = date.toLocaleTimeString();
     }
   }
-  
+
   const hasDetails = log.before_state || log.after_state || log.reason;
 
   return (
@@ -69,13 +69,23 @@ export default function AuditLogs() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        setSearchTerm(searchInput);
+        setPage(0);
+      }, 300);
+      return () => clearTimeout(handler);
+    }, [searchInput]);
+
   const limit = 50;
 
   useEffect(() => {
     const fetchLogs = async () => {
       setLoading(true);
       try {
-        const data = await adminApi.getAuditLogs(limit, page * limit);
+        const data = await adminApi.getAuditLogs(limit, page * limit, searchTerm);
         setLogs(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message || 'Failed to load audit logs');
@@ -84,7 +94,7 @@ export default function AuditLogs() {
       }
     };
     fetchLogs();
-  }, [page]);
+  }, [page, searchTerm]);
 
 
   const filteredLogs = logs.filter(l => {
@@ -105,7 +115,26 @@ export default function AuditLogs() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Audit Logs</h1>
-      
+        <div className="flex gap-4 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by Admin ID, User ID, or action..."
+              className="w-full bg-slate-900 border border-slate-700 rounded pl-10 pr-10 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => { if(e.key === 'Enter') { setSearchTerm(searchInput); setPage(0); } }}
+            />
+            {searchInput && (
+              <button onClick={() => { setSearchInput(''); setSearchTerm(''); setPage(0); }} className="absolute right-3 top-2.5">
+                <X className="h-4 w-4 text-slate-400 hover:text-white" />
+              </button>
+            )}
+          </div>
+        </div>
+
+
       {logs.length === 0 && page === 0 ? (
         <div className="p-8 text-center text-slate-400 border border-slate-800 rounded bg-slate-900">
           No audit logs found.
@@ -131,18 +160,18 @@ export default function AuditLogs() {
               </tbody>
             </table>
           </div>
-          
+
           <div className="flex justify-between items-center pt-4">
-             <button 
-               disabled={page === 0 || loading} 
+             <button
+               disabled={page === 0 || loading}
                onClick={() => setPage(p => p - 1)}
                className="px-4 py-2 bg-slate-800 rounded disabled:opacity-50"
              >
                Previous
              </button>
              <span className="text-slate-400">Page {page + 1}</span>
-             <button 
-               disabled={logs.length < limit || loading} 
+             <button
+               disabled={logs.length < limit || loading}
                onClick={() => setPage(p => p + 1)}
                className="px-4 py-2 bg-slate-800 rounded disabled:opacity-50"
              >

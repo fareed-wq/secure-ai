@@ -68,10 +68,10 @@ const adminPost = async (endpoint, payload = {}) => {
 export const adminApi = {
   getMe: () => adminFetch('/me'),
   getOverview: () => adminFetch('/overview'),
-  getUsers: (limit = 50, offset = 0) => adminFetch(`/users?limit=${limit}&offset=${offset}`),
+  getUsers: (limit = 50, offset = 0, search = '') => adminFetch(`/users?limit=${limit}&offset=${offset}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
   getUserDetail: (userId) => adminFetch(`/users/${userId}`),
-  getScans: (limit = 50, offset = 0) => adminFetch(`/scans?limit=${limit}&offset=${offset}`),
-  getAuditLogs: (limit = 50, offset = 0) => adminFetch(`/audit-logs?limit=${limit}&offset=${offset}`),
+  getScans: (limit = 50, offset = 0, search = '') => adminFetch(`/scans?limit=${limit}&offset=${offset}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
+  getAuditLogs: (limit = 50, offset = 0, search = '') => adminFetch(`/audit-logs?limit=${limit}&offset=${offset}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
   grantProfessional: (userId, reason) => adminPost(`/users/${userId}/grant-professional`, { reason }),
   removeProfessional: (userId, reason) => adminPost(`/users/${userId}/remove-professional`, { reason }),
   suspendUser: (userId, reason) => adminPost(`/users/${userId}/suspend`, { reason }),

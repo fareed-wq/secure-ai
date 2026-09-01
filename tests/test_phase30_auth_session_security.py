@@ -261,5 +261,38 @@ class TestPhase30AuthSessionSecurity(unittest.TestCase):
         names = [f['name'] for f in findings]
         self.assertIn("Password Recovery Interface Detected", names)
 
+
+    @patch('api.scanner.modules.http_security.safe_request')
+    def test_cookie_heuristic_csrf_exemption(self, mock_safe_req):
+        from api.scanner.modules.http_security import AdvancedCookieModule
+        from unittest.mock import MagicMock
+        mock_safe_req.return_value = MagicMock()
+        mock_safe_req.return_value.raw.headers.getlist.return_value = ['csrf_token=123; Path=/', 'XSRF-TOKEN=abc; Path=/', 'session_id=secure123; Path=/; HttpOnly; Secure']
+        module = AdvancedCookieModule()
+        findings = module.run('https://example.com', 'example.com', MagicMock())
+        finding_names = [f['name'] for f in findings]
+        assert 'Session Cookie Missing Secure Flag' not in finding_names
+        assert 'Session Cookie Missing HttpOnly Flag' not in finding_names
+        bulk_findings = [f for f in findings if 'Unsecured Non-Session Cookie' in f['name']]
+        assert len(bulk_findings) == 1
+        assert 'csrf_token' in bulk_findings[0]['evidence']['raw']
+        assert 'XSRF-TOKEN' in bulk_findings[0]['evidence']['raw']
+
+    @patch('api.scanner.modules.http_security.safe_request')
+    def test_clickjacking_xfo_and_csp(self, mock_safe_req):
+        from api.scanner.modules.http_security import SecurityHeadersModule
+        from unittest.mock import MagicMock
+        module = SecurityHeadersModule()
+        def run_with_headers(headers):
+            mock_safe_req.return_value = MagicMock()
+            mock_safe_req.return_value.headers = headers
+            mock_safe_req.return_value.text = '<html></html>'
+            return [f['name'] for f in module.run('http://example.com', 'example.com', MagicMock())]
+        assert 'Missing X-Frame-Options' in run_with_headers({'Content-Type': 'text/html'})
+        assert 'Missing X-Frame-Options' not in run_with_headers({'Content-Type': 'text/html', 'X-Frame-Options': 'DENY'})
+        assert 'Missing X-Frame-Options' not in run_with_headers({'Content-Type': 'text/html', 'Content-Security-Policy': "default-src 'self'; frame-ancestors 'none'"})
+        assert 'Missing X-Frame-Options' not in run_with_headers({'Content-Type': 'text/html', 'Content-Security-Policy': "frame-ancestors 'self';"})
+        assert 'Missing X-Frame-Options' in run_with_headers({'Content-Type': 'text/html', 'Content-Security-Policy-Report-Only': "frame-ancestors 'none';"})
+
 if __name__ == '__main__':
     unittest.main()

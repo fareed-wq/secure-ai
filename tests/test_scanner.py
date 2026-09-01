@@ -25,8 +25,8 @@ from api.index import (
 class TestScannerModules(unittest.TestCase):
     def setUp(self):
         self.session = requests.Session()
-        self.url = "https://example.com"
-        self.hostname = "example.com"
+        self.url = "https://google.com"
+        self.hostname = "google.com"
 
     def mock_response(self, status_code=200, text="", headers=None):
         resp = MagicMock()
@@ -84,7 +84,7 @@ class TestScannerModules(unittest.TestCase):
     @patch('requests.Session.request')
     def test_security_txt_module(self, mock_get):
         hp_resp = self.mock_response(status_code=200, text="homepage" * 200)
-        target_resp = self.mock_response(status_code=200, text="Contact: mailto:security@example.com\nExpires: 2030-12-31T23:59:59Z", headers={"Content-Type": "text/plain"})
+        target_resp = self.mock_response(status_code=200, text="Contact: mailto:security@google.com\nExpires: 2030-12-31T23:59:59Z", headers={"Content-Type": "text/plain"})
         mock_get.side_effect = [hp_resp, target_resp]
         module = SecurityTxtModule()
         findings = module.run(self.url, self.hostname, self.session)
@@ -107,7 +107,7 @@ class TestScannerModules(unittest.TestCase):
 
     @patch('requests.Session.request')
     def test_https_redirect_module(self, mock_get):
-        mock_get.return_value = self.mock_response(status_code=301, headers={"Location": "https://example.com"})
+        mock_get.return_value = self.mock_response(status_code=301, headers={"Location": "https://google.com"})
         module = HTTPSRedirectModule()
         findings = module.run(self.url, self.hostname, self.session)
         self.assertEqual(findings[0]['severity'], 'Passed')
@@ -121,7 +121,7 @@ class TestScannerModules(unittest.TestCase):
         # Valid future date
         future_date = (datetime.datetime.utcnow() + datetime.timedelta(days=40)).strftime("%b %d %H:%M:%S %Y GMT")
         mock_ssock.getpeercert.return_value = {
-            "subject": ((("commonName", "*.example.com"),),),
+            "subject": ((("commonName", "*.google.com"),),),
             "notAfter": future_date
         }
         mock_ssock.version.return_value = "TLSv1.3"
@@ -173,7 +173,7 @@ class TestScannerModules(unittest.TestCase):
         # Test a public IP directly since DNS can be flaky in tests
         with patch('socket.getaddrinfo') as mock_dns:
             mock_dns.return_value = [(2, 1, 6, '', ('8.8.8.8', 0))]
-            self.assertTrue(is_public_hostname("example.com"))
+            self.assertTrue(is_public_hostname("google.com"))
 
     @patch('api.scanner.orchestrator.validate_scan_target')
     @patch('api.index.is_public_hostname')
@@ -197,7 +197,7 @@ class TestScannerModules(unittest.TestCase):
              patch('api.scanner.orchestrator.REGISTERED_MODULES', [DummyModule()]), \
              patch('api.scanner.orchestrator.PASSIVE_MODULES', [DummyModule()]), \
              patch('api.scanner.orchestrator.ACTIVE_MODULES', [DummyModule()]):
-            result = scan_url("https://example.com")
+            result = scan_url("https://google.com")
     
             self.assertEqual(result['score'], 90) # 100 - 10 (High)
             self.assertEqual(result['severity_counts']['High'], 1)

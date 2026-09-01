@@ -8,21 +8,10 @@ from pydantic import BaseModel, Field
 class AdminMutationRequest(BaseModel):
     reason: Optional[str] = Field(None, max_length=500)
 
-from api.auth.entitlements import get_current_user, get_user_role, get_user_plan_and_status, audit_log
+from api.auth.entitlements import get_current_user, get_user_role, get_user_plan_and_status, audit_log, require_admin
 
 admin_router = APIRouter(prefix="/api/admin", tags=["admin"])
 
-def require_admin(user: Optional[dict] = Depends(get_current_user)) -> dict:
-    if not user:
-        raise HTTPException(status_code=401, detail="Authentication required.")
-    user_id = user.get("sub")
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Invalid user subject.")
-    role = get_user_role(user_id)
-    if role != "admin":
-        raise HTTPException(status_code=403, detail="Admin privileges required.")
-    user["role"] = "admin"
-    return user
 
 @admin_router.get("/me")
 def get_me(user: dict = Depends(require_admin)):
@@ -128,7 +117,7 @@ def get_overview(user: dict = Depends(require_admin)):
 
 
 @admin_router.get("/users")
-def get_users(limit: int = Query(50), offset: int = Query(0), user: dict = Depends(require_admin)):
+def get_users(limit: int = Query(50), offset: int = Query(0), search: Optional[str] = Query(None), user: dict = Depends(require_admin)):
     if not os.environ.get('SUPABASE_URL') or not os.environ.get('SUPABASE_SECRET_KEY'):
         raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
 
@@ -176,6 +165,14 @@ def get_users(limit: int = Query(50), offset: int = Query(0), user: dict = Depen
             safe_users = []
             for u in users_data:
                 uid = u.get("id")
+
+                # Apply search filter
+                if search:
+                    s = search.lower()
+                    email = u.get("email", "").lower()
+                    if s not in email and s not in uid.lower():
+                        continue
+
                 plan_info = plans_map.get(uid, {})
                 safe_users.append({
                     "user_id": uid,
@@ -313,11 +310,20 @@ def reactivate_user(user_id: str, payload: Optional[AdminMutationRequest] = None
     return {"user_id": user_id, "plan": current_plan, "status": "active"}
 
 @admin_router.get("/scans")
-def get_scans(limit: int = Query(50), offset: int = Query(0), user: dict = Depends(require_admin)):
+def get_scans(limit: int = Query(50), offset: int = Query(0), search: Optional[str] = Query(None), user: dict = Depends(require_admin)):
     if not os.environ.get('SUPABASE_URL') or not os.environ.get('SUPABASE_SECRET_KEY'):
         raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
 
-    url = f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/scans?select=id,user_id,target_url,score,report_data,created_at&limit={limit}&offset={offset}&order=created_at.desc"
+    query = f"select=id,user_id,target_url,score,report_data,created_at&limit={limit}&offset={offset}&order=created_at.desc"
+    if search:
+        # If search looks like a UUID, search user_id, otherwise target_url
+        if len(search) >= 8 and "-" in search:
+            query += f"&or=(user_id.eq.{search},target_url.ilike.*{search}*)"
+        else:
+            query += f"&target_url=ilike.*{search}*"
+
+    url = f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/scans?{query}"
+
     headers = {
         "apikey": os.environ.get('SUPABASE_SECRET_KEY', ''),
         "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}"
@@ -353,11 +359,19 @@ def get_scans(limit: int = Query(50), offset: int = Query(0), user: dict = Depen
     return []
 
 @admin_router.get("/audit-logs")
-def get_audit_logs(limit: int = Query(50), offset: int = Query(0), user: dict = Depends(require_admin)):
+def get_audit_logs(limit: int = Query(50), offset: int = Query(0), search: Optional[str] = Query(None), user: dict = Depends(require_admin)):
     if not os.environ.get('SUPABASE_URL') or not os.environ.get('SUPABASE_SECRET_KEY'):
         raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
 
-    url = f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/audit_logs?select=*&limit={limit}&offset={offset}&order=created_at.desc"
+    query = f"select=*&limit={limit}&offset={offset}&order=created_at.desc"
+    if search:
+        if len(search) >= 8 and "-" in search:
+            query += f"&or=(admin_user_id.eq.{search},resource_id.eq.{search},action.ilike.*{search}*)"
+        else:
+            query += f"&action=ilike.*{search}*"
+
+    url = f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/audit_logs?{query}"
+
     headers = {
         "apikey": os.environ.get('SUPABASE_SECRET_KEY', ''),
         "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}"

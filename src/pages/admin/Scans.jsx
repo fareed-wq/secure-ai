@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { adminApi } from '../../lib/api/admin';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Scans() {
@@ -11,16 +11,23 @@ export default function Scans() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
-  const limit = 50;
+  const [searchTerm, setSearchTerm] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    useEffect(() => {
+      const handler = setTimeout(() => {
+        setSearchTerm(searchInput);
+        setPage(0);
+      }, 300);
+      return () => clearTimeout(handler);
+    }, [searchInput]);
 
-  const [selectedScans, setSelectedScans] = useState([]);
-  const navigate = useNavigate();
+  const limit = 50;
 
   useEffect(() => {
     const fetchScans = async () => {
       setLoading(true);
       try {
-        const data = await adminApi.getScans(limit, page * limit);
+        const data = await adminApi.getScans(limit, page * limit, searchTerm);
         setScans(Array.isArray(data) ? data : []);
       } catch (err) {
         setError(err.message || 'Failed to load scans');
@@ -29,11 +36,7 @@ export default function Scans() {
       }
     };
     fetchScans();
-  }, [page]);
-
-  useEffect(() => {
-    setSelectedScans([]);
-  }, [searchTermUrl, searchTermUser, scanTypeFilter, page]);
+  }, [page, searchTerm]);
 
   const getScanModeLabel = (mode, rawMode) => {
     if (mode === 'Advanced' || mode === 'Basic') return mode;
@@ -50,42 +53,6 @@ export default function Scans() {
     return matchesUrl && matchesUser && matchesType;
   });
 
-  const getBaseScan = () => selectedScans.length > 0 ? selectedScans[0] : null;
-
-  const isScanSelectable = (scan) => {
-    const scanType = getScanModeLabel(scan.scan_mode, scan.report_data?.scan_mode);
-    if (scanType === 'Unknown') return false; // Unknowns can never be compared
-    
-    if (selectedScans.some(s => s.id === scan.id)) return true; // Already selected
-    
-    if (selectedScans.length >= 2) return false; // Max 2
-
-    const baseScan = getBaseScan();
-    if (!baseScan) return true; // If no base, can select any valid scan
-
-    const baseType = getScanModeLabel(baseScan.scan_mode, baseScan.report_data?.scan_mode);
-    const sameTarget = (baseScan.target_url || baseScan.url) === (scan.target_url || scan.url);
-    const sameType = baseType === scanType;
-    
-    return sameTarget && sameType;
-  };
-
-  const toggleSelection = (scan) => {
-    if (selectedScans.some(s => s.id === scan.id)) {
-      setSelectedScans(selectedScans.filter(s => s.id !== scan.id));
-    } else {
-      if (selectedScans.length < 2 && isScanSelectable(scan)) {
-        setSelectedScans([...selectedScans, scan]);
-      }
-    }
-  };
-
-  const handleCompare = () => {
-    if (selectedScans.length === 2) {
-      navigate(`/admin/scans/compare?scan1=${selectedScans[0].id}&scan2=${selectedScans[1].id}`);
-    }
-  };
-
   if (loading && scans.length === 0) {
     return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>;
   }
@@ -98,15 +65,27 @@ export default function Scans() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Scans</h1>
-        <button
-          onClick={handleCompare}
-          disabled={selectedScans.length !== 2}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          Compare Selected ({selectedScans.length})
-        </button>
+        <div className="flex gap-4 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by User ID or target..."
+              className="w-full bg-slate-900 border border-slate-700 rounded pl-10 pr-10 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => { if(e.key === 'Enter') { setSearchTerm(searchInput); setPage(0); } }}
+            />
+            {searchInput && (
+              <button onClick={() => { setSearchInput(''); setSearchTerm(''); setPage(0); }} className="absolute right-3 top-2.5">
+                <X className="h-4 w-4 text-slate-400 hover:text-white" />
+              </button>
+            )}
+          </div>
+        </div>
+
       </div>
-      
+
       {scans.length === 0 && page === 0 ? (
         <div className="p-8 text-center text-slate-400 border border-slate-800 rounded bg-slate-900">
           No scans found.
@@ -118,9 +97,7 @@ export default function Scans() {
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-slate-900 border-b border-slate-800 text-slate-400">
                 <tr>
-                  <th className="px-4 py-3 font-medium w-12 text-center">
-                    {/* Select All checkbox omitted since logic is complex */}
-                  </th>
+
                   <th className="px-4 py-3 font-medium">TARGET</th>
                   <th className="px-4 py-3 font-medium">USER</th>
                   <th className="px-4 py-3 font-medium">SCAN TYPE</th>
@@ -141,21 +118,10 @@ export default function Scans() {
                        timeStr = date.toLocaleTimeString();
                     }
                   }
-                  
-                  const isSelected = selectedScans.some(s => s.id === scan.id);
-                  const selectable = isScanSelectable(scan);
 
                   return (
-                    <tr key={scan.id} className={`hover:bg-slate-800/50 transition-colors ${!selectable && !isSelected ? 'opacity-50 grayscale' : ''}`}>
-                      <td className="px-4 py-3 text-center">
-                        <input 
-                          type="checkbox"
-                          className="w-4 h-4 bg-slate-800 border-slate-600 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer disabled:cursor-not-allowed"
-                          checked={isSelected}
-                          disabled={!selectable && !isSelected}
-                          onChange={() => toggleSelection(scan)}
-                        />
-                      </td>
+                    <tr key={scan.id} className="hover:bg-slate-800/50 transition-colors">
+
                       <td className="px-4 py-3 truncate max-w-[200px]" title={scan.url || scan.target_url}>{scan.url || scan.target_url}</td>
                       <td className="px-4 py-3 font-mono text-xs truncate max-w-[150px]" title={scan.user_id}>{scan.user_id}</td>
                       <td className="px-4 py-3">{getScanModeLabel(scan.scan_mode, scan.report_data?.scan_mode)}</td>
@@ -173,18 +139,18 @@ export default function Scans() {
               </tbody>
             </table>
           </div>
-          
+
           <div className="flex justify-between items-center pt-4">
-             <button 
-               disabled={page === 0 || loading} 
+             <button
+               disabled={page === 0 || loading}
                onClick={() => setPage(p => p - 1)}
                className="px-4 py-2 bg-slate-800 rounded disabled:opacity-50"
              >
                Previous
              </button>
              <span className="text-slate-400">Page {page + 1}</span>
-             <button 
-               disabled={scans.length < limit || loading} 
+             <button
+               disabled={scans.length < limit || loading}
                onClick={() => setPage(p => p + 1)}
                className="px-4 py-2 bg-slate-800 rounded disabled:opacity-50"
              >

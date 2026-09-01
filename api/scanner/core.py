@@ -40,12 +40,22 @@ class Config:
 IN_MEMORY_LIMITS = defaultdict(list)
 
 def get_client_ip(request: Request) -> str:
-    # 1. Prefer Vercel's immutable edge header
-    vercel_ip = request.headers.get("x-vercel-forwarded-for")
-    if vercel_ip:
-        return vercel_ip.split(",")[0].strip()
+    import os
+    import ipaddress
 
-    # 2. Local development fallback
+    # 1. Trusted Vercel Runtime
+    if os.environ.get("VERCEL") == "1":
+        for header in ["x-vercel-forwarded-for", "x-forwarded-for"]:
+            raw_val = request.headers.get(header)
+            if raw_val:
+                ip_str = raw_val.split(",")[0].strip()
+                try:
+                    ipaddress.ip_address(ip_str)
+                    return ip_str
+                except ValueError:
+                    pass
+
+    # 2. Untrusted / Local development fallback
     if getattr(request.client, "host", None):
         return request.client.host
 
@@ -110,18 +120,18 @@ def acquire_scan_lease(is_admin: bool = False) -> str | None:
     redis.call('ZREMRANGEBYSCORE', KEYS[2], '-inf', ARGV[1])
     local count = redis.call('ZCARD', KEYS[1])
     local admin_count = redis.call('ZCARD', KEYS[2])
-    
+
     if count >= tonumber(ARGV[2]) then
         return 0
     end
-    
+
     if tonumber(ARGV[4]) == 1 then
         if admin_count >= tonumber(ARGV[5]) then
             return 0
         end
         redis.call('ZADD', KEYS[2], ARGV[3], ARGV[6])
     end
-    
+
     redis.call('ZADD', KEYS[1], ARGV[3], ARGV[6])
     return 1
     """
@@ -156,7 +166,7 @@ def release_scan_lease(lease_id: str, is_admin: bool = False):
         return
 
     headers = {"Authorization": f"Bearer {redis_token}"}
-    
+
     lua_script = """
     redis.call('ZREM', KEYS[1], ARGV[1])
     if tonumber(ARGV[2]) == 1 then

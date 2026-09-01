@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Search, ArrowRight, ShieldAlert, Lock, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ScanForm = ({ onScan, quotaInfo, user }) => {
   const [url, setUrl] = useState('');
@@ -11,7 +12,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
   const urlInputRef = useRef(null);
 
   const isGuest = !user;
-  const isAdmin = quotaInfo?.role === 'admin' || quotaInfo?.is_unlimited || user?.role === 'admin';
+  const { isAdmin } = useAuth();
   const quotaReached = !isAdmin && quotaInfo?.quota?.quota_remaining <= 0;
   const quotaUsed = quotaInfo?.quota?.quota_used || 0;
   const quotaLimit = quotaInfo?.quota?.quota_limit || (isGuest ? 3 : 5);

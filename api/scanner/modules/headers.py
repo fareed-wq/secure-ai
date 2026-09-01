@@ -85,12 +85,12 @@ class CORSModule(ScannerModule):
                 if acac:
                     findings.append(self.make_finding(
                         "Insecure CORS Policy (Wildcard with Credentials)",
-                        "Medium",
+                        "Low",
                         "Your website is set up to allow any other website on the internet to read your users' private data.",
                         f"Access-Control-Allow-Origin: *\\nAccess-Control-Allow-Credentials: true",
-                        impact="Malicious websites visited by your users can silently extract private data directly from your server while the user is logged in.",
+                        impact="Modern web browsers strictly reject this invalid configuration, preventing direct exploitation. However, it indicates inconsistent CORS middleware or security configuration.",
                         confidence="High",
-                        remediation="Restrict CORS to specific trusted origins and remove credentials flag if not needed.",
+                        remediation="Fix the CORS middleware configuration. Access-Control-Allow-Credentials: true must only be used with a specific, statically defined Origin, never a wildcard (*).",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))

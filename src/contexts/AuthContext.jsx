@@ -60,16 +60,15 @@ export const AuthProvider = ({ children }) => {
       }
       setIsAdminLoading(true);
       try {
-        const response = await fetch('/api/admin/me', {
-          headers: { 'Authorization': `Bearer ${session.access_token}` }
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setIsAdmin(data.role === 'admin');
-        } else {
+        const { data, error } = await supabase.rpc('is_admin');
+        if (error) {
+          console.error('Error checking admin status:', error);
           setIsAdmin(false);
+        } else {
+          setIsAdmin(!!data);
         }
       } catch (e) {
+        console.error('Unexpected error checking admin status:', e);
         setIsAdmin(false);
       } finally {
         setIsAdminLoading(false);

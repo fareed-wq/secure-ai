@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Loader2, ShieldAlert, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import WhatsAppWidget from '../WhatsAppWidget';
@@ -28,6 +28,7 @@ function Scanner() {
   });
   const { user } = useAuth();
   const location = useLocation();
+    const navigate = useNavigate();
   const [url, setUrl] = useState('');
   const [scanState, setScanState] = useState('idle'); // idle, scanning, error, mode-select, view-report
   const [reportData, setReportData] = useState(null);
@@ -59,17 +60,35 @@ function Scanner() {
   useEffect(() => {
     fetchQuota();
   }, [user]);
-
   useEffect(() => {
     if (location.state?.resetScan) {
       setScanState('idle');
       setReportData(null);
       setUrl('');
       setErrorMessage('');
+      sessionStorage.removeItem('guestScanResult');
       scrollToTop();
       fetchQuota();
+    } else if (!user) {
+      // Guest only: restore previous scan result from sessionStorage on mount/refresh
+      const stored = sessionStorage.getItem('guestScanResult');
+      if (stored) {
+        try {
+          const data = JSON.parse(stored);
+          if (data && data.status !== 'failed') {
+            setReportData(data);
+            setUrl(data.url || data.target_url || '');
+            setScanState('view-report');
+            setReportMode(data.report_mode || 'simple');
+            setExecutedScanMode(data.scan_mode || 'passive');
+          }
+        } catch(e) {
+          sessionStorage.removeItem('guestScanResult');
+        }
+      }
     }
-  }, [location.state?.resetScan, user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.resetScan]);
 
   const handleRequireAuth = (featureName) => {
     if (!user) {
@@ -87,23 +106,27 @@ function Scanner() {
     setErrorMessage('');
     setReportMode(reportModeValue);
     setExecutedScanMode(scanMode);
+      try {
+        const data = await scanApi.runScan(parsedUrl, scanMode, reportModeValue);
 
-    try {
-      const data = await scanApi.runScan(parsedUrl, scanMode, reportModeValue);
+        if (data.status === 'failed' || data.status === 'timeout') {
+          setErrorMessage(data.error || "Unable to complete the security scan because the target could not be reached or the connection timed out.");
+          setScanState('error');
+          return;
+        }
 
-      if (data.status === 'failed' || data.status === 'timeout') {
-        setErrorMessage(data.error || "Unable to complete the security scan because the target could not be reached or the connection timed out.");
-        setScanState('error');
-        return;
-      }
+        if (user && data.id) {
+          navigate(`/history/${data.id}`, { replace: true });
+        } else {
+          sessionStorage.setItem('guestScanResult', JSON.stringify(data));
+          setReportData(data);
+          setScanState('view-report'); // Skip mode selection, go straight to report
+        }
 
-      setReportData(data);
-      setScanState('view-report'); // Skip mode selection, go straight to report
-
-    } catch (error) {
+      } catch (error) {
       console.error('Backend Connection Error:', error);
       const msg = error.message || String(error);
-      if (msg.includes("You've used your 3 free Guest scans")) {
+      if (msg.includes("You've used your") || msg.includes("Rate limit exceeded") || msg.includes("Global scanner capacity") || msg.includes("already have a scan")) {
         setErrorMessage(msg);
       } else {
         setErrorMessage(`Failed to connect to the backend scanner: ${msg}`);
@@ -131,8 +154,8 @@ function Scanner() {
     setScanState('view-report');
   };
 
-  
-  
+
+
 
   const handlePdfExport = () => {
     if (!user) {
@@ -142,7 +165,7 @@ function Scanner() {
     generatePdf(reportData, executedScanMode, reportMode);
   };
 
-  
+
   return (
     <div className="scanner-page scanner-wallpaper flow-root flex-1 bg-slate-950 font-sans text-slate-50 selection:bg-indigo-500/30">
 
@@ -207,7 +230,7 @@ function Scanner() {
                             {/* 3. Input Bar Container */}
               <ScanForm onScan={handleScan} quotaInfo={quotaInfo} user={user} />
 
-              
+
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-slate-400 mt-8 font-medium">
                 <div className="flex items-center gap-2">Interested in advanced testing? Let's chat on WhatsApp!</div>
@@ -287,8 +310,8 @@ function Scanner() {
                     <>
                       <h2 className="text-2xl font-bold text-red-400 mb-4">Scan Incomplete</h2>
                       <p className="text-red-200 mb-8">{errorMessage}</p>
-                      
-                      
+
+
                     </>
                 )}
 

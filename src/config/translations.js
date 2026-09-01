@@ -314,5 +314,25 @@ export const TRANSLATIONS = {
     impact: "Informational",
     problem: "The scanner detected a completely unencrypted web service port running directly on your main server.",
     why: "Any customer using this port without redirection sends their data completely unprotected over the network."
+  },
+  "Missing Cross-Origin Attribute for SRI Verification": {
+    name: "Missing Cross-Origin Attribute (SRI)",
+    category: "Browser Protection",
+    impact: "Low",
+    problem: "A cross-origin resource using Subresource Integrity may require compatible cross-origin fetching so the browser can successfully perform integrity verification.",
+    why: "The external resource may fail integrity validation/loading depending on the resource and CORS configuration."
+  },
+  "Malformed Subresource Integrity (SRI) Attribute": {
+    name: "Malformed SRI Hash",
+    category: "Browser Protection",
+    impact: "Low",
+    problem: "The integrity attribute on an external resource does not contain valid SRI metadata.",
+    why: "The browser may reject the resource because its integrity information cannot be validated correctly."
+  },
+  "Missing Subresource Integrity (SRI) on Third-Party Asset": {
+    name: "Missing Subresource Integrity (SRI)",
+    category: "Browser Protection",
+    problem: "The page loads a static third-party script or supported external asset without cryptographically verifying its contents.",
+    why: "If that third-party hosted resource or delivery path is compromised, modified code could be delivered to site visitors."
   }
 };

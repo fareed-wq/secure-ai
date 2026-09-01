@@ -37,7 +37,6 @@ const AdminUsers = React.lazy(() => import('./pages/admin/Users'));
 const AdminUserDetail = React.lazy(() => import('./pages/admin/UserDetail'));
 const AdminScans = React.lazy(() => import('./pages/admin/Scans'));
 const AdminAuditLogs = React.lazy(() => import('./pages/admin/AuditLogs'));
-const AdminCompare = React.lazy(() => import('./pages/admin/Compare'));
 
 const PlaceholderPage = ({ title }) => (
   <div className="flex flex-col items-center justify-center h-[60vh] text-slate-400">
@@ -107,8 +106,7 @@ const App = () => {
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="users/:userId" element={<AdminUserDetail />} />
                 <Route path="scans" element={<AdminScans />} />
-                <Route path="scans/compare" element={<AdminCompare />} />
-                <Route path="audit-logs" element={<AdminAuditLogs />} />
+                                <Route path="audit-logs" element={<AdminAuditLogs />} />
               </Route>
 
               {/* Redirect root to dashboard (if we were previously doing that globally, wait, let's keep * to NotFound inside RootLayout or outside) */}

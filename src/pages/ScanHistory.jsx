@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { History, ExternalLink, Calendar, ShieldAlert, Trash2, X } from 'lucide-react';
+import { History, ExternalLink, Calendar, ShieldAlert, Trash2, X, Search } from 'lucide-react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,13 +15,30 @@ const ScanHistory = () => {
   const [selectedScans, setSelectedScans] = useState([]);
   const navigate = useNavigate();
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
 
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      setSearchTerm(searchInput);
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchInput]);
 
   const getScanModeLabel = (mode) => {
     if (mode === 'active') return 'Advanced';
     if (mode === 'passive' || mode === 'basic') return 'Basic';
     return 'Unknown';
   };
+
+  const filteredScans = scans.filter(scan => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    const typeLabel = getScanModeLabel(scan.report_data?.scan_mode).toLowerCase();
+    const targetUrl = (scan.target_url || '').toLowerCase();
+    const scoreStr = (scan.score || '').toString();
+    return targetUrl.includes(term) || typeLabel.includes(term) || scoreStr.includes(term);
+  });
 
   const getBaseScan = () => selectedScans.length > 0 ? selectedScans[0] : null;
 
@@ -62,8 +79,9 @@ const ScanHistory = () => {
     try {
       const { data, error: err } = await supabase
         .from('scans')
-        .select('*')
-        .order('created_at', { ascending: false });
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
       if (err) throw err;
       setScans(data || []);
@@ -137,6 +155,28 @@ const ScanHistory = () => {
           )}
         </div>
 
+
+      {scans.length > 0 || searchTerm ? (
+        <div className="mb-6 relative max-w-md">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-9 pr-10 py-2 text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
+            placeholder="Search history by target or scan type..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          {searchInput && (
+            <button
+              onClick={() => { setSearchInput(''); setSearchTerm(''); }}
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      ) : null}
+
       {deleteMessage && (
         <div className={`p-4 rounded-xl flex items-center gap-2 ${deleteMessage.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'}`}>
           {deleteMessage.text}
@@ -148,9 +188,9 @@ const ScanHistory = () => {
           <ShieldAlert className="w-5 h-5" />
           {error}
         </div>
-      ) : scans.length === 0 ? (
+      ) : filteredScans.length === 0 ? (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-400">
-          You have no scan history yet. Try running your first scan!
+          {searchTerm ? 'No results found for your search.' : 'You have no scan history yet. Try running your first scan!'}
         </div>
       ) : (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
@@ -168,7 +208,7 @@ const ScanHistory = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800">
-                {scans.map((scan) => {
+                {filteredScans.map((scan) => {
                   const mode = scan.report_data?.scan_mode;
                   const modeLabel = mode === 'active' ? 'Advanced Scan' : (mode === 'passive' || mode === 'basic' ? 'Basic Scan' : 'Unknown');
 
@@ -210,7 +250,7 @@ const ScanHistory = () => {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-4">
-                          <Link to={`/history/${scan.id}`} className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors">
+                          <Link to={`/history/${scan.id}?from=history`} className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors">
                             View Report <ExternalLink className="w-4 h-4" />
                           </Link>
                           <button
