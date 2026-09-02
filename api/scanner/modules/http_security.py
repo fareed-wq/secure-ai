@@ -19,14 +19,42 @@ class AdvancedCookieModule(ScannerModule):
 
     def is_session_cookie(self, name: str) -> bool:
         nl = name.lower()
-        if "csrf" in nl or "xsrf" in nl:
+        csrf_keywords = [
+            "csrf", "xsrf", "antiforgery", "anti-forgery", "anti_forgery",
+            "requestverificationtoken", "request_verification_token"
+        ]
+        if any(k in nl for k in csrf_keywords):
             return False
-        session_keywords = {
-            "session", "sessionid", "sess", "sid", "auth", "token",
-            "access_token", "refresh_token", "jwt", "connect.sid",
-            "phpsessid", "jsessionid", "asp.net_sessionid"
+
+        exact_matches = {
+            "session", "sessionid", "sess", "sid", "auth", "token", "jwt",
+            "connect.sid", "phpsessid", "jsessionid", "asp.net_sessionid"
         }
-        return any(k in nl for k in session_keywords)
+        if nl in exact_matches:
+            return True
+
+        s = re.sub(r'([a-z0-9])([A-Z])', r'\1_\2', name).lower()
+        s = re.sub(r'[\-\.]', '_', s)
+        tokens = set(p for p in s.split('_') if p)
+
+        strong_tokens = {"session", "sess", "sid", "auth", "jwt"}
+        if tokens.intersection(strong_tokens):
+            return True
+
+        if "token" in tokens:
+            valid_token_prefixes = {"access", "refresh", "id"}
+            if tokens.intersection(valid_token_prefixes):
+                return True
+
+        return False
+
+    def strip_quotes(self, val: str) -> str:
+        if not val:
+            return val
+        if (val.startswith('"') and val.endswith('"')) or (val.startswith("'") and val.endswith("'")):
+            if len(val) >= 2:
+                return val[1:-1]
+        return val
 
     def mask_cookie_value(self, cookie_str: str) -> str:
         parts = cookie_str.split(";")
@@ -85,17 +113,17 @@ class AdvancedCookieModule(ScannerModule):
                 expires_val = None
                 for d in directives:
                     if d.startswith("samesite="):
-                        samesite_val = d.split("=")[1].strip()
+                        samesite_val = self.strip_quotes(d.split("=", 1)[1].strip())
                     elif d == "samesite":
                         samesite_val = "unknown"
                     elif d.startswith("domain="):
-                        domain_val = d.split("=", 1)[1].strip()
+                        domain_val = self.strip_quotes(d.split("=", 1)[1].strip())
                     elif d.startswith("path="):
-                        path_val = d.split("=", 1)[1].strip()
+                        path_val = self.strip_quotes(d.split("=", 1)[1].strip())
                     elif d.startswith("max-age="):
-                        max_age_val = d.split("=", 1)[1].strip()
+                        max_age_val = self.strip_quotes(d.split("=", 1)[1].strip())
                     elif d.startswith("expires="):
-                        expires_val = d.split("=", 1)[1].strip()
+                        expires_val = self.strip_quotes(d.split("=", 1)[1].strip())
 
                 is_session = self.is_session_cookie(cookie_name)
                 masked_cookie = self.mask_cookie_value(cookie_str)
@@ -155,15 +183,22 @@ class AdvancedCookieModule(ScannerModule):
                         ))
 
                 # Smart Session Cookie Checks
+                samesite_none_without_secure = (samesite_val == "none" and not is_secure)
+
                 if is_session:
                     if not is_secure and url.startswith("https"):
+                        desc = "A cookie used to keep users logged in is missing the 'Secure' setting."
+                        rem = "Add the 'Secure' attribute to ensure the cookie is only transmitted over HTTPS."
+                        if samesite_val == "none":
+                            desc += " Additionally, it specifies SameSite=None without Secure, which modern browsers generally reject."
+                            rem += " SameSite=None must be paired with Secure."
                         findings.append(self.make_finding(
                             "Session Cookie Missing Secure Flag",
                             "Medium",
-                            "A cookie used to keep users logged in is missing the 'Secure' setting.",
+                            desc,
                             masked_cookie,
                             impact="If this is an authentication cookie, missing the Secure flag allows transmission over unencrypted connections, increasing interception risk.",
-                            remediation="Add the 'Secure' attribute to ensure the cookie is only transmitted over HTTPS.",
+                            remediation=rem,
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies",
                             confidence="High"
@@ -193,18 +228,6 @@ class AdvancedCookieModule(ScannerModule):
                             category="session_cookies",
                             confidence="High"
                         ))
-                    elif samesite_val == "none" and not is_secure:
-                        findings.append(self.make_finding(
-                            "Session Cookie Uses SameSite=None Without Secure",
-                            "Medium",
-                            "A login cookie is configured to be sent everywhere but is missing the required 'Secure' safety rule.",
-                            masked_cookie,
-                            impact="Cookies configured with SameSite=None must also include the Secure flag, otherwise modern browsers will reject them.",
-                            remediation="Add the Secure flag when using SameSite=None.",
-                            owasp="A05: Security Misconfiguration",
-                            category="session_cookies",
-                            confidence="High"
-                        ))
 
                     if domain_val and domain_val.startswith(".") and domain_val != f".{hostname}":
                         # Basic broad domain check
@@ -221,23 +244,39 @@ class AdvancedCookieModule(ScannerModule):
                         ))
                 else:
                     # Collect non-session cookie issues for bulk reporting
-                    if not is_httponly:
-                        missing_httponly.append(cookie_name)
                     if not is_secure and url.startswith("https"):
                         missing_secure.append(cookie_name)
                     if not samesite_val:
                         missing_samesite.append(cookie_name)
 
+                if samesite_none_without_secure and not (is_session and not is_secure and url.startswith("https")):
+                    findings.append(self.make_finding(
+                        "Cookie Uses SameSite=None Without Secure",
+                        "Low",
+                        "The cookie specifies SameSite=None without Secure. Modern browsers generally reject this combination for cross-site cookie use.",
+                        masked_cookie,
+                        impact="Modern browsers require Secure with SameSite=None, so this commonly represents an invalid/inconsistent cookie configuration rather than proven credential exposure.",
+                        remediation="Add the Secure flag when using SameSite=None.",
+                        owasp="A05: Security Misconfiguration",
+                        category="session_cookies",
+                        confidence="High"
+                    ))
+
                 # Prefix Checks
                 if cookie_name.startswith("__Host-"):
                     path_is_root = path_val == "/"
                     if not is_secure or not path_is_root or domain_val is not None:
+                        failures = []
+                        if not is_secure: failures.append("missing Secure")
+                        if not path_is_root: failures.append("Path is not '/'")
+                        if domain_val is not None: failures.append("Domain is present")
+
                         findings.append(self.make_finding(
                             "Invalid __Host- Cookie Prefix Configuration",
-                            "Medium",
+                            "Low",
                             "A cookie trying to use the secure '__Host-' naming rule is missing required safety settings.",
-                            masked_cookie,
-                            impact="The browser will reject this cookie because it doesn't follow strict security rules, potentially breaking parts of your website.",
+                            f"Cookie: {cookie_name}\nFailures: {', '.join(failures)}",
+                            impact="The browser will reject this cookie because it doesn't follow strict security rules.",
                             remediation="Ensure the cookie sets Secure, Path=/, and omits the Domain attribute.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies"
@@ -246,43 +285,38 @@ class AdvancedCookieModule(ScannerModule):
                     if not is_secure:
                         findings.append(self.make_finding(
                             "Invalid __Secure- Cookie Prefix Configuration",
-                            "Medium",
+                            "Low",
                             "A cookie trying to use the secure '__Secure-' naming rule is missing the 'Secure' flag.",
                             masked_cookie,
-                            impact="The browser will reject this cookie because it is not securely encrypted, which could break features on your site.",
+                            impact="The browser will reject this cookie because it is not securely encrypted.",
                             remediation="Ensure the cookie sets the Secure attribute.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies"
                         ))
 
-            all_unsecured = set(missing_httponly + missing_secure + missing_samesite)
+            all_unsecured = set(missing_secure + missing_samesite)
             if all_unsecured:
                 problems = []
-                if missing_httponly:
-                    problems.append(f"Missing HttpOnly: {', '.join(missing_httponly)}.")
                 if missing_secure:
-                    problems.append(f"Missing Secure: {', '.join(missing_secure)}.")
+                    problems.append(f"Missing Secure: {', '.join(missing_secure)}")
                 if missing_samesite:
-                    problems.append(f"Missing SameSite: {', '.join(missing_samesite)}.")
-
-                overall_sev = "Low"
-                if all(c.upper() in self.NON_SENSITIVE_COOKIES for c in all_unsecured):
-                    overall_sev = "Informational"
+                    problems.append(f"Missing SameSite: {', '.join(missing_samesite)}")
 
                 count_len = len(all_unsecured)
                 title = f"Unsecured Non-Session Cookie{'s' if count_len > 1 else ''} Detected ({count_len})"
                 findings.append(self.make_finding(
                     title,
-                    overall_sev,
-                    " ".join(problems),
+                    "Informational",
+                    "Some non-authentication cookies are missing recommended security attributes: " + "; ".join(problems) + ".",
                     f"Cookies affected: {', '.join(all_unsecured)}",
-                    impact="Some non-authentication cookies are missing recommended security attributes. These appear to be low-risk cookies rather than login/session credentials.",
-                    remediation="Consider adding HttpOnly, Secure, and SameSite flags to all cookies.",
+                    impact="These appear to be low-risk cookies rather than login/session credentials.",
+                    remediation="Consider adding Secure and SameSite flags to all cookies if appropriate.",
                     owasp="A05: Security Misconfiguration",
                     category="session_cookies"
                 ))
 
-        except Exception:
+        except Exception as e:
+            print(f"DEBUG EXCEPTION: {e}")
             pass
         return findings
 

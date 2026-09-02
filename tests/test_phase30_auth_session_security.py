@@ -61,8 +61,9 @@ class TestPhase30AuthSessionSecurity(unittest.TestCase):
             headers={"Set-Cookie": "sessionid=123; HttpOnly; SameSite=None; Path=/"}
         )
         findings = self.cookie_mod.run("https://example.com", "example.com", self.session)
-        names = [f['name'] for f in findings]
-        self.assertIn("Session Cookie Uses SameSite=None Without Secure", names)
+        self.assertIn("Session Cookie Missing Secure Flag", [f['name'] for f in findings])
+        secure_finding = next(f for f in findings if f['name'] == "Session Cookie Missing Secure Flag")
+        self.assertIn("SameSite=None", secure_finding['description'])
 
     @patch('api.scanner.modules.http_security.safe_request')
     def test_session_cookie_missing_samesite(self, mock_safe_req):
