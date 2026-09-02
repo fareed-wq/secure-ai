@@ -44,7 +44,7 @@ class TestPhase26ApiWebExpansion(unittest.TestCase):
     def test_openapi_detection_valid(self, mock_request):
         mock_request.side_effect = self.create_side_effect("/openapi.json", DummyResponse(200, '{"openapi": "3.0.0"}', {"Content-Type": "application/json"}))
         mod = OpenApiModule()
-        findings = mod.run("https://example.com", "example.com", self.session)
+        findings = mod.run("https://example.com/openapi.json", "example.com", self.session)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]["name"], "Public OpenAPI / Swagger Specification Exposed")
         self.assertEqual(findings[0]["severity"], "Informational")
@@ -54,14 +54,14 @@ class TestPhase26ApiWebExpansion(unittest.TestCase):
     def test_openapi_detection_invalid(self, mock_request):
         mock_request.side_effect = self.create_side_effect("/openapi.json", DummyResponse(200, '{"error": "not found"}', {"Content-Type": "application/json"}))
         mod = OpenApiModule()
-        findings = mod.run("https://example.com", "example.com", self.session)
+        findings = mod.run("https://example.com/graphiql", "example.com", self.session)
         self.assertEqual(len(findings), 0)
 
     @patch('api.scanner.modules.discovery.safe_request')
     def test_graphql_ide_detection(self, mock_request):
         mock_request.side_effect = self.create_side_effect("/graphiql", DummyResponse(200, '<html><head><title>GraphiQL</title></head><body></body></html>', {"Content-Type": "text/html"}))
         mod = GraphqlIdeModule()
-        findings = mod.run("https://example.com", "example.com", self.session)
+        findings = mod.run("https://example.com/graphiql", "example.com", self.session)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]["name"], "Interactive GraphQL Developer IDE Exposed")
 
@@ -69,7 +69,7 @@ class TestPhase26ApiWebExpansion(unittest.TestCase):
     def test_actuator_health(self, mock_request):
         mock_request.side_effect = self.create_side_effect("/actuator/health", DummyResponse(200, '{"status": "UP"}', {"Content-Type": "application/json"}))
         mod = ActuatorModule()
-        findings = mod.run("https://example.com", "example.com", self.session)
+        findings = mod.run("https://example.com/actuator/health", "example.com", self.session)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]["severity"], "Informational")
         self.assertEqual(findings[0]["name"], "Spring Boot Actuator Endpoint Exposed")
@@ -78,7 +78,7 @@ class TestPhase26ApiWebExpansion(unittest.TestCase):
     def test_actuator_sensitive_env(self, mock_request):
         mock_request.side_effect = self.create_side_effect("/actuator/env", DummyResponse(200, '{"propertySources": []}', {"Content-Type": "application/json"}))
         mod = ActuatorModule()
-        findings = mod.run("https://example.com", "example.com", self.session)
+        findings = mod.run("https://example.com/actuator/env", "example.com", self.session)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]["severity"], "High")
         self.assertEqual(findings[0]["name"], "Sensitive Spring Boot Actuator Config Exposed")
@@ -129,7 +129,7 @@ class TestPhase26ApiWebExpansion(unittest.TestCase):
     def test_xmlrpc_detection(self, mock_request):
         mock_request.side_effect = self.create_side_effect("/xmlrpc.php", DummyResponse(405, 'XML-RPC server accepts POST requests only', {"Content-Type": "text/plain"}))
         mod = XmlRpcModule()
-        findings = mod.run("https://example.com", "example.com", self.session)
+        findings = mod.run("https://example.com/xmlrpc.php", "example.com", self.session)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]["name"], "Legacy XML-RPC Endpoint Exposed")
 

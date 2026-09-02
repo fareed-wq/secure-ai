@@ -137,7 +137,9 @@ class JavaScriptSecurityModule(ScannerModule):
             script_urls = script_urls[:self.MAX_BUNDLES]
 
             secrets_found = set()
+            raw_secrets_found = set()
             info_secrets_found = set()
+            raw_secrets_found = set()
             api_endpoints = set()
             internal_hosts = set()
             frameworks = set()
@@ -167,6 +169,7 @@ class JavaScriptSecurityModule(ScannerModule):
                         raw_match = match.group(1) if len(match.groups()) > 0 else match.group(0)
                         if not self._is_test_value(raw_match):
                             secrets_found.add(f"Pattern: {secret_name} | Location: {filename} | Value: {self._mask_secret(raw_match)}")
+                            raw_secrets_found.add(raw_match)
 
                 # 1.5 PUBLIC KEY DETECTION
                 for key_name, pattern in self.PUBLIC_KEY_PATTERNS.items():
@@ -174,6 +177,7 @@ class JavaScriptSecurityModule(ScannerModule):
                         raw_match = match.group(1) if len(match.groups()) > 0 else match.group(0)
                         if not self._is_test_value(raw_match):
                             info_secrets_found.add(f"Pattern: {key_name} | Location: {filename} | Value: {self._mask_secret(raw_match)}")
+                            raw_secrets_found.add(raw_match)
 
                 # 2. INTERNAL HOSTS
                 for pattern in self.INTERNAL_HOST_PATTERNS:
@@ -216,7 +220,7 @@ class JavaScriptSecurityModule(ScannerModule):
                 for match in self.DANGEROUS_CONFIG.finditer(js_text):
                     val = match.group(1)
                     if len(val) > 4 and not self._is_test_value(val):
-                        if not val.startswith("sk_live_") and not val.startswith("AKIA"): # avoid duplicate with secrets
+                        if val not in raw_secrets_found: # avoid duplicate with secrets
                             dangerous_config.add(f"Config Key in {filename}: masked value '{self._mask_secret(val)}'")
 
                 # PHASE 31: AUTH LOGIC & PRIVILEGED APIS
@@ -263,6 +267,7 @@ class JavaScriptSecurityModule(ScannerModule):
                                             raw_match = match.group(1) if len(match.groups()) > 0 else match.group(0)
                                             if not self._is_test_value(raw_match):
                                                 secrets_found.add(f"Pattern: {secret_name} | Location: {map_url} (SourceMap) | Value: {self._mask_secret(raw_match)}")
+                            raw_secrets_found.add(raw_match)
                     except Exception as e:
                         logger.debug("Source map fetch failed: %s", e)
 

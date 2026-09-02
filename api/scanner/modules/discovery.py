@@ -770,14 +770,10 @@ class OpenApiModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
-        scheme = "https" if url.startswith("https") else "http"
-        base_url = f"{scheme}://{hostname}"
-        paths = ["/openapi.json", "/swagger.json", "/v3/api-docs", "/api-docs", "/swagger-ui.html"]
 
-        def check_path(path):
+        def check_path(target):
             local_findings = []
             try:
-                target = base_url + path
                 resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
                 if resp and resp.status_code == 200 and "application/json" in resp.headers.get("Content-Type", "").lower():
                     try:
@@ -887,14 +883,12 @@ class OpenApiModule(ScannerModule):
                     except ValueError:
                         pass
             except Exception as e:
-                logger.debug("OpenApiModule check failed for %s: %s", path, e)
+                logger.debug("OpenApiModule check failed: %s", e)
             return local_findings
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            for result_list in executor.map(check_path, paths):
-                if result_list:
-                    findings.extend(result_list)
-                    break  # Return on first finding to reduce noise
+        result_list = check_path(url)
+        if result_list:
+            findings.extend(result_list)
         return findings
 
 
@@ -904,13 +898,9 @@ class GraphqlIdeModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
-        scheme = "https" if url.startswith("https") else "http"
-        base_url = f"{scheme}://{hostname}"
-        paths = ["/graphiql", "/playground", "/graphql/console"]
 
-        def check_path(path):
+        def check_path(target):
             try:
-                target = base_url + path
                 resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
                 if resp and resp.status_code == 200 and "text/html" in resp.headers.get("Content-Type", "").lower():
                     lower_text = resp.text.lower()
@@ -926,14 +916,12 @@ class GraphqlIdeModule(ScannerModule):
                             owasp="Not Mapped"
                         )
             except Exception as e:
-                logger.debug("GraphqlIdeModule check failed for %s: %s", path, e)
+                logger.debug("GraphqlIdeModule check failed: %s", e)
             return None
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            for result in executor.map(check_path, paths):
-                if result:
-                    findings.append(result)
-                    break
+        result = check_path(url)
+        if result:
+            findings.append(result)
         return findings
 
 
@@ -943,21 +931,17 @@ class ActuatorModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
-        scheme = "https" if url.startswith("https") else "http"
-        base_url = f"{scheme}://{hostname}"
-        paths = ["/actuator", "/actuator/health", "/actuator/env"]
 
-        def check_path(path):
+        def check_path(target):
             try:
-                target = base_url + path
                 resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
                 if resp and resp.status_code == 200 and "json" in resp.headers.get("Content-Type", "").lower():
                     try:
                         data = resp.json()
                         if isinstance(data, dict):
-                            is_health = path == "/actuator/health" and "status" in data
-                            is_env = path == "/actuator/env" and ("propertySources" in data or "activeProfiles" in data)
-                            is_base = path == "/actuator" and "_links" in data
+                            is_health = "status" in data
+                            is_env = ("propertySources" in data or "activeProfiles" in data)
+                            is_base = "_links" in data
 
                             if is_env:
                                 return self.make_finding(
@@ -985,13 +969,12 @@ class ActuatorModule(ScannerModule):
                     except ValueError:
                         pass
             except Exception as e:
-                logger.debug("ActuatorModule check failed for %s: %s", path, e)
+                logger.debug("ActuatorModule check failed: %s", e)
             return None
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            for result in executor.map(check_path, paths):
-                if result:
-                    findings.append(result)
+        result = check_path(url)
+        if result:
+            findings.append(result)
 
         # Deduplicate to keep the highest severity
         highest_severity_finding = None
@@ -1009,8 +992,7 @@ class XmlRpcModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
-        scheme = "https" if url.startswith("https") else "http"
-        target = f"{scheme}://{hostname}/xmlrpc.php"
+        target = url
 
         try:
             resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
