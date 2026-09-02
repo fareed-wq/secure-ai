@@ -229,6 +229,9 @@ def safe_request(
                         location = resp.headers.get("Location")
                         if not location:
                             break
+                        if _ == max_redirects:
+                            break
+                        resp.close()
                         current_url = urljoin(current_url, location)
                     else:
                         break
