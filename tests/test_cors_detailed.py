@@ -69,6 +69,18 @@ def test_cors_missing(module, monkeypatch):
     assert findings[0]["name"] == "Strict CORS Policy Enforced"
     assert findings[0]["severity"] == "Passed"
 
+def test_cors_waf_challenge_no_acao(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({"X-Vercel-Mitigated": "challenge"}))
+    findings = module.run("http://example.com", "example.com", MagicMock())
+    assert len(findings) == 0
+
+def test_cors_waf_challenge_with_200_status(module, monkeypatch):
+    # safe_request mock_response doesn't typically mock status, but the module logic
+    # depends only on the headers, so this effectively tests B.
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({"X-Vercel-Mitigated": "challenge", "Content-Type": "text/html"}))
+    findings = module.run("http://example.com", "example.com", MagicMock())
+    assert len(findings) == 0
+
 def test_cors_invalid_acac(module, monkeypatch):
     monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({"Access-Control-Allow-Origin": "https://cors-test.invalid", "Access-Control-Allow-Credentials": "yes"}))
     findings = module.run("http://example.com", "example.com", MagicMock())

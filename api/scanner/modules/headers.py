@@ -72,6 +72,13 @@ class CORSModule(ScannerModule):
             if resp is None:
                 return findings
 
+            # WAF/Challenge protection check
+            # If the response is a known WAF challenge, we should not evaluate CORS
+            # because the headers belong to the challenge page, not the application.
+            vercel_mitigated = self.get_header_safe(resp, "X-Vercel-Mitigated")
+            if vercel_mitigated and vercel_mitigated.strip().lower() == "challenge":
+                return findings
+
             acao_raw = self.get_header_safe(resp, "Access-Control-Allow-Origin")
             acao = acao_raw.strip() if acao_raw else ""
 
