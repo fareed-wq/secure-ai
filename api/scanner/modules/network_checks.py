@@ -143,35 +143,24 @@ class GraphQLIntrospectionModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
-        base_url = url.rstrip('/')
-        paths = ["/graphql", "/api/graphql"]
-
-        with ThreadPoolExecutor(max_workers=2) as file_pool:
-            futures = {}
-            for path in paths:
-                target_url = f"{base_url}{path}?query={{__typename}}"
-                futures[file_pool.submit(safe_request, "GET", target_url, session=session, timeout=(1.5, 2.5))] = target_url
-
-            for future in as_completed(futures):
-                try:
-                    resp = future.result()
-                    if resp and resp.status_code == 200:
-                        content_type = resp.headers.get("Content-Type", "").lower()
-                        if "application/json" in content_type:
-                            text = resp.text
-                            if '"__typename"' in text or '"__schema"' in text:
-                                findings.append(self.make_finding(
-                                    "Public GraphQL Introspection Enabled",
-                                    "Informational",
-                                    "Your database interface (GraphQL) is publicly answering questions about how it is structured.",
-                                    target_url,
-                                    impact="Exposed GraphQL introspection provides a complete schema map, assisting reconnaissance.",
-                                    owasp="Not Mapped",
-                                    category="information_exposure"
-                                ))
-                                break
-                except Exception:
-                    pass
+        try:
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
+            if resp and resp.status_code == 200:
+                content_type = resp.headers.get("Content-Type", "").lower()
+                if "application/json" in content_type:
+                    text = resp.text
+                    if '"__typename"' in text or '"__schema"' in text:
+                        findings.append(self.make_finding(
+                            "Public GraphQL Introspection Enabled",
+                            "Informational",
+                            "Your database interface (GraphQL) is publicly answering questions about how it is structured.",
+                            url,
+                            impact="Exposed GraphQL introspection provides a complete schema map, assisting reconnaissance.",
+                            owasp="Not Mapped",
+                            category="information_exposure"
+                        ))
+        except Exception:
+            pass
         return findings
 
 class VerboseStackTraceModule(ScannerModule):

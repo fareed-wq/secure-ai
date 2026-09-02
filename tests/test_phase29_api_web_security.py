@@ -136,25 +136,19 @@ class TestPhase29ApiWebSecurity(unittest.TestCase):
 
     @patch("api.scanner.modules.api_web_security.safe_request")
     def test_oidc_discovery(self, mock_safe_request):
-        mock_base = MagicMock()
-        mock_base.history = []
-        mock_base.url = self.url
-        mock_base.text = ""
-        mock_base.headers = {}
-        mock_base.status_code = 200
-
         mock_oidc = MagicMock()
         mock_oidc.status_code = 200
+        mock_oidc.text = ""
         mock_oidc.headers = {"Content-Type": "application/json"}
         mock_oidc.json.return_value = {
             "issuer": "https://example.com",
             "authorization_endpoint": "https://example.com/auth"
         }
         
-        mock_safe_request.side_effect = [mock_base, mock_oidc]
+        mock_safe_request.side_effect = [mock_oidc, mock_oidc]
 
         module = ApiWebSecurityModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        findings = module.run("https://example.com/.well-known/openid-configuration", self.hostname, self.session)
         
         oidc = next((f for f in findings if f["name"] == "OpenID Connect Configuration Discovered"), None)
         self.assertIsNotNone(oidc)

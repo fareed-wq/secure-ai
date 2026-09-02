@@ -332,29 +332,28 @@ class ApiWebSecurityModule(ScannerModule):
 
         # 8. OIDC Configuration
         try:
-            oidc_url = urljoin(url, "/.well-known/openid-configuration")
-            oidc_resp = safe_request("GET", oidc_url, session=session, timeout=(1.5, 2.5))
-            if oidc_resp and oidc_resp.status_code == 200:
-                ct = self.get_header_safe(oidc_resp, "Content-Type", "").lower()
-                if "application/json" in ct:
-                    try:
-                        data = oidc_resp.json()
-                        required_fields = ["issuer", "authorization_endpoint", "token_endpoint", "jwks_uri"]
-                        found_fields = [f for f in required_fields if f in data]
-                        if len(found_fields) >= 2:
-                            findings.append(self.make_finding(
-                                "OpenID Connect Configuration Discovered",
-                                "Informational",
-                                description="Your website publicly shares its login system configuration file.",
-                                evidence=f"Observed fields: {', '.join(found_fields)}",
-                                confidence="High",
-                                category="information_exposure",
-                                owasp="Not Mapped",
-                                impact="Verbose configuration files may inadvertently disclose sensitive application details."
-                            ))
-                    except Exception:
-                        pass
+            if "openid-configuration" in url.lower():
+                if resp and resp.status_code == 200:
+                    ct = self.get_header_safe(resp, "Content-Type", "").lower()
+                    if "application/json" in ct:
+                        try:
+                            data = resp.json()
+                            required_fields = ["issuer", "authorization_endpoint", "token_endpoint", "jwks_uri"]
+                            found_fields = [f for f in required_fields if f in data]
+                            if len(found_fields) >= 2:
+                                findings.append(self.make_finding(
+                                    "OpenID Connect Configuration Discovered",
+                                    "Informational",
+                                    description="Your website publicly shares its login system configuration file.",
+                                    evidence=f"Observed fields: {', '.join(found_fields)}",
+                                    confidence="High",
+                                    category="information_exposure",
+                                    owasp="Not Mapped",
+                                    impact="Verbose configuration files may inadvertently disclose sensitive application details."
+                                ))
+                        except Exception:
+                            pass
         except Exception as e:
-            logger.debug(f"ApiWebSecurityModule OIDC fetch failed: {e}")
+            logger.debug(f"ApiWebSecurityModule OIDC parse failed: {e}")
 
         return findings
