@@ -64,6 +64,7 @@ class CORSModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         request_successful = False
+        resp = None
         try:
             synthetic_origin = "https://cors-test.invalid"
             headers = {"Origin": synthetic_origin}
@@ -181,7 +182,15 @@ class CORSModule(ScannerModule):
             import logging
             logging.getLogger(__name__).debug("CORSModule failed: %s", e)
 
-        if request_successful and not any("CORS" in f["name"].upper() for f in findings):
+        status = getattr(resp, "status_code", None)
+
+        if (
+            request_successful
+            and resp is not None
+            and isinstance(status, int)
+            and 200 <= status < 300
+            and not any("CORS" in f["name"].upper() for f in findings)
+        ):
             findings.append(self.make_finding(
                 "Strict CORS Policy Enforced",
                 "Passed",

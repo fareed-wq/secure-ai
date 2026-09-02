@@ -6,9 +6,10 @@ from api.scanner.modules.headers import CORSModule
 def module():
     return CORSModule()
 
-def mock_response(headers):
+def mock_response(headers, status_code=200):
     resp = MagicMock()
     resp.headers = headers
+    resp.status_code = status_code
     return resp
 
 def test_cors_wildcard_no_creds(module, monkeypatch):
@@ -122,5 +123,63 @@ def test_cors_evaluation_exception(module, monkeypatch):
         type(resp).headers = property(lambda self: (_ for _ in ()).throw(Exception("Eval Error")))
         return resp
     monkeypatch.setattr("api.scanner.modules.headers.safe_request", mock_resp)
+    findings = module.run("http://example.com", "example.com", MagicMock())
+    assert len(findings) == 0
+
+def test_cors_200_no_acao(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({}, 200))
+    findings = module.run("http://example.com", "example.com", MagicMock())
+    assert len(findings) == 1
+    assert findings[0]["severity"] == "Passed"
+
+def test_cors_204_no_acao(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({}, 204))
+    findings = module.run("http://example.com", "example.com", MagicMock())
+    assert len(findings) == 1
+    assert findings[0]["severity"] == "Passed"
+
+def test_cors_302_no_acao(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({}, 302))
+    findings = module.run("http://example.com", "example.com", MagicMock())
+    assert len(findings) == 0
+
+def test_cors_404_no_acao(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({}, 404))
+    findings = module.run("http://example.com", "example.com", MagicMock())
+    assert len(findings) == 0
+
+def test_cors_429_no_acao(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({}, 429))
+    findings = module.run("http://example.com", "example.com", MagicMock())
+    assert len(findings) == 0
+
+def test_cors_500_no_acao(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({}, 500))
+    findings = module.run("http://example.com", "example.com", MagicMock())
+    assert len(findings) == 0
+
+def test_cors_504_no_acao(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({}, 504))
+    findings = module.run("http://example.com", "example.com", MagicMock())
+    assert len(findings) == 0
+
+def test_cors_missing_status_code(module, monkeypatch):
+    def mock_missing_status(*a, **kw):
+        resp = MagicMock()
+        resp.headers = {}
+        # explicitly delete status_code so it's missing or mock it to None
+        resp.status_code = None
+        return resp
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", mock_missing_status)
+    findings = module.run("http://example.com", "example.com", MagicMock())
+    assert len(findings) == 0
+
+def test_cors_non_integer_status_code(module, monkeypatch):
+    def mock_non_int_status(*a, **kw):
+        resp = MagicMock()
+        resp.headers = {}
+        resp.status_code = "200" # string instead of int
+        return resp
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", mock_non_int_status)
     findings = module.run("http://example.com", "example.com", MagicMock())
     assert len(findings) == 0

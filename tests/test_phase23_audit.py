@@ -62,6 +62,7 @@ class TestPhase23Audit(unittest.TestCase):
     def test_cors_confidence(self, mock_req):
         mock_resp = MagicMock()
         mock_resp.headers = {"Access-Control-Allow-Origin": "*"}
+        mock_resp.status_code = 200
         mock_req.return_value = mock_resp
         
         module = CORSModule()
