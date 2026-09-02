@@ -1,4 +1,5 @@
 import socket
+import errno
 import time
 import logging
 
@@ -12,6 +13,7 @@ def safe_create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, sour
     """
     host, port = address
     err = None
+    meaningful_err = None
     try:
         infos = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
     except socket.gaierror as e:
@@ -50,9 +52,13 @@ def safe_create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, sour
             errno_val = getattr(_, 'errno', None)
             logger.info(f"safe_connect host={host} port={port} family={family_str} ip={ip} failed {type(_).__name__} errno={errno_val} elapsed={elapsed:.2f}s")
             err = _
+            if errno_val != errno.EADDRNOTAVAIL:
+                meaningful_err = _
             if sock is not None:
                 sock.close()
                 
+    if meaningful_err is not None:
+        raise meaningful_err
     if err is not None:
         raise err
     raise OSError("getaddrinfo returns an empty list")
