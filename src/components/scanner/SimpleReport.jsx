@@ -61,7 +61,8 @@ const SimpleReport = ({ reportData }) => {
     { name: 'Transport & TLS', val: calculateDomainHealth('transport_tls'), icon: Lock },
     { name: 'Browser Defense', val: calculateDomainHealth('browser_defense'), icon: ShieldAlert },
     { name: 'API Surface', val: calculateDomainHealth('api_surface'), icon: Code2 },
-    { name: 'Email & Domain', val: calculateDomainHealth('email_domain'), icon: Mail }
+    { name: 'Email & Domain', val: calculateDomainHealth('email_domain'), icon: Mail },
+    { name: 'Network & Service Exposure', val: calculateDomainHealth('network_services'), icon: Activity }
   ];
 
   return (
