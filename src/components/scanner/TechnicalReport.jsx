@@ -20,6 +20,7 @@ const TechnicalReport = ({ reportData }) => {
     { key: 'browser_defense', label: 'Browser Defense Headers', icon: <Shield className="w-4 h-4 text-indigo-400" /> },
     { key: 'api_surface', label: 'API & Application Surface', icon: <Terminal className="w-4 h-4 text-amber-400" /> },
     { key: 'email_domain', label: 'Email & Domain Trust', icon: <Globe className="w-4 h-4 text-emerald-400" /> },
+    { key: 'network_services', label: 'Network & Service Exposure', icon: <Activity className="w-4 h-4 text-purple-400" /> },
   ];
 
   const getSeverityBadge = (severity) => {
