@@ -1,6 +1,7 @@
 import logging
 import re
 import json
+import requests
 from typing import List, Dict, Set
 from urllib.parse import urljoin, urlparse
 
@@ -98,7 +99,7 @@ class JavaScriptSecurityModule(ScannerModule):
     # PHASE 31: AUTHORIZATION & ACCESS CONTROL
     AUTH_LOGIC_PATTERN = re.compile(r'\b(isAdmin|is_admin|userRole|user_role|hasPermission|has_permission|canDelete|can_delete|canEdit|can_edit|canManage|can_manage|isStaff|is_staff|isSuperuser|is_superuser)\b\s*(?:===|==|!==|!=|=|\()\s*[^;,\)]+', re.IGNORECASE)
     ROLE_MODEL_PATTERN = re.compile(r'(?:["\']?(?:role|roles|permission|permissions)["\']?\s*:\s*(?:["\'][a-zA-Z0-9_\-]+["\']|\[[^\]]{1,100}\]))', re.IGNORECASE)
-    PRIVILEGED_API_PATTERN = re.compile(r'["\'](?:https?://api\.[a-zA-Z0-9\.\-]+)?(/api/(?:admin|administrator|staff|management|roles|permissions|users|accounts|config|settings|payments|billing|internal)[/a-zA-Z0-9_\-\{\}]*)["\']', re.IGNORECASE)
+    PRIVILEGED_API_PATTERN = re.compile(r'[\"\'](?:https?://[a-zA-Z0-9\.\-]+)?(/(?:[a-zA-Z0-9_\-\{\}]+/)*(?:admin|administrator|manage|management|staff|superuser|internal)(?:/[a-zA-Z0-9_\-\{\}]+)*)[\"\']', re.IGNORECASE)
     API_VERSION_PATTERN = re.compile(r'/(?:api/)?(v\d+)/')
 
     def _is_test_value(self, match_str: str) -> bool:
@@ -440,9 +441,9 @@ class JavaScriptSecurityModule(ScannerModule):
                 findings.append(self.make_finding(
                     "Privileged API Surface Discovered in Client-Side Code",
                     "Informational",
-                    "Paths to restricted administrative areas were found in the public code of your website.",
+                    "A privileged-looking route reference was observed in client-side code.",
                     "\\n".join(list(privileged_apis)[:5]),
-                    impact="Exposed administrative endpoints provide targets for unauthorized access attempts.",
+                    impact="This may reveal application structure or administrative route names. The scanner did not verify whether the route is reachable, publicly accessible, or improperly authorized.",
                     owasp="Not Mapped",
                     category="api_surface",
                     confidence="High"

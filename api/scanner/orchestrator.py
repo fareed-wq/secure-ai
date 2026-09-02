@@ -270,12 +270,12 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
                 "name": "Privileged Application Surface Correlated",
                 "severity": "Informational",
                 "category": "api_surface",
-                "description": "Cross-module correlation consolidated findings from JavaScript, OpenAPI, robots.txt, and HTML to map the application's privileged surface.",
+                "description": "Cross-module correlation consolidated findings from multiple passive sources indicating privileged-looking application routes/surfaces. Accessibility, authentication, and authorization enforcement were NOT tested.",
                 "evidence": {"raw": "\\n".join(evidence_lines)},
                 "confidence": "High",
                 "remediation": "N/A",
                 "remediation_snippets": {},
-                "owasp": "A01: Broken Access Control",
+                "owasp": "Not Mapped",
                 "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
             })
 
