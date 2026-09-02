@@ -14,7 +14,7 @@ def mock_session():
 def create_dns_response(status_code, records):
     mock = MagicMock()
     mock.status_code = status_code
-    mock.json.return_value = {"Answer": [{"data": r} for r in records]}
+    mock.json.return_value = {"Status": 0, "Answer": [{"data": r} for r in records]}
     return mock
 
 def test_private_rfc1918_ip(module, mock_session):

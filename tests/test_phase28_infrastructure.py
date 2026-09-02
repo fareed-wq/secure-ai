@@ -20,10 +20,10 @@ class TestPhase28Infrastructure(unittest.TestCase):
 
         module = DNSCAAModule()
         findings = module.run(self.hostname, self.domain, self.session)
-        
-        missing_caa = next((f for f in findings if f["name"] == "Missing CAA Record"), None)
+
+        missing_caa = next((f for f in findings if f["name"] == "CAA Record Not Observed"), None)
         self.assertIsNotNone(missing_caa)
-        self.assertEqual(missing_caa["severity"], "Low")
+        self.assertEqual(missing_caa["severity"], "Informational")
         self.assertEqual(missing_caa["confidence"], "High")
 
     @patch("api.scanner.modules.dns.safe_request")
@@ -31,13 +31,13 @@ class TestPhase28Infrastructure(unittest.TestCase):
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "Status": 0, 
+            "Status": 0,
             "Answer": [
                 {"data": "v=spf1 include:_spf.google.com ~all"},
                 {"data": "v=spf1 include:spf.protection.outlook.com -all"}
             ]
         }
-        
+
         # We need to simulate safe_request responding to multiple calls.
         # But for DNSEmailSecurityModule, SPF is just one of the calls.
         # We can just use side_effect to return this for all TXT queries to make it easy.
@@ -45,7 +45,7 @@ class TestPhase28Infrastructure(unittest.TestCase):
 
         module = DNSEmailSecurityModule()
         findings = module.run(self.hostname, self.domain, self.session)
-        
+
         multiple_spf = next((f for f in findings if f["name"] == "Multiple SPF Records Detected"), None)
         self.assertIsNotNone(multiple_spf)
         self.assertEqual(multiple_spf["severity"], "Medium")
@@ -55,7 +55,7 @@ class TestPhase28Infrastructure(unittest.TestCase):
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "Status": 0, 
+            "Status": 0,
             "Answer": [
                 {"data": "v=spf1 +all"}
             ]
@@ -64,7 +64,7 @@ class TestPhase28Infrastructure(unittest.TestCase):
 
         module = DNSEmailSecurityModule()
         findings = module.run(self.hostname, self.domain, self.session)
-        
+
         permissive = next((f for f in findings if f["name"] == "Overly Permissive SPF Record"), None)
         self.assertIsNotNone(permissive)
         self.assertEqual(permissive["severity"], "High")
@@ -79,17 +79,17 @@ class TestPhase28Infrastructure(unittest.TestCase):
 
         module = DNSEmailSecurityModule()
         findings = module.run(self.hostname, self.domain, self.session)
-        
-        missing_dmarc = next((f for f in findings if f["name"] == "Missing DMARC Policy"), None)
+
+        missing_dmarc = next((f for f in findings if f["name"] == "DMARC Record Not Observed"), None)
         self.assertIsNotNone(missing_dmarc)
-        self.assertEqual(missing_dmarc["severity"], "Medium")
+        self.assertEqual(missing_dmarc["severity"], "Informational")
 
     @patch("api.scanner.modules.dns.safe_request")
     def test_dns_dmarc_none(self, mock_safe_request):
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         mock_resp.json.return_value = {
-            "Status": 0, 
+            "Status": 0,
             "Answer": [
                 {"data": "v=DMARC1; p=none; rua=mailto:dmarc@example.com"}
             ]
@@ -98,7 +98,7 @@ class TestPhase28Infrastructure(unittest.TestCase):
 
         module = DNSEmailSecurityModule()
         findings = module.run(self.hostname, self.domain, self.session)
-        
+
         dmarc_none = next((f for f in findings if f["name"] == "DMARC Monitoring-Only Policy"), None)
         self.assertIsNotNone(dmarc_none)
         self.assertEqual(dmarc_none["severity"], "Informational")
@@ -111,7 +111,7 @@ class TestPhase28Infrastructure(unittest.TestCase):
         mock_resp.status_code = 200
         # NS response
         mock_resp.json.return_value = {
-            "Status": 0, 
+            "Status": 0,
             "Answer": [
                 {"data": "ns1.cloudflare.com."}
             ]
@@ -120,7 +120,7 @@ class TestPhase28Infrastructure(unittest.TestCase):
 
         module = InfrastructureIntelligenceModule()
         findings = module.run(self.hostname, self.domain, self.session)
-        
+
         dns_prov = next((f for f in findings if f["name"] == "DNS Infrastructure Provider Identified"), None)
         self.assertIsNotNone(dns_prov)
         self.assertIn("Cloudflare", dns_prov["evidence"]["raw"])
@@ -136,17 +136,51 @@ class TestPhase28Infrastructure(unittest.TestCase):
         mock_resp.headers = {"Content-Type": "text/html"}
         mock_resp.text = "<html></html>"
         mock_safe_request.return_value = mock_resp
-        
+
         mock_sess = MagicMock()
         mock_get_session.return_value.__enter__.return_value = mock_sess
 
         # Test full orchestration to trigger cross-module correlation
         result = scan_url("https://example.com")
         self.assertTrue("findings" in result)
-        
+
         # We don't have mock data injecting SANs directly here, but we can verify
         # that the function doesn't crash and returns valid results.
         self.assertIsInstance(result["score"], int)
 
 if __name__ == '__main__':
     unittest.main()
+
+    @patch("api.scanner.modules.dns.safe_request")
+    def test_caa_wording_neutralized(self, mock_safe_request):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"Status": 0, "Answer": [{"data": "0 iodef \"mailto:security@example.com\""}]}
+        mock_safe_request.return_value = mock_resp
+
+        module = DNSCAAModule()
+        findings = module.run(self.hostname, self.domain, self.session)
+        info = next((f for f in findings if f["name"] == "CAA Records Observed"), None)
+        self.assertIsNotNone(info)
+        self.assertEqual(info["severity"], "Informational")
+        self.assertNotIn("explicitly restricts", info["description"])
+
+    @patch("api.scanner.modules.dns.safe_request")
+    def test_wildcard_wording_neutralized(self, mock_safe_request):
+        def _mock_req(method, url, **kwargs):
+            mock = MagicMock()
+            mock.status_code = 200
+            if "type=A" in url:
+                mock.json.return_value = {"Status": 0, "Answer": [{"data": "1.2.3.4"}]}
+            else:
+                mock.json.return_value = {"Status": 3, "Answer": []}
+            return mock
+
+        mock_safe_request.side_effect = _mock_req
+
+        module = DNSCAAModule()
+        findings = module.run(self.hostname, self.domain, self.session)
+        wildcard = next((f for f in findings if f["name"] == "Wildcard DNS Record Detected"), None)
+        self.assertIsNotNone(wildcard)
+        self.assertIn("suggests wildcard", wildcard["description"])
+        self.assertNotIn("every subdomain", wildcard["description"])

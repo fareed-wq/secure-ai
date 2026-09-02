@@ -85,7 +85,7 @@ class TestPhase24Consistency(unittest.TestCase):
         mock_resp = MagicMock()
         mock_resp.status_code = 200
         # Return CNAME first, then probe response
-        mock_resp.json.return_value = {"Answer": [{"type": 5, "data": "s3.amazonaws.com."}]}
+        mock_resp.json.return_value = {"Status": 0, "Answer": [{"type": 5, "data": "s3.amazonaws.com."}]}
         mock_resp.text = "NoSuchBucket"
         mock_req.return_value = mock_resp
         

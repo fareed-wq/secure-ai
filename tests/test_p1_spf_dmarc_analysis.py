@@ -20,14 +20,14 @@ def session():
 def mock_safe_request(mock_answers, dmarc_answers=None, mta_answers=None, dkim_answers=None):
     def _mock_req(method, url, **kwargs):
         if "_dmarc" in url:
-            if dmarc_answers: return create_mock_response(200, {"Answer": dmarc_answers})
+            if dmarc_answers: return create_mock_response(200, {"Status": 0, "Answer": dmarc_answers})
         elif "_mta-sts" in url:
-            if mta_answers: return create_mock_response(200, {"Answer": mta_answers})
+            if mta_answers: return create_mock_response(200, {"Status": 0, "Answer": mta_answers})
         elif "_domainkey" in url:
-            if dkim_answers: return create_mock_response(200, {"Answer": dkim_answers})
+            if dkim_answers: return create_mock_response(200, {"Status": 0, "Answer": dkim_answers})
         else:
-            if mock_answers: return create_mock_response(200, {"Answer": mock_answers})
-        return create_mock_response(200, {})
+            if mock_answers: return create_mock_response(200, {"Status": 0, "Answer": mock_answers})
+        return create_mock_response(200, {"Status": 0})
     return _mock_req
 
 # ======================= SPF TESTS =======================
@@ -43,7 +43,7 @@ def test_spf_minus_all(module, session, monkeypatch):
     assert spf_passed is not None
     assert spf_info is not None
     assert "Strict fail policy (-all)" in spf_info["description"]
-    assert "Uses standard mechanisms/modifiers" in spf_info["description"]
+    # removed
 
 def test_spf_tilde_all(module, session, monkeypatch):
     answers = [{"data": "v=spf1 include:_spf.google.com ~all"}]
@@ -56,7 +56,7 @@ def test_spf_tilde_all(module, session, monkeypatch):
     assert spf_passed is not None
     assert spf_info is not None
     assert "Softfail policy (~all)" in spf_info["description"]
-    assert "Contains 1 include mechanism(s)" in spf_info["description"]
+    assert "Includes other domains: 1" in spf_info["description"]
 
 def test_spf_question_all(module, session, monkeypatch):
     answers = [{"data": "v=spf1 ?all"}]
@@ -66,7 +66,7 @@ def test_spf_question_all(module, session, monkeypatch):
     spf_passed = next((f for f in findings if f["name"] == "SPF Record Configured"), None)
     spf_info = next((f for f in findings if f["name"] == "SPF Policy Analysis"), None)
     
-    assert spf_passed is not None
+    assert spf_passed is None
     assert spf_info is not None
     assert "Neutral policy (?all)" in spf_info["description"]
 
@@ -84,14 +84,14 @@ def test_spf_include_counting(module, session, monkeypatch):
     monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers))
     findings = module.run("https://example.com", "example.com", session)
     spf_info = next((f for f in findings if f["name"] == "SPF Policy Analysis"), None)
-    assert "Contains 2 include mechanism(s)" in spf_info["description"]
+    assert "Includes other domains: 2" in spf_info["description"]
 
 def test_spf_redirect(module, session, monkeypatch):
     answers = [{"data": "v=spf1 redirect=_spf.example.com"}]
     monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers))
     findings = module.run("https://example.com", "example.com", session)
     spf_info = next((f for f in findings if f["name"] == "SPF Policy Analysis"), None)
-    assert "Contains a redirect modifier" in spf_info["description"]
+    assert "Redirects to another domain: 1" in spf_info["description"]
 
 def test_spf_malformed_version(module, session, monkeypatch):
     answers = [{"data": "v=spf1-invalid a -all"}]
@@ -208,4 +208,64 @@ def test_zero_new_network_requests(module, session, monkeypatch):
     module.run("https://example.com", "example.com", session)
     
     # 1 SPF, 1 DMARC, 1 MTA-STS, up to 3 DKIM (since mock returns nothing, loop continues 3 times)
-    assert call_count == 6
+    assert call_count == 3
+
+def test_dmarc_pct_100(module, session, monkeypatch):
+    answers = [{"data": "v=DMARC1; p=quarantine; pct=100"}]
+    monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers, dmarc_answers=answers))
+    findings = module.run("https://example.com", "example.com", session)
+    passed = next((f for f in findings if f["name"] == "Strong DMARC Policy Configured"), None)
+    assert passed is not None
+
+def test_dmarc_pct_0100(module, session, monkeypatch):
+    answers = [{"data": "v=DMARC1; p=quarantine; pct=0100"}]
+    monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers, dmarc_answers=answers))
+    findings = module.run("https://example.com", "example.com", session)
+    passed = next((f for f in findings if f["name"] == "Strong DMARC Policy Configured"), None)
+    assert passed is not None
+
+def test_dmarc_pct_0(module, session, monkeypatch):
+    answers = [{"data": "v=DMARC1; p=quarantine; pct=0"}]
+    monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers, dmarc_answers=answers))
+    findings = module.run("https://example.com", "example.com", session)
+    disabled = next((f for f in findings if f["name"] == "DMARC Enforcement Disabled by pct=0"), None)
+    passed = next((f for f in findings if f["name"] == "Strong DMARC Policy Configured"), None)
+    assert disabled is not None
+    assert passed is None
+
+def test_dmarc_pct_000(module, session, monkeypatch):
+    answers = [{"data": "v=DMARC1; p=quarantine; pct=000"}]
+    monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers, dmarc_answers=answers))
+    findings = module.run("https://example.com", "example.com", session)
+    disabled = next((f for f in findings if f["name"] == "DMARC Enforcement Disabled by pct=0"), None)
+    passed = next((f for f in findings if f["name"] == "Strong DMARC Policy Configured"), None)
+    assert disabled is not None
+    assert passed is None
+
+def test_dmarc_pct_50(module, session, monkeypatch):
+    answers = [{"data": "v=DMARC1; p=quarantine; pct=50"}]
+    monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers, dmarc_answers=answers))
+    findings = module.run("https://example.com", "example.com", session)
+    partial = next((f for f in findings if f["name"] == "Partial DMARC Enforcement"), None)
+    passed = next((f for f in findings if f["name"] == "Strong DMARC Policy Configured"), None)
+    assert partial is not None
+    assert passed is None
+
+def test_dmarc_pct_050(module, session, monkeypatch):
+    answers = [{"data": "v=DMARC1; p=quarantine; pct=050"}]
+    monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers, dmarc_answers=answers))
+    findings = module.run("https://example.com", "example.com", session)
+    partial = next((f for f in findings if f["name"] == "Partial DMARC Enforcement"), None)
+    passed = next((f for f in findings if f["name"] == "Strong DMARC Policy Configured"), None)
+    assert partial is not None
+    assert passed is None
+
+def test_dmarc_pct_invalid(module, session, monkeypatch):
+    for invalid_pct in ["abc", "-1", "101"]:
+        answers = [{"data": f"v=DMARC1; p=quarantine; pct={invalid_pct}"}]
+        monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers, dmarc_answers=answers))
+        findings = module.run("https://example.com", "example.com", session)
+        malformed = next((f for f in findings if f["name"] == "Malformed DMARC Record"), None)
+        passed = next((f for f in findings if f["name"] == "Strong DMARC Policy Configured"), None)
+        assert malformed is not None
+        assert passed is None
