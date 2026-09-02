@@ -77,7 +77,7 @@ class TestPhase23Audit(unittest.TestCase):
     def test_subdomain_takeover_confidence(self, mock_req):
         mock_cname_resp = MagicMock()
         mock_cname_resp.status_code = 200
-        mock_cname_resp.json.return_value = {"Answer": [{"data": "test.github.io."}]}
+        mock_cname_resp.json.return_value = {"Status": 0, "Answer": [{"data": "test.github.io."}]}
         
         mock_probe_resp = MagicMock()
         mock_probe_resp.text = "There isn't a GitHub Pages site here"

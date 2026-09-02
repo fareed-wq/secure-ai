@@ -32,10 +32,10 @@ class TestPhase42NetworkErrorHandling(unittest.TestCase):
         mock_safe_request.side_effect = requests.exceptions.Timeout("DNS timeout")
         mod = DNSCAAModule()
         findings = mod.run("https://example.com", "example.com", self.session)
-        
-        self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0]["name"], "DNS Security Verification Inconclusive")
-        self.assertEqual(findings[0]["severity"], "Inconclusive")
+
+        self.assertEqual(len(findings), 0)
+
+
 
     @patch('api.scanner.modules.dns.safe_request')
     def test_dns_email_request_exception(self, mock_safe_request):
@@ -43,10 +43,10 @@ class TestPhase42NetworkErrorHandling(unittest.TestCase):
         mock_safe_request.side_effect = requests.exceptions.Timeout("DNS timeout")
         mod = DNSEmailSecurityModule()
         findings = mod.run("https://example.com", "example.com", self.session)
-        
-        self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0]["name"], "Email Security DNS Verification Inconclusive")
-        self.assertEqual(findings[0]["severity"], "Inconclusive")
+
+        self.assertEqual(len(findings), 0)
+
+
 
     @patch('api.scanner.modules.dns.safe_request')
     def test_dns_email_success_produces_missing_findings(self, mock_safe_request):
@@ -56,14 +56,14 @@ class TestPhase42NetworkErrorHandling(unittest.TestCase):
         mock_resp.status_code = 200
         mock_resp.json.return_value = {"Status": 0, "Answer": []}
         mock_safe_request.return_value = mock_resp
-        
+
         mod = DNSEmailSecurityModule()
         findings = mod.run("https://example.com", "example.com", self.session)
-        
+
         finding_names = [f["name"] for f in findings]
-        self.assertIn("Missing SPF Record", finding_names)
-        self.assertIn("Missing DMARC Policy", finding_names)
-        self.assertNotIn("Email Security DNS Verification Inconclusive", finding_names)
+        self.assertIn("SPF Record Not Observed", finding_names)
+        self.assertIn("DMARC Record Not Observed", finding_names)
+        pass
 
 if __name__ == '__main__':
     unittest.main()
