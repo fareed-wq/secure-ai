@@ -11,50 +11,132 @@ class TechFingerprintModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
+            if not resp:
+                return findings
 
-            headers_to_check = ["Server", "X-Powered-By", "X-AspNet-Version", "X-AspNetMvc-Version", "X-Generator"]
-            exposed_tech = []
-            has_version = False
-            import re
-            version_regex = re.compile(r'\d')
+            detected = {}
 
-            for h in headers_to_check:
-                val = self.get_header_safe(resp, h)
-                if val:
-                    exposed_tech.append(f"{h}: {val}")
-                    if version_regex.search(val):
-                        has_version = True
-
-            if exposed_tech:
-                if has_version:
-                    findings.append(self.make_finding(
-                        "Server Version Information Disclosed",
-                        "Low",
-                        "Your web server publicly announces its exact software name and version.",
-                        "\\n".join(exposed_tech),
-                        impact="Exposing detailed server/version information gives external observers additional information that may assist reconnaissance.",
-                        confidence="High",
-                        remediation="Configure server to return generic names and omit version numbers.",
-                        owasp="Not Mapped",
-                        category="information_exposure"
-                    ))
+            def add_tech(name, evidence, confidence, version=None):
+                if name not in detected:
+                    detected[name] = {"version": version, "evidence": evidence, "confidence": confidence}
                 else:
-                    findings.append(self.make_finding(
-                        "Server Header Exposed",
-                        "Informational",
-                        "Your web server publicly announces the software it is running.",
-                        "\\n".join(exposed_tech),
-                        impact="Exposing technology details provides reconnaissance information to external observers.",
-                        remediation="Configure server to return generic names or remove headers.",
-                        owasp="Not Mapped",
-                        category="information_exposure"
-                    ))
+                    if confidence == "High" and detected[name]["confidence"] == "Medium":
+                        detected[name]["confidence"] = "High"
+                        detected[name]["evidence"] = evidence
+                    if version and not detected[name]["version"]:
+                        detected[name]["version"] = version
 
-        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
+            import re
+
+            # 1. HTTP Headers
+            server = self.get_header_safe(resp, "Server")
+            if server:
+                match = re.search(r'^([A-Za-z0-9\-]+)(?:/([\d\.]+))?', server.strip())
+                if match:
+                    name = match.group(1)
+                    version = match.group(2)
+                    # Ignore fake generic digits like AmazonS3 unless slash format used
+                    if not "/" in server and re.search(r'\d', name):
+                        name = server.strip()
+                        version = None
+                    add_tech(name, f"Server header", "High", version=version)
+                else:
+                    add_tech(server.strip(), f"Server header", "High")
+
+            x_powered_by = self.get_header_safe(resp, "X-Powered-By")
+            if x_powered_by:
+                match = re.search(r'^([A-Za-z0-9\-]+)(?:/([\d\.]+))?', x_powered_by.strip())
+                if match:
+                    name = match.group(1)
+                    version = match.group(2)
+                    if not "/" in x_powered_by and re.search(r'\d', name):
+                        name = x_powered_by.strip()
+                        version = None
+                    add_tech(name, f"X-Powered-By header", "High", version=version)
+                else:
+                    add_tech(x_powered_by.strip(), f"X-Powered-By header", "High")
+
+            asp_net = self.get_header_safe(resp, "X-AspNet-Version")
+            if asp_net:
+                match = re.search(r'([\d\.]+)', asp_net)
+                version = match.group(1) if match else None
+                add_tech("ASP.NET", f"X-AspNet-Version header", "High", version=version)
+
+            asp_mvc = self.get_header_safe(resp, "X-AspNetMvc-Version")
+            if asp_mvc:
+                match = re.search(r'([\d\.]+)', asp_mvc)
+                version = match.group(1) if match else None
+                add_tech("ASP.NET MVC", f"X-AspNetMvc-Version header", "High", version=version)
+
+            generator_hdr = self.get_header_safe(resp, "X-Generator")
+            if generator_hdr:
+                match = re.search(r'^([A-Za-z0-9\-\s]+?)(?:\s+v?([\d\.]+))?$', generator_hdr.strip(), re.I)
+                if match:
+                    name = match.group(1).strip()
+                    version = match.group(2)
+                    add_tech(name, f"X-Generator header", "High", version=version)
+                else:
+                    add_tech(generator_hdr.strip(), f"X-Generator header", "High")
+
+            # 2. HTML Body
+            html = resp.text[:1024 * 500] if resp.text else ""
+
+            # HTML Meta Generator
+            meta_gen = re.search(r'<meta[^>]+name=["\']?generator["\']?[^>]+content=["\']?([^"\'>]+)["\']?', html, re.I)
+            if not meta_gen:
+                meta_gen = re.search(r'<meta[^>]+content=["\']?([^"\'>]+)["\']?[^>]+name=["\']?generator["\']?', html, re.I)
+            if meta_gen:
+                gen_content = meta_gen.group(1).strip()
+                match = re.search(r'^([A-Za-z0-9\-\s]+?)(?:\s+v?([\d\.]+))?$', gen_content, re.I)
+                if match:
+                    name = match.group(1).strip()
+                    version = match.group(2)
+                    add_tech(name, "HTML meta generator", "High", version=version)
+                else:
+                    add_tech(gen_content, "HTML meta generator", "High")
+
+            # Next.js
+            if re.search(r'<script[^>]*id=["\']?__NEXT_DATA__["\']?', html):
+                add_tech("Next.js", "__NEXT_DATA__ marker in HTML", "High")
+            elif "/_next/static/" in html:
+                add_tech("Next.js", "HTML references /_next/static/", "Medium")
+
+            # Nuxt
+            if "__NUXT__" in html or "__NUXT_DATA__" in html:
+                add_tech("Nuxt", "__NUXT__ / __NUXT_DATA__ strong markers in HTML", "High")
+            elif "/_nuxt/" in html:
+                add_tech("Nuxt", "HTML references /_nuxt/", "Medium")
+
+            # Angular
+            ang_match = re.search(r'ng-version=["\']?([\d\.]+)["\']?', html)
+            if ang_match:
+                add_tech("Angular", "ng-version attribute", "High", version=ang_match.group(1))
+
+            # WordPress
+            if "/wp-content/" in html or "/wp-includes/" in html:
+                add_tech("WordPress", "HTML references /wp-content/ or /wp-includes/", "Medium")
+
+            for tech, info in detected.items():
+                ver_str = f" {info['version']}" if info['version'] else ""
+                findings.append(self.make_finding(
+                    "Technology Fingerprint Identified",
+                    "Informational",
+                    f"The scanner identified the following technology used by the application: {tech}{ver_str}",
+                    f"Detected: {tech}{ver_str}\nEvidence: {info['evidence']}",
+                    impact="Exposing technology details provides reconnaissance information to external observers.",
+                    remediation="Configure server to return generic names or remove headers if applicable.",
+                    confidence=info['confidence'],
+                    owasp="Not Mapped",
+                    category="technology_detection"
+                ))
+
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass
         except Exception as e:
             import logging
-            logging.getLogger(__name__).debug("TechFingerprintModule failed: %s", e)
+            logger = logging.getLogger(__name__)
+            logger.error(f"TechFingerprintModule error: {e}", exc_info=True)
+
         return findings
 
 class CORSModule(ScannerModule):

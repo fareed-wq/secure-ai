@@ -111,7 +111,7 @@ class TestJavaScriptSecurityModule(unittest.TestCase):
         self.assertIn("/api/v1/orders/{id}", str(idor_findings[0]["evidence"]))
 
     @patch('api.scanner.modules.javascript_security.safe_request')
-    def test_framework_and_library_fingerprinting(self, mock_request):
+    def test_library_fingerprinting(self, mock_request):
         html_body = '<script src="/app.js"></script>'
         js_app = '/*! jQuery v3.4.1 */ Vue.component("app", {});'
         
@@ -124,8 +124,7 @@ class TestJavaScriptSecurityModule(unittest.TestCase):
         findings = self.module.run("https://example.com/", "example.com", self.session)
         
         fw_findings = [f for f in findings if f["name"] == "Client-Side Framework Detected"]
-        self.assertEqual(len(fw_findings), 1)
-        self.assertIn("Vue", str(fw_findings[0]["evidence"]))
+        self.assertEqual(len(fw_findings), 0)
         
         lib_findings = [f for f in findings if f["name"] == "Outdated Client-Side JavaScript Library Detected"]
         self.assertEqual(len(lib_findings), 1)

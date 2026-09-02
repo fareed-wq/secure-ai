@@ -242,7 +242,7 @@ class TestRegressionMatrix:
         mock_safe_req.return_value = make_mock_response(headers={"Server": "nginx/1.18.0", "X-Powered-By": "Express"})
         f = mod.run("https://example.com", "example.com", MagicMock())
         names = [x["name"] for x in f]
-        assert "Server Version Information Disclosed" in names
+        assert "Technology Fingerprint Identified" in names
 
     # 16. Scoring assertions
     def test_scoring(self):

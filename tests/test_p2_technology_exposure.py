@@ -1,16 +1,11 @@
-﻿import pytest
+import pytest
 from unittest.mock import MagicMock, patch
 from api.scanner.modules.headers import TechFingerprintModule
-from api.scanner.modules.discovery import InformationDisclosureModule
 import requests
 
 @pytest.fixture
 def headers_module():
     return TechFingerprintModule()
-
-@pytest.fixture
-def discovery_module():
-    return InformationDisclosureModule()
 
 @pytest.fixture
 def mock_session():
@@ -23,59 +18,104 @@ def create_mock_response(status_code, text, headers=None):
     mock.headers = headers or {}
     return mock
 
-def test_x_powered_by_detected_by_headers_module(headers_module, mock_session):
-    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, "<html></html>", {"X-Powered-By": "Express"})):
+def test_x_powered_by_versioned(headers_module, mock_session):
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, "<html></html>", {"X-Powered-By": "PHP/8.2"})):
         findings = headers_module.run("https://example.com", "example.com", mock_session)
-        tech = [f for f in findings if "Information Disclosed" in f["name"] or "Header Exposed" in f["name"]]
-        assert len(tech) == 1
-        assert "X-Powered-By: Express" in str(tech[0]["evidence"])
-        assert tech[0]["severity"] == "Informational"  # Without versions, it's Informational
-        assert tech[0]["name"] == "Server Software Information Disclosed" or tech[0]["name"] == "Server Header Exposed"
+        assert len(findings) == 1
+        assert "Technology Fingerprint Identified" in findings[0]["name"]
+        assert "Detected: PHP 8.2" in str(findings[0]["evidence"])
+        assert findings[0]["severity"] == "Informational"
+
+def test_server_versioned(headers_module, mock_session):
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, "<html></html>", {"Server": "nginx/1.24.0"})):
+        findings = headers_module.run("https://example.com", "example.com", mock_session)
+        assert len(findings) == 1
+        assert "Detected: nginx 1.24.0" in str(findings[0]["evidence"])
 
 def test_x_aspnet_version_detected(headers_module, mock_session):
     with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, "", {"X-AspNet-Version": "4.0.30319"})):
         findings = headers_module.run("https://example.com", "example.com", mock_session)
-        tech = [f for f in findings if "Information Disclosed" in f["name"] or "Header Exposed" in f["name"]]
-        assert len(tech) == 1
-        assert "X-AspNet-Version: 4.0.30319" in str(tech[0]["evidence"])
-        assert tech[0]["severity"] == "Low"  # Has numbers/versions
+        assert len(findings) == 1
+        assert "Detected: ASP.NET 4.0.30319" in str(findings[0]["evidence"])
+        assert findings[0]["severity"] == "Informational"
 
-def test_discovery_module_does_not_duplicate(discovery_module, mock_session):
-    with patch("api.scanner.modules.discovery.safe_request", return_value=create_mock_response(200, "", {"X-Powered-By": "Express"})):
-        findings = discovery_module.run("https://example.com", "example.com", mock_session)
-        tech = [f for f in findings if "Information Disclosure" in f["name"] or "Information Disclosed" in f["name"]]
-        assert len(tech) == 0
-
-def test_multiple_headers_consolidated(headers_module, mock_session):
-    headers = {
-        "X-Powered-By": "ASP.NET",
-        "X-AspNet-Version": "4.0.30319"
-    }
-    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, "", headers)):
+def test_fake_version_amazon_s3(headers_module, mock_session):
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, "", {"Server": "AmazonS3"})):
         findings = headers_module.run("https://example.com", "example.com", mock_session)
-        tech = [f for f in findings if "Information Disclosed" in f["name"] or "Header Exposed" in f["name"]]
-        assert len(tech) == 1
-        evidence = str(tech[0]["evidence"])
-        assert "X-Powered-By: ASP.NET" in evidence
-        assert "X-AspNet-Version: 4.0.30319" in evidence
+        assert len(findings) == 1
+        assert "Detected: AmazonS3" in str(findings[0]["evidence"])
+        assert "Detected: AmazonS3 " not in str(findings[0]["evidence"])
+
+def test_fake_version_platform(headers_module, mock_session):
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, "", {"X-Powered-By": "Platform365"})):
+        findings = headers_module.run("https://example.com", "example.com", mock_session)
+        assert len(findings) == 1
+        assert "Detected: Platform365" in str(findings[0]["evidence"])
+
+def test_wp_generator_html(headers_module, mock_session):
+    html = '<html><head><meta name="generator" content="WordPress 6.6"></head></html>'
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, html)):
+        findings = headers_module.run("https://example.com", "example.com", mock_session)
+        assert len(findings) == 1
+        assert "Detected: WordPress 6.6" in str(findings[0]["evidence"])
+        assert "meta generator" in str(findings[0]["evidence"])
+
+def test_wp_path_html(headers_module, mock_session):
+    html = '<html><script src="/wp-content/themes/style.css"></script></html>'
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, html)):
+        findings = headers_module.run("https://example.com", "example.com", mock_session)
+        assert len(findings) == 1
+        assert "Detected: WordPress" in str(findings[0]["evidence"])
+        assert "HTML references /wp-content/" in str(findings[0]["evidence"])
+        assert findings[0]["confidence"] == "Medium"
+
+def test_nextjs_data_html(headers_module, mock_session):
+    html = '<html><script id="__NEXT_DATA__" type="application/json">{}</script></html>'
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, html)):
+        findings = headers_module.run("https://example.com", "example.com", mock_session)
+        assert len(findings) == 1
+        assert "Detected: Next.js" in str(findings[0]["evidence"])
+        assert "High" == findings[0]["confidence"]
+
+def test_nextjs_static_html(headers_module, mock_session):
+    html = '<html><script src="/_next/static/chunks/main.js"></script></html>'
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, html)):
+        findings = headers_module.run("https://example.com", "example.com", mock_session)
+        assert len(findings) == 1
+        assert "Detected: Next.js" in str(findings[0]["evidence"])
+        assert "Medium" == findings[0]["confidence"]
+
+def test_nuxt_html(headers_module, mock_session):
+    html = '<html><script>window.__NUXT__={}</script></html>'
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, html)):
+        findings = headers_module.run("https://example.com", "example.com", mock_session)
+        assert len(findings) == 1
+        assert "Detected: Nuxt" in str(findings[0]["evidence"])
+
+def test_angular_html(headers_module, mock_session):
+    html = '<html ng-version="18.2.0"></html>'
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, html)):
+        findings = headers_module.run("https://example.com", "example.com", mock_session)
+        assert len(findings) == 1
+        assert "Detected: Angular 18.2.0" in str(findings[0]["evidence"])
+
+def test_dedup_wordpress(headers_module, mock_session):
+    html = '<html><head><meta name="generator" content="WordPress 6.6"></head><script src="/wp-content/themes/style.css"></script></html>'
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, html)):
+        findings = headers_module.run("https://example.com", "example.com", mock_session)
+        assert len(findings) == 1
+        assert "Detected: WordPress 6.6" in str(findings[0]["evidence"])
+        assert "High" == findings[0]["confidence"]
+
+def test_dedup_nextjs(headers_module, mock_session):
+    html = '<html><script id="__NEXT_DATA__" type="application/json">{}</script><script src="/_next/static/main.js"></script></html>'
+    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, html)):
+        findings = headers_module.run("https://example.com", "example.com", mock_session)
+        assert len(findings) == 1
+        assert "Detected: Next.js" in str(findings[0]["evidence"])
+        assert "High" == findings[0]["confidence"]
 
 def test_missing_headers_ignored(headers_module, mock_session):
     with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, "", {})):
         findings = headers_module.run("https://example.com", "example.com", mock_session)
-        tech = [f for f in findings if "Information Disclosed" in f["name"] or "Header Exposed" in f["name"]]
-        assert len(tech) == 0
-
-def test_server_header_versioned(headers_module, mock_session):
-    headers = {"Server": "nginx/1.18.0", "X-Powered-By": "Express"}
-    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, "", headers)):
-        findings = headers_module.run("https://example.com", "example.com", mock_session)
-        tech = [f for f in findings if "Version Information Disclosed" in f["name"]]
-        assert len(tech) == 1
-        assert "nginx/1.18.0" in str(tech[0]["evidence"])
-
-def test_normal_headers_do_not_trigger(headers_module, mock_session):
-    headers = {"Content-Type": "text/html", "Cache-Control": "no-cache", "Age": "10"}
-    with patch("api.scanner.modules.headers.safe_request", return_value=create_mock_response(200, "", headers)):
-        findings = headers_module.run("https://example.com", "example.com", mock_session)
-        tech = [f for f in findings if "Information Disclosed" in f["name"] or "Header Exposed" in f["name"]]
-        assert len(tech) == 0
+        assert len(findings) == 0
