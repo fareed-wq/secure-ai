@@ -42,6 +42,21 @@ export const CATEGORY_METADATA = {
 };
 
 export const TRANSLATIONS = {
+  "CSP Missing Default Source Fallback": {
+    name: "Missing Default Injection Guard",
+    category: "Browser Protection",
+    impact: "Low",
+    problem: "Your website restricts some resources but forgets to set a default safe list for others.",
+    why: "If new features are added to your site, they might be unprotected against attacks by default."
+  },
+  "CSP Object Sources Not Explicitly Disabled": {
+    name: "Missing Legacy Plugin Guard",
+    category: "Browser Protection",
+    impact: "Low",
+    problem: "Your website does not explicitly disable object sources.",
+    why: "While most modern browsers disable plugins, explicitly restricting object-src provides comprehensive defense-in-depth."
+  },
+
   "Port 21 Publicly Reachable (FTP-associated)": {
     name: "Port 21 Publicly Reachable (FTP-associated)",
     category: "Network Services",
