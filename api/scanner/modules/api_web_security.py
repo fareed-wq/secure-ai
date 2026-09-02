@@ -150,9 +150,9 @@ class ApiWebSecurityModule(ScannerModule):
                 cache_lower = cache_control.lower()
                 if "public" in cache_lower or "max-age" in cache_lower or "s-maxage" in cache_lower:
                     findings.append(self.make_finding(
-                        "Sensitive API Response May Be Publicly Cacheable",
-                        "Medium",
-                        description="Your website allows sensitive user data to be saved on public servers or shared networks.",
+                        "Publicly Cacheable JSON Response Observed",
+                            "Informational",
+                            description="A JSON response was observed with cache directives allowing shared/public caching.",
                         evidence=f"Cache-Control: {cache_control}",
                         confidence="Medium",
                         remediation="Set Cache-Control to 'no-store, no-cache, must-revalidate' for sensitive data.",
@@ -183,9 +183,9 @@ class ApiWebSecurityModule(ScannerModule):
                         if "public" in val or ("max-age" in val and "max-age=0" not in val and "no-store" not in val and "private" not in val):
                             is_publicly_cacheable = True
                             findings.append(self.make_finding(
-                                "Permissive CDN Caching on Sensitive Content",
-                                "Medium",
-                                description="A Content Delivery Network (CDN) is explicitly instructed to cache this sensitive response.",
+                                "Publicly Cacheable JSON Response Observed",
+                                "Informational",
+                                description="A Content Delivery Network (CDN) is explicitly instructed to cache this JSON response.",
                                 evidence=f"{ch}: {val}",
                                 remediation="Configure CDN-specific cache headers to 'no-store' for sensitive endpoints.",
                                 owasp="A05: Security Misconfiguration",
@@ -197,9 +197,9 @@ class ApiWebSecurityModule(ScannerModule):
                     vary = self.get_header_safe(resp, "Vary", "").lower()
                     if "cookie" not in vary and "authorization" not in vary:
                         findings.append(self.make_finding(
-                            "Missing Cache Vary Protection on Sensitive Content",
-                            "Medium",
-                            description="Sensitive content permits shared caching but fails to instruct caches to separate responses per user.",
+                            "Cache Variation Header Not Observed",
+                            "Informational",
+                            description="The JSON response permits shared caching but fails to instruct caches to separate responses per user.",
                             evidence=f"Cache-Control: {cache_control} | Vary: {vary}",
                             remediation="If caching is required, ensure 'Vary: Cookie' or 'Vary: Authorization' is present.",
                             owasp="A05: Security Misconfiguration",

@@ -14,21 +14,21 @@ class DummyResponse:
         self.status_code = status_code
         self.text = text
         self.headers = headers or {}
-        
+
     def json(self):
         import json
         return json.loads(self.text)
 
     def iter_content(self, chunk_size=1024):
         yield self.text.encode('utf-8')
-        
+
     def close(self):
         pass
 
 class TestPhase26ApiWebExpansion(unittest.TestCase):
     def setUp(self):
         self.session = MagicMock()
-        
+
     def create_side_effect(self, target_path, target_response):
         def side_effect(method, url, **kwargs):
             from urllib.parse import urlparse
@@ -132,6 +132,85 @@ class TestPhase26ApiWebExpansion(unittest.TestCase):
         findings = mod.run("https://example.com/xmlrpc.php", "example.com", self.session)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]["name"], "Legacy XML-RPC Endpoint Exposed")
+
+
+    @patch('api.scanner.modules.discovery.safe_request')
+    def test_actuator_generic_json_ignored(self, mock_request):
+        mock_request.side_effect = self.create_side_effect("/api/public-json", DummyResponse(200, '{"status": "ok", "service": "public-demo"}', {"Content-Type": "application/json"}))
+        mod = ActuatorModule()
+        findings = mod.run("https://example.com/api/public-json", "example.com", self.session)
+        self.assertEqual(len(findings), 0)
+
+    @patch('api.scanner.modules.discovery.safe_request')
+    def test_openapi_global_security(self, mock_request):
+        json_payload = '{"openapi": "3.0.0", "security": [{"ApiKeyAuth": []}], "paths": {"/admin": {"get": {}}}}'
+        mock_request.side_effect = self.create_side_effect("/openapi.json", DummyResponse(200, json_payload, {"Content-Type": "application/json"}))
+        mod = OpenApiModule()
+        findings = mod.run("https://example.com/openapi.json", "example.com", self.session)
+        names = [f["name"] for f in findings]
+        self.assertNotIn("Privileged API Operation Documented Without Security Requirement", names)
+
+    @patch('api.scanner.modules.discovery.safe_request')
+    def test_openapi_no_global_security(self, mock_request):
+        json_payload = '{"openapi": "3.0.0", "paths": {"/admin": {"get": {}}}}'
+        mock_request.side_effect = self.create_side_effect("/openapi.json", DummyResponse(200, json_payload, {"Content-Type": "application/json"}))
+        mod = OpenApiModule()
+        findings = mod.run("https://example.com/openapi.json", "example.com", self.session)
+        names = [f["name"] for f in findings]
+        self.assertIn("Privileged API Operation Documented Without Security Requirement", names)
+
+    @patch('api.scanner.modules.discovery.safe_request')
+    def test_openapi_override_global_security(self, mock_request):
+        json_payload = '{"openapi": "3.0.0", "security": [{"ApiKeyAuth": []}], "paths": {"/admin": {"get": {"security": []}}}}'
+        mock_request.side_effect = self.create_side_effect("/openapi.json", DummyResponse(200, json_payload, {"Content-Type": "application/json"}))
+        mod = OpenApiModule()
+        findings = mod.run("https://example.com/openapi.json", "example.com", self.session)
+        names = [f["name"] for f in findings]
+        self.assertIn("Privileged API Operation Documented Without Security Requirement", names)
+
+
+    @patch('api.scanner.modules.discovery.safe_request')
+    def test_actuator_health_negative_paths(self, mock_request):
+        # /api/health -> NO Actuator finding
+        mock_request.side_effect = self.create_side_effect("/api/health", DummyResponse(200, '{"status": "UP"}', {"Content-Type": "application/json"}))
+        mod = ActuatorModule()
+        findings = mod.run("https://example.com/api/health", "example.com", self.session)
+        self.assertEqual(len(findings), 0)
+
+        # /health -> NO Actuator finding
+        mock_request.side_effect = self.create_side_effect("/health", DummyResponse(200, '{"status": "ok"}', {"Content-Type": "application/json"}))
+        findings = mod.run("https://example.com/health", "example.com", self.session)
+        self.assertEqual(len(findings), 0)
+
+    @patch('api.scanner.modules.discovery.safe_request')
+    def test_actuator_health_positive(self, mock_request):
+        # /actuator/health -> Spring Boot Actuator Endpoint Exposed (Informational)
+        mock_request.side_effect = self.create_side_effect("/actuator/health", DummyResponse(200, '{"status": "UP"}', {"Content-Type": "application/json"}))
+        mod = ActuatorModule()
+        findings = mod.run("https://example.com/actuator/health", "example.com", self.session)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]["name"], "Spring Boot Actuator Endpoint Exposed")
+        self.assertEqual(findings[0]["severity"], "Informational")
+
+    @patch('api.scanner.modules.discovery.safe_request')
+    def test_actuator_env_high(self, mock_request):
+        # /actuator/env with propertySources -> High
+        mock_request.side_effect = self.create_side_effect("/actuator/env", DummyResponse(200, '{"propertySources": []}', {"Content-Type": "application/json"}))
+        mod = ActuatorModule()
+        findings = mod.run("https://example.com/actuator/env", "example.com", self.session)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]["name"], "Sensitive Spring Boot Actuator Config Exposed")
+        self.assertEqual(findings[0]["severity"], "High")
+
+    @patch('api.scanner.modules.discovery.safe_request')
+    def test_actuator_env_info_only(self, mock_request):
+        # /actuator/env with activeProfiles ONLY -> Informational
+        mock_request.side_effect = self.create_side_effect("/actuator/env", DummyResponse(200, '{"activeProfiles": ["prod"]}', {"Content-Type": "application/json"}))
+        mod = ActuatorModule()
+        findings = mod.run("https://example.com/actuator/env", "example.com", self.session)
+        self.assertEqual(len(findings), 1)
+        self.assertEqual(findings[0]["name"], "Spring Boot Actuator Endpoint Exposed")
+        self.assertEqual(findings[0]["severity"], "Informational")
 
 if __name__ == '__main__':
     unittest.main()

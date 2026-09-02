@@ -79,9 +79,10 @@ class TestPhase29ApiWebSecurity(unittest.TestCase):
         module = ApiWebSecurityModule()
         findings = module.run(self.url, self.hostname, self.session)
         
-        cache = next((f for f in findings if f["name"] == "Sensitive API Response May Be Publicly Cacheable"), None)
+        cache = next((f for f in findings if f["name"] == "Publicly Cacheable JSON Response Observed"), None)
+        self.assertIsNone(next((f for f in findings if f["name"] == "Sensitive API Response May Be Publicly Cacheable"), None), "Old Medium finding must be absent")
         self.assertIsNotNone(cache)
-        self.assertEqual(cache["severity"], "Medium")
+        self.assertEqual(cache["severity"], "Informational")
 
     @patch("api.scanner.modules.api_web_security.safe_request")
     def test_python_traceback(self, mock_safe_request):
