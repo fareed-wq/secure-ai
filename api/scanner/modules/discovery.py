@@ -27,43 +27,168 @@ class ExposedFilesModule(ScannerModule):
         except Exception as e:
             logger.debug("ExposedFilesModule head check failed: %s", e)
 
-        try:
-            env_url = f"{scheme}://{hostname}/.env"
-            resp = safe_request("GET", env_url, session=session, timeout=(1.5, 2.5))
-            if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
-                env_text = resp.text.upper()
-                if any(k in env_text for k in ["APP_ENV=", "DB_", "DATABASE_URL=", "SECRET", "PASSWORD", "APP_KEY", "API_KEY"]):
-                    findings.append(self.make_finding(
-                        "Exposed .env Configuration File",
-                        "Critical",
-                        "A configuration file containing sensitive passwords and secret keys is publicly visible on your website.",
-                        env_url,
-                        impact="Exposed credentials could allow unauthorized access to the associated service or database.",
-                        remediation="Restrict web server access to dotfiles or move .env outside the web root immediately.",
-                        owasp="A05: Security Misconfiguration",
-                        category="information_exposure",
-                        confidence="High"
-                    ))
-        except Exception as e:
-            logger.debug("ExposedFilesModule env fetch failed: %s", e)
+
+        for env_path in ['/.env', '/api/.env', '/backend/.env', '/core/.env']:
+            try:
+                env_url = f"{scheme}://{hostname}{env_path}"
+                resp = safe_request("GET", env_url, session=session, timeout=(1.5, 2.5))
+                if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
+                    from urllib.parse import urlparse
+                    history = getattr(resp, 'history', [])
+                    valid_resp = True
+                    if isinstance(history, list) and history:
+                        url_val = getattr(resp, 'url', '')
+                        if isinstance(url_val, str) and url_val:
+                            if urlparse(env_url).path.rstrip('/') != urlparse(url_val).path.rstrip('/'):
+                                valid_resp = False
+                    if valid_resp:
+                        text_content = getattr(resp, 'text', '')
+                        valid_lines = 0
+                        exact_sensitive = {"PASSWORD", "PASSWD", "SECRET", "TOKEN", "API_KEY", "PRIVATE_KEY", "APP_KEY", "DATABASE_URL", "AWS_SECRET_ACCESS_KEY"}
+                        sensitive_suffixes = ("_PASSWORD", "_PASSWD", "_SECRET", "_TOKEN", "_API_KEY", "_PRIVATE_KEY")
+                        placeholders = {"changeme", "example", "placeholder", "null", "none", "your_api_key_here", "your_password_here", "your_secret_here"}
+                        found_sensitive = False
+                        for line in text_content.splitlines():
+                            line = line.strip()
+                            if not line or line.startswith('#'): continue
+                            match = re.match(r"""^([A-Za-z_][A-Za-z0-9_]*)=["']?(.*?)["']?$""", line)
+                            if match:
+                                valid_lines += 1
+                                key_name = match.group(1).upper()
+                                val = match.group(2).strip()
+                                val_lower = val.lower()
+                                if not val: continue
+                                if val_lower in placeholders or ("your_" in val_lower and "_here" in val_lower): continue
+                                if key_name in exact_sensitive or key_name.endswith(sensitive_suffixes):
+                                    found_sensitive = True
+
+                        if found_sensitive:
+                            findings.append(self.make_finding(
+                                "Exposed .env Configuration File",
+                                "High",
+                                "A configuration file containing sensitive environment variables is publicly visible on your website.",
+                                f"Requested: {env_path}\nValidated environment-variable syntax with a sensitive credential-style key.\nValues redacted.",
+                                impact="If working credentials are exposed, it could allow unauthorized access to the associated service or database.",
+                                owasp="A05: Security Misconfiguration",
+                                category="information_exposure"
+                            ))
+            except Exception as e:
+                logger.debug("ExposedFilesModule env fetch failed: %s", e)
+
+
 
         try:
             git_url = f"{scheme}://{hostname}/.git/HEAD"
             resp = safe_request("GET", git_url, session=session, timeout=(1.5, 2.5))
-            if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len) and resp.text.startswith("ref: refs/"):
-                findings.append(self.make_finding(
-                    "Exposed .git Repository",
-                    "High",
-                    "A folder containing the entire blueprint and source code of your website is publicly accessible.",
-                    git_url,
-                    impact="Source code exposure provides external observers with detailed insight into application logic.",
-                    remediation="Configure the web server to block access to the /.git directory.",
-                    owasp="A05: Security Misconfiguration",
-                    category="information_exposure",
-                    confidence="High"
-                ))
+            if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
+                from urllib.parse import urlparse
+                history = getattr(resp, 'history', [])
+                valid_resp = True
+                if isinstance(history, list) and history:
+                    url_val = getattr(resp, 'url', '')
+                    if isinstance(url_val, str) and url_val:
+                        if urlparse(git_url).path.rstrip('/') != urlparse(url_val).path.rstrip('/'):
+                            valid_resp = False
+                if valid_resp and 'text/html' not in self.get_header_safe(resp, 'Content-Type', '').lower():
+                    body_stripped = getattr(resp, 'text', '').strip()
+                    if re.match(r'^ref: refs/[a-zA-Z0-9_/\-\.]+$', body_stripped) or re.match(r'^[0-9a-f]{40}$', body_stripped) or re.match(r'^[0-9a-f]{64}$', body_stripped):
+                        findings.append(self.make_finding(
+                            "Exposed .git Repository",
+                            "Medium",
+                            "Git repository metadata is publicly accessible through /.git/HEAD.",
+                            f"Requested: /.git/HEAD\nValidated Git HEAD reference format.",
+                            impact="This may reveal repository branch/reference information and can indicate broader .git exposure if additional repository objects are also accessible.",
+                            remediation="Configure the web server to block public access to the entire /.git directory.",
+                            owasp="A05: Security Misconfiguration",
+                            category="information_exposure",
+                            confidence="High"
+                        ))
         except Exception as e:
             logger.debug("ExposedFilesModule git config failed: %s", e)
+
+        try:
+            git_config_url = f"{scheme}://{hostname}/.git/config"
+            resp = safe_request("GET", git_config_url, session=session, timeout=(1.5, 2.5))
+            if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
+                from urllib.parse import urlparse
+                history = getattr(resp, 'history', [])
+                valid_resp = True
+                if isinstance(history, list) and history:
+                    url_val = getattr(resp, 'url', '')
+                    if isinstance(url_val, str) and url_val:
+                        if urlparse(git_config_url).path.rstrip('/') != urlparse(url_val).path.rstrip('/'):
+                            valid_resp = False
+                if valid_resp and 'text/html' not in self.get_header_safe(resp, 'Content-Type', '').lower():
+                    body = getattr(resp, 'text', '')
+                    if '[core]' in body and ('repositoryformatversion' in body or '[remote' in body):
+                        findings.append(self.make_finding(
+                            "Exposed .git Configuration File",
+                            "Medium",
+                            "A Git configuration file is publicly accessible.",
+                            f"Requested: /.git/config\nValidated Git configuration structure.",
+                            impact="May disclose repository configuration, remote URLs, and internal repository details.",
+                            owasp="A05: Security Misconfiguration",
+                            category="information_exposure"
+                        ))
+        except Exception as e: pass
+
+        docker_finding_added = False
+        for docker_path in ['/docker-compose.yml', '/docker-compose.yaml']:
+            if docker_finding_added: break
+            try:
+                docker_url = f"{scheme}://{hostname}{docker_path}"
+                resp = safe_request("GET", docker_url, session=session, timeout=(1.5, 2.5))
+                if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
+                    from urllib.parse import urlparse
+                    history = getattr(resp, 'history', [])
+                    valid_resp = True
+                    if isinstance(history, list) and history:
+                        url_val = getattr(resp, 'url', '')
+                        if isinstance(url_val, str) and url_val:
+                            if urlparse(docker_url).path.rstrip('/') != urlparse(url_val).path.rstrip('/'):
+                                valid_resp = False
+                    if valid_resp:
+                        body = getattr(resp, 'text', '')
+                        if 'services:' in body and ('image:' in body or 'build:' in body):
+                            findings.append(self.make_finding(
+                                "Exposed Docker Compose Configuration",
+                                "Medium",
+                                "A container deployment configuration file is exposed.",
+                                f"Requested: {docker_path}\nValidated Compose services structure.",
+                                impact="May reveal service names, container images, build configuration, ports, or deployment structure.",
+                                owasp="A05: Security Misconfiguration",
+                                category="information_exposure"
+                            ))
+                            docker_finding_added = True
+            except Exception as e: pass
+
+        try:
+            ds_url = f"{scheme}://{hostname}/.DS_Store"
+            resp = safe_request("GET", ds_url, session=session, timeout=(1.5, 2.5))
+            if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
+                from urllib.parse import urlparse
+                history = getattr(resp, 'history', [])
+                valid_resp = True
+                if isinstance(history, list) and history:
+                    url_val = getattr(resp, 'url', '')
+                    if isinstance(url_val, str) and url_val:
+                        if urlparse(ds_url).path.rstrip('/') != urlparse(url_val).path.rstrip('/'):
+                            valid_resp = False
+                if valid_resp:
+                    content = getattr(resp, 'content', b'')
+                    if content.startswith(b'\x00\x00\x00\x01Bud1'):
+                        findings.append(self.make_finding(
+                            "Exposed .DS_Store File",
+                            "Informational",
+                            "An Apple desktop metadata file was accidentally uploaded to the server.",
+                            f"Requested: /.DS_Store\nValidated .DS_Store binary signature.",
+                            impact="May reveal names of hidden files or directories on the server.",
+                            owasp="A05: Security Misconfiguration",
+                            category="information_exposure"
+                        ))
+        except Exception as e: pass
+
+
 
         try:
             phpinfo_url = f"{scheme}://{hostname}/phpinfo.php"
@@ -153,12 +278,20 @@ class ExposedFilesModule(ScannerModule):
                     if result:
                         findings.append(result)
 
+
             def check_exposed_dump(path):
                 try:
                     target_url = urljoin(base_url, path)
                     resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
                     if resp and resp.status_code == 200 and 'text/html' not in resp.headers.get('Content-Type', '').lower():
-                        chunk = resp.content[:1024]
+                        from urllib.parse import urlparse
+                        history = getattr(resp, 'history', [])
+                        if isinstance(history, list) and history:
+                            url_val = getattr(resp, 'url', '')
+                            if isinstance(url_val, str) and url_val:
+                                if urlparse(target_url).path.rstrip('/') != urlparse(url_val).path.rstrip('/'):
+                                    return None
+                        chunk = getattr(resp, 'content', b'')[:1024]
                         is_zip = chunk.startswith(b'PK\x03\x04') or chunk.startswith(b'\x1f\x8b')
 
                         try:
@@ -168,22 +301,32 @@ class ExposedFilesModule(ScannerModule):
 
                         is_sql = '-- MySQL dump' in chunk_text or 'CREATE TABLE' in chunk_text or 'INSERT INTO' in chunk_text
 
-                        if is_zip or is_sql:
+                        if is_sql:
                             return self.make_finding(
-                                f"Exposed Site / Database Backup Dump ({path})",
-                                "Critical",
-                                f"A complete backup of your website or database is publicly available for anyone to download at {path}.",
+                                f"Exposed Database Backup Dump ({path})",
+                                "Medium",
+                                f"A database backup dump is publicly available for anyone to download at {path}.",
                                 target_url,
                                 impact="Exposed database backups can lead to full disclosure of stored application data.",
+                                owasp="A05: Security Misconfiguration",
+                                category="information_exposure"
+                            )
+                        elif is_zip:
+                            return self.make_finding(
+                                f"Exposed Backup / Archive File ({path})",
+                                "Medium",
+                                f"An archive file is publicly available for anyone to download at {path}.",
+                                target_url,
+                                impact="Exposed archives may expose application files, source code, or configuration data.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
                             )
                 except requests.exceptions.RequestException:
                     pass
                 except Exception as e:
-                    logger.debug("ExposedFilesModule php info fetch failed: %s", e)
                     pass
                 return None
+
 
             dump_paths = ['/backup.zip', '/site.tar.gz', '/db.sql', '/dump.sql', '/backup.sql']
             with ThreadPoolExecutor(max_workers=2) as executor:
@@ -191,32 +334,7 @@ class ExposedFilesModule(ScannerModule):
                     if result:
                         findings.append(result)
 
-            def check_env_file(path):
-                try:
-                    target_url = urljoin(base_url, path)
-                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
-                    if resp and resp.status_code == 200:
-                        body = resp.text.lower() if resp.text else ""
-                        if "db_password=" in body or "app_key=" in body or "aws_access_key_id=" in body or "secret_key=" in body:
-                            return self.make_finding(
-                                f"Exposed Environment File ({path})",
-                                "Critical",
-                                f"A configuration file containing sensitive passwords and secret keys is publicly visible at {path}.",
-                                target_url,
-                                impact="Exposed credentials could allow unauthorized access to the associated service or database.",
-                                owasp="A05: Security Misconfiguration",
-                                category="information_exposure"
-                            )
-                except requests.exceptions.RequestException:
-                    pass
-                except Exception as e:
-                    logger.debug("ExposedFilesModule env file fetch failed: %s", e)
-                    pass
-                return None
 
-            env_result = check_env_file('/.env')
-            if env_result:
-                findings.append(env_result)
 
             def check_admin_panel(path):
                 try:
