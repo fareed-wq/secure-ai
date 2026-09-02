@@ -42,8 +42,8 @@ class TestScannerModules(unittest.TestCase):
         mock_get.return_value = self.mock_response(headers={"Server": "nginx", "X-Powered-By": "PHP"})
         module = TechFingerprintModule()
         findings = module.run(self.url, self.hostname, self.session)
-        self.assertEqual(len(findings), 1)
-        self.assertTrue(any(f['name'] == 'Server Header Exposed' for f in findings))
+        self.assertEqual(len(findings), 2)
+        self.assertTrue(all(f['name'] == 'Technology Fingerprint Identified' for f in findings))
 
     @patch('requests.Session.request')
     def test_tech_fingerprint_module_empty(self, mock_get):

@@ -71,17 +71,8 @@ class JavaScriptSecurityModule(ScannerModule):
         r'\bVue\.config\.devtools\b'
     ]
 
-    # 4. FRAMEWORKS
-    FRAMEWORKS = {
-        "React": r'\bReact\b|\bcreateElement\b',
-        "Vue": r'\bVue\.component\b|\b__VUE__\b',
-        "Angular": r'\bangular\.module\b|\bng-app\b',
-        "Next.js": r'\b__NEXT_DATA__\b',
-        "Nuxt": r'\b__NUXT__\b',
-        "Svelte": r'\bSvelteComponent\b',
-        "Webpack": r'\bwebpackJsonp\b|\b__webpack_require__\b',
-        "Vite": r'\b__vite_is_modern_browser\b'
-    }
+    # 4. FRAMEWORKS (Migrated to TechFingerprintModule for safe HTML-based detection)
+    FRAMEWORKS = {}
 
     # 5. LIBRARIES
     LIBRARIES = {

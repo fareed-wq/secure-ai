@@ -164,6 +164,7 @@ class TestPhase29ApiWebSecurity(unittest.TestCase):
     def test_server_version_disclosure(self, mock_safe_request):
         mock_resp = MagicMock()
         mock_resp.status_code = 200
+        mock_resp.text = ""
         mock_resp.headers = {
             "Server": "nginx/1.24.0",
             "X-Powered-By": "PHP/8.2"
@@ -173,9 +174,9 @@ class TestPhase29ApiWebSecurity(unittest.TestCase):
         module = TechFingerprintModule()
         findings = module.run(self.url, self.hostname, self.session)
         
-        version_finding = next((f for f in findings if f["name"] == "Server Version Information Disclosed"), None)
+        version_finding = next((f for f in findings if f["name"] == "Technology Fingerprint Identified" and "nginx" in str(f["evidence"])), None)
         self.assertIsNotNone(version_finding)
-        self.assertEqual(version_finding["severity"], "Low")
+        self.assertEqual(version_finding["severity"], "Informational")
 
 if __name__ == '__main__':
     unittest.main()
