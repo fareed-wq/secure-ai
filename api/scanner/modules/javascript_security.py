@@ -86,7 +86,7 @@ class JavaScriptSecurityModule(ScannerModule):
     }
 
     # API ROUTES
-    API_ROUTE_PATTERN = re.compile(r'["\'](/api/v\d+/[a-zA-Z0-9_\-\/\{\}]+|/graphql|/rest/[a-zA-Z0-9_\-\/\{\}]+)[\'"]')
+    API_ROUTE_PATTERN = re.compile(r'["\'](/api(?:/v\d+)?/[a-zA-Z0-9_\-\/\{\}]+|/graphql|/rest/[a-zA-Z0-9_\-\/\{\}]+)[\'"]')
     ABS_API_ROUTE_PATTERN = re.compile(r'["\'](https?://api\.[a-zA-Z0-9\.\-]+/[a-zA-Z0-9_\-\/\{\}]+)[\'"]')
 
     # IDOR / SEQUENTIAL ID
@@ -378,14 +378,14 @@ class JavaScriptSecurityModule(ScannerModule):
 
             if seq_id_routes:
                 findings.append(self.make_finding(
-                    "Sequential Object Identifiers Detected in API Routes (IDOR Risk)",
-                    "Medium",
-                    "Your website appears to use simple, predictable numbers (like 1, 2, 3) to identify users or records.",
-                    "\\n".join(list(seq_id_routes)[:3]),
-                    impact="Predictable identifiers can increase the risk of Insecure Direct Object Reference (IDOR) vulnerabilities.",
-                    confidence="Low",
-                    category="api_surface",
-                    owasp="A01: Broken Access Control"
+                    "Sequential Identifier Observed in API Route",
+                      "Informational",
+                      "A sequential or numeric identifier was observed in a client-side API route. Authorization enforcement was NOT tested, and this does not establish an IDOR vulnerability.",
+                      "\n".join(list(seq_id_routes)[:3]),
+                      impact="Numeric identifiers can sometimes increase the risk of enumeration if access controls are absent.",
+                      confidence="Low",
+                      category="api_surface",
+                      owasp="Not Mapped"
                 ))
 
             if dangerous_config:

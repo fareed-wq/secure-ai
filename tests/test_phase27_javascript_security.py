@@ -106,7 +106,7 @@ class TestJavaScriptSecurityModule(unittest.TestCase):
         self.assertIn("/api/v1/users", str(api_findings[0]["evidence"]))
         self.assertIn("https://api.example.com/data", str(api_findings[0]["evidence"]))
         
-        idor_findings = [f for f in findings if f["name"] == "Sequential Object Identifiers Detected in API Routes (IDOR Risk)"]
+        idor_findings = [f for f in findings if f["name"] == "Sequential Identifier Observed in API Route"]
         self.assertEqual(len(idor_findings), 1)
         self.assertIn("/api/v1/orders/{id}", str(idor_findings[0]["evidence"]))
 
