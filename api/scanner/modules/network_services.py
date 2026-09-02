@@ -78,7 +78,7 @@ class NetworkServiceExposureModule(ScannerModule):
         findings = []
 
         # Concurrently check ports
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=3) as executor:
             futures = []
 
             for port, (service, severity, finding_name, desc, impact) in self.TARGET_PORTS.items():

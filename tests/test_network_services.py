@@ -87,3 +87,21 @@ class TestNetworkServiceExposureModule:
 
     def test_port_443_not_in_targets(self, module):
         assert 443 not in module.TARGET_PORTS
+
+    @patch('api.scanner.modules.network_services.ThreadPoolExecutor')
+    def test_run_concurrency_capped_at_3(self, mock_executor, module, mock_session):
+        # We just need to check the call to ThreadPoolExecutor
+        mock_executor_instance = MagicMock()
+        mock_executor.return_value.__enter__.return_value = mock_executor_instance
+
+        # We need to mock submit to return a mock future to avoid errors in as_completed
+        mock_future = MagicMock()
+        mock_future.result.return_value = None
+        mock_executor_instance.submit.return_value = mock_future
+
+        # also patch as_completed since it requires an iterable of futures
+        with patch('api.scanner.modules.network_services.as_completed') as mock_as_completed:
+            mock_as_completed.return_value = [mock_future] * len(module.TARGET_PORTS)
+            module.run("http://example.com", "example.com", mock_session)
+
+        mock_executor.assert_called_with(max_workers=3)
