@@ -840,8 +840,10 @@ class OpenApiModule(ScannerModule):
 
                                             if isinstance(op_details, dict):
                                                 local_security = op_details.get("security")
-                                                if not has_global_security and (local_security is None or (isinstance(local_security, list) and len(local_security) == 0)):
-                                                    unprotected_privileged.add(f"{method.upper()} {route_path}")
+                                            if local_security == []:
+                                                unprotected_privileged.add(f"{method.upper()} {route_path}")
+                                            elif local_security is None and not has_global_security:
+                                                unprotected_privileged.add(f"{method.upper()} {route_path}")
 
                             if privileged_routes:
                                 local_findings.append(self.make_finding(
@@ -857,14 +859,14 @@ class OpenApiModule(ScannerModule):
 
                             if unprotected_privileged:
                                 local_findings.append(self.make_finding(
-                                    "Potentially Unprotected Privileged API Operation",
-                                    "Medium",
-                                    "Your website's documentation suggests that some sensitive administrative functions might not require a password.",
-                                    "\\n".join(list(unprotected_privileged)[:5]),
-                                    impact="If true, anyone could perform administrative actions on your website without needing to log in.",
-                                    confidence="Medium",
-                                    category="authentication",
-                                    owasp="A01: Broken Access Control"
+                                    "Privileged API Operation Documented Without Security Requirement",
+                                "Informational",
+                                "This observation is derived from the OpenAPI specification and does NOT confirm the endpoint is actually unauthenticated. Runtime authorization enforcement was not tested.",
+                                "\n".join(list(unprotected_privileged)[:5]),
+                                impact="If true, anyone could perform administrative actions on your website without needing to log in.",
+                                confidence="High",
+                                category="authentication",
+                                owasp="Not Mapped"
                                 ))
 
                             if api_versions:
@@ -939,11 +941,16 @@ class ActuatorModule(ScannerModule):
                     try:
                         data = resp.json()
                         if isinstance(data, dict):
-                            is_health = "status" in data
-                            is_env = ("propertySources" in data or "activeProfiles" in data)
-                            is_base = "_links" in data
+                            from urllib.parse import urlparse
+                            path = urlparse(target).path.lower()
+                            is_actuator_path = path == "/actuator" or "/actuator/" in path
 
-                            if is_env:
+                            is_health = is_actuator_path and "status" in data
+                            is_env_high = is_actuator_path and "propertySources" in data
+                            is_env_info = is_actuator_path and "activeProfiles" in data
+                            is_base = is_actuator_path and "_links" in data
+
+                            if is_env_high:
                                 return self.make_finding(
                                     "Sensitive Spring Boot Actuator Config Exposed",
                                     "High",
@@ -955,7 +962,7 @@ class ActuatorModule(ScannerModule):
                                     owasp="A05: Security Misconfiguration",
                                     remediation="Restrict access to actuator endpoints."
                                 )
-                            elif is_health or is_base:
+                            elif is_health or is_base or is_env_info:
                                 return self.make_finding(
                                     "Spring Boot Actuator Endpoint Exposed",
                                     "Informational",

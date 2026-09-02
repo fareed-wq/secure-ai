@@ -138,14 +138,14 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     vary = self.get_header_safe(resp, "Vary", "").lower()
                     if "cookie" not in vary and "authorization" not in vary:
                         findings.append(self.make_finding(
-                            "Missing Cache Vary Protection on Sensitive Content",
-                            "Medium",
-                            description="Sensitive content permits shared caching but fails to instruct caches to separate responses per user.",
+                            "Cache Variation Header Not Observed",
+                            "Informational",
+                            description="The JSON response permits shared caching but fails to instruct caches to separate responses per user.",
                             evidence=f"Cache-Control: {cache_control} | Vary: {vary}",
                             remediation="If caching is required, ensure 'Vary: Cookie' or 'Vary: Authorization' is present.",
-                            owasp="A05: Security Misconfiguration",
+                            owasp="Not Mapped",
                             category="http_headers",
-                            impact="A shared cache might mistakenly serve one user's private data to a completely different user."
+                            impact="If caching is required for sensitive data, ensure 'Vary: Cookie' or 'Vary: Authorization' is present."
                         ))
 
                 if cache_control and "no-store" in cache_lower:

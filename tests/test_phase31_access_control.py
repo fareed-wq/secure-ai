@@ -90,7 +90,7 @@ class TestPhase31AccessControl(unittest.TestCase):
         self.assertIn("Public OpenAPI / Swagger Specification Exposed", finding_names)
         self.assertIn("API Authorization Scheme Disclosed", finding_names)
         self.assertIn("Privileged API Routes Publicly Documented", finding_names)
-        self.assertIn("Potentially Unprotected Privileged API Operation", finding_names)
+        self.assertIn("Privileged API Operation Documented Without Security Requirement", finding_names)
         self.assertIn("Versioned API Surface Discovered", finding_names)
 
     @patch('requests.Session.request')
