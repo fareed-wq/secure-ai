@@ -72,7 +72,7 @@ class TestPhase29ApiWebSecurity(unittest.TestCase):
         mock_resp.history = []
         mock_resp.url = "https://example.com/api/v1/user/profile"
         mock_resp.status_code = 200
-        mock_resp.headers = {"Cache-Control": "public, max-age=3600"}
+        mock_resp.headers = {"Content-Type": "application/json", "Cache-Control": "public, max-age=3600"}
         mock_resp.text = '{"user": "admin"}'
         mock_safe_request.side_effect = [mock_resp, None]
 

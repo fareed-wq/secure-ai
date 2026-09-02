@@ -145,23 +145,25 @@ class ApiWebSecurityModule(ScannerModule):
             path = urlparse(resp.url).path.lower()
             is_sensitive_path = any(x in path for x in ['/api', '/user', '/me', '/account', '/profile'])
             is_highly_sensitive = any(x in path for x in ['/user', '/me', '/account', '/profile'])
+
             if is_sensitive_path:
+                content_type = self.get_header_safe(resp, "Content-Type", "").lower()
+                has_json_ct = "application/json" in content_type or "+json" in content_type
+
+                json_valid = False
+                if has_json_ct:
+                    try:
+                        resp.json()
+                        json_valid = True
+                    except Exception:
+                        pass
+
+                is_json_response = has_json_ct and json_valid
+
                 cache_control = self.get_header_safe(resp, "Cache-Control", "")
                 cache_lower = cache_control.lower()
-                if "public" in cache_lower or "max-age" in cache_lower or "s-maxage" in cache_lower:
-                    findings.append(self.make_finding(
-                        "Publicly Cacheable JSON Response Observed",
-                            "Informational",
-                            description="A JSON response was observed with cache directives allowing shared/public caching.",
-                        evidence=f"Cache-Control: {cache_control}",
-                        confidence="Medium",
-                        remediation="Set Cache-Control to 'no-store, no-cache, must-revalidate' for sensitive data.",
-                        category="http_headers",
-                        owasp="A05: Security Misconfiguration",
-                        impact="Other people on the same network or public computers could view your users' private information."
-                    ))
 
-                # Deep Cache Analysis
+                # Deep Cache Analysis applies generally (Contradictory directives)
                 if ("no-store" in cache_lower or "no-cache" in cache_lower) and ("max-age=" in cache_lower or "s-maxage=" in cache_lower):
                     findings.append(self.make_finding(
                         "Contradictory Cache-Control Directives",
@@ -174,26 +176,42 @@ class ApiWebSecurityModule(ScannerModule):
                         impact="Different network proxies may interpret these conflicting rules differently, potentially caching sensitive data unexpectedly."
                     ))
 
-                is_publicly_cacheable = ("public" in cache_lower or (cache_lower and "max-age" in cache_lower and "max-age=0" not in cache_lower and "no-store" not in cache_lower and "private" not in cache_lower))
+                is_publicly_cacheable = ("public" in cache_lower or (cache_lower and ("max-age" in cache_lower or "s-maxage" in cache_lower) and "max-age=0" not in cache_lower and "no-store" not in cache_lower and "private" not in cache_lower))
 
                 cdn_headers = ["CDN-Cache-Control", "Cloudflare-CDN-Cache-Control"]
+                cdn_cacheable = False
                 for ch in cdn_headers:
                     val = self.get_header_safe(resp, ch).lower()
                     if val:
-                        if "public" in val or ("max-age" in val and "max-age=0" not in val and "no-store" not in val and "private" not in val):
+                        if "public" in val or (("max-age" in val or "s-maxage" in val) and "max-age=0" not in val and "no-store" not in val and "private" not in val):
                             is_publicly_cacheable = True
-                            findings.append(self.make_finding(
-                                "Publicly Cacheable JSON Response Observed",
-                                "Informational",
-                                description="A Content Delivery Network (CDN) is explicitly instructed to cache this JSON response.",
-                                evidence=f"{ch}: {val}",
-                                remediation="Configure CDN-specific cache headers to 'no-store' for sensitive endpoints.",
-                                owasp="A05: Security Misconfiguration",
-                                category="http_headers",
-                                impact="The CDN may serve this sensitive data to unauthorized users or store it on public edge servers."
-                            ))
+                            cdn_cacheable = True
+                            if is_json_response:
+                                findings.append(self.make_finding(
+                                    "Publicly Cacheable JSON Response Observed",
+                                    "Informational",
+                                    description="A Content Delivery Network (CDN) is explicitly instructed to cache this JSON response.",
+                                    evidence=f"{ch}: {val}",
+                                    remediation="Configure CDN-specific cache headers to 'no-store' for sensitive endpoints.",
+                                    owasp="A05: Security Misconfiguration",
+                                    category="http_headers",
+                                    impact="The CDN may serve this sensitive data to unauthorized users or store it on public edge servers."
+                                ))
 
-                if is_publicly_cacheable and is_highly_sensitive:
+                if is_json_response and is_publicly_cacheable and not cdn_cacheable:
+                    findings.append(self.make_finding(
+                        "Publicly Cacheable JSON Response Observed",
+                        "Informational",
+                        description="A JSON response was observed with cache directives allowing shared/public caching.",
+                        evidence=f"Cache-Control: {cache_control}",
+                        confidence="Medium",
+                        remediation="Set Cache-Control to 'no-store, no-cache, must-revalidate' for sensitive data.",
+                        category="http_headers",
+                        owasp="A05: Security Misconfiguration",
+                        impact="Other people on the same network or public computers could view your users' private information."
+                    ))
+
+                if is_json_response and is_publicly_cacheable and is_highly_sensitive:
                     vary = self.get_header_safe(resp, "Vary", "").lower()
                     if "cookie" not in vary and "authorization" not in vary:
                         findings.append(self.make_finding(
@@ -206,6 +224,7 @@ class ApiWebSecurityModule(ScannerModule):
                             category="http_headers",
                             impact="A shared cache might mistakenly serve one user's private data to a completely different user."
                         ))
+
 
                 if "no-store" in cache_lower and is_highly_sensitive:
                     etag = self.get_header_safe(resp, "ETag", "")
