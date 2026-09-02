@@ -1,9 +1,5 @@
 import socket
 import errno
-import time
-import logging
-
-logger = logging.getLogger(__name__)
 
 def safe_create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, source_address=None, socket_options=None):
     """
@@ -31,9 +27,6 @@ def safe_create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, sour
     for res in infos:
         af, socktype, proto, canonname, sa = res
         sock = None
-        ip = sa[0]
-        family_str = "IPv6" if af == socket.AF_INET6 else ("IPv4" if af == socket.AF_INET else str(af))
-        start_time = time.monotonic()
         try:
             sock = socket.socket(af, socktype, proto)
             if socket_options:
@@ -44,14 +37,10 @@ def safe_create_connection(address, timeout=socket._GLOBAL_DEFAULT_TIMEOUT, sour
             if timeout is not socket._GLOBAL_DEFAULT_TIMEOUT:
                 sock.settimeout(timeout)
             sock.connect(sa)
-            elapsed = time.monotonic() - start_time
-            logger.info(f"safe_connect host={host} port={port} family={family_str} ip={ip} success elapsed={elapsed:.2f}s")
             return sock
         except OSError as _:
-            elapsed = time.monotonic() - start_time
-            errno_val = getattr(_, 'errno', None)
-            logger.info(f"safe_connect host={host} port={port} family={family_str} ip={ip} failed {type(_).__name__} errno={errno_val} elapsed={elapsed:.2f}s")
             err = _
+            errno_val = getattr(_, 'errno', None)
             if errno_val != errno.EADDRNOTAVAIL:
                 meaningful_err = _
             if sock is not None:
