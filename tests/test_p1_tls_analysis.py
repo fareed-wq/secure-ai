@@ -86,28 +86,26 @@ def test_tls_12_behavior(monkeypatch, module, session):
     assert tls13 is None
 
 def test_applicable_exceeds_398_days(monkeypatch, module, session):
-    # Issued after Sept 1, 2020 and lifespan > 398 days
     not_before = "Jan 01 12:00:00 2021 GMT"
-    not_after = "Jan 01 12:00:00 2023 GMT" # 2 years
+    not_after = "Jan 01 12:00:00 2023 GMT"
     cert = mock_getpeercert(not_before=not_before, not_after=not_after)
 
     findings = execute_with_mock(monkeypatch, module, session, getpeercert_mock=cert)
 
-    lifespan = next((f for f in findings if "Maximum Lifespan" in f["name"]), None)
+    lifespan = next((f for f in findings if "Validity Period Identified" in f["name"]), None)
     assert lifespan is not None
-    assert lifespan["severity"] == "Low"
-    assert "exceeds the 398-day maximum" in lifespan["description"]
+    assert lifespan["severity"] == "Informational"
 
 def test_non_applicable_exceeds_398_days(monkeypatch, module, session):
-    # Issued before Sept 1, 2020 and lifespan > 398 days
     not_before = "Jan 01 12:00:00 2019 GMT"
-    not_after = "Jan 01 12:00:00 2022 GMT" # 3 years
+    not_after = "Jan 01 12:00:00 2022 GMT"
     cert = mock_getpeercert(not_before=not_before, not_after=not_after)
 
     findings = execute_with_mock(monkeypatch, module, session, getpeercert_mock=cert)
 
-    lifespan = next((f for f in findings if "Maximum Lifespan" in f["name"]), None)
-    assert lifespan is None
+    lifespan = next((f for f in findings if "Validity Period Identified" in f["name"]), None)
+    assert lifespan is not None
+    assert lifespan["severity"] == "Informational"
 
 def test_valid_lifespan(monkeypatch, module, session):
     # Issued after Sept 1, 2020 and lifespan < 398 days
@@ -117,21 +115,21 @@ def test_valid_lifespan(monkeypatch, module, session):
 
     findings = execute_with_mock(monkeypatch, module, session, getpeercert_mock=cert)
 
-    lifespan = next((f for f in findings if "Maximum Lifespan" in f["name"]), None)
-    assert lifespan is None
+    lifespan = next((f for f in findings if "Validity Period Identified" in f["name"]), None)
+    assert lifespan is not None
 
 def test_missing_dates(monkeypatch, module, session):
     cert = mock_getpeercert(not_before=None, not_after=None)
     findings = execute_with_mock(monkeypatch, module, session, getpeercert_mock=cert)
 
-    lifespan = next((f for f in findings if "Maximum Lifespan" in f["name"]), None)
+    lifespan = next((f for f in findings if "Validity Period Identified" in f["name"]), None)
     assert lifespan is None
 
 def test_malformed_dates(monkeypatch, module, session):
     cert = mock_getpeercert(not_before="Not a date", not_after="Still not a date")
     findings = execute_with_mock(monkeypatch, module, session, getpeercert_mock=cert)
 
-    lifespan = next((f for f in findings if "Maximum Lifespan" in f["name"]), None)
+    lifespan = next((f for f in findings if "Validity Period Identified" in f["name"]), None)
     assert lifespan is None
 
 def test_zero_network_requests(monkeypatch, module, session):

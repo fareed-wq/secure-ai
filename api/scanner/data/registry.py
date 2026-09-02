@@ -20,7 +20,6 @@ from api.scanner.modules.http_security import (
 )
 from api.scanner.modules.network_checks import (
     SubdomainProbingModule,
-    TLSCipherStrengthModule,
     GraphQLIntrospectionModule,
     VerboseStackTraceModule,
     PassiveSubdomainDiscoveryModule,
@@ -36,7 +35,6 @@ from api.scanner.modules.auth_session_security import AuthenticationSessionSecur
 
 DOMAIN_MAP = {
     "EnhancedTLSModule": "transport_tls",
-    "TLSCipherStrengthModule": "transport_tls",
     "HTTPSRedirectModule": "transport_tls",
     "MixedContentModule": "transport_tls",
     "SecurityHeadersModule": "browser_defense",
@@ -96,7 +94,6 @@ ACTIVE_MODULES = [
     CORSModule(),
     HTTPSRedirectModule(),
     EnhancedTLSModule(),
-    TLSCipherStrengthModule(),
     PassiveSubdomainDiscoveryModule(),
     JavaScriptSecurityModule(),
     InfrastructureIntelligenceModule(),

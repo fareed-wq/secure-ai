@@ -45,7 +45,6 @@ from api.scanner.modules.http_security import (
 from api.scanner.modules.network_checks import (
     SubdomainProbingModule,
     SubdomainTakeoverModule,
-    TLSCipherStrengthModule,
     GraphQLIntrospectionModule,
     VerboseStackTraceModule,
 )
