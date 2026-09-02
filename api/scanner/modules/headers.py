@@ -63,31 +63,55 @@ class CORSModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        request_successful = False
         try:
-            headers = {"Origin": "https://audit-test.local"}
+            synthetic_origin = "https://cors-test.invalid"
+            headers = {"Origin": synthetic_origin}
             resp = safe_request("GET", url, headers=headers, session=session, timeout=(1.5, 2.5))
-            acao = self.get_header_safe(resp, "Access-Control-Allow-Origin")
-            acac = self.get_header_safe(resp, "Access-Control-Allow-Credentials").lower() == "true"
 
-            if acao == "https://audit-test.local" and acac:
-                findings.append(self.make_finding(
-                    "Insecure CORS Policy (Arbitrary Origin Reflection with Credentials)",
-                    "High",
-                    "Your website automatically trusts any other website that asks for data, and allows them to access users' private information.",
-                    f"Access-Control-Allow-Origin: {acao}\\nAccess-Control-Allow-Credentials: true",
-                    impact="Reflecting arbitrary origins while allowing credentials can permit an untrusted website to read credentialed cross-origin responses when the browser sends user credentials and the affected endpoint returns sensitive data.",
-                    confidence="High",
-                    remediation="Never dynamically reflect the Origin header. Statically define a list of trusted domains.",
-                    owasp="A05: Security Misconfiguration",
-                    category="http_headers"
-                ))
+            if resp is None:
+                return findings
+
+            acao_raw = self.get_header_safe(resp, "Access-Control-Allow-Origin")
+            acao = acao_raw.strip() if acao_raw else ""
+
+            acac_raw = self.get_header_safe(resp, "Access-Control-Allow-Credentials")
+            acac = acac_raw.strip().lower() == "true" if acac_raw else False
+
+            evidence_str = "Origin sent: " + synthetic_origin + chr(10) + "Access-Control-Allow-Origin: " + acao_raw + chr(10) + "Access-Control-Allow-Credentials: " + str(acac_raw)
+
+            if acao == synthetic_origin:
+                if acac:
+                    findings.append(self.make_finding(
+                        "Insecure CORS Policy (Arbitrary Origin Reflection with Credentials)",
+                        "High",
+                        "Your website dynamically reflects an arbitrary origin and allows credentials.",
+                        evidence_str,
+                        impact="This may allow a malicious origin to read credentialed cross-origin responses when the browser sends applicable credentials.",
+                        confidence="High",
+                        remediation="Never dynamically reflect the Origin header. Statically define a list of trusted domains.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+                else:
+                    findings.append(self.make_finding(
+                        "Insecure CORS Policy (Arbitrary Origin Reflection)",
+                        "Low",
+                        "The server reflects an arbitrary Origin value in its CORS response.",
+                        evidence_str,
+                        impact="This permits cross-origin reading of responses that are accessible without credentialed CORS. Risk depends on whether the endpoint exposes data that should not be readable by arbitrary origins.",
+                        confidence="High",
+                        remediation="Statically define a list of trusted domains instead of echoing the request Origin.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
             elif acao == "*":
                 if acac:
                     findings.append(self.make_finding(
                         "Insecure CORS Policy (Wildcard with Credentials)",
                         "Low",
-                        "Your website is set up to allow any other website on the internet to read your users' private data.",
-                        f"Access-Control-Allow-Origin: *\\nAccess-Control-Allow-Credentials: true",
+                        "Your website specifies a wildcard origin and allows credentials, but browsers block this combination.",
+                        evidence_str,
                         impact="Modern web browsers strictly reject this invalid configuration, preventing direct exploitation. However, it indicates inconsistent CORS middleware or security configuration.",
                         confidence="High",
                         remediation="Fix the CORS middleware configuration. Access-Control-Allow-Credentials: true must only be used with a specific, statically defined Origin, never a wildcard (*).",
@@ -99,22 +123,50 @@ class CORSModule(ScannerModule):
                         "CORS Enabled (Wildcard)",
                         "Informational",
                         "Your website allows any other website on the internet to read its public responses.",
-                        "Access-Control-Allow-Origin: *",
+                        evidence_str,
                         impact="If this part of your website contains sensitive data, any other website can access it.",
                         confidence="Medium",
                         remediation="Restrict CORS to specific trusted origins if the endpoint handles sensitive data.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))
+            elif acao == "null":
+                if acac:
+                    findings.append(self.make_finding(
+                        "CORS Null-Origin Configuration Observed",
+                        "Low",
+                        "The tested response returned Access-Control-Allow-Origin: null while a different synthetic Origin was sent.",
+                        evidence_str,
+                        impact="This may indicate a null-origin CORS configuration, but acceptance of an actual Origin: null request was not verified.",
+                        confidence="High",
+                        remediation="Do not trust the 'null' origin. Statically define a list of trusted domains.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+                else:
+                    findings.append(self.make_finding(
+                        "CORS Null-Origin Configuration Observed",
+                        "Informational",
+                        "The tested response returned Access-Control-Allow-Origin: null while a different synthetic Origin was sent.",
+                        evidence_str,
+                        impact="This may indicate a null-origin CORS configuration, but acceptance of an actual Origin: null request was not verified.",
+                        confidence="Medium",
+                        remediation="Ensure that the 'null' origin is intentionally trusted.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
             elif acao:
                 findings.append(self.make_finding(
-                    "CORS Enabled",
+                    "CORS Configured for Specific Origin",
                     "Informational",
-                    "Your website is specifically configured to share data with another trusted website.",
-                    f"Access-Control-Allow-Origin: {acao}",
+                    "The response allows a specific origin that differs from the test origin.",
+                    evidence_str,
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
+
+            # Reached end of evaluation successfully
+            request_successful = True
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass
@@ -122,12 +174,12 @@ class CORSModule(ScannerModule):
             import logging
             logging.getLogger(__name__).debug("CORSModule failed: %s", e)
 
-        if not any("CORS" in f["name"].upper() for f in findings):
+        if request_successful and not any("CORS" in f["name"].upper() for f in findings):
             findings.append(self.make_finding(
                 "Strict CORS Policy Enforced",
                 "Passed",
-                "Your website safely restricts other websites from reading its data.",
-                "No open Access-Control-Allow-Origin header detected.",
+                "No permissive Access-Control-Allow-Origin policy was observed on the tested response.",
+                "Origin sent: " + synthetic_origin + chr(10) + "Access-Control-Allow-Origin: not present",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
             ))

@@ -49,10 +49,10 @@ class TestPhase32CoverageAudit(unittest.TestCase):
         module = CORSModule()
         
         def mock_req(*args, **kwargs):
-            self.assertEqual(kwargs.get("headers", {}).get("Origin"), "https://audit-test.local")
+            self.assertEqual(kwargs.get("headers", {}).get("Origin"), "https://cors-test.invalid")
             resp = MagicMock()
             resp.headers = {
-                "Access-Control-Allow-Origin": "https://audit-test.local",
+                "Access-Control-Allow-Origin": "https://cors-test.invalid",
                 "Access-Control-Allow-Credentials": "true"
             }
             return resp

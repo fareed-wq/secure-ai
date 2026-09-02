@@ -119,7 +119,7 @@ class TestRegressionMatrix:
         assert any(x["name"] == "Insecure CORS Policy (Wildcard with Credentials)" and x["severity"] == "Low" for x in f)
 
         # C) Reflected with creds -> High
-        mock_safe_req.return_value = make_mock_response(headers={"Access-Control-Allow-Origin": "https://audit-test.local", "Access-Control-Allow-Credentials": "true"})
+        mock_safe_req.return_value = make_mock_response(headers={"Access-Control-Allow-Origin": "https://cors-test.invalid", "Access-Control-Allow-Credentials": "true"})
         f = mod.run("https://example.com", "example.com", MagicMock())
         assert any(x["name"] == "Insecure CORS Policy (Arbitrary Origin Reflection with Credentials)" and x["severity"] == "High" for x in f)
 
