@@ -1,5 +1,5 @@
 from api.scanner.modules.network_services import NetworkServiceExposureModule
-from api.scanner.modules.headers import TechFingerprintModule, CORSModule, PermissionsPolicyModule
+from api.scanner.modules.headers import TechFingerprintModule, CORSModule, PermissionsPolicyModule, CSPQualityModule
 from api.scanner.modules.discovery import (
     ExposedFilesModule,
     InformationDisclosureModule,
@@ -42,6 +42,7 @@ DOMAIN_MAP = {
     "SecurityHeadersModule": "browser_defense",
     "AdvancedSecurityHeadersModule": "browser_defense",
     "PermissionsPolicyModule": "browser_defense",
+    "CSPQualityModule": "browser_defense",
     "CORSModule": "browser_defense",
     "AdvancedCookieModule": "browser_defense",
     "GraphQLIntrospectionModule": "api_surface",
@@ -73,6 +74,7 @@ PASSIVE_MODULES = [
     InformationDisclosureModule(),
     TechFingerprintModule(),
     PermissionsPolicyModule(),
+    CSPQualityModule(),
     AdvancedCookieModule(),
     SecurityHeadersModule(),
     AdvancedSecurityHeadersModule(),

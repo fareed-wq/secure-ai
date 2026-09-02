@@ -148,3 +148,50 @@ def test_malformed_trust_anchor_strict_dynamic_does_not_suppress_http():
     findings = run_csp(headers)
     weak = [f for f in findings if f["name"] == "Weak Content-Security-Policy"]
     assert len(weak) == 1
+import pytest
+from unittest.mock import MagicMock
+
+def test_registry_has_csp_quality_module():
+    from api.scanner.data.registry import PASSIVE_MODULES, DOMAIN_MAP
+
+    # Verify exactly one instance in PASSIVE_MODULES
+    csp_instances = [m for m in PASSIVE_MODULES if m.__class__.__name__ == 'CSPQualityModule']
+    assert len(csp_instances) == 1, "CSPQualityModule should be registered exactly once in PASSIVE_MODULES"
+
+    # Verify DOMAIN_MAP
+    assert DOMAIN_MAP.get('CSPQualityModule') == 'browser_defense', "CSPQualityModule must map to browser_defense"
+
+def test_orchestrator_executes_csp_quality_module():
+    from api.scanner.orchestrator import scan_url
+    import api.scanner.orchestrator as orch_mod
+
+    old_get_http = orch_mod.get_http_session
+    old_safe_req = orch_mod.safe_request
+
+    mock_session = MagicMock()
+    orch_mod.get_http_session = lambda: mock_session
+
+    mock_resp = MagicMock()
+    mock_resp.headers = {"Content-Security-Policy": "script-src 'unsafe-inline'; default-src 'self'"}
+    orch_mod.safe_request = lambda *a, **k: mock_resp
+
+    try:
+        # run_modules(url, hostname, scan_mode="passive")
+        # We need to mock safe_request inside the headers module too since it runs in a thread
+        import api.scanner.modules.headers as headers_mod
+        old_headers_req = headers_mod.safe_request
+        headers_mod.safe_request = lambda *a, **k: mock_resp
+
+        try:
+            results = scan_url("http://example.com", scan_mode="passive").get("findings", [])
+        finally:
+            headers_mod.safe_request = old_headers_req
+
+    finally:
+        orch_mod.get_http_session = old_get_http
+        orch_mod.safe_request = old_safe_req
+
+    csp_findings = [f for f in results if f.get("name") in ["Weak Content-Security-Policy", "CSP Object Sources Not Explicitly Disabled"]]
+    assert len(csp_findings) == 2, "Expected CSPQualityModule findings from the passive scan"
+    assert csp_findings[0]["domain"] == "browser_defense", "Finding should have correct domain"
+    assert csp_findings[1]["domain"] == "browser_defense", "Finding should have correct domain"
