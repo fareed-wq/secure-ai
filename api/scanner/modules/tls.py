@@ -12,11 +12,12 @@ WHITESPACE_REGEX = re.compile(r'\s+')
 
 class EnhancedTLSModule(ScannerModule):
     module_name = "EnhancedTLS"
-    description = "Parses SANs, signature algorithms, and expiration."
+    description = "Parses SANs, signature algorithms, expiration, ciphers, and validation errors."
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         context = ssl.create_default_context()
+
         try:
             with safe_create_connection((hostname, 443), timeout=2.5) as sock:
                 with context.wrap_socket(sock, server_hostname=hostname) as ssock:
@@ -44,9 +45,39 @@ class EnhancedTLSModule(ScannerModule):
                             impact="TLS 1.3 removes obsolete and insecure features from previous versions and speeds up secure connections."
                         ))
 
+                    cipher_info = ssock.cipher()
+                    if cipher_info:
+                        cipher_name, tls_ver, bit_len = cipher_info[0], cipher_info[1], cipher_info[2]
+                        findings.append(self.make_finding(
+                            "Negotiated TLS Cipher Identified",
+                            "Informational",
+                            "Identifies the specific encryption method (cipher suite) negotiated between our scanner and your server.",
+                            f"Protocol: {tls_ver}\\nNegotiated cipher: {cipher_name}\\nBits: {bit_len}",
+                            owasp="Not Mapped",
+                            category="encryption_tls"
+                        ))
+
+                        weak_keywords = ["RC4", "3DES", "DES", "NULL", "EXPORT"]
+                        if any(kw in cipher_name.upper() for kw in weak_keywords):
+                            findings.append(self.make_finding(
+                                "Weak TLS Cipher Negotiated",
+                                "Medium",
+                                "The scanner successfully negotiated a known-weak or obsolete encryption method.",
+                                f"Cipher: {cipher_name}",
+                                impact="Weak cryptography provides insufficient protection for sensitive data in transit.",
+                                remediation="Disable weak ciphers (such as RC4, 3DES, or EXPORT) in your server configuration.",
+                                owasp="A02: Cryptographic Failures",
+                                category="encryption_tls"
+                            ))
+
                     subject = dict(x[0] for x in cert.get("subject", []))
                     cn = subject.get("commonName", "")
-                    if cn.startswith("*"):
+
+                    sans = cert.get("subjectAltName", [])
+                    dns_names = [san[1] for san in sans if san[0] == "DNS"]
+
+                    is_wildcard = cn.startswith("*") or any(name.startswith("*") for name in dns_names)
+                    if is_wildcard:
                         findings.append(self.make_finding(
                             "Wildcard Certificate in Use",
                             "Informational",
@@ -59,28 +90,43 @@ class EnhancedTLSModule(ScannerModule):
                         ))
 
                     not_after = cert.get("notAfter")
+                    expire_date = None
                     if not_after:
-                        clean_date = WHITESPACE_REGEX.sub(' ', not_after)
-                        expire_date = datetime.datetime.strptime(
-                            clean_date, "%b %d %H:%M:%S %Y %Z"
-                        ).replace(tzinfo=datetime.timezone.utc)
-                        now = datetime.datetime.now(datetime.timezone.utc)
-                        days_left = (expire_date - now).days
+                        try:
+                            clean_date = WHITESPACE_REGEX.sub(' ', not_after)
+                            expire_date = datetime.datetime.strptime(
+                                clean_date, "%b %d %H:%M:%S %Y %Z"
+                            ).replace(tzinfo=datetime.timezone.utc)
+                            now = datetime.datetime.now(datetime.timezone.utc)
+                            days_left = (expire_date - now).days
 
-                        if days_left < 30:
-                            findings.append(self.make_finding(
-                                "Certificate Expiring Soon",
-                                "Medium",
-                                f"Your website's digital security certificate is about to expire in {days_left} days.",
-                                not_after,
-                                remediation="Renew the TLS certificate immediately.",
-                                owasp="A02: Cryptographic Failures",
-                                category="encryption_tls",
-                                impact="If your certificate expires, web browsers will display a scary security warning to your visitors, blocking them from accessing your site and damaging your reputation."
-                            ))
+                            if days_left <= 7:
+                                findings.append(self.make_finding(
+                                    "Certificate Expiring Very Soon",
+                                    "Medium",
+                                    f"Your website's digital security certificate is about to expire in {days_left} days.",
+                                    f"Expires: {not_after}",
+                                    remediation="Renew the TLS certificate immediately.",
+                                    owasp="A02: Cryptographic Failures",
+                                    category="encryption_tls",
+                                    impact="If your certificate expires, web browsers will display a scary security warning to your visitors."
+                                ))
+                            elif days_left <= 30:
+                                findings.append(self.make_finding(
+                                    "Certificate Expiring Soon",
+                                    "Low",
+                                    f"Your website's digital security certificate is about to expire in {days_left} days.",
+                                    f"Expires: {not_after}",
+                                    remediation="Renew the TLS certificate soon.",
+                                    owasp="A02: Cryptographic Failures",
+                                    category="encryption_tls",
+                                    impact="If your certificate expires, web browsers will display a scary security warning to your visitors."
+                                ))
+                        except Exception:
+                            pass
 
                     not_before = cert.get("notBefore")
-                    if not_after and not_before:
+                    if not_after and not_before and expire_date:
                         try:
                             clean_not_before = WHITESPACE_REGEX.sub(' ', not_before)
                             issue_date = datetime.datetime.strptime(
@@ -88,19 +134,14 @@ class EnhancedTLSModule(ScannerModule):
                             ).replace(tzinfo=datetime.timezone.utc)
 
                             lifespan_days = (expire_date - issue_date).days
-                            enforcement_date = datetime.datetime(2020, 9, 1, tzinfo=datetime.timezone.utc)
-
-                            if issue_date >= enforcement_date and lifespan_days > 398:
-                                findings.append(self.make_finding(
-                                    "Certificate Exceeds Maximum Lifespan (398 Days)",
-                                    "Low",
-                                    "Your certificate's validity period exceeds the 398-day maximum enforced by modern browsers.",
-                                    f"Lifespan: {lifespan_days} days (Issued: {issue_date.date()}, Expires: {expire_date.date()})",
-                                    remediation="Reissue the certificate with a lifespan of 398 days or fewer.",
-                                    owasp="A02: Cryptographic Failures",
-                                    category="encryption_tls",
-                                    impact="Modern browsers like Safari and Chrome will reject this certificate, causing a security warning for your visitors."
-                                ))
+                            findings.append(self.make_finding(
+                                "Certificate Validity Period Identified",
+                                "Informational",
+                                "The lifespan of the presented certificate.",
+                                f"Validity period: {lifespan_days} days (Issued: {issue_date.date()}, Expires: {expire_date.date()})",
+                                owasp="Not Mapped",
+                                category="encryption_tls"
+                            ))
                         except Exception:
                             pass
 
@@ -123,8 +164,6 @@ class EnhancedTLSModule(ScannerModule):
                             category="encryption_tls"
                         ))
 
-                    sans = cert.get("subjectAltName", [])
-                    dns_names = [san[1] for san in sans if san[0] == "DNS"]
                     if dns_names:
                         findings.append(self.make_finding(
                             "Certificate Subject Alternative Names (SANs)",
@@ -134,7 +173,32 @@ class EnhancedTLSModule(ScannerModule):
                             owasp="Not Mapped",
                             category="encryption_tls"
                         ))
-        except Exception as e:
+
+        except ssl.SSLCertVerificationError as e:
+            err_reason = e.verify_message if hasattr(e, 'verify_message') else str(e)
+            err_code = e.verify_code if hasattr(e, 'verify_code') else "Unknown"
+
+            finding_name = "Certificate Validation Failed"
+            err_lower = err_reason.lower()
+            if "expired" in err_lower:
+                finding_name = "Expired Certificate"
+            elif "hostname" in err_lower or "match" in err_lower:
+                finding_name = "Hostname Mismatch"
+            elif "self signed" in err_lower or "unable to get local issuer" in err_lower:
+                finding_name = "Self-Signed or Untrusted Certificate"
+
+            evidence_str = f"Hostname: {hostname}\\nReason: {err_reason}\\nCode: {err_code}"
+
+            findings.append(self.make_finding(
+                finding_name,
+                "Medium",
+                "The digital certificate presented by the scanned hostname failed validation.",
+                evidence_str,
+                remediation="Ensure the server is presenting a valid, trusted certificate matching the requested hostname.",
+                owasp="A02: Cryptographic Failures",
+                category="encryption_tls"
+            ))
+        except Exception:
             pass
 
         # Legacy TLS Probe
@@ -143,6 +207,7 @@ class EnhancedTLSModule(ScannerModule):
             legacy_context = ssl.create_default_context()
             legacy_context.options &= ~ssl.OP_NO_TLSv1
             legacy_context.options &= ~ssl.OP_NO_TLSv1_1
+            legacy_context.minimum_version = ssl.TLSVersion.TLSv1
             legacy_context.maximum_version = ssl.TLSVersion.TLSv1_1
 
             with safe_create_connection((hostname, 443), timeout=2.5) as sock:
@@ -161,16 +226,6 @@ class EnhancedTLSModule(ScannerModule):
                 owasp="A05: Security Misconfiguration",
                 category="encryption_tls",
                 impact="Legacy TLS protocols have known cryptographic weaknesses and should be disabled to ensure secure transit."
-            ))
-        else:
-            findings.append(self.make_finding(
-                "Legacy TLS Protocols Disabled",
-                "Passed",
-                "Your website correctly rejects outdated and insecure connection methods.",
-                "TLS 1.2+ Only",
-                owasp="Not Mapped",
-                category="encryption_tls",
-                impact="This protects your visitors by ensuring they only connect using modern, strong security standards."
             ))
 
         return findings
