@@ -7,7 +7,10 @@ export const articles = [
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Website Security",
         "primaryKeyword": "website security checklist",
-        "excerpt": "A practical 20-point checklist for identifying common website security weaknesses, configuration issues, and exposure risks.",
+        "secondaryKeywords": ["website security best practices", "website security audit checklist", "website security checklist for businesses"],
+        "seoTitle": "Website Security Checklist | URLScanOnline",
+        "metaDescription": "A practical 20-point website security checklist covering common misconfigurations, security headers, HTTPS, and access control for modern websites.",
+       "excerpt": "A practical 20-point checklist for identifying common website security weaknesses, configuration issues, and exposure risks.",
         "content": "Securing a website in today's threat landscape requires a proactive approach. This practical <strong>website security checklist</strong> covers 20 essential steps every website owner should take to identify potential weaknesses.",
         "sections": [
             {
@@ -230,7 +233,7 @@ export const articles = [
                 "id": "vuln-scans",
                 "number": "19",
                 "title": "Run Regular Security Scans",
-                "content": "Using tools like URLScannerOnline can help you identify missing headers, exposed files, and misconfigurations.",
+                "content": "Using tools like URLScanOnline can help you identify missing headers, exposed files, and misconfigurations.",
                 "listTitle": "What to check",
                 "list": [
                     "Automated scans are scheduled",
@@ -260,7 +263,10 @@ export const articles = [
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Website Security",
         "primaryKeyword": "how to check if a website is secure",
-        "excerpt": "Learn the practical steps to evaluate a website's security posture, from basic visual checks to advanced vulnerability scanning.",
+        "secondaryKeywords": ["check website security", "website security check", "how to know if a website is secure"],
+        "seoTitle": "How to Check if a Website is Secure | URLScanOnline",
+        "metaDescription": "Learn how to check if a website is secure using browser indicators, passive analysis, and automated vulnerability scanning techniques.",
+       "excerpt": "Learn the practical steps to evaluate a website's security posture, from basic visual checks to advanced vulnerability scanning.",
         "content": "Understanding <strong>how to check if a website is secure</strong> is essential for site owners and visitors alike. This practical guide covers everything from basic browser indicators to targeted security testing.",
         "sections": [
             {
@@ -271,7 +277,7 @@ export const articles = [
             {
                 "id": "passive-analysis",
                 "title": "Passive Security Analysis",
-                "content": "Passive security analysis involves evaluating a website without sending malicious payloads or intrusive requests. This approach analyzes the primary target responses, observing headers, cookies, configuration files, and exposed client-side code. Tools like URLScannerOnline's passive mode perform read-only checks to identify issues like missing security headers (e.g., CSP, HSTS), weak TLS configurations, and unintended information disclosure."
+                "content": "Passive security analysis involves evaluating a website without sending malicious payloads or intrusive requests. This approach analyzes the primary target responses, observing headers, cookies, configuration files, and exposed client-side code. Tools like URLScanOnline's passive mode perform read-only checks to identify issues like missing security headers (e.g., CSP, HSTS), weak TLS configurations, and unintended information disclosure."
             },
             {
                 "id": "active-testing",
@@ -297,8 +303,11 @@ export const articles = [
         "author": "URLScanOnline",
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "OWASP Security",
-        "primaryKeyword": "OWASP Top 10",
-        "excerpt": "A detailed breakdown of the current OWASP Top 10 web application security risks and how to protect your applications against them.",
+        "primaryKeyword": "OWASP Top 10 explained",
+        "secondaryKeywords": ["OWASP Top 10", "web application security risks", "OWASP vulnerabilities"],
+        "seoTitle": "OWASP Top 10 Explained | URLScanOnline",
+        "metaDescription": "An overview of the OWASP Top 10 web application security risks, explaining broken access control, cryptographic failures, injection flaws, and more.",
+       "excerpt": "A detailed breakdown of the current OWASP Top 10 web application security risks and how to protect your applications against them.",
         "content": "The <strong>OWASP Top 10</strong> is the universally recognized awareness document for web application security. It represents a broad consensus about the most critical security risks to web applications.",
         "sections": [
             {
@@ -360,8 +369,11 @@ export const articles = [
         "author": "URLScanOnline",
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Security Headers",
-        "primaryKeyword": "security headers",
-        "excerpt": "A comprehensive guide to HTTP security headers, their purpose, and how to configure them to protect your web application.",
+        "primaryKeyword": "HTTP security headers",
+        "secondaryKeywords": ["website security headers", "security headers", "HTTP security headers guide"],
+        "seoTitle": "HTTP Security Headers Guide | URLScanOnline",
+        "metaDescription": "A practical guide to HTTP security headers, detailing how to configure CSP, HSTS, X-Frame-Options, and Referrer-Policy to protect your web application.",
+       "excerpt": "A comprehensive guide to HTTP security headers, their purpose, and how to configure them to protect your web application.",
         "content": "<strong>HTTP security headers</strong> are instructions sent by your web server to the user's browser. They provide an essential layer of defense by dictating how the browser should behave when interacting with your site.",
         "sections": [
             {
@@ -418,7 +430,10 @@ export const articles = [
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Security Headers",
         "primaryKeyword": "Content Security Policy",
-        "excerpt": "Learn how to build and deploy a robust Content Security Policy to protect your users from Cross-Site Scripting (XSS) attacks.",
+        "secondaryKeywords": ["CSP header", "Content Security Policy header", "CSP security"],
+        "seoTitle": "What is Content Security Policy (CSP)? | URLScanOnline",
+        "metaDescription": "Discover what a Content Security Policy (CSP) is and how it helps defend against Cross-Site Scripting (XSS) and data injection attacks.",
+       "excerpt": "Learn how to build and deploy a robust Content Security Policy to protect your users from Cross-Site Scripting (XSS) attacks.",
         "content": "A <strong>Content Security Policy (CSP)</strong> is an HTTP response header that can significantly reduce the risk of Cross-Site Scripting (XSS) and data injection attacks.",
         "sections": [
             {
@@ -457,8 +472,11 @@ export const articles = [
         "author": "URLScanOnline",
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "SSL / TLS Security",
-        "primaryKeyword": "HSTS",
-        "excerpt": "Understand HTTP Strict Transport Security (HSTS), how it prevents downgrade attacks, and best practices for deployment.",
+        "primaryKeyword": "HSTS header",
+        "secondaryKeywords": ["HTTP Strict Transport Security", "HSTS security", "Strict-Transport-Security"],
+        "seoTitle": "HSTS Header Explained: How It Works | URLScanOnline",
+        "metaDescription": "Learn how the HTTP Strict Transport Security (HSTS) header works and how it protects websites against protocol downgrade attacks.",
+       "excerpt": "Understand HTTP Strict Transport Security (HSTS), how it prevents downgrade attacks, and best practices for deployment.",
         "content": "<strong>HTTP Strict Transport Security (HSTS)</strong> is an essential security mechanism that protects websites against protocol downgrade attacks.",
         "sections": [
             {
@@ -496,7 +514,10 @@ export const articles = [
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "SSL / TLS Security",
         "primaryKeyword": "TLS 1.2 vs TLS 1.3",
-        "excerpt": "A technical comparison of TLS 1.2 and TLS 1.3, highlighting the security enhancements and performance benefits of modern encryption.",
+        "secondaryKeywords": ["TLS 1.3 security", "TLS versions", "TLS 1.2 security"],
+        "seoTitle": "TLS 1.2 vs TLS 1.3: Security and Performance | URLScanOnline",
+        "metaDescription": "Compare TLS 1.2 and TLS 1.3 to understand the security enhancements, faster handshakes, and overall performance benefits of modern encryption protocols.",
+       "excerpt": "A technical comparison of TLS 1.2 and TLS 1.3, highlighting the security enhancements and performance benefits of modern encryption.",
         "content": "Transport Layer Security (TLS) is the protocol responsible for providing secure, encrypted communications. Understanding <strong>TLS 1.2 vs TLS 1.3</strong> is critical.",
         "sections": [
             {
@@ -529,7 +550,10 @@ export const articles = [
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "API Security",
         "primaryKeyword": "API security checklist",
-        "excerpt": "A comprehensive API security checklist to help developers secure endpoints, manage authentication, and prevent data breaches.",
+        "secondaryKeywords": ["API security best practices", "secure API checklist", "API security testing checklist"],
+        "seoTitle": "API Security Checklist | URLScanOnline",
+        "metaDescription": "A comprehensive 15-point API security checklist covering authentication, authorization, rate limiting, and data exposure prevention.",
+       "excerpt": "A comprehensive API security checklist to help developers secure endpoints, manage authentication, and prevent data breaches.",
         "content": "APIs are the backbone of modern web applications, making them prime targets. This <strong>API security checklist</strong> provides steps to secure their architecture.",
         "sections": [
             {
@@ -632,7 +656,10 @@ export const articles = [
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "API Security",
         "primaryKeyword": "API security vulnerabilities",
-        "excerpt": "Explore the most common API security vulnerabilities, including Broken Object Level Authorization, and learn how to prevent them.",
+        "secondaryKeywords": ["common API vulnerabilities", "OWASP API security", "API security risks"],
+        "seoTitle": "Common API Security Vulnerabilities | URLScanOnline",
+        "metaDescription": "Explore the most frequent API security vulnerabilities, including Broken Object Level Authorization (BOLA), and discover how to prevent them.",
+       "excerpt": "Explore the most common API security vulnerabilities, including Broken Object Level Authorization, and learn how to prevent them.",
         "content": "As applications become increasingly distributed, <strong>API security vulnerabilities</strong> have become the primary attack vector. This guide explores the most frequent problems.",
         "sections": [
             {
@@ -665,7 +692,10 @@ export const articles = [
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Security Testing",
         "primaryKeyword": "DAST vs SAST",
-        "excerpt": "A detailed comparison of Dynamic Application Security Testing (DAST) and Static Application Security Testing (SAST).",
+        "secondaryKeywords": ["SAST vs DAST", "static vs dynamic security testing", "application security testing"],
+        "seoTitle": "DAST vs SAST: Security Testing Differences | URLScanOnline",
+        "metaDescription": "Understand the differences between Dynamic Application Security Testing (DAST) and Static Application Security Testing (SAST) methodologies.",
+       "excerpt": "A detailed comparison of Dynamic Application Security Testing (DAST) and Static Application Security Testing (SAST).",
         "content": "Integrating automated security tooling is critical. Understanding <strong>DAST vs SAST</strong> is vital for building a comprehensive security program.",
         "sections": [
             {
@@ -701,7 +731,10 @@ export const articles = [
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Security Testing",
         "primaryKeyword": "vulnerability scanning vs penetration testing",
-        "excerpt": "Learn the vital differences between automated vulnerability scanning and manual penetration testing.",
+        "secondaryKeywords": ["vulnerability scanner vs penetration test", "vulnerability assessment vs penetration testing"],
+        "seoTitle": "Vulnerability Scanning vs Penetration Testing | URLScanOnline",
+        "metaDescription": "Learn the differences between automated vulnerability scanning and manual penetration testing for discovering and exploiting security flaws.",
+       "excerpt": "Learn the vital differences between automated vulnerability scanning and manual penetration testing.",
         "content": "While both are essential components, <strong>vulnerability scanning and penetration testing</strong> serve vastly different purposes.",
         "sections": [
             {
@@ -737,7 +770,10 @@ export const articles = [
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Security Testing",
         "primaryKeyword": "passive vs active security testing",
-        "excerpt": "Understand the differences between passive and active security testing.",
+        "secondaryKeywords": ["passive security testing", "active security testing", "passive vs active scanning"],
+        "seoTitle": "Passive vs Active Security Testing | URLScanOnline",
+        "metaDescription": "Compare passive vs active security testing approaches to understand their differences in target interaction, footprint, and discovery methods.",
+       "excerpt": "Understand the differences between passive and active security testing.",
         "content": "When assessing the security posture of a live web application, understanding <strong>passive vs active security testing</strong> is critical.",
         "sections": [
             {
@@ -775,8 +811,11 @@ export const articles = [
         "author": "URLScanOnline",
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Remediation",
-        "primaryKeyword": "strict-transport-security header",
-        "excerpt": "Learn why the HTTP Strict Transport Security (HSTS) header is critical for securing your traffic and how to implement it safely on modern web servers.",
+        "primaryKeyword": "how to fix missing HSTS header",
+        "secondaryKeywords": ["missing Strict-Transport-Security header", "fix HSTS header", "enable HSTS"],
+        "seoTitle": "How to Fix a Missing HSTS Header | URLScanOnline",
+        "metaDescription": "Step-by-step remediation guide on how to fix a missing Strict-Transport-Security (HSTS) header on common web servers like Nginx and Apache.",
+       "excerpt": "Learn why the HTTP Strict Transport Security (HSTS) header is critical for securing your traffic and how to implement it safely on modern web servers.",
         "content": "The <strong>Strict-Transport-Security (HSTS)</strong> header is an essential security control that instructs web browsers to only connect to your site via secure HTTPS connections. Without this header, your visitors are vulnerable to protocol downgrade attacks and cookie hijacking. In this guide, we explain how to safely implement HSTS to secure your application.<br><br>Before enforcing strict policies, you can use our <a href=\"/scan\">passive vulnerability scanner</a> to verify your baseline TLS configuration.",
         "sections": [
             {
@@ -824,8 +863,11 @@ export const articles = [
         "author": "URLScanOnline",
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Remediation",
-        "primaryKeyword": "content-security-policy header",
-        "excerpt": "Content-Security-Policy (CSP) is your primary defense against Cross-Site Scripting (XSS). Learn how to incrementally deploy a CSP to protect your users.",
+        "primaryKeyword": "how to fix missing Content Security Policy header",
+        "secondaryKeywords": ["missing CSP header", "fix Content Security Policy", "Content-Security-Policy header missing"],
+        "seoTitle": "Fix Missing Content Security Policy (CSP) Header | URLScanOnline",
+        "metaDescription": "Troubleshooting guide to fixing a missing Content-Security-Policy (CSP) header, including how to safely build and enforce policies.",
+       "excerpt": "Content-Security-Policy (CSP) is your primary defense against Cross-Site Scripting (XSS). Learn how to incrementally deploy a CSP to protect your users.",
         "content": "A missing <strong>Content-Security-Policy (CSP)</strong> header removes a critical layer of defense-in-depth against Cross-Site Scripting (XSS) and data injection attacks. CSP provides a rigorous allowlist of trusted content sources, preventing the browser from executing malicious inline scripts or loading untrusted assets.<br><br>To see if your current framework exposes any headers by default, consider running a quick check using our <a href=\"/scan\">passive vulnerability scanner</a>.",
         "sections": [
             {
@@ -874,8 +916,11 @@ export const articles = [
         "author": "URLScanOnline",
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Remediation",
-        "primaryKeyword": "x-frame-options header",
-        "excerpt": "Clickjacking is a stealthy UI-redress attack. Find out how the X-Frame-Options header stops attackers from framing your website.",
+        "primaryKeyword": "how to fix missing X-Frame-Options",
+        "secondaryKeywords": ["missing X-Frame-Options header", "X-Frame-Options security", "clickjacking protection"],
+        "seoTitle": "How to Fix Missing X-Frame-Options Header | URLScanOnline",
+        "metaDescription": "Learn how to remediate a missing X-Frame-Options header to protect your website from clickjacking and UI-redress attacks.",
+       "excerpt": "Clickjacking is a stealthy UI-redress attack. Find out how the X-Frame-Options header stops attackers from framing your website.",
         "content": "If your website is missing the <strong>X-Frame-Options</strong> header, it can be embedded inside an invisible iframe on a malicious third-party site. This technique, known as Clickjacking, tricks users into clicking sensitive buttons (like \"Transfer Funds\" or \"Delete Account\") while they think they are interacting with the attacker's harmless page.",
         "sections": [
             {
@@ -923,8 +968,11 @@ export const articles = [
         "author": "URLScanOnline",
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Remediation",
-        "primaryKeyword": "insecure cookie flags",
-        "excerpt": "Session hijacking is a severe threat. Learn how to implement the Secure, HttpOnly, and SameSite flags to harden your session cookies.",
+        "primaryKeyword": "how to fix insecure cookie flags",
+        "secondaryKeywords": ["Secure HttpOnly SameSite cookies", "cookie security flags", "insecure cookies"],
+        "seoTitle": "How to Fix Insecure Cookie Flags | URLScanOnline",
+        "metaDescription": "Remediation instructions for securing session cookies by properly configuring the Secure, HttpOnly, and SameSite attributes.",
+       "excerpt": "Session hijacking is a severe threat. Learn how to implement the Secure, HttpOnly, and SameSite flags to harden your session cookies.",
         "content": "Cookies often contain sensitive session identifiers. If these cookies lack the proper security flags, they can be stolen via Cross-Site Scripting (XSS), intercepted over unencrypted networks, or abused in Cross-Site Request Forgery (CSRF) attacks.",
         "sections": [
             {
@@ -971,8 +1019,11 @@ export const articles = [
         "author": "URLScanOnline",
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Remediation",
-        "primaryKeyword": "cors misconfiguration",
-        "excerpt": "Cross-Origin Resource Sharing (CORS) is often misunderstood. Learn how a permissive CORS policy can leak private data and how to correctly restrict it.",
+        "primaryKeyword": "how to fix CORS misconfiguration",
+        "secondaryKeywords": ["CORS security", "CORS misconfiguration", "Access-Control-Allow-Origin security"],
+        "seoTitle": "How to Fix a CORS Misconfiguration | URLScanOnline",
+        "metaDescription": "A troubleshooting guide on how to fix CORS misconfigurations and correctly restrict the Access-Control-Allow-Origin response header.",
+       "excerpt": "Cross-Origin Resource Sharing (CORS) is often misunderstood. Learn how a permissive CORS policy can leak private data and how to correctly restrict it.",
         "content": "Cross-Origin Resource Sharing (CORS) is a mechanism that allows a web application running at one origin to access restricted resources from a different origin. While necessary for modern API integrations, a poorly configured CORS policy can completely undermine the Same-Origin Policy (SOP), leading to severe data leakage.",
         "sections": [
             {
@@ -1020,7 +1071,10 @@ export const articles = [
         "image": "https://www.urlscanonline.com/logo-v6.png",
         "category": "Concepts",
         "primaryKeyword": "passive vulnerability scanner",
-        "excerpt": "Understand the fundamental differences between passive scanning and active penetration testing to choose the right tool for your security workflow.",
+        "secondaryKeywords": ["passive vulnerability scanning", "active penetration testing", "passive scanner vs penetration test"],
+        "seoTitle": "Passive Vulnerability Scanner vs Penetration Testing | URLScanOnline",
+        "metaDescription": "Discover how a passive vulnerability scanner fits into your security workflow compared to high-interaction active penetration testing.",
+       "excerpt": "Understand the fundamental differences between passive scanning and active penetration testing to choose the right tool for your security workflow.",
         "content": "When building a secure application, teams must choose the right security assessment tools. The two most common approaches are passive scanning and active penetration testing. Understanding the distinction is vital for maintaining uptime while uncovering risks.",
         "sections": [
             {
