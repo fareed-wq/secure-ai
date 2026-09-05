@@ -38,7 +38,7 @@ const ArticlePage = () => {
       };
 
       // 2. Set new states
-      document.title = `${article.title} | URLScanOnline`;
+      document.title = article.seoTitle || `${article.title} | URLScanOnline`;
 
       let activeDesc = descTag;
       let createdDesc = false;
@@ -48,7 +48,7 @@ const ArticlePage = () => {
         document.head.appendChild(activeDesc);
         createdDesc = true;
       }
-      activeDesc.content = article.excerpt || article.metaDescription;
+      activeDesc.content = article.metaDescription || article.excerpt;
 
       let activeCanonical = canonicalTag;
       let createdCanonical = false;
@@ -61,8 +61,8 @@ const ArticlePage = () => {
       activeCanonical.href = `https://www.urlscanonline.com/blog/${article.slug}`;
 
       const managedTags = [];
-      managedTags.push(setMetaProperty('meta[property="og:title"]', 'property', 'og:title', `${article.title} | URLScanOnline`));
-      managedTags.push(setMetaProperty('meta[property="og:description"]', 'property', 'og:description', article.excerpt));
+      managedTags.push(setMetaProperty('meta[property="og:title"]', 'property', 'og:title', article.seoTitle || `${article.title} | URLScanOnline`));
+      managedTags.push(setMetaProperty('meta[property="og:description"]', 'property', 'og:description', article.metaDescription || article.excerpt));
       managedTags.push(setMetaProperty('meta[property="og:url"]', 'property', 'og:url', `https://www.urlscanonline.com/blog/${article.slug}`));
       managedTags.push(setMetaProperty('meta[property="og:type"]', 'property', 'og:type', 'article'));
       if (article.image) {
@@ -70,8 +70,8 @@ const ArticlePage = () => {
       }
 
       managedTags.push(setMetaProperty('meta[name="twitter:card"]', 'name', 'twitter:card', 'summary_large_image'));
-      managedTags.push(setMetaProperty('meta[name="twitter:title"]', 'name', 'twitter:title', `${article.title} | URLScanOnline`));
-      managedTags.push(setMetaProperty('meta[name="twitter:description"]', 'name', 'twitter:description', article.excerpt));
+      managedTags.push(setMetaProperty('meta[name="twitter:title"]', 'name', 'twitter:title', article.seoTitle || `${article.title} | URLScanOnline`));
+      managedTags.push(setMetaProperty('meta[name="twitter:description"]', 'name', 'twitter:description', article.metaDescription || article.excerpt));
       if (article.image) {
         managedTags.push(setMetaProperty('meta[name="twitter:image"]', 'name', 'twitter:image', article.image));
       }
@@ -89,7 +89,7 @@ const ArticlePage = () => {
         "@context": "https://schema.org",
         "@type": "BlogPosting",
         "headline": article.title,
-        "description": article.excerpt,
+        "description": article.metaDescription || article.excerpt,
         "url": `https://www.urlscanonline.com/blog/${article.slug}`,
         "mainEntityOfPage": {
           "@type": "WebPage",
