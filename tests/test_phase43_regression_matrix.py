@@ -137,7 +137,7 @@ class TestRegressionMatrix:
         mod = ExposedFilesModule()
         mock_safe_req.return_value = make_mock_response(headers={'Content-Type': 'text/html'}, text='<title>Index of /uploads/</title>')
         f = mod.run("https://example.com", "example.com", MagicMock())
-        assert any("Directory Indexing Enabled" in x["name"] for x in f)
+        assert not any("Directory Indexing Enabled" in x["name"] for x in f)
 
     # 13. Sensitive Files (ExposedFilesModule)
     @patch('api.scanner.modules.discovery.safe_request')

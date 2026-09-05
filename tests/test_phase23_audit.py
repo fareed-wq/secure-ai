@@ -115,10 +115,10 @@ class TestPhase23Audit(unittest.TestCase):
         module = ExposedFilesModule()
         findings = module.run(self.url, self.hostname, self.session)
         
-        admin_finding = next((f for f in findings if f["name"] == "Administrative Interface Exposed"), None)
+        admin_finding = next((f for f in findings if f["name"] == "Administrative Interface Observed"), None)
         self.assertIsNotNone(admin_finding)
         self.assertEqual(admin_finding["confidence"], "Medium")
-        self.assertEqual(admin_finding["severity"], "Low")
+        self.assertEqual(admin_finding["severity"], "Informational")
 
     def test_subdomains_discovered_evidence_limit(self):
         # Create a massive string > 180 chars

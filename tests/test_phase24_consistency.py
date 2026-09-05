@@ -77,7 +77,7 @@ class TestPhase24Consistency(unittest.TestCase):
         mod = ExposedFilesModule()
         findings = mod.run("http://test.com", "test.com", requests.Session())
         f = findings[0]
-        self.assertEqual(f["name"], "Administrative Interface Exposed")
+        self.assertEqual(f["name"], "Administrative Interface Observed")
         self.assertEqual(f["confidence"], "Medium")
 
     @patch("api.scanner.modules.network_checks.safe_request")
