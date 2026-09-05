@@ -15,7 +15,7 @@ export const articles = [
         "seoTitle": "Website Security Checklist | URLScanOnline",
         "metaDescription": "A practical 20-point website security checklist covering common misconfigurations, security headers, HTTPS, and access control for modern websites.",
         "excerpt": "A practical 20-point checklist for identifying common website security weaknesses, configuration issues, and exposure risks.",
-        "content": "Securing a website in today's threat landscape requires a proactive, layered approach. This practical <strong>website security checklist</strong> covers essential steps every website owner, developer, and IT professional should take to identify potential weaknesses and harden their infrastructure.",
+        "content": "Securing a website in today's threat landscape requires a proactive, layered approach. This practical <strong>website security checklist</strong> covers essential steps every website owner, developer, and IT professional should take to identify potential weaknesses and harden their infrastructure. If you are unsure where to begin, see our guide on <a href=\"/blog/how-to-check-if-a-website-is-secure\">how to check if a website is secure</a>. Addressing this checklist helps mitigate many risks outlined in the <a href=\"/blog/owasp-top-10-explained\">OWASP Top 10</a>.",
         "sections": [
             {
                 "id": "https-tls",
@@ -45,7 +45,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Start Your Security Audit",
-                "content": "URLScanOnline can help automate the first step of this checklist. Our passive vulnerability scanner can instantly identify missing security headers, weak TLS configurations, and exposed information files on your public-facing assets."
+                "content": "<a href=\"/scan\">URLScanOnline can help</a> automate the first step of this checklist. Our passive vulnerability scanner can instantly identify missing <a href=\"/blog/http-security-headers-guide\">HTTP security headers</a>, weak TLS configurations (see our <a href=\"/blog/tls-1-2-vs-tls-1-3\">TLS version comparison</a>) configurations, and exposed information files on your public-facing assets."
             }
         ],
         "faqs": [
@@ -75,7 +75,7 @@ export const articles = [
         "seoTitle": "How to Check if a Website is Secure | URLScanOnline",
         "metaDescription": "Learn how to check if a website is secure using browser indicators, passive analysis, and automated vulnerability scanning techniques.",
         "excerpt": "Learn the practical steps to evaluate a website's security posture, from basic visual checks to advanced vulnerability scanning.",
-        "content": "Whether you are a consumer evaluating an online store or a developer reviewing a new application, knowing <strong>how to check if a website is secure</strong> is a vital skill. This guide outlines how to evaluate a website's security posture using browser indicators and passive analysis.",
+        "content": "Whether you are a consumer evaluating an online store or a developer reviewing a new application, knowing <strong>how to check if a website is secure</strong> is a vital skill. This guide outlines how to evaluate a website's security posture using browser indicators and passive analysis. For a complete methodology, review our <a href=\"/blog/website-security-checklist\">website security checklist</a>.",
         "sections": [
             {
                 "id": "browser-indicators",
@@ -85,7 +85,7 @@ export const articles = [
             {
                 "id": "verify-domain",
                 "title": "Verify the Domain Name Carefully",
-                "content": "Phishing sites frequently use deceptive domain names (e.g., <code>examp1e.com</code> instead of <code>example.com</code>) and secure them with free SSL certificates. The presence of HTTPS only means your connection to that server is encrypted; it does not guarantee the server itself is run by a legitimate or trustworthy organization."
+                "content": "Phishing sites frequently use deceptive domain names (e.g., <code>examp1e.com</code> instead of <code>example.com</code>) and secure them with free SSL certificates. The presence of <a href=\"/blog/tls-1-2-vs-tls-1-3\">HTTPS and TLS configuration</a> only means your connection to that server is encrypted; it does not guarantee the server itself is run by a legitimate or trustworthy organization."
             },
             {
                 "id": "evaluate-trust",
@@ -95,12 +95,12 @@ export const articles = [
             {
                 "id": "passive-analysis",
                 "title": "Perform Passive Technical Analysis",
-                "content": "For a deeper evaluation, you can analyze the site's HTTP response headers and configuration. Tools can observe whether the site enforces policies like CSP or HSTS. These are observable configuration signals, though not absolute proof that the application is fully secure."
+                "content": "For a deeper evaluation, you can analyze the site's <a href=\"/blog/http-security-headers-guide\">HTTP security headers</a> and configuration. Tools can observe whether the site enforces policies like CSP or HSTS. These are observable configuration signals, though not absolute proof that the application is fully secure."
             },
             {
                 "id": "cta",
                 "title": "Run a Technical Security Check",
-                "content": "If you want to evaluate the technical security configuration of a website, URLScanOnline can help. Our passive scanner safely analyzes a site's headers, TLS configuration, and observable security posture without sending intrusive payloads."
+                "content": "If you want to evaluate the technical security configuration of a website, <a href=\"/scan\">URLScanOnline can help</a>. Our passive scanner safely analyzes a site's headers, TLS configuration, and observable security posture without sending intrusive payloads."
             }
         ],
         "faqs": [
@@ -135,7 +135,7 @@ export const articles = [
             {
                 "id": "observation-vs-testing",
                 "title": "Observation vs. Deep Testing",
-                "content": "This overview describes the OWASP Top 10:2025 edition. It is important to distinguish between configuration observations and deep application testing. Passive scanning tools can observe missing headers, outdated libraries, and weak TLS configurations. However, discovering complex flaws like Broken Access Control or business logic errors requires deeper, often manual, penetration testing. No single automated tool guarantees the discovery of all OWASP Top 10 vulnerabilities."
+                "content": "This overview describes the OWASP Top 10:2025 edition. It is important to distinguish between configuration observations and deep application testing. Passive scanning tools can observe missing headers, outdated libraries, and weak TLS configurations. However, discovering complex flaws like <a href=\"/blog/common-api-security-vulnerabilities\">Broken Access Control</a> or business logic errors requires deeper, often manual, penetration testing. No single automated tool guarantees the discovery of all OWASP Top 10 vulnerabilities."
             },
             {
                 "id": "a01-broken-access-control",
@@ -145,7 +145,7 @@ export const articles = [
             {
                 "id": "a02-security-misconfiguration",
                 "title": "A02:2025 \u2014 Security Misconfiguration",
-                "content": "This covers insecure default settings, incomplete configurations, misconfigured HTTP headers, and verbose error messages. It requires a repeatable hardening process to secure the application stack."
+                "content": "This covers insecure default settings, incomplete configurations, misconfigured HTTP headers, and verbose error messages. It requires a repeatable hardening process to <a href=\"/blog/website-security-checklist\">secure the application stack</a>."
             },
             {
                 "id": "a03-software-supply-chain",
@@ -190,7 +190,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Start Assessing Your Posture",
-                "content": "URLScanOnline provides passive and low-impact external security checks that can help identify externally observable configuration issues, such as missing security headers and exposed information, which often align with the Security Misconfiguration category."
+                "content": "<a href=\"/scan\">URLScanOnline provides</a> passive and low-impact external security checks that can help identify externally observable configuration issues, such as missing security headers and exposed information, which often align with the Security Misconfiguration category."
             }
         ],
         "faqs": [
@@ -225,22 +225,22 @@ export const articles = [
             {
                 "id": "defense-in-depth",
                 "title": "A Layer of Defense-in-Depth",
-                "content": "It is critical to understand that security headers do not make an application secure by themselves. They are a defense-in-depth measure. They provide a safety net by instructing the browser to behave securely, mitigating the impact of vulnerabilities like Cross-Site Scripting (XSS) or Clickjacking. However, they do not replace secure coding practices, input validation, or proper server-side authentication."
+                "content": "It is critical to understand that security headers do not make an application secure by themselves. They are a defense-in-depth measure. They provide a safety net by instructing the browser to behave securely, mitigating the impact of vulnerabilities like Cross-Site Scripting (<a href=\"/blog/fix-missing-content-security-policy-header\">XSS</a>) or Clickjacking. However, they do not replace secure coding practices, input validation, or proper server-side authentication."
             },
             {
                 "id": "csp",
                 "title": "Content-Security-Policy (CSP)",
-                "content": "The Content-Security-Policy header restricts the sources from which the browser is allowed to load resources, such as scripts, stylesheets, and images. It is one of the most effective tools for mitigating XSS attacks. By explicitly defining an allowlist of trusted domains, you prevent the execution of malicious injected scripts."
+                "content": "The <a href=\"/blog/content-security-policy-guide\">Content-Security-Policy</a> header restricts the sources from which the browser is allowed to load resources, such as scripts, stylesheets, and images. It is one of the most effective tools for mitigating XSS attacks. By explicitly defining an allowlist of trusted domains, you prevent the execution of malicious injected scripts."
             },
             {
                 "id": "hsts",
                 "title": "Strict-Transport-Security (HSTS)",
-                "content": "The Strict-Transport-Security header forces the browser to communicate with the server exclusively over HTTPS. This prevents protocol downgrade attacks and ensures that even if a user types 'http://' into their address bar, the browser will automatically upgrade the connection to secure HTTPS before sending any data."
+                "content": "The <a href=\"/blog/hsts-explained\">Strict-Transport-Security</a> header forces the browser to communicate with the server exclusively over HTTPS. This prevents protocol downgrade attacks and ensures that even if a user types 'http://' into their address bar, the browser will automatically upgrade the connection to secure HTTPS before sending any data."
             },
             {
                 "id": "xfo",
                 "title": "X-Frame-Options",
-                "content": "The X-Frame-Options header protects against Clickjacking (UI redress attacks) by controlling whether a browser is allowed to render a page in a <code><frame></code>, <code><iframe></code>, or <code><object></code>. Common values are <code>DENY</code> (no framing allowed) or <code>SAMEORIGIN</code> (framing only allowed by pages on the same site). Note that the modern <code>frame-ancestors</code> directive in CSP largely supersedes this header, but X-Frame-Options remains relevant for older browser compatibility."
+                "content": "The <a href=\"/blog/fix-missing-x-frame-options-header\">X-Frame-Options</a> header protects against Clickjacking (UI redress attacks) by controlling whether a browser is allowed to render a page in a <code><frame></code>, <code><iframe></code>, or <code><object></code>. Common values are <code>DENY</code> (no framing allowed) or <code>SAMEORIGIN</code> (framing only allowed by pages on the same site). Note that the modern <code>frame-ancestors</code> directive in CSP largely supersedes this header, but X-Frame-Options remains relevant for older browser compatibility."
             },
             {
                 "id": "xcto",
@@ -260,7 +260,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Verify Your Headers",
-                "content": "URLScanOnline can help identify externally observable configuration issues such as missing security headers, TLS configuration concerns, and other website security signals. Running a scan can provide a quick overview of which headers your site currently implements."
+                "content": "<a href=\"/scan\">URLScanOnline can help</a> identify externally observable configuration issues such as missing security headers, TLS configuration concerns, and other website security signals. Running a scan can provide a quick overview of which headers your site currently implements."
             }
         ],
         "faqs": [
@@ -294,7 +294,7 @@ export const articles = [
         "seoTitle": "What is Content Security Policy (CSP)? | URLScanOnline",
         "metaDescription": "Discover what a Content Security Policy (CSP) is and how it helps defend against Cross-Site Scripting (XSS) and data injection attacks.",
         "excerpt": "Learn how to build and deploy a robust Content Security Policy to protect your users from Cross-Site Scripting (XSS) attacks.",
-        "content": "A <strong>Content Security Policy (CSP)</strong> is a powerful HTTP header that adds a robust layer of defense-in-depth against some of the most pervasive web vulnerabilities, particularly Cross-Site Scripting (XSS). This informational guide explains what CSP is, how it works, and its core directives.",
+        "content": "A <strong>Content Security Policy (CSP)</strong> is a powerful <a href=\"/blog/http-security-headers-guide\">HTTP header</a> that adds a robust layer of defense-in-depth against some of the most pervasive web vulnerabilities, particularly Cross-Site Scripting (XSS). This informational guide explains what CSP is, how it works, and its core directives.",
         "sections": [
             {
                 "id": "what-is-csp",
@@ -324,7 +324,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Check Your Current CSP",
-                "content": "URLScanOnline can help identify externally observable configuration issues such as missing security headers, including CSP. A quick scan can reveal if your site currently broadcasts a Content Security Policy and whether it relies on insecure directives like unsafe-inline."
+                "content": "<a href=\"/scan\">URLScanOnline can help</a> identify externally observable configuration issues such as missing security headers, including CSP. A quick scan can reveal if your site currently broadcasts a Content Security Policy and whether it relies on insecure directives like unsafe-inline."
             }
         ],
         "faqs": [
@@ -338,7 +338,7 @@ export const articles = [
             },
             {
                 "question": "How do I implement a CSP?",
-                "answer": "Implementing CSP requires returning the HTTP header from your web server. For a detailed troubleshooting and implementation guide, see our article on how to fix a missing Content Security Policy header."
+                "answer": "Implementing CSP requires returning the HTTP header from your web server. For a detailed troubleshooting and implementation guide, see our article on how to fix a <a href=\"/blog/fix-missing-content-security-policy-header\">missing Content Security Policy</a> header."
             }
         ]
     },
@@ -363,7 +363,7 @@ export const articles = [
             {
                 "id": "how-hsts-works",
                 "title": "How HSTS Works",
-                "content": "When a web server returns the <code>Strict-Transport-Security</code> HTTP header, it instructs the browser that it must only communicate with the site using a secure HTTPS connection. Once the browser receives this policy, it will automatically upgrade any future HTTP requests to HTTPS before they ever leave the device. This prevents attackers from intercepting initial plaintext HTTP requests and executing SSL stripping or protocol downgrade attacks."
+                "content": "When a web server returns the <code>Strict-Transport-Security</code> HTTP header, it instructs the browser that it must only communicate with the site using a secure <a href=\"/blog/tls-1-2-vs-tls-1-3\">HTTPS</a> connection. Once the browser receives this policy, it will automatically upgrade any future HTTP requests to HTTPS before they ever leave the device. This prevents attackers from intercepting initial plaintext HTTP requests and executing SSL stripping or protocol downgrade attacks."
             },
             {
                 "id": "the-header",
@@ -393,7 +393,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Verify Your Header Configuration",
-                "content": "URLScanOnline can help identify externally observable configuration issues such as missing security headers, TLS configuration concerns, and other website security signals. A quick scan can verify if your HSTS header is correctly formatted and active."
+                "content": "<a href=\"/scan\">URLScanOnline can help</a> identify externally observable configuration issues such as missing security headers, TLS configuration concerns, and other website security signals. A quick scan can verify if your HSTS header is correctly formatted and active."
             }
         ],
         "faqs": [
@@ -437,7 +437,7 @@ export const articles = [
             {
                 "id": "legacy-algorithms",
                 "title": "Removal of Legacy Algorithms",
-                "content": "TLS 1.3 brings a massive overhaul to the protocol's security by eliminating obsolete and insecure cryptographic features. While TLS 1.2 supported older, vulnerable algorithms for backward compatibility, TLS 1.3 completely removes support for RC4, DES, 3DES, SHA-1, MD5, and various weak CBC-mode ciphers. This aggressive pruning reduces the attack surface and mitigates risks associated with downgrade attacks."
+                "content": "TLS 1.3 brings a massive overhaul to the protocol's security by eliminating obsolete and insecure cryptographic features. While TLS 1.2 supported older, vulnerable algorithms for backward compatibility, TLS 1.3 completely removes support for RC4, DES, 3DES, SHA-1, MD5, and various weak CBC-mode ciphers. This aggressive pruning reduces the attack surface and mitigates risks associated with downgrade attacks. While TLS secures the connection itself, you should also learn <a href=\"/blog/hsts-explained\">how HSTS works</a> to instruct browsers to mandate HTTPS connections."
             },
             {
                 "id": "cipher-negotiation",
@@ -457,7 +457,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Verify Your Configuration",
-                "content": "URLScanOnline can help identify externally observable configuration issues such as weak TLS configurations, missing security headers, and other website security signals. Running a quick scan can confirm if your server is correctly negotiating modern TLS protocols."
+                "content": "<a href=\"/scan\">URLScanOnline can help</a> identify externally observable configuration issues such as weak TLS configurations, missing security headers, and other <a href=\"/blog/how-to-check-if-a-website-is-secure\">website security signals</a>. Running a quick scan can confirm if your server is correctly negotiating modern TLS protocols."
             }
         ],
         "faqs": [
@@ -511,7 +511,7 @@ export const articles = [
             {
                 "id": "security-headers",
                 "title": "4. API Headers and CORS",
-                "content": "Configure appropriate HTTP security headers on API responses. Ensure Cross-Origin Resource Sharing (CORS) is strictly configured. Modern browsers reject credentialed requests if the allowed origin is a wildcard <code>*</code>. A dangerous pattern is reflecting an untrusted Origin while allowing credentials. Restrict origins to explicitly trusted domains."
+                "content": "Configure appropriate HTTP security headers on API responses. Ensure Cross-Origin Resource Sharing (<a href=\"/blog/fix-cors-misconfiguration\">CORS</a>) is strictly configured. Modern browsers reject credentialed requests if the allowed origin is a wildcard <code>*</code>. A dangerous pattern is reflecting an untrusted Origin while allowing credentials. Restrict origins to explicitly trusted domains."
             },
             {
                 "id": "logging-monitoring",
@@ -521,13 +521,13 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Verify Your API Configuration",
-                "content": "URLScanOnline can help identify externally observable configuration issues on your API infrastructure, such as overly permissive CORS policies, missing TLS configurations, and exposed documentation endpoints."
+                "content": "<a href=\"/scan\">URLScanOnline can help</a> identify externally observable configuration issues on your API infrastructure, such as overly permissive CORS policies, missing TLS configurations, and exposed documentation endpoints."
             }
         ],
         "faqs": [
             {
                 "question": "What is the most common API vulnerability?",
-                "answer": "Broken Object Level Authorization (BOLA) is a major API authorization risk and has historically ranked highly in OWASP API Security guidance."
+                "answer": "<a href=\"/blog/common-api-security-vulnerabilities\">Broken Object Level Authorization</a> (BOLA) is a major API authorization risk and has historically ranked highly in OWASP API Security guidance."
             },
             {
                 "question": "Can I use basic authentication for my API?",
@@ -551,7 +551,7 @@ export const articles = [
         "seoTitle": "Common API Security Vulnerabilities | URLScanOnline",
         "metaDescription": "Explore the most frequent API security vulnerabilities, including Broken Object Level Authorization (BOLA), and discover how to prevent them.",
         "excerpt": "Explore the most common API security vulnerabilities, including Broken Object Level Authorization, and learn how to prevent them.",
-        "content": "APIs are the backbone of modern web and mobile applications, making them a high-value target for attackers. This educational overview explores the most <strong>common API security vulnerabilities</strong> and how development teams can prevent them.",
+        "content": "APIs are the backbone of modern web and mobile applications, making them a high-value target for attackers. This educational overview explores the most <strong>common API security vulnerabilities</strong> and how development teams can prevent them. For comprehensive defensive guidance, follow our <a href=\"/blog/api-security-checklist\">API security checklist</a>.",
         "sections": [
             {
                 "id": "bola",
@@ -576,7 +576,7 @@ export const articles = [
             {
                 "id": "security-misconfiguration",
                 "title": "Security Misconfiguration and CORS",
-                "content": "Security misconfiguration is a broad category that includes insecure default settings, incomplete configurations, open cloud storage, misconfigured HTTP headers, and excessively permissive Cross-Origin Resource Sharing (CORS) policies. A misconfigured CORS policy (e.g., <code>Access-Control-Allow-Origin: *</code> with credentials) can allow malicious websites to make authenticated requests to the API on behalf of the user."
+                "content": "Security misconfiguration is a broad category (see our <a href=\"/blog/fix-cors-misconfiguration\">CORS misconfiguration guide</a> for a common example) that includes insecure default settings, incomplete configurations, open cloud storage, misconfigured HTTP headers, and excessively permissive Cross-Origin Resource Sharing (CORS) policies. A misconfigured CORS policy (e.g., <code>Access-Control-Allow-Origin: *</code> with credentials) can allow malicious websites to make authenticated requests to the API on behalf of the user."
             },
             {
                 "id": "observation-limits",
@@ -586,7 +586,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Check Your API Infrastructure",
-                "content": "URLScanOnline can help identify externally observable configuration issues such as permissive CORS headers, missing security headers, and TLS configuration concerns on your API endpoints."
+                "content": "<a href=\"/scan\">URLScanOnline can help</a> identify externally observable configuration issues such as permissive CORS headers, missing security headers, and TLS configuration concerns on your API endpoints."
             }
         ],
         "faqs": [
@@ -616,17 +616,17 @@ export const articles = [
         "seoTitle": "DAST vs SAST: Security Testing Differences | URLScanOnline",
         "metaDescription": "Understand the differences between Dynamic Application Security Testing (DAST) and Static Application Security Testing (SAST) methodologies.",
         "excerpt": "A detailed comparison of Dynamic Application Security Testing (DAST) and Static Application Security Testing (SAST).",
-        "content": "Application security testing is crucial for identifying vulnerabilities before they reach production. Two of the most common methodologies are Dynamic Application Security Testing (DAST) and Static Application Security Testing (SAST). Understanding <strong>DAST vs SAST</strong> helps teams build a comprehensive security strategy.",
+        "content": "Application security testing is crucial for identifying vulnerabilities before they reach production. Two of the most common methodologies are Dynamic Application Security Testing (DAST) and Static Application Security Testing (<a href=\"/blog/vulnerability-scanning-vs-penetration-testing\">SAST</a>). Understanding <strong>DAST vs SAST</strong> helps teams build a comprehensive security strategy.",
         "sections": [
             {
                 "id": "what-is-sast",
                 "title": "What is SAST?",
-                "content": "SAST is a \"white-box\" testing method that analyzes the application's source code, bytecode, or binaries without executing the program. It looks for coding errors, such as insecure use of cryptography, hardcoded secrets, and SQL injection flaws, by tracing the data flow through the code. SAST is typically integrated early in the Software Development Life Cycle (SDLC) and provides exact line numbers for vulnerabilities, making remediation easier for developers."
+                "content": "SAST is a \"white-box\" testing method that analyzes the application's source code, bytecode, or binaries without executing the program. It looks for coding errors, such as insecure use of cryptography, hardcoded secrets, and SQL injection flaws, by tracing the data flow through the code. SAST is typically integrated early in the Software Development Life Cycle (SDLC) and provides exact line numbers for vulnerabilities, making remediation easier for developers. These tools can be integrated with <a href=\"/blog/passive-vs-active-security-testing\">passive and active security testing</a> approaches."
             },
             {
                 "id": "what-is-dast",
                 "title": "What is DAST?",
-                "content": "DAST is a \"black-box\" testing method that analyzes the application while it is running. The scanner interacts with the application from the outside, sending various payloads and malformed requests to identify vulnerabilities like Cross-Site Scripting (XSS), authentication bypasses, and server misconfigurations. DAST does not require access to the source code and evaluates the application in its deployed environment, catching issues that only manifest at runtime."
+                "content": "<a href=\"/blog/vulnerability-scanning-vs-penetration-testing\">DAST</a> is a \"black-box\" testing method that analyzes the application while it is running. The scanner interacts with the application from the outside, sending various payloads and malformed requests to identify vulnerabilities like Cross-Site Scripting (XSS), authentication bypasses, and server misconfigurations. DAST does not require access to the source code and evaluates the application in its deployed environment, catching issues that only manifest at runtime."
             },
             {
                 "id": "comparison",
@@ -641,7 +641,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Evaluate Your Runtime Posture",
-                "content": "URLScanOnline provides passive scanning capabilities that observe your deployed application from the outside, identifying externally observable configuration issues such as missing security headers and TLS configuration concerns."
+                "content": "<a href=\"/scan\">URLScanOnline provides</a> passive scanning capabilities that observe your deployed application from the outside, identifying externally observable configuration issues such as missing security headers and TLS configuration concerns."
             }
         ],
         "faqs": [
@@ -675,7 +675,7 @@ export const articles = [
             {
                 "id": "vulnerability-scanning",
                 "title": "What is Vulnerability Scanning?",
-                "content": "Vulnerability scanning is an automated process that identifies known security weaknesses in systems, networks, and applications. Scanners look for outdated software versions, missing patches, default passwords, and common misconfigurations. Scanning is typically fast, repeatable, and scalable, making it ideal for continuous monitoring and baseline security checks."
+                "content": "<a href=\"/blog/passive-vulnerability-scanner-vs-active-penetration-testing\">Vulnerability scanning</a> is an automated process that identifies known security weaknesses in systems, networks, and applications. Scanners look for outdated software versions, missing patches, default passwords, and common misconfigurations. Scanning is typically fast, repeatable, and scalable, making it ideal for continuous monitoring and baseline security checks. Understanding them helps inform whether you need <a href=\"/blog/passive-vs-active-security-testing\">passive and active security testing</a> or specifically a <a href=\"/blog/passive-vulnerability-scanner-vs-active-penetration-testing\">passive vulnerability scanner vs penetration testing</a> approach."
             },
             {
                 "id": "penetration-testing",
@@ -695,7 +695,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Start with Automated Scanning",
-                "content": "Before engaging a manual penetration testing team, check your baseline security is solid. URLScanOnline can help identify externally observable configuration issues such as missing security headers, weak TLS configurations, and exposed information."
+                "content": "Before engaging a manual penetration testing team, check your baseline security is solid. <a href=\"/scan\">URLScanOnline can help</a> identify externally observable configuration issues such as missing security headers, weak TLS configurations, and exposed information."
             }
         ],
         "faqs": [
@@ -730,7 +730,7 @@ export const articles = [
             {
                 "id": "passive-testing",
                 "title": "Passive Security Testing",
-                "content": "Passive security testing involves analyzing an application without sending malicious payloads or intrusive requests that could alter the state of the target. A passive scanner makes normal HTTP requests, much like a regular user's browser, and analyzes the responses. It observes headers, cookies, configuration files, and exposed client-side code. This approach minimizes operational risk, as it avoids creating test data or triggering application errors."
+                "content": "Passive security testing involves analyzing an application without sending malicious payloads or intrusive requests that could alter the state of the target. A <a href=\"/blog/passive-vulnerability-scanner-vs-active-penetration-testing\">passive scanner</a> makes normal HTTP requests, much like a regular user's browser, and analyzes the responses. It observes headers, cookies, configuration files, and exposed client-side code. This approach minimizes operational risk, as it avoids creating test data or triggering application errors. This distinction is critical when evaluating a <a href=\"/blog/passive-vulnerability-scanner-vs-active-penetration-testing\">passive vulnerability scanner vs active penetration testing</a>, or when comparing broader <a href=\"/blog/vulnerability-scanning-vs-penetration-testing\">vulnerability scanning and penetration testing</a> strategies."
             },
             {
                 "id": "active-testing",
@@ -750,7 +750,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Run a Passive Scan",
-                "content": "URLScanOnline provides passive and low-impact external security checks. It analyzes your website's observable configuration without sending malicious payloads, making it safe to run against any production environment to identify missing security headers and TLS configuration concerns."
+                "content": "<a href=\"/scan\">URLScanOnline provides</a> passive and low-impact external security checks. It analyzes your website's observable configuration without sending malicious payloads, making it safe to run against any production environment to identify missing security headers and TLS configuration concerns."
             }
         ],
         "faqs": [
@@ -780,17 +780,17 @@ export const articles = [
         "seoTitle": "How to Fix a Missing HSTS Header | URLScanOnline",
         "metaDescription": "Step-by-step remediation guide on how to fix a missing Strict-Transport-Security (HSTS) header on common web servers like Nginx and Apache.",
         "excerpt": "Learn why the HTTP Strict Transport Security (HSTS) header is critical for securing your traffic and how to implement it safely on modern web servers.",
-        "content": "A missing Strict-Transport-Security header leaves your users vulnerable to man-in-the-middle protocol downgrade attacks. This troubleshooting guide explains exactly <strong>how to fix a missing HSTS header</strong> and safely enforce HTTPS on your web server.",
+        "content": "A missing <a href=\"/blog/http-security-headers-guide\">Strict-Transport-Security</a> header leaves your users vulnerable to man-in-the-middle protocol <a href=\"/blog/hsts-explained\">downgrade</a> attacks. This troubleshooting guide explains exactly <strong>how to fix a missing HSTS header</strong> and safely enforce HTTPS on your web server.",
         "sections": [
             {
                 "id": "why-it-matters",
                 "title": "Why a Missing HSTS Header Matters",
-                "content": "Without HSTS, the site lacks a browser-enforced HTTPS-only protection that can reduce exposure to downgrade or SSL-stripping scenarios. If a user connects via HTTP initially, an attacker could intercept the request before the server redirects to HTTPS."
+                "content": "Without <a href=\"/blog/hsts-explained\">HSTS</a>, the site lacks a browser-enforced HTTPS-only protection that can reduce exposure to downgrade or SSL-stripping scenarios. If a user connects via HTTP initially, an attacker could intercept the request before the server redirects to HTTPS."
             },
             {
                 "id": "implementation",
                 "title": "How to Add the HSTS Header",
-                "content": "To implement HSTS, you must configure your web server to return the <code>Strict-Transport-Security</code> HTTP header on all HTTPS responses. (Note: Browsers ignore the HSTS header if it is served over plain HTTP).<br><br><strong>For Nginx:</strong><br><br>Add the following directive to your server block:<br><code>add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;</code><br><br><strong>For Apache:</strong><br><br>Add this to your VirtualHost configuration:<br><code>Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains\"</code>"
+                "content": "To implement HSTS, you must configure your web server to return the <code>Strict-Transport-Security</code> HTTP header on all HTTPS responses. (Note: Browsers ignore the HSTS header if it is served over plain HTTP).<br><br><strong>For Nginx:</strong><br><br>Add the following directive to your server block:<br><code>add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;</code><br><br><strong>For Apache:</strong><br><br>Add this to your VirtualHost configuration:<br><code>Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains\"</code> <a href=\"/scan\">URLScanOnline can help</a> verify if your Strict-Transport-Security header is properly exposed."
             },
             {
                 "id": "safe-rollout",
@@ -835,7 +835,7 @@ export const articles = [
         "seoTitle": "Fix Missing Content Security Policy (CSP) Header | URLScanOnline",
         "metaDescription": "Troubleshooting guide to fixing a missing Content-Security-Policy (CSP) header, including how to safely build and enforce policies.",
         "excerpt": "Content-Security-Policy (CSP) is your primary defense against Cross-Site Scripting (XSS). Learn how to incrementally deploy a CSP to protect your users.",
-        "content": "A missing Content-Security-Policy (CSP) header removes a critical layer of defense-in-depth against Cross-Site Scripting (XSS). This remediation guide covers <strong>how to fix a missing Content Security Policy header</strong> through a safe, incremental rollout.",
+        "content": "A missing <a href=\"/blog/content-security-policy-guide\">Content-Security-Policy</a> (CSP) header removes a critical layer of defense-in-depth against Cross-Site Scripting (XSS). This remediation guide covers <strong>how to fix a missing <a href=\"/blog/http-security-headers-guide\">Content Security Policy header</a></strong> through a safe, incremental rollout.",
         "sections": [
             {
                 "id": "why-it-matters",
@@ -860,7 +860,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Check Your CSP Header",
-                "content": "URLScanOnline can help identify if your site is currently broadcasting a Content Security Policy and flag if it relies on overly permissive directives like unsafe-inline."
+                "content": "<a href=\"/scan\">URLScanOnline can help</a> identify if your site is currently broadcasting a Content Security Policy and flag if it relies on overly permissive directives like unsafe-inline."
             }
         ],
         "faqs": [
@@ -900,17 +900,17 @@ export const articles = [
             {
                 "id": "implementation",
                 "title": "How to Implement X-Frame-Options",
-                "content": "The <code>X-Frame-Options</code> HTTP response header tells the browser whether it is allowed to render a page in a <code><frame></code>, <code><iframe></code>, <code><embed></code> or <code><object></code>. <br><br><strong>Common Values:</strong><br><br>- <code>DENY</code>: The page cannot be displayed in a frame, regardless of the site attempting to do so.<br>- <code>SAMEORIGIN</code>: The page can only be displayed in a frame on the same origin as the page itself.<br><br><strong>Nginx Example:</strong><br><code>add_header X-Frame-Options \"SAMEORIGIN\" always;</code><br><br><strong>Apache Example:</strong><br><code>Header always set X-Frame-Options \"SAMEORIGIN\"</code>"
+                "content": "The <code>X-Frame-Options</code> <a href=\"/blog/http-security-headers-guide\">HTTP response header</a> tells the browser whether it is allowed to render a page in a <code><frame></code>, <code><iframe></code>, <code><embed></code> or <code><object></code>. <br><br><strong>Common Values:</strong><br><br>- <code>DENY</code>: The page cannot be displayed in a frame, regardless of the site attempting to do so.<br>- <code>SAMEORIGIN</code>: The page can only be displayed in a frame on the same origin as the page itself.<br><br><strong>Nginx Example:</strong><br><code>add_header X-Frame-Options \"SAMEORIGIN\" always;</code><br><br><strong>Apache Example:</strong><br><code>Header always set X-Frame-Options \"SAMEORIGIN\"</code>"
             },
             {
                 "id": "csp-alternative",
                 "title": "Modern Alternative: CSP frame-ancestors",
-                "content": "While <code>X-Frame-Options</code> is widely supported, the modern approach is to use the <code>frame-ancestors</code> directive within the <code>Content-Security-Policy</code> header. For example, <code>Content-Security-Policy: frame-ancestors 'self'</code> provides the equivalent of <code>SAMEORIGIN</code>. If both are present, modern browsers will prioritize the CSP directive. However, setting both provides the best backward compatibility for older browsers."
+                "content": "While <code>X-Frame-Options</code> is widely supported, the modern approach is to use the <code>frame-ancestors</code> directive within the <code><a href=\"/blog/content-security-policy-guide\">Content-Security-Policy</a></code> header. For example, <code>Content-Security-Policy: frame-ancestors 'self'</code> provides the equivalent of <code>SAMEORIGIN</code>. If both are present, modern browsers will prioritize the CSP directive. However, setting both provides the best backward compatibility for older browsers."
             },
             {
                 "id": "cta",
                 "title": "Verify Framing Protections",
-                "content": "URLScanOnline can passively check your HTTP responses to ensure that either an X-Frame-Options header or a CSP frame-ancestors directive is correctly configured to protect your site."
+                "content": "<a href=\"/scan\">URLScanOnline can passively check</a> your HTTP responses to ensure that either an X-Frame-Options header or a CSP frame-ancestors directive is correctly configured to protect your site."
             }
         ],
         "faqs": [
@@ -936,7 +936,7 @@ export const articles = [
         "seoTitle": "How to Fix Insecure Cookie Flags | URLScanOnline",
         "metaDescription": "Remediation instructions for securing session cookies by properly configuring the Secure, HttpOnly, and SameSite attributes.",
         "excerpt": "Session hijacking is a severe threat. Learn how to implement the Secure, HttpOnly, and SameSite flags to harden your session cookies.",
-        "content": "Session cookies are the keys to user accounts. If they are intercepted or stolen, attackers can completely bypass authentication. This guide explains <strong>how to fix insecure cookie flags</strong> to protect session integrity.",
+        "content": "Session cookies are the keys to user accounts. If they are intercepted or stolen, attackers can completely bypass authentication. This guide explains <strong>how to fix insecure cookie flags</strong> to protect <a href=\"/blog/website-security-checklist\">session integrity</a>.",
         "sections": [
             {
                 "id": "why-it-matters",
@@ -966,7 +966,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Check Your Cookie Configuration",
-                "content": "URLScanOnline analyzes the <code>Set-Cookie</code> headers returned by your web server to identify missing Secure or HttpOnly flags on your critical session identifiers."
+                "content": "<a href=\"/scan\">URLScanOnline analyzes</a> the <code>Set-Cookie</code> headers returned by your web server to identify missing Secure or HttpOnly flags on your critical session identifiers."
             }
         ],
         "faqs": [
@@ -997,7 +997,7 @@ export const articles = [
             {
                 "id": "why-it-matters",
                 "title": "The Danger of Permissive CORS",
-                "content": "By default, the Same-Origin Policy prevents a malicious website from making authenticated API requests to your application on behalf of a victim. CORS relaxes this policy. A wildcard <code>*</code> allows cross-origin reading of non-credentialed responses. However, modern browsers reject credentialed requests if the allowed origin is a wildcard. A dangerous pattern is reflecting an arbitrary or untrusted Origin in the <code>Access-Control-Allow-Origin</code> header while also allowing credentials."
+                "content": "By default, the <a href=\"/blog/common-api-security-vulnerabilities\">Same-Origin Policy</a> prevents a malicious website from making <a href=\"/blog/api-security-checklist\">authenticated API</a> requests to your application on behalf of a victim. CORS relaxes this policy. A wildcard <code>*</code> allows cross-origin reading of non-credentialed responses. However, modern browsers reject credentialed requests if the allowed origin is a wildcard. A dangerous pattern is reflecting an arbitrary or untrusted Origin in the <code>Access-Control-Allow-Origin</code> header while also allowing credentials."
             },
             {
                 "id": "implementation",
@@ -1017,7 +1017,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Test Your API Headers",
-                "content": "URLScanOnline can help observe the CORS headers returned by your web application and identify if overly permissive configurations, such as wildcard origins, are exposed to the public."
+                "content": "<a href=\"/scan\">URLScanOnline can help</a> observe the CORS headers returned by your web application and identify if overly permissive configurations, such as wildcard origins, are exposed to the public."
             }
         ],
         "faqs": [
@@ -1043,12 +1043,12 @@ export const articles = [
         "seoTitle": "Passive Vulnerability Scanner vs Penetration Testing | URLScanOnline",
         "metaDescription": "Discover how a passive vulnerability scanner fits into your security workflow compared to high-interaction active penetration testing.",
         "excerpt": "Understand the fundamental differences between passive scanning and active penetration testing to choose the right tool for your security workflow.",
-        "content": "When deciding how to allocate security resources, organizations often wonder whether they need automated tools, manual testing, or both. Discovering how a <strong>passive vulnerability scanner vs active penetration testing</strong> fits into a modern workflow is key to building a robust security program.",
+        "content": "When deciding how to allocate security resources, organizations often wonder whether they need automated tools, manual testing, or both. Discovering how a <strong>passive vulnerability scanner vs active <a href=\"/blog/vulnerability-scanning-vs-penetration-testing\">penetration testing</a></strong> fits into a modern workflow is key to building a robust security program.",
         "sections": [
             {
                 "id": "what-is-passive-scanner",
                 "title": "The Role of a Passive Vulnerability Scanner",
-                "content": "A passive vulnerability scanner provides low-impact external security checks designed to identify observable security misconfigurations. It analyzes HTTP headers and certificates without sending exploit payloads. It minimizes operational risk, though any automated scan generates network requests and should be run only against authorized systems. Scans can be repeated periodically to check baseline security hygiene."
+                "content": "A passive vulnerability scanner provides low-impact external security checks designed to identify observable security misconfigurations. It analyzes HTTP headers and certificates without sending exploit payloads. It minimizes operational risk, though any automated scan generates network requests and should be run only against authorized systems. Scans can be repeated periodically to check baseline security hygiene. They serve entirely different purposes within <a href=\"/blog/passive-vs-active-security-testing\">passive and active security testing</a> workflows."
             },
             {
                 "id": "what-is-active-pentesting",
@@ -1068,7 +1068,7 @@ export const articles = [
             {
                 "id": "cta",
                 "title": "Establish Your Security Baseline",
-                "content": "URLScanOnline is designed to be your first line of visibility. Use our passive scanner to identify and fix missing security headers, weak TLS, and exposed files before scheduling your next deep penetration test."
+                "content": "<a href=\"/scan\">URLScanOnline is designed</a> to be your first line of visibility. Use our passive scanner to identify and fix missing security headers, weak TLS, and exposed files before scheduling your next deep penetration test."
             }
         ],
         "faqs": [
