@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParams, Link, Navigate, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { articles } from '../../data/blog';
 import { ChevronRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
 
@@ -7,6 +7,38 @@ const ArticlePage = () => {
   const { slug } = useParams();
   const { hash } = useLocation();
   const article = articles.find(a => a.slug === slug);
+
+  // Effect: Unknown-article metadata (noindex + title)
+  useEffect(() => {
+    if (article) return;
+
+    const previousTitle = document.title;
+    document.title = "Article Not Found | URLScanOnline";
+
+    let robots = document.querySelector('meta[name="robots"]');
+    const created = !robots;
+
+    if (!robots) {
+      robots = document.createElement("meta");
+      robots.setAttribute("name", "robots");
+      document.head.appendChild(robots);
+    }
+
+    const previousRobots = robots.getAttribute("content");
+    robots.setAttribute("content", "noindex");
+
+    return () => {
+      document.title = previousTitle;
+
+      if (created) {
+        robots.remove();
+      } else if (previousRobots === null) {
+        robots.removeAttribute("content");
+      } else {
+        robots.setAttribute("content", previousRobots);
+      }
+    };
+  }, [article]);
 
   useEffect(() => {
     if (article) {
@@ -120,16 +152,6 @@ const ArticlePage = () => {
         schema.dateModified = article.dateModified;
       }
 
-      if (article.faqs && article.faqs.length > 0) {
-        schema.mainEntity = article.faqs.map(faq => ({
-          "@type": "Question",
-          "name": faq.question,
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": faq.answer
-          }
-        }));
-      }
 
       scriptSchema.textContent = JSON.stringify(schema);
 
@@ -211,7 +233,16 @@ const ArticlePage = () => {
   }, [hash, slug]);
 
   if (!article) {
-    return <Navigate to="/blog" replace />;
+    return (
+      <div className="flex flex-col min-h-screen bg-slate-950 text-slate-200 font-sans items-center justify-center p-8">
+        <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
+        <p className="text-slate-400 mb-8">The article you are looking for does not exist.</p>
+        <Link to="/blog" className="text-indigo-400 hover:text-indigo-300 flex items-center">
+          <ArrowLeft size={16} className="mr-2" />
+          Back to Blog
+        </Link>
+      </div>
+    );
   }
 
   // Get related articles (same category, exclude current, up to 3)
