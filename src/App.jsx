@@ -18,6 +18,8 @@ const HistoryCompare = React.lazy(() => import('./pages/HistoryCompare'));
 const Compare = React.lazy(() => import('./pages/Compare'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const Services = React.lazy(() => import('./pages/Services'));
+const ScannerCapabilities = React.lazy(() => import('./pages/ScannerCapabilities'));
+const SecurityAudits = React.lazy(() => import('./pages/SecurityAudits'));
 const About = React.lazy(() => import('./pages/About'));
 const BlogLanding = React.lazy(() => import('./pages/blog/BlogLanding'));
 const ArticlePage = React.lazy(() => import('./pages/blog/ArticlePage'));
@@ -68,6 +70,8 @@ const App = () => {
               <Route element={<RootLayout />}>
                 <Route path="/" element={<Scanner />} />
                 <Route path="/services" element={<Services />} />
+                <Route path="/services/scanner-capabilities" element={<ScannerCapabilities />} />
+                <Route path="/services/security-audits" element={<SecurityAudits />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/scan" element={<Scanner />} />
 
