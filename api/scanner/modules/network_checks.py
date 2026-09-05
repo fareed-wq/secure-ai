@@ -170,9 +170,7 @@ class VerboseStackTraceModule(ScannerModule):
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
         try:
-            base_url = f"http://{hostname}" if url.startswith("http://") else f"https://{hostname}"
-            target_url = f"{base_url}/api/v1/debug_probe_404"
-            resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
+            resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5), max_attempts=1)
             if resp and resp.text:
                 if "Traceback (most recent call last):" in resp.text:
                     findings.append(self.make_finding(

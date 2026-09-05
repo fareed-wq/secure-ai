@@ -72,11 +72,11 @@ class TestPhase18Accuracy(unittest.TestCase):
         
         try:
             findings = module.run(self.url, self.hostname, self.session)
-            finding = next((f for f in findings if "Administrative Interface Exposed" in f["name"]), None)
+            finding = next((f for f in findings if "Administrative Interface Observed" in f["name"]), None)
             
             self.assertIsNotNone(finding)
-            self.assertEqual(finding["severity"], "Low")
-            self.assertIn("admin login page", finding["description"])
+            self.assertEqual(finding["severity"], "Informational", "Administrative interface should be Informational severity")
+            self.assertIn("administrative use", finding["description"])
         finally:
             api.scanner.modules.discovery.safe_request = old_safe_request
 

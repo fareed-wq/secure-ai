@@ -28,10 +28,10 @@ class ExposedFilesModule(ScannerModule):
             logger.debug("ExposedFilesModule head check failed: %s", e)
 
 
-        for env_path in ['/.env', '/api/.env', '/backend/.env', '/core/.env']:
+        for env_path in ['/.env', '/api/.env']:
             try:
                 env_url = f"{scheme}://{hostname}{env_path}"
-                resp = safe_request("GET", env_url, session=session, timeout=(1.5, 2.5))
+                resp = safe_request("GET", env_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
                 if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                     from urllib.parse import urlparse
                     history = getattr(resp, 'history', [])
@@ -79,7 +79,7 @@ class ExposedFilesModule(ScannerModule):
 
         try:
             git_url = f"{scheme}://{hostname}/.git/HEAD"
-            resp = safe_request("GET", git_url, session=session, timeout=(1.5, 2.5))
+            resp = safe_request("GET", git_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
             if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                 from urllib.parse import urlparse
                 history = getattr(resp, 'history', [])
@@ -108,7 +108,7 @@ class ExposedFilesModule(ScannerModule):
 
         try:
             git_config_url = f"{scheme}://{hostname}/.git/config"
-            resp = safe_request("GET", git_config_url, session=session, timeout=(1.5, 2.5))
+            resp = safe_request("GET", git_config_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
             if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                 from urllib.parse import urlparse
                 history = getattr(resp, 'history', [])
@@ -133,11 +133,11 @@ class ExposedFilesModule(ScannerModule):
         except Exception as e: pass
 
         docker_finding_added = False
-        for docker_path in ['/docker-compose.yml', '/docker-compose.yaml']:
+        for docker_path in ['/docker-compose.yml']:
             if docker_finding_added: break
             try:
                 docker_url = f"{scheme}://{hostname}{docker_path}"
-                resp = safe_request("GET", docker_url, session=session, timeout=(1.5, 2.5))
+                resp = safe_request("GET", docker_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
                 if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                     from urllib.parse import urlparse
                     history = getattr(resp, 'history', [])
@@ -163,8 +163,8 @@ class ExposedFilesModule(ScannerModule):
             except Exception as e: pass
 
         try:
-            ds_url = f"{scheme}://{hostname}/.DS_Store"
-            resp = safe_request("GET", ds_url, session=session, timeout=(1.5, 2.5))
+            phpinfo_url = f"{scheme}://{hostname}/phpinfo.php"
+            resp = safe_request("GET", phpinfo_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
             if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                 from urllib.parse import urlparse
                 history = getattr(resp, 'history', [])
@@ -172,29 +172,9 @@ class ExposedFilesModule(ScannerModule):
                 if isinstance(history, list) and history:
                     url_val = getattr(resp, 'url', '')
                     if isinstance(url_val, str) and url_val:
-                        if urlparse(ds_url).path.rstrip('/') != urlparse(url_val).path.rstrip('/'):
+                        if urlparse(phpinfo_url).path.rstrip('/') != urlparse(url_val).path.rstrip('/'):
                             valid_resp = False
-                if valid_resp:
-                    content = getattr(resp, 'content', b'')
-                    if content.startswith(b'\x00\x00\x00\x01Bud1'):
-                        findings.append(self.make_finding(
-                            "Exposed .DS_Store File",
-                            "Informational",
-                            "An Apple desktop metadata file was accidentally uploaded to the server.",
-                            f"Requested: /.DS_Store\nValidated .DS_Store binary signature.",
-                            impact="May reveal names of hidden files or directories on the server.",
-                            owasp="A05: Security Misconfiguration",
-                            category="information_exposure"
-                        ))
-        except Exception as e: pass
-
-
-
-        try:
-            phpinfo_url = f"{scheme}://{hostname}/phpinfo.php"
-            resp = safe_request("GET", phpinfo_url, session=session, timeout=(1.5, 2.5))
-            if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
-                if "<title>phpinfo()</title>" in resp.text.lower() or "zend engine" in resp.text.lower():
+                if valid_resp and ("<title>phpinfo()</title>" in resp.text.lower() or "zend engine" in resp.text.lower()):
                     findings.append(self.make_finding(
                         "Exposed phpinfo() File",
                         "Medium",
@@ -209,158 +189,39 @@ class ExposedFilesModule(ScannerModule):
         except Exception as e:
             logger.debug("ExposedFilesModule phpinfo fetch failed: %s", e)
 
-        # Smart Path Scoping: Skip path probes if the root endpoint is a JSON API
-        is_json_api = False
-        try:
-            if 'application/json' in self.get_header_safe(hp_resp, 'Content-Type', '').lower():
-                is_json_api = True
-        except Exception as e:
-            logger.debug("ExposedFilesModule ds_store fetch failed: %s", e)
+        def check_admin_panel(path):
+            try:
+                target_url = urljoin(base_url, path)
+                resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+                if resp and resp.status_code == 200 and 'text/html' in self.get_header_safe(resp, 'Content-Type', '').lower() and not self.is_spa_fallback(resp, homepage_len):
+                    from urllib.parse import urlparse
+                    history = getattr(resp, 'history', [])
+                    valid_resp = True
+                    if isinstance(history, list) and history:
+                        url_val = getattr(resp, 'url', '')
+                        if isinstance(url_val, str) and url_val:
+                            if urlparse(target_url).path.rstrip('/') != urlparse(url_val).path.rstrip('/'):
+                                valid_resp = False
+                    if valid_resp and "password" in resp.text.lower() and "admin" in resp.text.lower():
+                        return self.make_finding(
+                            "Administrative Interface Observed",
+                            "Informational",
+                            "A login page that appears to be for administrative use was observed.",
+                            target_url,
+                            impact="Administrative interfaces are common targets. This finding confirms the interface exists but does not imply it is vulnerable.",
+                            confidence="Medium",
+                            owasp="Not Mapped",
+                            category="api_surface"
+                        )
+            except requests.exceptions.RequestException:
+                pass
+            except Exception as e:
+                logger.debug("ExposedFilesModule admin check failed: %s", e)
+            return None
 
-        if not is_json_api:
-            def check_dir_index(path):
-                try:
-                    target_url = urljoin(base_url, path)
-                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
-                    if resp and resp.status_code == 200 and 'text/html' in resp.headers.get('Content-Type', '').lower():
-                        if "Index of /" in resp.text or "<title>Index of" in resp.text:
-                            return self.make_finding(
-                                "Directory Indexing Enabled",
-                                "Medium",
-                                "Your website allows anyone to see a raw list of all the files and folders stored in this directory.",
-                                target_url,
-                                impact="Directory listing exposes file and directory structure, potentially revealing sensitive files.",
-                                owasp="A05: Security Misconfiguration",
-                                category="information_exposure"
-                            )
-                except requests.exceptions.RequestException:
-                    pass
-                except Exception as e:
-                    logger.debug("ExposedFilesModule sensitive path fetch failed: %s", e)
-                    pass
-                return None
-
-            paths_to_probe = ['/uploads/', '/images/', '/assets/', '/static/']
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                for result in executor.map(check_dir_index, paths_to_probe):
-                    if result:
-                        findings.append(result)
-
-            def check_exposed_log(path):
-                try:
-                    target_url = urljoin(base_url, path)
-                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
-                    if resp and resp.status_code == 200 and 'text/html' not in resp.headers.get('Content-Type', '').lower():
-                        try:
-                            chunk_text = resp.text[:1024]
-                        except Exception:
-                            chunk_text = ""
-                        if any(x in chunk_text for x in ['[202', '[ERROR]', '[DEBUG]', 'Stack trace:']):
-                            return self.make_finding(
-                                f"Exposed Application Log File ({path})",
-                                "High",
-                                f"A system log file recording background activity for your website is publicly readable at {path}.",
-                                target_url,
-                                impact="Exposed logs can reveal sensitive application state, internal errors, or session data.",
-                                owasp="A05: Security Misconfiguration",
-                                category="information_exposure"
-                            )
-                except requests.exceptions.RequestException:
-                    pass
-                except Exception as e:
-                    logger.debug("ExposedFilesModule source code fetch failed: %s", e)
-                    pass
-                return None
-
-            log_paths = ['/laravel.log', '/error.log', '/app.log', '/debug.log', '/logs/laravel.log']
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                for result in executor.map(check_exposed_log, log_paths):
-                    if result:
-                        findings.append(result)
-
-
-            def check_exposed_dump(path):
-                try:
-                    target_url = urljoin(base_url, path)
-                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
-                    if resp and resp.status_code == 200 and 'text/html' not in resp.headers.get('Content-Type', '').lower():
-                        from urllib.parse import urlparse
-                        history = getattr(resp, 'history', [])
-                        if isinstance(history, list) and history:
-                            url_val = getattr(resp, 'url', '')
-                            if isinstance(url_val, str) and url_val:
-                                if urlparse(target_url).path.rstrip('/') != urlparse(url_val).path.rstrip('/'):
-                                    return None
-                        chunk = getattr(resp, 'content', b'')[:1024]
-                        is_zip = chunk.startswith(b'PK\x03\x04') or chunk.startswith(b'\x1f\x8b')
-
-                        try:
-                            chunk_text = chunk.decode('utf-8', errors='ignore')
-                        except Exception:
-                            chunk_text = ""
-
-                        is_sql = '-- MySQL dump' in chunk_text or 'CREATE TABLE' in chunk_text or 'INSERT INTO' in chunk_text
-
-                        if is_sql:
-                            return self.make_finding(
-                                f"Exposed Database Backup Dump ({path})",
-                                "Medium",
-                                f"A database backup dump is publicly available for anyone to download at {path}.",
-                                target_url,
-                                impact="Exposed database backups can lead to full disclosure of stored application data.",
-                                owasp="A05: Security Misconfiguration",
-                                category="information_exposure"
-                            )
-                        elif is_zip:
-                            return self.make_finding(
-                                f"Exposed Backup / Archive File ({path})",
-                                "Medium",
-                                f"An archive file is publicly available for anyone to download at {path}.",
-                                target_url,
-                                impact="Exposed archives may expose application files, source code, or configuration data.",
-                                owasp="A05: Security Misconfiguration",
-                                category="information_exposure"
-                            )
-                except requests.exceptions.RequestException:
-                    pass
-                except Exception as e:
-                    pass
-                return None
-
-
-            dump_paths = ['/backup.zip', '/site.tar.gz', '/db.sql', '/dump.sql', '/backup.sql']
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                for result in executor.map(check_exposed_dump, dump_paths):
-                    if result:
-                        findings.append(result)
-
-
-
-            def check_admin_panel(path):
-                try:
-                    target_url = urljoin(base_url, path)
-                    resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
-                    if resp and resp.status_code == 200 and 'text/html' in resp.headers.get('Content-Type', '').lower():
-                        if "password" in resp.text.lower() and "admin" in resp.text.lower():
-                            return self.make_finding(
-                                "Administrative Interface Exposed",
-                                "Low",
-                                "A private admin login page for managing your website is open to the public.",
-                                target_url,
-                                impact="Exposed login portals provide targets for brute-force or credential stuffing attacks.",
-                                confidence="Medium",
-                                owasp="A01: Broken Access Control",
-                                category="api_surface"
-                            )
-                except requests.exceptions.RequestException:
-                    pass
-                except Exception as e:
-                    logger.debug("ExposedFilesModule admin check failed: %s", e)
-                return None
-
-            admin_result = check_admin_panel('/admin')
-            if admin_result:
-                findings.append(admin_result)
+        admin_result = check_admin_panel('/admin')
+        if admin_result:
+            findings.append(admin_result)
 
         return findings
 

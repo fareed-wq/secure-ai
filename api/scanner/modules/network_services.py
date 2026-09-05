@@ -2,6 +2,7 @@ from typing import List, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from api.scanner.base import ScannerModule
+import socket
 from api.scanner.socket_helper import safe_create_connection
 
 class NetworkServiceExposureModule(ScannerModule):
@@ -44,10 +45,18 @@ class NetworkServiceExposureModule(ScannerModule):
     }
 
     def _check_port(self, hostname: str, port: int, service: str, severity: str, finding_name: str, desc: str, impact: str) -> Optional[dict]:
+        sock = None
         try:
+            try:
+                infos = socket.getaddrinfo(hostname, port, 0, socket.SOCK_STREAM)
+                if not infos:
+                    return None
+                target_ip = infos[0][4][0]
+            except Exception:
+                return None
+
             # Short timeout per port, safe_create_connection includes SSRF protection
-            sock = safe_create_connection((hostname, port), timeout=1.5)
-            sock.close()
+            sock = safe_create_connection((target_ip, port), timeout=1.5)
 
             return self.make_finding(
                 name=finding_name,
@@ -63,6 +72,12 @@ class NetworkServiceExposureModule(ScannerModule):
         except Exception:
             # Timeout, connection refused, unreachable, unexpected errors -> No finding
             return None
+        finally:
+            if sock is not None:
+                try:
+                    sock.close()
+                except Exception:
+                    pass
 
     def run(self, url: str, hostname: str, session) -> List[dict]:
         findings = []
