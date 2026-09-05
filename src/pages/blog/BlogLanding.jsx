@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { articles } from '../../data/blog';
 import { BookOpen, Search, ChevronRight } from 'lucide-react';
 
-const CATEGORIES = [
-  "All",
+const PREFERRED_ORDER = [
   "Website Security",
   "Website Vulnerabilities",
   "OWASP Security",
@@ -18,6 +17,13 @@ const CATEGORIES = [
   "DevSecOps",
   "Security Testing",
   "Security Guides"
+];
+
+const availableCategories = Array.from(new Set(articles.map(a => a.category)));
+const CATEGORIES = [
+  "All",
+  ...PREFERRED_ORDER.filter(c => availableCategories.includes(c)),
+  ...availableCategories.filter(c => !PREFERRED_ORDER.includes(c))
 ];
 
 const BlogLanding = () => {
@@ -110,7 +116,16 @@ const BlogLanding = () => {
     };
   }, []);
 
+  const featuredArticles = articles.slice(0, 3); // Just pick first 3 as featured
+
   const filteredArticles = articles.filter(article => {
+    const isDefaultView = selectedCategory === "All" && searchQuery === "";
+    const isFeatured = featuredArticles.some(f => f.id === article.id);
+
+    if (isDefaultView && isFeatured) {
+      return false;
+    }
+
     const matchesCategory = selectedCategory === "All" || article.category === selectedCategory;
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
@@ -120,7 +135,6 @@ const BlogLanding = () => {
     return matchesCategory && matchesSearch;
   });
 
-  const featuredArticles = articles.slice(0, 3); // Just pick first 3 as featured
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-200">
@@ -133,7 +147,7 @@ const BlogLanding = () => {
             Practical security guides for websites, web applications, APIs, and online businesses.
           </p>
           <p className="mt-4 text-slate-500">
-            Learn about website vulnerabilities, OWASP risks, security headers, SSL/TLS, API security, e-commerce security, DevSecOps, and security testing.
+            Learn about website security, OWASP risks, security headers, SSL/TLS, API security, security testing, remediation, and security concepts.
           </p>
         </header>
 
@@ -145,7 +159,7 @@ const BlogLanding = () => {
               In today's digital landscape, a strong security posture is not optional. Attackers constantly scan for weaknesses like security misconfiguration, exposed information, weak security headers, and insecure authentication or session configurations.
             </p>
             <p>
-              A single oversightâ€”such as exposed APIs, outdated software dependencies, poor TLS/HTTPS configuration, or client-side JavaScript exposureâ€”can lead to severe breaches. Proactive security assessment helps you stay ahead of the threats.
+              A single oversight&mdash;such as exposed APIs, outdated software dependencies, poor TLS/HTTPS configuration, or client-side JavaScript exposure&mdash;can lead to severe breaches. Proactive security assessment helps you stay ahead of the threats.
             </p>
           </div>
         </section>
