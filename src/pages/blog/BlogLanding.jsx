@@ -26,29 +26,95 @@ const BlogLanding = () => {
 
   // SEO setup
   useEffect(() => {
-    document.title = "Security Blog | URLScannerOnline";
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement('meta');
-      metaDesc.name = "description";
-      document.head.appendChild(metaDesc);
+    // 1. Record previous states
+    const prevTitle = document.title;
+
+    const descTag = document.querySelector('meta[name="description"]');
+    const prevDesc = descTag ? descTag.content : null;
+
+    const canonicalTag = document.querySelector('link[rel="canonical"]');
+    const prevCanonical = canonicalTag ? canonicalTag.href : null;
+
+    const prevMeta = {};
+
+    const setMetaProperty = (selector, attr, prop, content) => {
+      let tag = document.querySelector(selector);
+      let created = false;
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute(attr, prop);
+        document.head.appendChild(tag);
+        created = true;
+      } else {
+        prevMeta[selector] = tag.content;
+      }
+      tag.content = content;
+      return { tag, created, selector };
+    };
+
+    // 2. Set new states
+    document.title = "Website Security Blog | Security Guides & Best Practices | URLScanOnline";
+
+    let activeDesc = descTag;
+    let createdDesc = false;
+    if (!activeDesc) {
+      activeDesc = document.createElement('meta');
+      activeDesc.name = "description";
+      document.head.appendChild(activeDesc);
+      createdDesc = true;
     }
-    metaDesc.content = "Practical security guides for websites, web applications, APIs, and online businesses by URLScannerOnline.";
-    
-    let linkCanonical = document.querySelector('link[rel="canonical"]');
-    if (!linkCanonical) {
-      linkCanonical = document.createElement('link');
-      linkCanonical.rel = "canonical";
-      document.head.appendChild(linkCanonical);
+    activeDesc.content = "Practical website security guides covering security headers, SSL/TLS, CSP, CORS, cookies, APIs, DNS, email security and common website misconfigurations.";
+
+    let activeCanonical = canonicalTag;
+    let createdCanonical = false;
+    if (!activeCanonical) {
+      activeCanonical = document.createElement('link');
+      activeCanonical.rel = "canonical";
+      document.head.appendChild(activeCanonical);
+      createdCanonical = true;
     }
-    linkCanonical.href = "https://www.urlscanonline.com/blog";
+    activeCanonical.href = "https://www.urlscanonline.com/blog";
+
+    const managedTags = [];
+    managedTags.push(setMetaProperty('meta[property="og:title"]', 'property', 'og:title', 'Website Security Blog | Security Guides & Best Practices | URLScanOnline'));
+    managedTags.push(setMetaProperty('meta[property="og:description"]', 'property', 'og:description', 'Practical website security guides covering security headers, SSL/TLS, CSP, CORS, cookies, APIs, DNS, email security and common website misconfigurations.'));
+    managedTags.push(setMetaProperty('meta[property="og:url"]', 'property', 'og:url', 'https://www.urlscanonline.com/blog'));
+    managedTags.push(setMetaProperty('meta[property="og:type"]', 'property', 'og:type', 'website'));
+    managedTags.push(setMetaProperty('meta[name="twitter:card"]', 'name', 'twitter:card', 'summary'));
+    managedTags.push(setMetaProperty('meta[name="twitter:title"]', 'name', 'twitter:title', 'Website Security Blog | Security Guides & Best Practices | URLScanOnline'));
+    managedTags.push(setMetaProperty('meta[name="twitter:description"]', 'name', 'twitter:description', 'Practical website security guides covering security headers, SSL/TLS, CSP, CORS, cookies, APIs, DNS, email security and common website misconfigurations.'));
+
+    // Cleanup on unmount
+    return () => {
+      document.title = prevTitle;
+
+      if (createdDesc) {
+        activeDesc.remove();
+      } else if (prevDesc !== null) {
+        activeDesc.content = prevDesc;
+      }
+
+      if (createdCanonical) {
+        activeCanonical.remove();
+      } else if (prevCanonical !== null) {
+        activeCanonical.href = prevCanonical;
+      }
+
+      managedTags.forEach(({ tag, created, selector }) => {
+        if (created) {
+          tag.remove();
+        } else if (prevMeta[selector] !== undefined) {
+          tag.content = prevMeta[selector];
+        }
+      });
+    };
   }, []);
 
   const filteredArticles = articles.filter(article => {
     const matchesCategory = selectedCategory === "All" || article.category === selectedCategory;
     const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = 
-      article.title.toLowerCase().includes(searchLower) || 
+    const matchesSearch =
+      article.title.toLowerCase().includes(searchLower) ||
       article.excerpt.toLowerCase().includes(searchLower) ||
       article.category.toLowerCase().includes(searchLower);
     return matchesCategory && matchesSearch;
@@ -59,10 +125,10 @@ const BlogLanding = () => {
   return (
     <div className="flex flex-col min-h-screen bg-slate-950 text-slate-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
-        
+
         {/* HEADER */}
         <header className="mb-16 text-center max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-50 mb-6">SECURITY BLOG</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-50 mb-6">Website Security Blog</h1>
           <p className="text-xl text-slate-400">
             Practical security guides for websites, web applications, APIs, and online businesses.
           </p>
@@ -79,7 +145,7 @@ const BlogLanding = () => {
               In today's digital landscape, a strong security posture is not optional. Attackers constantly scan for weaknesses like security misconfiguration, exposed information, weak security headers, and insecure authentication or session configurations.
             </p>
             <p>
-              A single oversight—such as exposed APIs, outdated software dependencies, poor TLS/HTTPS configuration, or client-side JavaScript exposure—can lead to severe breaches. Proactive security assessment helps you stay ahead of the threats.
+              A single oversightâ€”such as exposed APIs, outdated software dependencies, poor TLS/HTTPS configuration, or client-side JavaScript exposureâ€”can lead to severe breaches. Proactive security assessment helps you stay ahead of the threats.
             </p>
           </div>
         </section>
@@ -119,8 +185,8 @@ const BlogLanding = () => {
                   key={category}
                   onClick={() => setSelectedCategory(category)}
                   className={`text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                    selectedCategory === category 
-                      ? 'bg-indigo-600 text-white font-medium' 
+                    selectedCategory === category
+                      ? 'bg-indigo-600 text-white font-medium'
                       : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
                   }`}
                 >
@@ -136,9 +202,9 @@ const BlogLanding = () => {
               <h2 className="text-2xl font-bold text-slate-50">Latest Security Articles</h2>
               <div className="relative w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                <input 
-                  type="text" 
-                  placeholder="Search articles..." 
+                <input
+                  type="text"
+                  placeholder="Search articles..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-800 text-slate-200 text-sm rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
@@ -173,7 +239,7 @@ const BlogLanding = () => {
         <section className="mt-20 text-center bg-indigo-900/20 border border-indigo-500/30 rounded-2xl p-12">
           <h2 className="text-3xl font-bold text-slate-50 mb-4">Want to check your website's security posture?</h2>
           <p className="text-xl text-indigo-200 mb-8 max-w-2xl mx-auto">
-            Run a passive security scan with URLScannerOnline. Helps identify potential security issues like missing headers, exposed files, and misconfigurations.
+            Run a passive security scan with URLScanOnline. Helps identify potential security issues like missing headers, exposed files, and misconfigurations.
           </p>
           <Link to="/scan" className="inline-flex items-center justify-center px-6 py-3 rounded-lg text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 transition-colors">
             Run a Free Scan

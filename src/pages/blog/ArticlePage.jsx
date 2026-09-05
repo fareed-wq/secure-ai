@@ -10,40 +10,73 @@ const ArticlePage = () => {
 
   useEffect(() => {
     if (article) {
-      document.title = `${article.title} | URLScannerOnline`;
+      // 1. Record previous states
+      const prevTitle = document.title;
 
-      let metaDesc = document.querySelector('meta[name="description"]');
-      if (!metaDesc) {
-        metaDesc = document.createElement('meta');
-        metaDesc.name = "description";
-        document.head.appendChild(metaDesc);
-      }
-      metaDesc.content = article.excerpt;
+      const descTag = document.querySelector('meta[name="description"]');
+      const prevDesc = descTag ? descTag.content : null;
 
-      let linkCanonical = document.querySelector('link[rel="canonical"]');
-      if (!linkCanonical) {
-        linkCanonical = document.createElement('link');
-        linkCanonical.rel = "canonical";
-        document.head.appendChild(linkCanonical);
-      }
-      linkCanonical.href = `https://www.urlscanonline.com/blog/${article.slug}`;
+      const canonicalTag = document.querySelector('link[rel="canonical"]');
+      const prevCanonical = canonicalTag ? canonicalTag.href : null;
 
-      // Open Graph Tags
-      const setMetaProperty = (prop, content) => {
-        let tag = document.querySelector(`meta[property="${prop}"]`);
+      // Map to store previous values of other meta tags
+      const prevMeta = {};
+
+      const setMetaProperty = (selector, attr, prop, content) => {
+        let tag = document.querySelector(selector);
+        let created = false;
         if (!tag) {
           tag = document.createElement('meta');
-          tag.setAttribute('property', prop);
+          tag.setAttribute(attr, prop);
           document.head.appendChild(tag);
+          created = true;
+        } else {
+          prevMeta[selector] = tag.content;
         }
         tag.content = content;
+        return { tag, created, selector };
       };
-      setMetaProperty('og:title', `${article.title} | URLScannerOnline`);
-      setMetaProperty('og:description', article.excerpt);
-      setMetaProperty('og:url', `https://www.urlscanonline.com/blog/${article.slug}`);
-      setMetaProperty('og:type', 'article');
 
-      // Structured Data
+      // 2. Set new states
+      document.title = `${article.title} | URLScanOnline`;
+
+      let activeDesc = descTag;
+      let createdDesc = false;
+      if (!activeDesc) {
+        activeDesc = document.createElement('meta');
+        activeDesc.name = "description";
+        document.head.appendChild(activeDesc);
+        createdDesc = true;
+      }
+      activeDesc.content = article.excerpt || article.metaDescription;
+
+      let activeCanonical = canonicalTag;
+      let createdCanonical = false;
+      if (!activeCanonical) {
+        activeCanonical = document.createElement('link');
+        activeCanonical.rel = "canonical";
+        document.head.appendChild(activeCanonical);
+        createdCanonical = true;
+      }
+      activeCanonical.href = `https://www.urlscanonline.com/blog/${article.slug}`;
+
+      const managedTags = [];
+      managedTags.push(setMetaProperty('meta[property="og:title"]', 'property', 'og:title', `${article.title} | URLScanOnline`));
+      managedTags.push(setMetaProperty('meta[property="og:description"]', 'property', 'og:description', article.excerpt));
+      managedTags.push(setMetaProperty('meta[property="og:url"]', 'property', 'og:url', `https://www.urlscanonline.com/blog/${article.slug}`));
+      managedTags.push(setMetaProperty('meta[property="og:type"]', 'property', 'og:type', 'article'));
+      if (article.image) {
+        managedTags.push(setMetaProperty('meta[property="og:image"]', 'property', 'og:image', article.image));
+      }
+
+      managedTags.push(setMetaProperty('meta[name="twitter:card"]', 'name', 'twitter:card', 'summary_large_image'));
+      managedTags.push(setMetaProperty('meta[name="twitter:title"]', 'name', 'twitter:title', `${article.title} | URLScanOnline`));
+      managedTags.push(setMetaProperty('meta[name="twitter:description"]', 'name', 'twitter:description', article.excerpt));
+      if (article.image) {
+        managedTags.push(setMetaProperty('meta[name="twitter:image"]', 'name', 'twitter:image', article.image));
+      }
+
+      // Structured Data - BlogPosting
       let scriptSchema = document.querySelector('#schema-article');
       if (!scriptSchema) {
         scriptSchema = document.createElement('script');
@@ -58,13 +91,35 @@ const ArticlePage = () => {
         "headline": article.title,
         "description": article.excerpt,
         "url": `https://www.urlscanonline.com/blog/${article.slug}`,
+        "mainEntityOfPage": {
+          "@type": "WebPage",
+          "@id": `https://www.urlscanonline.com/blog/${article.slug}`
+        },
         "publisher": {
           "@type": "Organization",
-          "name": "URLScannerOnline"
+          "name": "URLScanOnline"
         }
       };
 
-      // FAQ Schema (if article has faqs)
+      if (article.author) {
+        schema.author = {
+          "@type": "Organization",
+          "name": article.author
+        };
+      }
+
+      if (article.image) {
+        schema.image = article.image;
+      }
+
+      if (article.datePublished) {
+        schema.datePublished = article.datePublished;
+      }
+
+      if (article.dateModified) {
+        schema.dateModified = article.dateModified;
+      }
+
       if (article.faqs && article.faqs.length > 0) {
         schema.mainEntity = article.faqs.map(faq => ({
           "@type": "Question",
@@ -77,6 +132,69 @@ const ArticlePage = () => {
       }
 
       scriptSchema.textContent = JSON.stringify(schema);
+
+      // Structured Data - BreadcrumbList
+      let breadcrumbSchema = document.querySelector('#schema-breadcrumb');
+      if (!breadcrumbSchema) {
+        breadcrumbSchema = document.createElement('script');
+        breadcrumbSchema.id = "schema-breadcrumb";
+        breadcrumbSchema.type = "application/ld+json";
+        document.head.appendChild(breadcrumbSchema);
+      }
+
+      const breadcrumbData = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.urlscanonline.com/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Security Blog",
+            "item": "https://www.urlscanonline.com/blog"
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": article.title,
+            "item": `https://www.urlscanonline.com/blog/${article.slug}`
+          }
+        ]
+      };
+      breadcrumbSchema.textContent = JSON.stringify(breadcrumbData);
+
+      // Cleanup on unmount
+      return () => {
+        document.title = prevTitle;
+
+        if (createdDesc) {
+          activeDesc.remove();
+        } else if (prevDesc !== null) {
+          activeDesc.content = prevDesc;
+        }
+
+        if (createdCanonical) {
+          activeCanonical.remove();
+        } else if (prevCanonical !== null) {
+          activeCanonical.href = prevCanonical;
+        }
+
+        managedTags.forEach(({ tag, created, selector }) => {
+          if (created) {
+            tag.remove();
+          } else if (prevMeta[selector] !== undefined) {
+            tag.content = prevMeta[selector];
+          }
+        });
+
+        if (scriptSchema) scriptSchema.remove();
+        if (breadcrumbSchema) breadcrumbSchema.remove();
+      };
     }
   }, [article]);
 
@@ -251,7 +369,7 @@ const ArticlePage = () => {
           <div className="relative z-10">
             <h2 className="text-2xl font-bold text-slate-50 mb-4">Ready to check your website's security posture?</h2>
             <p className="text-lg text-indigo-200/80 mb-8 max-w-xl mx-auto">
-              Run a passive security scan with URLScannerOnline to identify potential website security issues.
+              Run a passive security scan with URLScanOnline to identify potential website security issues.
             </p>
             <Link to="/scan" className="inline-flex items-center justify-center px-8 py-3.5 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5">
               Run a Free Scan
