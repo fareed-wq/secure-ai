@@ -1,43 +1,60 @@
-import React, { useEffect } from 'react';
-import { CreditCard, Clock, CheckCircle2, Shield, Zap, Building2 } from 'lucide-react';
-
+import React from 'react';
+import { CreditCard, CheckCircle2, Shield, Zap, Rocket } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 
 const Pricing = () => {
   useSEO({
-    title: 'Pricing',
-    description: 'Simple, transparent pricing for URLScannerOnline. Free to start, upgrade when you need to.',
+    title: 'Pricing & Access Plans | URLScanOnline',
+    description: 'Compare URLScanOnline Guest and Free Account features and preview upcoming Paid Account capabilities including scan comparison, scheduled scans and email reports.',
     path: '/pricing'
   });
 
-  const plannedPlans = [
+  const accessPlans = [
     {
-      name: "Starter",
+      name: "Guest",
+      status: "AVAILABLE NOW",
+      statusColor: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
       icon: <Shield className="w-6 h-6 text-indigo-400" />,
       features: [
-        "Basic security scanning",
-        "Security reports",
-        "Scan history"
-      ]
+        "Basic security scan",
+        "Passive security checks",
+        "Security findings and report",
+        "No account required"
+      ],
+      ctaText: "Start Basic Scan",
+      ctaLink: "/scan",
+      disabled: false
     },
     {
-      name: "Professional",
+      name: "Free Account",
+      status: "AVAILABLE NOW",
+      statusColor: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
       icon: <Zap className="w-6 h-6 text-purple-400" />,
       features: [
-        "Advanced scanning",
-        "Scan comparison",
-        "Detailed findings",
-        "Exportable reports"
-      ]
+        "Everything in Guest",
+        "Advanced security scanning",
+        "Scan history and saved reports",
+        "Account-based scan management"
+      ],
+      ctaText: "Create Free Account",
+      ctaLink: "/register",
+      disabled: false
     },
     {
-      name: "Business",
-      icon: <Building2 className="w-6 h-6 text-emerald-400" />,
+      name: "Paid Account",
+      status: "COMING SOON",
+      statusColor: "text-amber-400 bg-amber-400/10 border-amber-400/20",
+      icon: <Rocket className="w-6 h-6 text-amber-400" />,
       features: [
-        "Team access",
-        "Higher scan limits",
-        "Centralized reporting"
-      ]
+        "Everything in Free Account",
+        "Scan Comparison",
+        "Scheduled Scans",
+        "Email Reports"
+      ],
+      ctaText: "Coming Soon",
+      ctaLink: "#",
+      disabled: true
     }
   ];
 
@@ -51,57 +68,79 @@ const Pricing = () => {
         <div className="relative z-10 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-sm font-semibold mb-6">
             <CreditCard className="w-4 h-4" />
-            Pricing
+            Pricing & Access
           </div>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-50 mb-6 tracking-tight">
-            Plans are coming soon
+            Choose How You Scan
           </h1>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 font-medium mb-6">
-            <Clock className="w-5 h-5" />
-            In Development
-          </div>
           <div className="text-lg md:text-xl text-slate-400 leading-relaxed max-w-2xl mx-auto space-y-4">
             <p>
-              We're currently finalizing our plans and pricing for URLScannerOnline.
+              Start scanning without an account, create a free account for additional features, or access more automation and comparison tools with our upcoming paid plan.
             </p>
-            <p>
-              Our goal is to offer flexible options for individuals, security professionals, and organizations, with pricing based on features, scan usage, and reporting capabilities.
-            </p>
-            <p className="text-slate-500 text-base">
-              Pricing and plan details will be published once the service is ready for public use.
+            <p className="text-slate-500 text-base mt-6">
+              Guest and Free Account access are available now. Paid Account features and pricing are currently in development.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Planned Plans */}
+      {/* Access Options */}
       <section className="max-w-6xl mx-auto px-4 md:px-0">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-slate-50 mb-4">Plans in Development</h2>
+          <h2 className="text-3xl font-bold text-slate-50 mb-4">Access Options</h2>
           <p className="text-slate-400 max-w-2xl mx-auto">
-            The following tiers represent our planned feature breakdown. These plans are not currently available and details are subject to change.
+            Choose the level that fits how you use URLScanOnline. Guest and Free Account access are available today, while the Paid Account is coming soon.
           </p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plannedPlans.map((plan, idx) => (
-            <div 
-              key={idx} 
-              className="flex flex-col rounded-3xl border border-slate-800 bg-slate-900/50 p-8 select-none"
+          {accessPlans.map((plan, idx) => (
+            <div
+              key={idx}
+              className={`flex flex-col rounded-3xl border ${plan.disabled ? 'border-amber-500/20 bg-slate-900/40 relative overflow-hidden' : 'border-slate-800 bg-slate-900/50'} p-8`}
             >
-              <div className="w-12 h-12 rounded-xl border border-slate-700 bg-slate-800/50 flex items-center justify-center mb-6">
-                {plan.icon}
+              {plan.disabled && (
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-bl-full pointer-events-none" />
+              )}
+
+              <div className="flex items-center justify-between mb-6">
+                <div className={`w-12 h-12 rounded-xl border ${plan.disabled ? 'border-amber-500/20 bg-amber-500/10' : 'border-slate-700 bg-slate-800/50'} flex items-center justify-center`}>
+                  {plan.icon}
+                </div>
+                <div className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${plan.statusColor}`}>
+                  {plan.status}
+                </div>
               </div>
+
               <h3 className="text-2xl font-bold text-slate-50 mb-2">{plan.name}</h3>
+
+              {plan.disabled && (
+                <div className="text-amber-400/80 font-medium text-sm mb-2">
+                  Pricing to be announced
+                </div>
+              )}
+
               <div className="flex-1 mt-6">
                 <ul className="space-y-4">
                   {plan.features.map((feature, fIdx) => (
-                    <li key={fIdx} className="flex items-start gap-3 text-slate-300">
-                      <CheckCircle2 className="w-5 h-5 text-indigo-400/70 shrink-0 mt-0.5" />
+                    <li key={fIdx} className={`flex items-start gap-3 ${plan.disabled ? 'text-slate-400' : 'text-slate-300'}`}>
+                      <CheckCircle2 className={`w-5 h-5 shrink-0 mt-0.5 ${plan.disabled ? 'text-amber-500/50' : 'text-indigo-400/70'}`} />
                       <span>{feature}</span>
                     </li>
                   ))}
                 </ul>
+              </div>
+
+              <div className="mt-8 pt-6 border-t border-slate-800/60">
+                {plan.disabled ? (
+                  <button disabled className="w-full py-3 px-4 rounded-xl font-medium text-center transition-colors bg-slate-800/50 text-slate-500 border border-slate-700 cursor-not-allowed">
+                    {plan.ctaText}
+                  </button>
+                ) : (
+                  <Link to={plan.ctaLink} className="w-full block py-3 px-4 rounded-xl font-medium text-center transition-colors bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/20">
+                    {plan.ctaText}
+                  </Link>
+                )}
               </div>
             </div>
           ))}
