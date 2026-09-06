@@ -158,7 +158,7 @@ const About = () => {
             </div>
           </div>
           <div className="mt-8 text-center">
-            <Link to="/services/scanner-capabilities" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors" onClick={() => window.scrollTo({ top: 0, behavior: 'auto' })}>
+            <Link to="/services/scanner-capabilities" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
               Compare all scanner capabilities &rarr;
             </Link>
           </div>

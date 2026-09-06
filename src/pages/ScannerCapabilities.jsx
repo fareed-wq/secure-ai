@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { ChevronRight, History, CalendarClock, ArrowRightLeft } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
 import { Link } from 'react-router-dom';
 
 const ScannerCapabilities = () => {
+  const topRef = useRef(null);
+
+  useLayoutEffect(() => {
+    topRef.current?.scrollIntoView({
+      behavior: 'auto',
+      block: 'start'
+    });
+  }, []);
   useSEO({
     title: 'Website Security Scanner Capabilities | URLScanOnline',
     description: 'Compare URLScanOnline Basic and Advanced website security scans, including security checks, scan history, comparison tools and upcoming scheduled scans.',
@@ -11,7 +19,7 @@ const ScannerCapabilities = () => {
   });
 
   return (
-    <div className="space-y-12 pb-12 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+    <div ref={topRef} className="space-y-12 pb-12 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
 
       {/* BREADCRUMB */}
       <nav className="flex items-center text-sm font-medium text-slate-400 mb-6 space-x-2">
