@@ -72,13 +72,13 @@ def test_missing_default_src_uncovered_fetch():
 def test_default_src_none_no_object_src():
     headers = {"Content-Security-Policy": "default-src 'none'"}
     findings = run_csp(headers)
-    obj = [f for f in findings if f["name"] == "CSP Object Sources Not Explicitly Disabled"]
+    obj = [f for f in findings if f["name"] == "CSP Object Sources Not Restricted"]
     assert len(obj) == 0
 
 def test_default_src_self_no_object_src():
     headers = {"Content-Security-Policy": "default-src 'self'"}
     findings = run_csp(headers)
-    obj = [f for f in findings if f["name"] == "CSP Object Sources Not Explicitly Disabled"]
+    obj = [f for f in findings if f["name"] == "CSP Object Sources Not Restricted"]
     assert len(obj) == 1
 
 def test_strict_dynamic_without_nonce_does_not_mitigate_http():
@@ -191,7 +191,7 @@ def test_orchestrator_executes_csp_quality_module():
         orch_mod.get_http_session = old_get_http
         orch_mod.safe_request = old_safe_req
 
-    csp_findings = [f for f in results if f.get("name") in ["Weak Content-Security-Policy", "CSP Object Sources Not Explicitly Disabled"]]
+    csp_findings = [f for f in results if f.get("name") in ["Weak Content-Security-Policy", "CSP Object Sources Not Restricted"]]
     assert len(csp_findings) == 2, "Expected CSPQualityModule findings from the passive scan"
     assert csp_findings[0]["domain"] == "browser_defense", "Finding should have correct domain"
     assert csp_findings[1]["domain"] == "browser_defense", "Finding should have correct domain"

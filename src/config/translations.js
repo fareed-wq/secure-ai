@@ -43,18 +43,18 @@ export const CATEGORY_METADATA = {
 
 export const TRANSLATIONS = {
   "CSP Missing Default Source Fallback": {
-    name: "Missing Default Injection Guard",
+    name: "CSP Missing Default Source Fallback",
     category: "Browser Protection",
     impact: "Low",
-    problem: "Your website restricts some resources but forgets to set a default safe list for others.",
-    why: "If new features are added to your site, they might be unprotected against attacks by default."
+    problem: "Your website restricts some resources but lacks a default-src fallback to cover unspecified resource types.",
+    why: "While explicitly configured individual directives are valid, missing default-src is not automatically an XSS vulnerability, but it weakens defense-in-depth."
   },
-  "CSP Object Sources Not Explicitly Disabled": {
-    name: "Missing Legacy Plugin Guard",
+  "CSP Object Sources Not Restricted": {
+    name: "CSP Object Sources Not Restricted",
     category: "Browser Protection",
     impact: "Low",
-    problem: "Your website does not explicitly disable object sources.",
-    why: "While most modern browsers disable plugins, explicitly restricting object-src provides comprehensive defense-in-depth."
+    problem: "Your website does not explicitly restrict object sources.",
+    why: "Explicitly restricting object-src reduces unnecessary executable or embed attack surfaces via <object> and <embed> tags."
   },
 
   "Port 21 Publicly Reachable (FTP-associated)": {
@@ -115,26 +115,19 @@ export const TRANSLATIONS = {
     problem: "The scanner checked your website's rules for loading scripts and found them to be too permissive.",
     why: "Loose rules increase the risk of malicious code running and stealing private visitor information."
   },
-  "Missing X-Frame-Options": {
-    name: "Missing Clickjacking Protection (X-Frame-Options)",
+  "Missing Clickjacking Protection": {
+    name: "Missing Clickjacking Protection",
     category: "Browser Protection",
     impact: "Medium",
-    problem: "The scanner found your website lacks rules stopping others from embedding your pages inside hidden frames.",
+    problem: "The scanner found your website lacks clickjacking protections such as X-Frame-Options or CSP frame-ancestors.",
     why: "Another site could place your pages behind invisible buttons to trick visitors into unwanted actions."
   },
-  "Missing X-Frame-Options Header": {
-    name: "Missing Clickjacking Protection (X-Frame-Options)",
-    category: "Browser Protection",
-    impact: "Medium",
-    problem: "The scanner found your website lacks rules stopping others from embedding your pages inside hidden frames.",
-    why: "Another site could place your pages behind invisible buttons to trick visitors into unwanted actions."
-  },
-  "Missing X-Content-Type-Options": {
-    name: "Missing Malicious File Guard (nosniff)",
+  "Missing or Invalid X-Content-Type-Options": {
+    name: "Missing MIME Sniffing Protection",
     category: "Browser Protection",
     impact: "Low",
-    problem: "The scanner detected your server doesn't tell browsers to strictly trust the file types it sends.",
-    why: "Browsers might misidentify files, accidentally running harmful programs disguised as normal images or documents."
+    problem: "The scanner detected your server doesn't securely configure X-Content-Type-Options: nosniff.",
+    why: "Browsers might misidentify files, accidentally running scripts hidden in normal images or documents."
   },
   "Missing Referrer-Policy": {
     name: "Missing External Link Privacy (Referrer-Policy)",
@@ -150,19 +143,19 @@ export const TRANSLATIONS = {
     problem: "The scanner noted your website doesn't restrict external tools from requesting device camera or location access.",
     why: "Third-party ads or widgets could potentially ask for a visitor's device features without your oversight."
   },
-  "Missing Cross-Origin-Opener-Policy": {
-    name: "Missing Cross-Window Isolation (COOP)",
+  "COOP Not Configured": {
+    name: "COOP Not Configured",
     category: "Browser Protection",
     impact: "Informational",
-    problem: "The scanner found your website shares its working memory with external links opening in new tabs.",
-    why: "A malicious page opened from a link on your site could potentially monitor user activity."
+    problem: "The scanner observed your website does not enforce Cross-Origin Opener Policy (COOP).",
+    why: "COOP provides advanced browsing-context isolation where stronger cross-origin isolation is required, though it is not strictly necessary for ordinary sites."
   },
-  "Missing Cross-Origin-Embedder-Policy": {
-    name: "Missing Cross-Origin Resource Isolation (COEP)",
+  "COEP Not Configured": {
+    name: "COEP Not Configured",
     category: "Browser Protection",
     impact: "Informational",
-    problem: "The scanner found your website loads external files without requiring strict permission safety checks.",
-    why: "This prevents web browsers from isolating your site's memory, potentially exposing user data to leaks."
+    problem: "The scanner observed your website does not enforce Cross-Origin Embedder Policy (COEP).",
+    why: "COEP is an advanced browser hardening feature that restricts third-party embeds. It is not universally appropriate for standard websites."
   },
   "Missing Cross-Origin-Resource-Policy": {
     name: "Unprotected Cross-Origin Assets (CORP)",
@@ -360,12 +353,12 @@ export const TRANSLATIONS = {
     problem: "The scanner detected a completely unencrypted web service port running directly on your main server.",
     why: "Any customer using this port without redirection sends their data completely unprotected over the network."
   },
-  "Missing Cross-Origin Attribute for SRI Verification": {
-    name: "Missing Cross-Origin Attribute (SRI)",
+  "Missing crossorigin for SRI Resource": {
+    name: "Missing crossorigin for SRI Resource",
     category: "Browser Protection",
     impact: "Low",
-    problem: "A cross-origin resource using Subresource Integrity may require compatible cross-origin fetching so the browser can successfully perform integrity verification.",
-    why: "The external resource may fail integrity validation/loading depending on the resource and CORS configuration."
+    problem: "A third-party script uses SRI but is missing a valid CORS mode attribute like crossorigin='anonymous'.",
+    why: "The browser requires CORS to verify SRI hashes for third-party scripts. Without it, the script might fail to load."
   },
   "Malformed Subresource Integrity (SRI) Attribute": {
     name: "Malformed SRI Hash",
@@ -374,10 +367,11 @@ export const TRANSLATIONS = {
     problem: "The integrity attribute on an external resource does not contain valid SRI metadata.",
     why: "The browser may reject the resource because its integrity information cannot be validated correctly."
   },
-  "Missing Subresource Integrity (SRI) on Third-Party Asset": {
-    name: "Missing Subresource Integrity (SRI)",
+  "Missing Subresource Integrity": {
+    name: "Missing Subresource Integrity",
     category: "Browser Protection",
-    problem: "The page loads a static third-party script or supported external asset without cryptographically verifying its contents.",
-    why: "If that third-party hosted resource or delivery path is compromised, modified code could be delivered to site visitors."
+    impact: "Informational",
+    problem: "An externally hosted script was loaded without Subresource Integrity (SRI).",
+    why: "SRI protects stable third-party resources against unexpected modification, but it is not practical for resources that change dynamically."
   }
 };

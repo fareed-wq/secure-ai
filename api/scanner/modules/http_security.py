@@ -650,7 +650,8 @@ class SecurityHeadersModule(ScannerModule):
                 category="http_headers"
             ))
 
-        has_xfo = bool(self.get_header_safe(resp, "X-Frame-Options"))
+        xfo_header = self.get_header_safe(resp, "X-Frame-Options") or ""
+        has_xfo = xfo_header.strip().upper() in ("DENY", "SAMEORIGIN")
         has_effective_fa = False
         if csp:
             for directive in csp.split(';'):
@@ -663,7 +664,7 @@ class SecurityHeadersModule(ScannerModule):
 
         if not is_api_response and not has_xfo and not has_effective_fa:
             findings.append(self.make_finding(
-                "Missing X-Frame-Options",
+                "Missing Clickjacking Protection",
                 "Medium",
                 "Your website is missing a rule that prevents it from being embedded inside a hidden frame on another website.",
                 "Header not found in response",
@@ -673,12 +674,14 @@ class SecurityHeadersModule(ScannerModule):
                 category="http_headers"
             ))
 
-        if not self.get_header_safe(resp, "X-Content-Type-Options"):
+        xcto = self.get_header_safe(resp, "X-Content-Type-Options")
+        if not xcto or xcto.strip().lower() != "nosniff":
+            evidence = "Header not found in response" if not xcto else f"Invalid value: {xcto}"
             findings.append(self.make_finding(
-                "Missing X-Content-Type-Options",
-                "Informational",
+                "Missing or Invalid X-Content-Type-Options",
+                "Low",
                 "Your website is missing a rule that stops browsers from guessing what kind of file they are downloading.",
-                "Header not found in response",
+                evidence,
                 impact="Missing X-Content-Type-Options allows more browser MIME interpretation behavior (MIME sniffing), which can lead to unexpected script execution.",
                 remediation="Set X-Content-Type-Options: nosniff to prevent browsers from MIME-sniffing the response.",
                 owasp="A05: Security Misconfiguration",
@@ -776,12 +779,12 @@ class SecurityHeadersModule(ScannerModule):
                 # 2. Missing SRI
                 if missing_sri:
                     findings.append(self.make_finding(
-                        "Missing Subresource Integrity (SRI) on Third-Party Asset",
-                        "Low",
-                        description="External static resources are loaded without cryptographic integrity verification.",
-                        evidence="\\n".join(missing_sri[:5]) + ("\\n... and others" if len(missing_sri) > 5 else ""),
-                        impact="This can increase supply-chain exposure if that third-party resource is unexpectedly modified.",
-                        remediation="Add integrity='sha384-...' and crossorigin='anonymous' attributes to all external script tags.",
+                        "Missing Subresource Integrity",
+                        "Informational",
+                        description="An externally hosted script was loaded without Subresource Integrity. SRI can protect stable third-party resources against unexpected modification, but it may not be practical for resources that change dynamically.",
+                        evidence="\n".join(missing_sri[:5]) + ("\n... and others" if len(missing_sri) > 5 else ""),
+                        impact="This can increase supply-chain exposure if a static third-party resource is unexpectedly modified.",
+                        remediation="Use SRI for stable, versioned third-party scripts where the provider supports CORS and the resource contents are expected to remain fixed. Consider self-hosting critical dependencies where appropriate.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
                         confidence="High"
@@ -802,12 +805,12 @@ class SecurityHeadersModule(ScannerModule):
 
                 if missing_co:
                     findings.append(self.make_finding(
-                        "Missing Cross-Origin Attribute for SRI Verification",
+                        "Missing crossorigin for SRI Resource",
                         "Low",
                         description="A third-party script uses SRI but is missing the required crossorigin attribute.",
-                        evidence="\\n".join(missing_co[:5]),
+                        evidence="\n".join(missing_co[:5]),
                         impact="The browser requires Cross-Origin Resource Sharing (CORS) to verify SRI hashes for third-party scripts. Without this attribute, verification may fail or the script might not load properly.",
-                        remediation="Add crossorigin='anonymous' to the script tag.",
+                        remediation="Add crossorigin='anonymous' or another valid CORS mode to the script tag.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
                         confidence="High"
@@ -872,58 +875,35 @@ class AdvancedSecurityHeadersModule(ScannerModule):
             corp = self.get_header_safe(resp, "Cross-Origin-Resource-Policy")
 
             if not is_api_response:
-                weak = []
-                missing = []
+                coop_val = coop.strip().lower() if coop else ""
+                if coop_val not in ("same-origin", "same-origin-allow-popups"):
+                    evidence = "Header not found in response" if not coop_val else f"Configured as: {coop}"
+                    findings.append(self.make_finding(
+                        "COOP Not Configured",
+                        "Informational",
+                        "Your website does not enforce Cross-Origin Opener Policy (COOP).",
+                        evidence,
+                        impact="COOP provides additional browsing-context isolation and is relevant where stronger cross-origin isolation is desired.",
+                        remediation="Set Cross-Origin-Opener-Policy: same-origin if strict isolation from cross-origin popups is required.",
+                        owasp="Not Mapped",
+                        category="http_headers"
+                    ))
 
-                if not coop:
-                    missing.append("Cross-Origin-Opener-Policy")
-                elif coop.lower() == "unsafe-none":
-                    weak.append(f"COOP: {coop}")
-
-                if not coep:
-                    missing.append("Cross-Origin-Embedder-Policy")
-                elif coep.lower() == "unsafe-none":
-                    weak.append(f"COEP: {coep}")
+                coep_val = coep.strip().lower() if coep else ""
+                if coep_val not in ("require-corp", "credentialless"):
+                    evidence = "Header not found in response" if not coep_val else f"Configured as: {coep}"
+                    findings.append(self.make_finding(
+                        "COEP Not Configured",
+                        "Informational",
+                        "Your website does not enforce Cross-Origin Embedder Policy (COEP).",
+                        evidence,
+                        impact="COEP is an advanced browser hardening feature for cross-origin isolation. It is not universally appropriate and may affect third-party embeds.",
+                        remediation="Set Cross-Origin-Embedder-Policy: require-corp only if cross-origin isolation is explicitly needed.",
+                        owasp="Not Mapped",
+                        category="http_headers"
+                    ))
 
                 if not corp:
-                    missing.append("Cross-Origin-Resource-Policy")
-                elif corp.lower() == "unsafe-none":
-                    weak.append(f"CORP: {corp}")
-
-                if weak:
-                    findings.append(self.make_finding(
-                        "Weak Cross-Origin Isolation",
-                        "Low",
-                        "Your website is explicitly configured with weak cross-origin isolation policies.",
-                        ", ".join(weak),
-                        remediation="Configure COOP and COEP to restrict cross-origin interactions.",
-                        owasp="A05: Security Misconfiguration",
-                        category="http_headers"
-                    ))
-
-                if "Cross-Origin-Opener-Policy" in missing:
-                    findings.append(self.make_finding(
-                        "Missing COOP Header",
-                        "Informational",
-                        "Your website is missing the Cross-Origin-Opener-Policy (COOP) security rule.",
-                        "Header not found in response",
-                        impact="Malicious websites that open your site in a pop-up might be able to spy on what your users are doing.",
-                        remediation="Set Cross-Origin-Opener-Policy: same-origin to isolate your browsing context from cross-origin popups.",
-                        owasp="Not Mapped",
-                        category="http_headers"
-                    ))
-                if "Cross-Origin-Embedder-Policy" in missing:
-                    findings.append(self.make_finding(
-                        "Missing COEP Header",
-                        "Informational",
-                        "Your website is missing the Cross-Origin-Embedder-Policy (COEP) security rule.",
-                        "Header not found in response",
-                        impact="Your website might accidentally load malicious files from other sites, putting your visitors at risk.",
-                        remediation="Set Cross-Origin-Embedder-Policy: require-corp to prevent loading cross-origin resources without explicit permission.",
-                        owasp="Not Mapped",
-                        category="http_headers"
-                    ))
-                if "Cross-Origin-Resource-Policy" in missing:
                     findings.append(self.make_finding(
                         "Missing CORP Header",
                         "Informational",
@@ -934,16 +914,29 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         owasp="Not Mapped",
                         category="http_headers"
                     ))
-
-                if not missing and not weak:
+                elif corp.strip().lower() == "unsafe-none":
                     findings.append(self.make_finding(
-                        "Cross-Origin Isolation Configured",
-                        "Passed",
-                        "Your website has implemented modern cross-origin isolation headers.",
-                        f"COOP: {coop}, COEP: {coep}, CORP: {corp}",
+                        "Weak Cross-Origin Isolation",
+                        "Low",
+                        "Your website is explicitly configured with weak cross-origin isolation policies.",
+                        f"CORP: {corp}",
+                        remediation="Configure CORP to restrict cross-origin interactions.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))
+
+                if coop_val in ("same-origin", "same-origin-allow-popups") and coep_val in ("require-corp", "credentialless") and corp and corp.strip().lower() == "same-origin":
+                    findings.append(self.make_finding(
+                        "Cross-Origin Isolation Configured",
+                        "Passed",
+                        "Your website correctly implements Cross-Origin Isolation headers.",
+                        f"COOP: {coop}\nCOEP: {coep}\nCORP: {corp}",
+                        remediation="",
+                        owasp="Not Mapped",
+                        category="http_headers"
+                    ))
+
+
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             # Safely skip on network failures to avoid false positives and noise
             pass

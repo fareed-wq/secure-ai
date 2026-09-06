@@ -289,11 +289,11 @@ class TestPhase30AuthSessionSecurity(unittest.TestCase):
             mock_safe_req.return_value.headers = headers
             mock_safe_req.return_value.text = '<html></html>'
             return [f['name'] for f in module.run('http://example.com', 'example.com', MagicMock())]
-        assert 'Missing X-Frame-Options' in run_with_headers({'Content-Type': 'text/html'})
-        assert 'Missing X-Frame-Options' not in run_with_headers({'Content-Type': 'text/html', 'X-Frame-Options': 'DENY'})
-        assert 'Missing X-Frame-Options' not in run_with_headers({'Content-Type': 'text/html', 'Content-Security-Policy': "default-src 'self'; frame-ancestors 'none'"})
-        assert 'Missing X-Frame-Options' not in run_with_headers({'Content-Type': 'text/html', 'Content-Security-Policy': "frame-ancestors 'self';"})
-        assert 'Missing X-Frame-Options' in run_with_headers({'Content-Type': 'text/html', 'Content-Security-Policy-Report-Only': "frame-ancestors 'none';"})
+        assert 'Missing Clickjacking Protection' in run_with_headers({'Content-Type': 'text/html'})
+        assert 'Missing Clickjacking Protection' not in run_with_headers({'Content-Type': 'text/html', 'X-Frame-Options': 'DENY'})
+        assert 'Missing Clickjacking Protection' not in run_with_headers({'Content-Type': 'text/html', 'Content-Security-Policy': "default-src 'self'; frame-ancestors 'none'"})
+        assert 'Missing Clickjacking Protection' not in run_with_headers({'Content-Type': 'text/html', 'Content-Security-Policy': "frame-ancestors 'self';"})
+        assert 'Missing Clickjacking Protection' in run_with_headers({'Content-Type': 'text/html', 'Content-Security-Policy-Report-Only': "frame-ancestors 'none';"})
 
 if __name__ == '__main__':
     unittest.main()
