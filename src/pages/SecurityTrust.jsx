@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react';
 import { Shield, Lock, Eye, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useSEO } from '../hooks/useSEO';
 
 const SecurityTrust = () => {
-  useEffect(() => {
-    document.title = "Security & Trust | URLScannerOnline";
-  }, []);
+  useSEO({ title: 'Security & Trust | URLScanOnline', description: 'Learn about our defensive scanning practices and commitment to platform security.', path: '/security-trust' });
 
   return (
     <div className="space-y-16 pb-12">
@@ -23,7 +22,7 @@ const SecurityTrust = () => {
             Our commitment to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">responsible security.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-400 leading-relaxed">
-            URLScannerOnline is built around passive, non-intrusive security assessment. We believe security tools should help protect — not endanger — the websites they analyze.
+            URLScanOnline is built around passive-first, non-intrusive security assessment. We believe security tools should help protect — not endanger — the websites they analyze.
           </p>
         </div>
       </section>
@@ -33,7 +32,7 @@ const SecurityTrust = () => {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-slate-50 mb-4">Our Scanning Philosophy</h2>
           <p className="text-slate-400 max-w-2xl mx-auto">
-            URLScannerOnline is designed for defensive, passive security assessment.
+            URLScanOnline is designed as a passive-first, low-impact security scanner. Basic scans focus on passive observations, while Advanced scans perform additional bounded, non-destructive checks.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -68,7 +67,7 @@ const SecurityTrust = () => {
             <div>
               <h2 className="text-3xl font-bold text-slate-50 mb-4">No Exploitation or Destructive Testing</h2>
               <p className="text-slate-400 leading-relaxed mb-6">
-                URLScannerOnline's passive scan is explicitly designed to avoid harm to the websites it analyzes.
+                URLScanOnline's scans are explicitly designed to avoid harm to the websites it analyzes.
               </p>
             </div>
           </div>
@@ -96,10 +95,11 @@ const SecurityTrust = () => {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <div className="space-y-4 text-slate-400 leading-relaxed">
             <p>
-              Scan results for authenticated users are associated with their accounts so they can access their scan history. The platform uses standard web security practices for data handling.
-            </p>
-            <p>
-              We do not sell or share individual scan results with third parties. Scan data is used to provide the service and improve scanning accuracy.
+              Authenticated scan records are associated with the user's account so the user can access Scan History and Saved Reports. Normal application access is owner-scoped, so users cannot browse another user's scan records.
+
+Administrative dashboards use aggregate platform statistics where appropriate and do not provide a general interface for browsing individual users' scan histories.
+
+<div className="pt-2"><Link to="/privacy-policy" className="text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1">Read our Privacy Policy &rarr;</Link></div>
             </p>
           </div>
         </div>
@@ -134,11 +134,11 @@ const SecurityTrust = () => {
             {[
               "Automated scans can produce false positives (reporting issues that may not exist) and false negatives (missing issues that do exist).",
               "Scan results are informational and should be reviewed in context by qualified personnel.",
-              "URLScannerOnline does not guarantee that a website is secure or vulnerability-free.",
+              "URLScanOnline does not guarantee that a website is secure or vulnerability-free.",
               "Scan results do not constitute a professional security audit or penetration test."
             ].map((item, idx) => (
               <li key={idx} className="flex items-start gap-3 text-slate-400">
-                <span className="text-slate-600 font-bold mt-0.5">•</span>
+                <span className="text-slate-600 font-bold mt-0.5">ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢</span>
                 <span>{item}</span>
               </li>
             ))}

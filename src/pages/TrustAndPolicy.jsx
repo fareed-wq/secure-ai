@@ -1,8 +1,10 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, FileText, AlertTriangle, ChevronRight } from 'lucide-react';
+import { useSEO } from '../hooks/useSEO';
+import { Shield, FileText, AlertTriangle, ChevronRight, Lock } from 'lucide-react';
 
 const TrustAndPolicy = () => {
+  useSEO({ title: 'Trust & Policy | URLScanOnline', description: 'Review our security, privacy, terms of service, and responsible disclosure policies.', path: '/trust-policy' });
   return (
     <div className="flex-1 w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-12 pb-24">
       {/* Header Section */}
@@ -14,8 +16,8 @@ const TrustAndPolicy = () => {
       </section>
 
       {/* Cards Section */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link 
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Link
           to="/security-trust"
           className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer"
         >
@@ -31,7 +33,23 @@ const TrustAndPolicy = () => {
           </p>
         </Link>
 
-        <Link 
+        <Link
+          to="/privacy-policy"
+          className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer"
+        >
+          <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform">
+            <Lock size={24} />
+          </div>
+          <h2 className="text-xl font-bold text-slate-50 mb-3 flex items-center justify-between">
+            Privacy Policy
+            <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-slate-300 transition-colors" />
+          </h2>
+          <p className="text-slate-400 text-sm leading-relaxed">
+            Learn how URLScanOnline handles account information, scan data, scan history, access controls, retention, and privacy.
+          </p>
+        </Link>
+
+        <Link
           to="/terms"
           className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer"
         >
@@ -43,11 +61,11 @@ const TrustAndPolicy = () => {
             <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-slate-300 transition-colors" />
           </h2>
           <p className="text-slate-400 text-sm leading-relaxed">
-            Read the terms governing the use of URLScannerOnline and our scanning rules of engagement.
+            Read the terms governing the use of URLScanOnline and our scanning rules of engagement.
           </p>
         </Link>
 
-        <Link 
+        <Link
           to="/responsible-disclosure"
           className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer"
         >
