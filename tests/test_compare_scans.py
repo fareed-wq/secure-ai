@@ -86,12 +86,14 @@ def test_admin_compare_endpoint(mock_requests_get):
         if "id=eq.1" in url:
             mock_resp.json.return_value = [{
                 "target_url": "https://example.com",
+                "user_id": "admin123",
                 "score": 80,
                 "report_data": {"scan_mode": "passive", "findings": []}
             }]
         elif "id=eq.2" in url:
             mock_resp.json.return_value = [{
                 "target_url": "https://example.com",
+                "user_id": "admin123",
                 "score": 90,
                 "report_data": {"scan_mode": "passive", "findings": []}
             }]
@@ -409,3 +411,81 @@ def test_history_compare_endpoint_free_blocked(monkeypatch):
     assert "Professional" in resp.json()["error"]
 
     app.dependency_overrides = {}
+
+def test_admin_compare_scans_owner(monkeypatch):
+    from api.admin import require_admin
+    monkeypatch.setenv("SUPABASE_URL", "http://mock")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "mock")
+    app.dependency_overrides[require_admin] = lambda: {"sub": "admin-123"}
+    client = TestClient(app)
+
+    scan1_data = {
+        "id": "scan-1",
+        "target_url": "https://example.com",
+        "user_id": "admin-123",
+        "report_data": {"scan_mode": "basic", "score": 80, "findings": []}
+    }
+    scan2_data = {
+        "id": "scan-2",
+        "target_url": "https://example.com",
+        "user_id": "admin-123",
+        "report_data": {"scan_mode": "basic", "score": 90, "findings": []}
+    }
+
+    def mock_get(*args, **kwargs):
+        class MockResp:
+            status_code = 200
+            def json(self):
+                url = args[0]
+                if "scan-1" in url:
+                    return [scan1_data]
+                if "scan-2" in url:
+                    return [scan2_data]
+                return []
+        return MockResp()
+
+    monkeypatch.setattr("requests.get", mock_get)
+
+    resp = client.get("/api/admin/scans/compare?scan_id_1=scan-1&scan_id_2=scan-2")
+    assert resp.status_code == 200
+
+    app.dependency_overrides.clear()
+
+def test_admin_compare_scans_other_user(monkeypatch):
+    from api.admin import require_admin
+    monkeypatch.setenv("SUPABASE_URL", "http://mock")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "mock")
+    app.dependency_overrides[require_admin] = lambda: {"sub": "admin-123"}
+    client = TestClient(app)
+
+    scan1_data = {
+        "id": "scan-1",
+        "target_url": "https://example.com",
+        "user_id": "admin-123",
+        "report_data": {"scan_mode": "basic", "score": 80, "findings": []}
+    }
+    scan2_data = {
+        "id": "scan-2",
+        "target_url": "https://example.com",
+        "user_id": "other-user-456",
+        "report_data": {"scan_mode": "basic", "score": 90, "findings": []}
+    }
+
+    def mock_get(*args, **kwargs):
+        class MockResp:
+            status_code = 200
+            def json(self):
+                url = args[0]
+                if "scan-1" in url:
+                    return [scan1_data]
+                if "scan-2" in url:
+                    return [scan2_data]
+                return []
+        return MockResp()
+
+    monkeypatch.setattr("requests.get", mock_get)
+
+    resp = client.get("/api/admin/scans/compare?scan_id_1=scan-1&scan_id_2=scan-2")
+    assert resp.status_code == 403
+
+    app.dependency_overrides.clear()

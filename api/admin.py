@@ -415,12 +415,16 @@ def compare_admin_scans(scan_id_1: str, scan_id_2: str, user: dict = Depends(req
     if resp1.status_code != 200 or not resp1.json():
         raise HTTPException(status_code=404, detail="Scan 1 not found.")
     scan1 = resp1.json()[0]
+    if scan1.get("user_id") != user.get("sub"):
+        raise HTTPException(status_code=403, detail="Access denied for Scan 1.")
 
     # Fetch scan 2
     resp2 = requests.get(f"{supabase_url}/rest/v1/scans?id=eq.{scan_id_2}&select=*", headers=headers, timeout=5.0)
     if resp2.status_code != 200 or not resp2.json():
         raise HTTPException(status_code=404, detail="Scan 2 not found.")
     scan2 = resp2.json()[0]
+    if scan2.get("user_id") != user.get("sub"):
+        raise HTTPException(status_code=403, detail="Access denied for Scan 2.")
 
     # Sort scans chronologically
     s1_time = scan1.get("created_at", "")
