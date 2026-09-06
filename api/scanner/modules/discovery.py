@@ -456,25 +456,64 @@ class SecurityTxtModule(ScannerModule):
         try:
             scheme = "https" if url.startswith("https") else "http"
             base_url = f"{scheme}://{hostname}/"
+
+            # The homepage_len check is preserved to safely detect and reject SPA endpoints
+            # that echo generic 200 OK text/json bodies for all missing routes.
             homepage_len = 0
             hp_resp = safe_request("GET", base_url, session=session, timeout=(1.5, 2.5))
             if hp_resp and hp_resp.text:
                 homepage_len = len(hp_resp.text)
 
-            target = f"{scheme}://{hostname}/.well-known/security.txt"
-            resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
+            target_primary = f"{scheme}://{hostname}/.well-known/security.txt"
+            target_fallback = f"{scheme}://{hostname}/security.txt"
 
-            if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
+            def try_fetch(target_url):
+                resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5))
+                if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
+                    text = resp.text[:100000] if resp.text else ""
+                    # Explicitly reject HTML fallbacks
+                    if "<html" not in text.lower():
+                        return resp, text
+                return None, None
+
+            used_target = target_primary
+            is_legacy = False
+
+            resp, content_text = try_fetch(target_primary)
+            if not resp:
+                resp, content_text = try_fetch(target_fallback)
+                if resp:
+                    used_target = target_fallback
+                    is_legacy = True
+
+            if resp:
                 content_type = self.get_header_safe(resp, "Content-Type", "").lower()
 
-                # Bounded response text to prevent excessive processing
-                content = resp.text[:100000] if resp.text else ""
+                if is_legacy:
+                    findings.append(self.make_finding(
+                        "security.txt Uses Legacy Location",
+                        "Informational",
+                        "A disclosure file was found at /security.txt, but the standard RFC 9116 location is /.well-known/security.txt.",
+                        used_target,
+                        owasp="Not Mapped",
+                        category="information_exposure"
+                    ))
 
-                if "text/plain" not in content_type:
+                is_correct_content_type = False
+                media_type = content_type.split(";", 1)[0].strip()
+                if media_type == "text/plain":
+                    if "charset=" in content_type:
+                        charset = content_type.split("charset=")[-1].split(";")[0].strip().strip('"').strip("'").lower()
+                        if charset in ("utf-8", "utf8"):
+                            is_correct_content_type = True
+                    else:
+                        is_correct_content_type = True
+
+                if not is_correct_content_type:
                     findings.append(self.make_finding(
                         "security.txt Incorrect Content-Type",
                         "Informational",
-                        "Your security.txt file is not served with the text/plain Content-Type as required by RFC 9116.",
+                        "Your security.txt file is not served with the text/plain Content-Type as expected by RFC 9116.",
                         f"Content-Type: {content_type}",
                         owasp="Not Mapped",
                         category="information_exposure"
@@ -486,7 +525,7 @@ class SecurityTxtModule(ScannerModule):
                 policies = []
                 languages = []
 
-                for line in content.splitlines():
+                for line in content_text.splitlines():
                     line = line.strip()
                     if not line or line.startswith("#"):
                         continue
@@ -510,13 +549,44 @@ class SecurityTxtModule(ScannerModule):
                         if val:
                             languages.append(val)
 
-                # Contact
-                if not contacts:
+                # Validate Contacts
+                from urllib.parse import urlparse
+                import re
+
+                valid_contacts = []
+                for c in contacts:
+                    c_clean = c.strip()
+                    if not c_clean:
+                        continue
+                    # Reject whitespace or control characters
+                    if re.search(r'\s|[\x00-\x1F\x7F]', c_clean):
+                        continue
+                    try:
+                        parsed = urlparse(c_clean)
+                        sch = parsed.scheme.lower()
+                        if not sch:
+                            continue
+                        if sch == "http":
+                            continue
+                        if sch == "https" and not parsed.netloc:
+                            continue
+
+                        # For all other schemes, require non-empty content after scheme:
+                        if sch != "https":
+                            # parsed.path usually holds the scheme-specific part for non-hierarchical URIs
+                            if not parsed.path and not parsed.netloc:
+                                continue
+
+                        valid_contacts.append(c)
+                    except ValueError:
+                        continue
+
+                if not valid_contacts:
                     findings.append(self.make_finding(
                         "security.txt Missing Contact",
                         "Low",
-                        "Your security.txt file is missing the required Contact directive or it is empty.",
-                        target,
+                        "Your security.txt file is missing a valid URI-formatted Contact directive.",
+                        used_target,
                         remediation="Add at least one valid Contact directive (e.g., Contact: mailto:security@example.com).",
                         owasp="Not Mapped",
                         category="information_exposure"
@@ -528,7 +598,7 @@ class SecurityTxtModule(ScannerModule):
                         "security.txt Missing Expires",
                         "Low",
                         "Your security.txt file is missing the required Expires directive.",
-                        target,
+                        used_target,
                         remediation="Add an Expires directive with an RFC3339 formatted date.",
                         owasp="Not Mapped",
                         category="information_exposure"
@@ -538,7 +608,7 @@ class SecurityTxtModule(ScannerModule):
                         "security.txt Multiple Expires",
                         "Low",
                         "Your security.txt file contains multiple Expires directives, which violates RFC 9116.",
-                        target,
+                        used_target,
                         remediation="Ensure exactly one Expires directive exists.",
                         owasp="Not Mapped",
                         category="information_exposure"
@@ -547,45 +617,61 @@ class SecurityTxtModule(ScannerModule):
                     # Parse RFC3339 date
                     expires_str = expires_lines[0]
                     import datetime
+                    import re
 
-                    clean_date = expires_str.upper().replace('Z', '+00:00')
-                    try:
-                        exp_date = datetime.datetime.fromisoformat(clean_date)
-                        now = datetime.datetime.now(datetime.timezone.utc)
-                        if exp_date.tzinfo is None:
-                            exp_date = exp_date.replace(tzinfo=datetime.timezone.utc)
+                    rfc3339_regex = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$", re.IGNORECASE)
 
-                        if exp_date < now:
-                            findings.append(self.make_finding(
-                                "Expired security.txt",
-                                "Medium",
-                                "Your security.txt file has expired and may contain stale reporting instructions.",
-                                expires_str,
-                                remediation="Review your security.txt policies and update the Expires date.",
-                                owasp="Not Mapped",
-                                category="information_exposure"
-                            ))
-                        elif contacts:
-                            findings.append(self.make_finding(
-                                "Valid security.txt",
-                                "Passed",
-                                "Your website publishes a standard and valid security contact file.",
-                                target,
-                                impact="This is an excellent practice that allows security researchers to safely report vulnerabilities.",
-                                owasp="Not Mapped",
-                                category="information_exposure"
-                            ))
-
-                    except ValueError:
+                    if not rfc3339_regex.match(expires_str):
                         findings.append(self.make_finding(
                             "security.txt Invalid Expires",
                             "Low",
-                            f"The Expires directive is not formatted correctly as RFC3339: {expires_str}",
-                            target,
-                            remediation="Format the date using RFC3339 (e.g., 2024-12-31T23:59:59Z).",
+                            f"The Expires directive is not formatted correctly as RFC3339 with timezone: {expires_str}",
+                            used_target,
+                            remediation="Format the date using RFC3339 with timezone (e.g., 2024-12-31T23:59:59Z).",
                             owasp="Not Mapped",
                             category="information_exposure"
                         ))
+                    else:
+                        clean_date = expires_str.upper().replace('Z', '+00:00')
+                        try:
+                            exp_date = datetime.datetime.fromisoformat(clean_date)
+                            if exp_date.tzinfo is None:
+                                raise ValueError("Missing timezone information")
+
+                            now = datetime.datetime.now(datetime.timezone.utc)
+
+                            if exp_date < now:
+                                findings.append(self.make_finding(
+                                    "Expired security.txt",
+                                    "Low",
+                                    "Your security.txt file has expired and may contain stale reporting instructions.",
+                                    expires_str,
+                                    remediation="Review your security.txt policies and update the Expires date.",
+                                    owasp="Not Mapped",
+                                    category="information_exposure"
+                                ))
+                            elif valid_contacts:
+                                if not is_legacy and is_correct_content_type:
+                                    findings.append(self.make_finding(
+                                        "Valid security.txt",
+                                        "Passed",
+                                        "Your website publishes a standard and valid security contact file.",
+                                        used_target,
+                                        impact="This is an excellent practice that allows security researchers to safely report vulnerabilities.",
+                                        owasp="Not Mapped",
+                                        category="information_exposure"
+                                    ))
+
+                        except ValueError:
+                            findings.append(self.make_finding(
+                                "security.txt Invalid Expires",
+                                "Low",
+                                f"The Expires directive is not formatted correctly as RFC3339 with timezone: {expires_str}",
+                                used_target,
+                                remediation="Format the date using RFC3339 with timezone (e.g., 2024-12-31T23:59:59Z).",
+                                owasp="Not Mapped",
+                                category="information_exposure"
+                            ))
 
                 # Optional info
                 if policies:
@@ -608,11 +694,11 @@ class SecurityTxtModule(ScannerModule):
                     ))
             else:
                 findings.append(self.make_finding(
-                    "security.txt Missing",
+                    "security.txt Not Found",
                     "Informational",
                     "Your website does not have a standard security contact file.",
-                    target,
-                    impact="Friendly security researchers may have a hard time contacting you if they find a vulnerability, leaving you at risk.",
+                    target_primary,
+                    impact="Friendly security researchers may have a hard time contacting you if they find a vulnerability, but this is not an exploitable flaw.",
                     remediation="Publish a security.txt file at /.well-known/security.txt.",
                     owasp="Not Mapped",
                     category="information_exposure"

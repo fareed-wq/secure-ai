@@ -691,38 +691,59 @@ class SecurityHeadersModule(ScannerModule):
         referrer = self.get_header_safe(resp, "Referrer-Policy")
         if not referrer:
             findings.append(self.make_finding(
-                "Missing Referrer-Policy",
+                "Referrer-Policy Not Configured",
                 "Informational",
-                "Your website is missing a rule that controls how much of your web addresses are shared when visitors click on external links.",
+                "No explicit Referrer-Policy was observed. Modern browsers generally apply strict-origin-when-cross-origin by default.",
                 "Header not found in response",
-                impact="Sensitive information hidden in your website's web addresses (like secret password reset tokens) could be accidentally leaked to other websites.",
-                remediation="Set Referrer-Policy to 'strict-origin-when-cross-origin' or 'no-referrer' to control URL leakage.",
+                impact="Explicitly configuring a policy provides predictable defense-in-depth and compatibility across environments.",
+                remediation="Set Referrer-Policy to 'strict-origin-when-cross-origin' or 'no-referrer' to explicitly control URL leakage.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
             ))
         else:
-            if "unsafe-url" in referrer.lower():
+            ref_lower = referrer.lower().strip()
+            # Tokenize and filter recognized policies
+            valid_policies = ["no-referrer", "no-referrer-when-downgrade", "origin", "origin-when-cross-origin", "same-origin", "strict-origin", "strict-origin-when-cross-origin", "unsafe-url"]
+            tokens = [p.strip() for p in ref_lower.split(",")]
+            recognized_tokens = [t for t in tokens if t in valid_policies]
+
+            if not recognized_tokens:
                 findings.append(self.make_finding(
-                    "Unsafe Referrer Policy Configured",
-                    "Low",
-                    "Your website is explicitly configured to share your full web addresses whenever visitors click external links.",
+                    "Invalid Referrer-Policy",
+                    "Informational",
+                    "The configured Referrer-Policy contains no recognized valid policy tokens. Browsers will fall back to their default policy.",
                     referrer,
-                    impact="Sensitive information hidden in your website's web addresses (like secret password reset tokens) will be leaked to other websites.",
-                    remediation="Change the Referrer-Policy to 'strict-origin-when-cross-origin' or 'no-referrer'.",
-                    owasp="A05: Security Misconfiguration",
-                    category="http_headers",
-                    confidence="High"
-                ))
-            else:
-                findings.append(self.make_finding(
-                    "Referrer-Policy Configured",
-                    "Passed",
-                    "Your website correctly controls what web address information is shared when visitors click external links.",
-                    referrer,
-                    impact="Sensitive information in your web addresses is protected from being leaked to other websites.",
+                    impact="Invalid configuration is ignored by browsers.",
+                    remediation="Configure a standard Referrer-Policy such as 'strict-origin-when-cross-origin'.",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
                 ))
+            else:
+                # Effective policy is the LAST recognized policy token
+                effective_policy = recognized_tokens[-1]
+
+                if effective_policy == "unsafe-url":
+                    findings.append(self.make_finding(
+                        "Unsafe Referrer Policy Configured",
+                        "Low",
+                        "Your website's effective Referrer-Policy is 'unsafe-url', allowing full path/query referrer information to be sent even when navigating from HTTPS to less secure destinations.",
+                        referrer,
+                        impact="Sensitive information hidden in your website's web addresses (like secret password reset tokens) can be disclosed in Referer information to other websites.",
+                        remediation="Change the Referrer-Policy to 'strict-origin-when-cross-origin' or 'no-referrer'.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers",
+                        confidence="High"
+                    ))
+                else:
+                    findings.append(self.make_finding(
+                        "Referrer-Policy Configured",
+                        "Passed",
+                        f"Your website explicitly configures a valid effective Referrer-Policy ({effective_policy}).",
+                        referrer,
+                        impact="Sensitive information in your web addresses is protected consistently across environments.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
 
         # SRI & Third-Party JavaScript Check
         if resp and resp.text:
@@ -905,25 +926,36 @@ class AdvancedSecurityHeadersModule(ScannerModule):
 
                 if not corp:
                     findings.append(self.make_finding(
-                        "Missing CORP Header",
+                        "CORP Not Configured",
                         "Informational",
-                        "Your website is missing the Cross-Origin-Resource-Policy (CORP) security rule.",
+                        "Your website does not enforce a Cross-Origin-Resource-Policy (CORP).",
                         "Header not found in response",
-                        impact="Missing COOP/COEP/CORP headers can increase exposure to cross-origin information leaks.",
-                        remediation="Set Cross-Origin-Resource-Policy: same-origin to prevent other sites from embedding your resources.",
-                        owasp="Not Mapped",
-                        category="http_headers"
-                    ))
-                elif corp.strip().lower() == "unsafe-none":
-                    findings.append(self.make_finding(
-                        "Weak Cross-Origin Isolation",
-                        "Low",
-                        "Your website is explicitly configured with weak cross-origin isolation policies.",
-                        f"CORP: {corp}",
-                        remediation="Configure CORP to restrict cross-origin interactions.",
+                        impact="Without CORP, other websites can embed your public resources. Sensitive APIs should configure it to restrict embedding.",
+                        remediation="Add the Cross-Origin-Resource-Policy header (e.g., 'same-origin') for sensitive resources.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))
+                else:
+                    corp_val = corp.lower().strip()
+                    if corp_val not in ["same-origin", "same-site", "cross-origin"]:
+                        findings.append(self.make_finding(
+                            "Invalid Cross-Origin-Resource-Policy",
+                            "Informational",
+                            "The configured CORP header uses an invalid value.",
+                            f"Cross-Origin-Resource-Policy: {corp}",
+                            remediation="Use 'same-origin', 'same-site', or 'cross-origin' for the CORP header.",
+                            owasp="A05: Security Misconfiguration",
+                            category="http_headers"
+                        ))
+                    else:
+                        findings.append(self.make_finding(
+                            "Cross-Origin-Resource-Policy Configured",
+                            "Passed",
+                            "Your website explicitly configures Cross-Origin-Resource-Policy.",
+                            f"Cross-Origin-Resource-Policy: {corp}",
+                            owasp="A05: Security Misconfiguration",
+                            category="http_headers"
+                        ))
 
                 if coop_val in ("same-origin", "same-origin-allow-popups") and coep_val in ("require-corp", "credentialless") and corp and corp.strip().lower() == "same-origin":
                     findings.append(self.make_finding(

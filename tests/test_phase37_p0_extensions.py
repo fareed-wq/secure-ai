@@ -114,10 +114,10 @@ def test_cross_origin_isolation_all_missing(monkeypatch, session):
     # Missing headers remain informational
     assert any(f["name"] == "COOP Not Configured" and f["severity"] == "Informational" for f in findings)
     assert any(f["name"] == "COEP Not Configured" and f["severity"] == "Informational" for f in findings)
-    assert any(f["name"] == "Missing CORP Header" and f["severity"] == "Informational" for f in findings)
+    assert any(f["name"] == "CORP Not Configured" and f["severity"] == "Informational" for f in findings)
 
     # No duplicate findings for Weak
-    assert not any(f["name"] == "Weak Cross-Origin Isolation" for f in findings)
+    assert not any(f["name"] == "Invalid Cross-Origin-Resource-Policy" for f in findings)
 
 def test_cross_origin_isolation_all_present_and_valid(monkeypatch, session):
     module = AdvancedSecurityHeadersModule()
@@ -161,7 +161,7 @@ def test_cross_origin_isolation_weak_coep_corp(monkeypatch, session):
     monkeypatch.setattr("api.scanner.modules.http_security.safe_request", mock_safe_request)
     findings = module.run("http://example.com", "example.com", session)
     assert any(f["name"] == "COEP Not Configured" and "unsafe-none" in str(f.get("evidence", "")) for f in findings)
-    assert any(f["name"] == "Weak Cross-Origin Isolation" and "CORP" in str(f.get("evidence", "")) for f in findings)
+    assert any(f["name"] == "Invalid Cross-Origin-Resource-Policy" and "Cross-Origin-Resource-Policy" in str(f.get("evidence", "")) for f in findings)
 
 def test_cookie_lifetime_excessive(monkeypatch, session):
     module = AdvancedCookieModule()

@@ -142,15 +142,15 @@ class TestScoringConsistency(unittest.TestCase):
         """Score with mixed severities."""
         findings = [
             {"name": "Missing HSTS", "severity": "High", "category": "encryption_tls"},
-            {"name": "Missing Referrer-Policy", "severity": "Low", "category": "http_headers"},
+            {"name": "Referrer-Policy Not Configured", "severity": "Informational", "category": "http_headers"},
             {"name": "Info Finding", "severity": "Informational", "category": "info"},
         ]
         res = calculate_score("https://example.com", findings, {}, None)
-        # High=-10, Low=-2, Info=0 → score=88
-        self.assertEqual(res["score"], 88)
+        # High=-10, Info=0 → score=90
+        self.assertEqual(res["score"], 90)
         self.assertEqual(res["severity_counts"]["High"], 1)
-        self.assertEqual(res["severity_counts"]["Low"], 1)
-        self.assertEqual(res["severity_counts"]["Informational"], 1)
+        self.assertEqual(res["severity_counts"]["Low"], 0)
+        self.assertEqual(res["severity_counts"]["Informational"], 2)
 
     def test_all_findings_preserved(self):
         """All findings must appear in the output regardless of deduplication."""

@@ -51,7 +51,7 @@ class TestPhase20Accuracy(unittest.TestCase):
         try:
             findings = self.perm_module.run(self.url, self.hostname, self.session)
             self.assertEqual(len(findings), 1)
-            self.assertEqual(findings[0]["name"], "Missing Permissions-Policy")
+            self.assertEqual(findings[0]["name"], "Permissions-Policy Not Configured")
         finally:
             api.scanner.modules.headers.safe_request = original_safe
 

@@ -219,7 +219,7 @@ class TestRegressionMatrix:
 
         def mock_get(method, url, **kwargs):
             if url.endswith('security.txt'):
-                return make_mock_response(status_code=200, headers={"Content-Type": "text/plain"}, text="Contact: security@example.com\nExpires: 2030-12-31T23:59:59Z")
+                return make_mock_response(status_code=200, headers={"Content-Type": "text/plain"}, text="Contact: mailto:security@example.com\nExpires: 2030-12-31T23:59:59Z")
             return make_mock_response(status_code=200, text="<html>" + "A" * 500 + "</html>")
 
         mock_safe_req.side_effect = mock_get
@@ -233,7 +233,7 @@ class TestRegressionMatrix:
 
         mock_safe_req.side_effect = mock_get_404
         f = mod.run("https://example.com", "example.com", MagicMock())
-        assert any("security.txt Missing" in x["name"] for x in f)
+        assert any("security.txt Not Found" in x["name"] for x in f)
 
     # 14. Technology disclosure
     @patch('api.scanner.modules.headers.safe_request')

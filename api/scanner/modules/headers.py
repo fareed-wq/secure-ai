@@ -299,11 +299,11 @@ class PermissionsPolicyModule(ScannerModule):
             if "Permissions-Policy" not in headers:
                 if not is_api_response:
                     findings.append(self.make_finding(
-                        "Missing Permissions-Policy",
+                        "Permissions-Policy Not Configured",
                         "Informational",
-                        "Your website is missing rules that stop it from using sensitive browser features like the camera, microphone, or location.",
+                        "Your website does not declare an explicit Permissions-Policy.",
                         "Header not found in response",
-                        impact="A missing or overly permissive Permissions-Policy may allow unintended access to sensitive browser features.",
+                        impact="A missing policy means browser features are governed by default browser behavior rather than explicit restriction.",
                         remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"

@@ -129,19 +129,19 @@ export const TRANSLATIONS = {
     problem: "The scanner detected your server doesn't securely configure X-Content-Type-Options: nosniff.",
     why: "Browsers might misidentify files, accidentally running scripts hidden in normal images or documents."
   },
-  "Missing Referrer-Policy": {
-    name: "Missing External Link Privacy (Referrer-Policy)",
+  "Referrer-Policy Not Configured": {
+    name: "Referrer-Policy Not Configured",
     category: "Privacy Protection",
-    impact: "Low",
-    problem: "The scanner found your website shares excessive details when visitors click links to outside websites.",
-    why: "Private page addresses or sensitive details could be unintentionally leaked to external tracking companies."
+    impact: "Informational",
+    problem: "No explicit Referrer-Policy was found, though modern browsers typically apply a secure default.",
+    why: "Explicitly configuring this header provides defense-in-depth and predictable behavior across environments."
   },
-  "Missing Permissions-Policy": {
-    name: "Unrestricted Browser Capabilities (Permissions-Policy)",
+  "Permissions-Policy Not Configured": {
+    name: "Permissions-Policy Not Configured",
     category: "Privacy Protection",
-    impact: "Low",
-    problem: "The scanner noted your website doesn't restrict external tools from requesting device camera or location access.",
-    why: "Third-party ads or widgets could potentially ask for a visitor's device features without your oversight."
+    impact: "Informational",
+    problem: "Your website lacks an explicit policy to restrict browser capabilities like the camera or microphone.",
+    why: "While users are still prompted by browsers, a restrictive policy provides defense-in-depth against malicious embeds."
   },
   "COOP Not Configured": {
     name: "COOP Not Configured",
@@ -157,12 +157,12 @@ export const TRANSLATIONS = {
     problem: "The scanner observed your website does not enforce Cross-Origin Embedder Policy (COEP).",
     why: "COEP is an advanced browser hardening feature that restricts third-party embeds. It is not universally appropriate for standard websites."
   },
-  "Missing Cross-Origin-Resource-Policy": {
-    name: "Unprotected Cross-Origin Assets (CORP)",
+  "CORP Not Configured": {
+    name: "CORP Not Configured",
     category: "Privacy Protection",
     impact: "Informational",
-    problem: "The scanner found your server doesn't restrict external websites from displaying your site's images directly.",
-    why: "Other websites could potentially display your private media or files directly without authorization."
+    problem: "No Cross-Origin-Resource-Policy was found. This is typically acceptable for public websites.",
+    why: "Without CORP, other websites can embed your public resources. Sensitive APIs should configure it to restrict embedding."
   },
   "Missing SPF Record": {
     name: "Missing Email Anti-Spoofing (SPF)",
@@ -192,8 +192,8 @@ export const TRANSLATIONS = {
     problem: "The scanner found your domain lacks controls over which security companies can issue your certificates.",
     why: "Attackers could trick random security companies into issuing valid certificates for convincing fake websites."
   },
-  "Missing security.txt": {
-    name: "Missing Vulnerability Disclosure Contact (security.txt)",
+  "security.txt Not Found": {
+    name: "security.txt Not Found",
     category: "Website Trust",
     impact: "Informational",
     problem: "The scanner looked for a standard security contact file on your website but found nothing.",
