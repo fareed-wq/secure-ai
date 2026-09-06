@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { FileText, Shield, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, FileText, Shield, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 
@@ -9,7 +9,7 @@ const TermsOfService = () => {
   return (
     <div className="space-y-16 pb-12">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-16 text-center">
+      <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-16 text-center mb-8">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl opacity-30 pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-blue-500/20 blur-3xl rounded-full transform -translate-y-1/2" />
         </div>
@@ -29,7 +29,7 @@ const TermsOfService = () => {
       </section>
 
       {/* Acceptance of Terms */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <h2 className="text-2xl font-bold text-slate-50 mb-4">1. Acceptance of Terms</h2>
           <p className="text-slate-400 leading-relaxed">
@@ -39,7 +39,7 @@ const TermsOfService = () => {
       </section>
 
       {/* Service Description */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <h2 className="text-2xl font-bold text-slate-50 mb-4">2. Service Description</h2>
           <p className="text-slate-400 leading-relaxed">
@@ -51,8 +51,8 @@ const TermsOfService = () => {
         </div>
       </section>
 
-      {/* Authorization Requirement â€” highlighted */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      {/* Authorization Requirement - highlighted */}
+      <section>
         <div className="rounded-2xl border border-indigo-500/30 bg-slate-900/50 p-8">
           <div className="flex items-start gap-4 mb-4">
             <div className="w-10 h-10 rounded-lg border border-indigo-500/30 bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0">
@@ -75,7 +75,7 @@ const TermsOfService = () => {
       </section>
 
       {/* Acceptable Use */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <h2 className="text-2xl font-bold text-slate-50 mb-4">4. Acceptable Use</h2>
           <p className="text-slate-400 leading-relaxed mb-4">
@@ -94,7 +94,7 @@ const TermsOfService = () => {
               "Use URLScanOnline to facilitate attacks, unauthorized access, or harmful activity against third-party systems"
             ].map((item, idx) => (
               <li key={idx} className="flex items-start gap-3">
-                <span className="text-slate-600 font-bold mt-0.5">â€¢</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
                 <span>{item}</span>
               </li>
             ))}
@@ -103,7 +103,7 @@ const TermsOfService = () => {
       </section>
 
       {/* User Responsibilities */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <h2 className="text-2xl font-bold text-slate-50 mb-4">5. User Responsibilities</h2>
           <p className="text-slate-400 leading-relaxed mb-4">
@@ -118,7 +118,7 @@ const TermsOfService = () => {
               "Complying with all applicable laws and regulations in your jurisdiction"
             ].map((item, idx) => (
               <li key={idx} className="flex items-start gap-3">
-                <span className="text-slate-600 font-bold mt-0.5">â€¢</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
                 <span>{item}</span>
               </li>
             ))}
@@ -127,7 +127,7 @@ const TermsOfService = () => {
       </section>
 
       {/* Scan Accuracy Disclaimer */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <div className="flex items-start gap-4 mb-4">
             <AlertTriangle className="w-6 h-6 text-amber-400 shrink-0 mt-1" />
@@ -148,7 +148,7 @@ const TermsOfService = () => {
       </section>
 
       {/* Limitation of Liability */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <h2 className="text-2xl font-bold text-slate-50 mb-4">7. Limitation of Liability</h2>
           <div className="space-y-4 text-slate-400 leading-relaxed">
@@ -164,7 +164,7 @@ const TermsOfService = () => {
                 "Unauthorized access resulting from user credential compromise"
               ].map((item, idx) => (
                 <li key={idx} className="flex items-start gap-3">
-                  <span className="text-slate-600 font-bold mt-0.5">â€¢</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -174,7 +174,7 @@ const TermsOfService = () => {
       </section>
 
       {/* Changes to Terms */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <h2 className="text-2xl font-bold text-slate-50 mb-4">8. Changes to Terms</h2>
           <p className="text-slate-400 leading-relaxed">

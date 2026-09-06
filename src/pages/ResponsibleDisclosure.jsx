@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Shield, Mail, CheckCircle2, Search } from 'lucide-react';
+import { ArrowLeft, Shield, Mail, CheckCircle2, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 
@@ -9,7 +9,7 @@ const ResponsibleDisclosure = () => {
   return (
     <div className="space-y-16 pb-12">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-16 text-center">
+      <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-16 text-center mb-8">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl opacity-30 pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-blue-500/20 blur-3xl rounded-full transform -translate-y-1/2" />
         </div>
@@ -28,7 +28,7 @@ const ResponsibleDisclosure = () => {
       </section>
 
       {/* Reporting a Vulnerability */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-3xl border border-slate-800 bg-slate-900 p-8 md:p-12">
           <div className="flex items-start gap-4 mb-6">
             <div className="w-10 h-10 rounded-lg border border-indigo-500/30 bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0">
@@ -72,7 +72,7 @@ const ResponsibleDisclosure = () => {
       </section>
 
       {/* What We Ask */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <h2 className="text-3xl font-bold text-slate-50 mb-8 text-center">What We Ask</h2>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <ul className="space-y-4 text-slate-400 leading-relaxed">
@@ -83,7 +83,7 @@ const ResponsibleDisclosure = () => {
               "Act in good faith and avoid actions that could cause harm to URLScanOnline or its users."
             ].map((item, idx) => (
               <li key={idx} className="flex items-start gap-3">
-                <span className="text-slate-600 font-bold mt-0.5">Ã¢â‚¬Â¢</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
                 <span>{item}</span>
               </li>
             ))}
@@ -92,7 +92,7 @@ const ResponsibleDisclosure = () => {
       </section>
 
       {/* Our Response Process */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <h2 className="text-3xl font-bold text-slate-50 mb-8 text-center">Our Response Process</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[
@@ -116,7 +116,7 @@ const ResponsibleDisclosure = () => {
       </section>
 
       {/* Scope */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <h2 className="text-3xl font-bold text-slate-50 mb-8 text-center">Scope</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
@@ -150,7 +150,7 @@ const ResponsibleDisclosure = () => {
                 "Denial-of-service testing"
               ].map((item, idx) => (
                 <li key={idx} className="flex items-start gap-3">
-                  <span className="text-slate-600 font-bold mt-0.5">Ã¢â‚¬Â¢</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -160,7 +160,7 @@ const ResponsibleDisclosure = () => {
       </section>
 
       {/* Contact */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/40 via-slate-900/80 to-slate-900/40 p-8 sm:p-12 text-center">
           <h3 className="text-2xl sm:text-3xl font-bold text-slate-50 tracking-tight mb-4">
             Ready to report?

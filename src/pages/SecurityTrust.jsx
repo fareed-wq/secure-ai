@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Shield, Lock, Eye, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Shield, Lock, Eye, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 
@@ -9,7 +9,7 @@ const SecurityTrust = () => {
   return (
     <div className="space-y-16 pb-12">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-16 text-center">
+      <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-16 text-center mb-8">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl opacity-30 pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-blue-500/20 blur-3xl rounded-full transform -translate-y-1/2" />
         </div>
@@ -22,13 +22,13 @@ const SecurityTrust = () => {
             Our commitment to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">responsible security.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-400 leading-relaxed">
-            URLScanOnline is built around passive-first, non-intrusive security assessment. We believe security tools should help protect — not endanger — the websites they analyze.
+            URLScanOnline is built around passive-first, non-intrusive security assessment. We believe security tools should help protect â€” not endanger â€” the websites they analyze.
           </p>
         </div>
       </section>
 
       {/* Scanning Philosophy */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-slate-50 mb-4">Our Scanning Philosophy</h2>
           <p className="text-slate-400 max-w-2xl mx-auto">
@@ -58,7 +58,7 @@ const SecurityTrust = () => {
       </section>
 
       {/* No Exploitation */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-3xl border border-slate-800 bg-slate-900 p-8 md:p-12">
           <div className="flex items-start gap-4 mb-6">
             <div className="w-10 h-10 rounded-lg border border-indigo-500/30 bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0">
@@ -90,7 +90,7 @@ const SecurityTrust = () => {
       </section>
 
       {/* How We Protect Scan Data */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <h2 className="text-3xl font-bold text-slate-50 mb-8 text-center">How We Handle Scan Data</h2>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <div className="space-y-4 text-slate-400 leading-relaxed">
@@ -106,7 +106,7 @@ Administrative dashboards use aggregate platform statistics where appropriate an
       </section>
 
       {/* Platform Security Practices */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <h2 className="text-3xl font-bold text-slate-50 mb-8 text-center">Platform Security Practices</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[
@@ -124,7 +124,7 @@ Administrative dashboards use aggregate platform statistics where appropriate an
       </section>
 
       {/* Transparency */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <div className="flex items-start gap-4 mb-4">
             <AlertTriangle className="w-6 h-6 text-amber-400 shrink-0 mt-1" />
@@ -138,7 +138,7 @@ Administrative dashboards use aggregate platform statistics where appropriate an
               "Scan results do not constitute a professional security audit or penetration test."
             ].map((item, idx) => (
               <li key={idx} className="flex items-start gap-3 text-slate-400">
-                <span className="text-slate-600 font-bold mt-0.5">ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
                 <span>{item}</span>
               </li>
             ))}
@@ -147,7 +147,7 @@ Administrative dashboards use aggregate platform statistics where appropriate an
       </section>
 
       {/* Contact CTA */}
-      <section className="max-w-4xl mx-auto px-4 md:px-0">
+      <section>
         <div className="rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/40 via-slate-900/80 to-slate-900/40 p-8 sm:p-12 text-center">
           <h3 className="text-2xl sm:text-3xl font-bold text-slate-50 tracking-tight mb-4">
             Have security questions?
