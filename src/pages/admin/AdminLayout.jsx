@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { ShieldAlert, Users, Activity, List, LayoutDashboard, Loader2, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, Users, List, LayoutDashboard, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function AdminLayout() {
   const { session, loading: authLoading, isAdmin, isAdminLoading } = useAuth();
@@ -60,13 +60,6 @@ export default function AdminLayout() {
               >
                 <Users className="w-4 h-4" />
                 Users
-              </Link>
-              <Link
-                to="/admin/scans"
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${location.pathname.startsWith('/admin/scans') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
-              >
-                <Activity className="w-4 h-4" />
-                Scans
               </Link>
               <Link
                 to="/admin/audit-logs"

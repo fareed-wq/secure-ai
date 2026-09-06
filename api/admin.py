@@ -309,54 +309,7 @@ def reactivate_user(user_id: str, payload: Optional[AdminMutationRequest] = None
     audit_log(user.get("sub"), "reactivate_user", "user", user_id, payload.reason if payload else None, before_state, after_state)
     return {"user_id": user_id, "plan": current_plan, "status": "active"}
 
-@admin_router.get("/scans")
-def get_scans(limit: int = Query(50), offset: int = Query(0), search: Optional[str] = Query(None), user: dict = Depends(require_admin)):
-    if not os.environ.get('SUPABASE_URL') or not os.environ.get('SUPABASE_SECRET_KEY'):
-        raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
 
-    query = f"select=id,user_id,target_url,score,report_data,created_at&limit={limit}&offset={offset}&order=created_at.desc"
-    if search:
-        # If search looks like a UUID, search user_id, otherwise target_url
-        if len(search) >= 8 and "-" in search:
-            query += f"&or=(user_id.eq.{search},target_url.ilike.*{search}*)"
-        else:
-            query += f"&target_url=ilike.*{search}*"
-
-    url = f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/scans?{query}"
-
-    headers = {
-        "apikey": os.environ.get('SUPABASE_SECRET_KEY', ''),
-        "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}"
-    }
-
-    try:
-        resp = requests.get(url, headers=headers, timeout=5.0)
-        if resp.status_code == 200:
-            data = resp.json()
-            safe_scans = []
-            for row in data:
-                report = row.get("report_data") or {}
-                raw_mode = report.get("scan_mode")
-
-                product_mode = "Unknown"
-                if raw_mode == "active":
-                    product_mode = "Advanced"
-                elif raw_mode in ("passive", "basic"):
-                    product_mode = "Basic"
-
-                safe_scans.append({
-                    "id": row.get("id"),
-                    "user_id": row.get("user_id"),
-                    "url": row.get("target_url"),
-                    "scan_mode": product_mode,
-                    "score": row.get("score"),
-                    "status": "completed",
-                    "created_at": row.get("created_at")
-                })
-            return safe_scans
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    return []
 
 @admin_router.get("/audit-logs")
 def get_audit_logs(limit: int = Query(50), offset: int = Query(0), search: Optional[str] = Query(None), user: dict = Depends(require_admin)):
@@ -462,12 +415,16 @@ def compare_admin_scans(scan_id_1: str, scan_id_2: str, user: dict = Depends(req
     if resp1.status_code != 200 or not resp1.json():
         raise HTTPException(status_code=404, detail="Scan 1 not found.")
     scan1 = resp1.json()[0]
+    if scan1.get("user_id") != user.get("sub"):
+        raise HTTPException(status_code=403, detail="Access denied for Scan 1.")
 
     # Fetch scan 2
     resp2 = requests.get(f"{supabase_url}/rest/v1/scans?id=eq.{scan_id_2}&select=*", headers=headers, timeout=5.0)
     if resp2.status_code != 200 or not resp2.json():
         raise HTTPException(status_code=404, detail="Scan 2 not found.")
     scan2 = resp2.json()[0]
+    if scan2.get("user_id") != user.get("sub"):
+        raise HTTPException(status_code=403, detail="Access denied for Scan 2.")
 
     # Sort scans chronologically
     s1_time = scan1.get("created_at", "")

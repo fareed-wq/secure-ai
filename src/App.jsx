@@ -37,7 +37,6 @@ const AdminLayout = React.lazy(() => import('./pages/admin/AdminLayout'));
 const AdminOverview = React.lazy(() => import('./pages/admin/Overview'));
 const AdminUsers = React.lazy(() => import('./pages/admin/Users'));
 const AdminUserDetail = React.lazy(() => import('./pages/admin/UserDetail'));
-const AdminScans = React.lazy(() => import('./pages/admin/Scans'));
 const AdminAuditLogs = React.lazy(() => import('./pages/admin/AuditLogs'));
 
 const PlaceholderPage = ({ title }) => (
@@ -109,8 +108,7 @@ const App = () => {
                 <Route index element={<AdminOverview />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="users/:userId" element={<AdminUserDetail />} />
-                <Route path="scans" element={<AdminScans />} />
-                                <Route path="audit-logs" element={<AdminAuditLogs />} />
+                <Route path="audit-logs" element={<AdminAuditLogs />} />
               </Route>
 
               {/* Redirect root to dashboard (if we were previously doing that globally, wait, let's keep * to NotFound inside RootLayout or outside) */}
