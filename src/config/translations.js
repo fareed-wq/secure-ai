@@ -115,6 +115,13 @@ export const TRANSLATIONS = {
     problem: "The scanner checked your website's rules for loading scripts and found them to be too permissive.",
     why: "Loose rules increase the risk of malicious code running and stealing private visitor information."
   },
+  "CSP Allows Inline Styles": {
+    name: "Inline Styles Permitted (CSP)",
+    category: "Browser Protection",
+    impact: "Low",
+    problem: "The scanner noticed your website's security policy allows inline visual styling.",
+    why: "Allowing inline styling slightly weakens defense-in-depth layout protections, though it is much less severe than allowing inline scripts."
+  },
   "Missing Clickjacking Protection": {
     name: "Missing Clickjacking Protection",
     category: "Browser Protection",

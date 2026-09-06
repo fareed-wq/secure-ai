@@ -32,8 +32,10 @@ def test_script_nonce_does_not_suppress_style():
     headers = {"Content-Security-Policy": "script-src 'nonce-123' 'unsafe-inline'; style-src 'unsafe-inline'; default-src 'none'; object-src 'none'"}
     findings = run_csp(headers)
     weak = [f for f in findings if f["name"] == "Weak Content-Security-Policy"]
-    assert len(weak) == 1
-    assert "unsafe-inline in style-src" in weak[0]["evidence"]["raw"]
+    assert len(weak) == 0
+    style_weak = [f for f in findings if f["name"] == "CSP Allows Inline Styles"]
+    assert len(style_weak) == 1
+    assert "unsafe-inline in style-src" in style_weak[0]["evidence"]["raw"]
 
 def test_style_nonce_does_not_suppress_script():
     headers = {"Content-Security-Policy": "style-src 'nonce-123' 'unsafe-inline'; script-src 'unsafe-inline'; default-src 'none'; object-src 'none'"}
@@ -195,3 +197,56 @@ def test_orchestrator_executes_csp_quality_module():
     assert len(csp_findings) == 2, "Expected CSPQualityModule findings from the passive scan"
     assert csp_findings[0]["domain"] == "browser_defense", "Finding should have correct domain"
     assert csp_findings[1]["domain"] == "browser_defense", "Finding should have correct domain"
+
+
+def test_script_unsafe_inline_only():
+    headers = {"Content-Security-Policy": "script-src 'unsafe-inline'; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["name"] == "Weak Content-Security-Policy"]
+    assert len(weak) == 1
+    assert weak[0]["severity"] == "Medium"
+    style_finding = [f for f in findings if f["name"] == "CSP Allows Inline Styles"]
+    assert len(style_finding) == 0
+
+def test_script_unsafe_eval_only():
+    headers = {"Content-Security-Policy": "script-src 'unsafe-eval'; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["name"] == "Weak Content-Security-Policy"]
+    assert len(weak) == 1
+    assert weak[0]["severity"] == "Medium"
+
+def test_style_unsafe_inline_only():
+    headers = {"Content-Security-Policy": "style-src 'unsafe-inline'; script-src 'self'; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["name"] == "Weak Content-Security-Policy"]
+    assert len(weak) == 0
+    style_finding = [f for f in findings if f["name"] == "CSP Allows Inline Styles"]
+    assert len(style_finding) == 1
+    assert style_finding[0]["severity"] == "Low"
+
+def test_script_and_style_unsafe_inline():
+    headers = {"Content-Security-Policy": "script-src 'unsafe-inline'; style-src 'unsafe-inline'; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["name"] == "Weak Content-Security-Policy"]
+    assert len(weak) == 1
+    assert weak[0]["severity"] == "Medium"
+    assert "unsafe-inline in style-src" in weak[0]["evidence"]["raw"]
+    style_finding = [f for f in findings if f["name"] == "CSP Allows Inline Styles"]
+    assert len(style_finding) == 0
+
+def test_neither_unsafe_inline_nor_eval():
+    headers = {"Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["name"] == "Weak Content-Security-Policy"]
+    assert len(weak) == 0
+    style_finding = [f for f in findings if f["name"] == "CSP Allows Inline Styles"]
+    assert len(style_finding) == 0
+
+def test_urlscanonline_like_policy():
+    headers = {"Content-Security-Policy": "default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https:; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; frame-src 'self' https://challenges.cloudflare.com;"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["name"] == "Weak Content-Security-Policy"]
+    assert len(weak) == 0
+    style_finding = [f for f in findings if f["name"] == "CSP Allows Inline Styles"]
+    assert len(style_finding) == 1
+    assert style_finding[0]["severity"] == "Low"
