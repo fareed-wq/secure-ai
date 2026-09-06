@@ -6,3 +6,4 @@ cryptography
 python-whois
 urllib3
 PyJWT
+cvss==3.6

@@ -1,43 +1,37 @@
 import pytest
-from api.scanner.cvss_mapping import CVSS_REGISTRY, calculate_cvss31
+from api.scanner.cvss_mapping import CVSS_REGISTRY, calculate_cvss40
 from api.scanner.base import ScannerModule
 
 def test_cvss_calculator_basic():
-    # Official NVD/CVSS reference vectors
-    # CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H -> 10.0 Critical
-    score, sev = calculate_cvss31("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H")
+    # FIRST CVSS v4.0 reference vectors (sourced from FIRST official examples)
+    # Maximum severity reference
+    score, sev = calculate_cvss40("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:H/SI:H/SA:H")
     assert score == 10.0
     assert sev == "Critical"
-    
-    # CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N -> 4.3 Medium (wait, UI:R makes it lower? Let's check calculation)
-    # The prompt explicitly asks to test the project vectors
-    pass
+
+    # Minimum severity reference
+    score, sev = calculate_cvss40("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N")
+    assert score == 0.0
+    assert sev == "None"
 
 def test_cvss_calculator_registry():
-    # Test all 14 vectors from the registry
-    assert len(CVSS_REGISTRY) == 14
-    
+    # Test all 9 approved vectors from the registry
+    assert len(CVSS_REGISTRY) == 9
+
     expected_scores = {
-        "Subdomain Takeover Vulnerability (Dangling CNAME)": (10.0, "Critical"),
-        "Hardcoded Third-Party Secret Key Exposed in JS Bundle": (7.5, "High"),
-        "Sensitive Spring Boot Actuator Config Exposed": (7.5, "High"),
-        "Exposed .env Configuration File": (7.5, "High"),
-        "Exposed .git Repository": (5.3, "Medium"),
-        "Exposed .git Configuration File": (5.3, "Medium"),
-        "Exposed phpinfo() File": (5.3, "Medium"),
-        "Insecure CORS Policy (Arbitrary Origin Reflection with Credentials)": (8.2, "High"), # recalculate wait: 8.1 or 8.2?
-        "Insecure CORS Policy (Arbitrary Origin Reflection)": (4.3, "Medium"),
-        "Insecure CORS Policy (Wildcard with Credentials)": (4.3, "Medium"),
-        "Password Form Submits Over HTTP": (5.3, "Medium"),
-        "Basic Authentication Advertised Over HTTP": (5.3, "Medium"),
-        "Mixed Content Detected": (4.2, "Medium"),
-        "Insecure Form Action (HTTP)": (4.2, "Medium")
+        "Subdomain Takeover Vulnerability (Dangling CNAME)": (8.7, "High"),
+        "Hardcoded Third-Party Secret Key Exposed in JS Bundle": (8.7, "High"),
+        "Sensitive Spring Boot Actuator Config Exposed": (8.7, "High"),
+        "Exposed .env Configuration File": (8.7, "High"),
+        "Exposed phpinfo() File": (6.9, "Medium"),
+        "Password Form Submits Over HTTP": (6.0, "Medium"),
+        "Basic Authentication Advertised Over HTTP": (6.0, "Medium"),
+        "Insecure Form Action (HTTP)": (2.3, "Low"),
+        "Insecure CORS Policy (Arbitrary Origin Reflection with Credentials)": (7.1, "High")
     }
-    
+
     for name, vector in CVSS_REGISTRY.items():
-        score, sev = calculate_cvss31(vector)
-        # We don't strictly test expected_scores yet to avoid failing tests if our manual 
-        # calculation in the scratchpad was off by 0.1, we'll assert it's valid
+        score, sev = calculate_cvss40(vector)
         assert isinstance(score, float)
         assert sev in ["None", "Low", "Medium", "High", "Critical"]
         if name in expected_scores:
@@ -45,57 +39,65 @@ def test_cvss_calculator_registry():
             assert sev == expected_scores[name][1]
 
 def test_cvss_calculator_errors():
-    with pytest.raises(ValueError):
-        calculate_cvss31("CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H")
-    with pytest.raises(ValueError):
-        calculate_cvss31("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H")
-    with pytest.raises(ValueError):
-        calculate_cvss31("CVSS:3.1/AV:X/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H")
-    with pytest.raises(ValueError):
-        calculate_cvss31("CVSS:3.1/AV:N/AV:N/PR:N/UI:N/S:C/C:H/I:H/A:H")
+    # Invalid version
+    score, sev = calculate_cvss40("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H")
+    assert score is None
+    assert sev is None
+
+    # Missing required metric (e.g. AT)
+    score, sev = calculate_cvss40("CVSS:4.0/AV:N/AC:L/PR:N/UI:N/VC:H/VI:N/VA:N/SC:N/SI:N/SA:N")
+    assert score is None
+
+    # Duplicate metric
+    score, sev = calculate_cvss40("CVSS:4.0/AV:N/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:N/VA:N/SC:N/SI:N/SA:N")
+    assert score is None
+
+    # Malformed vector
+    score, sev = calculate_cvss40("not a vector")
+    assert score is None
 
 class DummyScanner(ScannerModule):
     def __init__(self, url):
         self.url = url
         self.module_name = "dummy"
-        
+
     def run(self):
         pass
 
 def test_registry_behavior():
     scanner = DummyScanner("http://example.com")
-    
+
     # 1. Known applicable finding
+    finding = scanner.make_finding(
+        name="Exposed .env Configuration File",
+        severity="High",
+        category="information_exposure",
+        description="desc", evidence="ev"
+    )
+    assert finding["cvss"] == CVSS_REGISTRY["Exposed .env Configuration File"]
+    assert finding["cvss_score"] == 8.7
+    assert finding["cvss_severity"] == "High"
+
+    # 2. Known removed finding (should now be None)
     finding = scanner.make_finding(
         name="Exposed .git Repository",
         severity="Medium",
         category="information_exposure",
         description="desc", evidence="ev"
     )
-    assert finding["cvss"] == CVSS_REGISTRY["Exposed .git Repository"]
-    assert finding["cvss_score"] == 5.3
-    assert finding["cvss_severity"] == "Medium"
-    
-    # 2. Known N/A Low finding (e.g. CSP Allows Inline Styles)
-    finding = scanner.make_finding(
-        name="CSP Allows Inline Styles",
-        severity="Low",
-        category="configuration",
-        description="desc", evidence="ev"
-    )
     assert finding["cvss"] is None
     assert finding["cvss_score"] is None
     assert finding["cvss_severity"] is None
-    
-    # 3. Known N/A High finding (no severity fallback)
+
+    # 3. Another removed finding
     finding = scanner.make_finding(
-        name="Missing Content-Security-Policy (CSP)",
-        severity="High",
-        category="configuration",
+        name="Mixed Content Detected",
+        severity="Medium",
+        category="information_exposure",
         description="desc", evidence="ev"
     )
     assert finding["cvss"] is None
-    
+
     # 4. Unknown new Low finding
     finding = scanner.make_finding(
         name="Some Unknown New Low",
@@ -104,7 +106,7 @@ def test_registry_behavior():
         description="desc", evidence="ev"
     )
     assert finding["cvss"] is None
-    
+
     # 5. Unknown new Critical finding
     finding = scanner.make_finding(
         name="Some Unknown New Critical",
@@ -113,23 +115,35 @@ def test_registry_behavior():
         description="desc", evidence="ev"
     )
     assert finding["cvss"] is None
-    
-    # 6. Explicit override
+
+    # 6. Explicit override with valid 4.0
     finding = scanner.make_finding(
         name="Some Finding",
+        severity="Critical",
+        cvss="CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N",
+        category="configuration",
+        description="desc", evidence="ev"
+    )
+    assert finding["cvss"] == "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N"
+    assert finding["cvss_score"] == 0.0
+    assert finding["cvss_severity"] == "None"
+
+    # 7. Explicit override with 3.1 (backend should leave score None, frontend renders natively)
+    finding = scanner.make_finding(
+        name="Another Finding",
         severity="Critical",
         cvss="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N",
         category="configuration",
         description="desc", evidence="ev"
     )
     assert finding["cvss"] == "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N"
-    assert finding["cvss_score"] == 0.0
-    assert finding["cvss_severity"] == "None"
+    assert finding["cvss_score"] is None
+    assert finding["cvss_severity"] is None
 
 def test_inventory_regression_guard():
-    # Exactly 14 explicitly mapped, preventing unintended expansions
-    assert len(CVSS_REGISTRY) == 14
+    # Exactly 9 explicitly mapped
+    assert len(CVSS_REGISTRY) == 9
     for key, val in CVSS_REGISTRY.items():
-        assert val.startswith("CVSS:3.1/")
-        # This will raise if invalid
-        calculate_cvss31(val)
+        assert val.startswith("CVSS:4.0/")
+        score, sev = calculate_cvss40(val)
+        assert score is not None
