@@ -299,3 +299,85 @@ def test_sectxt_content_type_micro(monkeypatch):
     }, monkeypatch, MagicMock())
     assert not any(x["name"] == "Valid security.txt" for x in findings4)
 
+
+# ── Localhost vs Private Infrastructure Classification ──
+
+from unittest.mock import patch
+from api.scanner.modules.javascript_security import JavaScriptSecurityModule
+
+class _DummyResp:
+    def __init__(self, code, text, headers=None):
+        self.status_code = code
+        self.text = text
+        self.headers = headers or {}
+
+def _run_js_module(js_text, monkeypatch):
+    html = '<script src="/app.js"></script>'
+    module = JavaScriptSecurityModule()
+    session = MagicMock()
+    def mock_req(method, url, **kwargs):
+        if url.endswith("/app.js"):
+            return _DummyResp(200, js_text)
+        return _DummyResp(200, html, {"Content-Type": "text/html"})
+    monkeypatch.setattr("api.scanner.modules.javascript_security.safe_request", mock_req)
+    return module.run("https://example.com/", "example.com", session)
+
+def test_localhost_only_informational(monkeypatch):
+    findings = _run_js_module('var x = "http://localhost:3000/api";', monkeypatch)
+    lb = [f for f in findings if f["name"] == "Development / Localhost References in Client-Side Code"]
+    assert len(lb) == 1
+    assert lb[0]["severity"] == "Informational"
+    infra = [f for f in findings if f["name"] == "Internal Infrastructure References Disclosed in Client-Side Code"]
+    assert len(infra) == 0
+
+def test_localhost_5000_informational(monkeypatch):
+    findings = _run_js_module('const api = "http://localhost:5000";', monkeypatch)
+    lb = [f for f in findings if f["name"] == "Development / Localhost References in Client-Side Code"]
+    assert len(lb) == 1
+    assert lb[0]["severity"] == "Informational"
+
+def test_127_0_0_1_informational(monkeypatch):
+    findings = _run_js_module('var db = "http://127.0.0.1:5432";', monkeypatch)
+    lb = [f for f in findings if f["name"] == "Development / Localhost References in Client-Side Code"]
+    assert len(lb) == 1
+    assert lb[0]["severity"] == "Informational"
+
+def test_10_x_private_ip_low(monkeypatch):
+    findings = _run_js_module('var api = "http://10.10.10.5:8080/v1";', monkeypatch)
+    infra = [f for f in findings if f["name"] == "Internal Infrastructure References Disclosed in Client-Side Code"]
+    assert len(infra) == 1
+    assert infra[0]["severity"] == "Low"
+    lb = [f for f in findings if f["name"] == "Development / Localhost References in Client-Side Code"]
+    assert len(lb) == 0
+
+def test_192_168_private_ip_low(monkeypatch):
+    findings = _run_js_module('const svc = "http://192.168.1.20:9090";', monkeypatch)
+    infra = [f for f in findings if f["name"] == "Internal Infrastructure References Disclosed in Client-Side Code"]
+    assert len(infra) == 1
+    assert infra[0]["severity"] == "Low"
+
+def test_172_16_private_ip_low(monkeypatch):
+    findings = _run_js_module('const x = "http://172.16.1.5/api";', monkeypatch)
+    infra = [f for f in findings if f["name"] == "Internal Infrastructure References Disclosed in Client-Side Code"]
+    assert len(infra) == 1
+    assert infra[0]["severity"] == "Low"
+
+def test_mixed_localhost_and_private_ip(monkeypatch):
+    js = 'var dev = "http://localhost:5000"; var prod = "http://10.0.0.5:8080";'
+    findings = _run_js_module(js, monkeypatch)
+    lb = [f for f in findings if f["name"] == "Development / Localhost References in Client-Side Code"]
+    assert len(lb) == 1
+    assert lb[0]["severity"] == "Informational"
+    assert "localhost" in str(lb[0]["evidence"])
+    infra = [f for f in findings if f["name"] == "Internal Infrastructure References Disclosed in Client-Side Code"]
+    assert len(infra) == 1
+    assert infra[0]["severity"] == "Low"
+    assert "10.0.0.5" in str(infra[0]["evidence"])
+    assert "localhost" not in str(infra[0]["evidence"])
+
+def test_public_url_only_no_findings(monkeypatch):
+    findings = _run_js_module('const api = "https://api.example.com/v2";', monkeypatch)
+    lb = [f for f in findings if f["name"] == "Development / Localhost References in Client-Side Code"]
+    assert len(lb) == 0
+    infra = [f for f in findings if f["name"] == "Internal Infrastructure References Disclosed in Client-Side Code"]
+    assert len(infra) == 0

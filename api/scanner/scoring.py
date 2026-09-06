@@ -234,13 +234,14 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
         if fsev == "Passed":
             continue
 
-        if "GraphQL" in fname:
-            api_surface = "Public API Spec Exposed"
-            api_subtext = "GraphQL Playground (/graphql)"
-            api_pill = "EXPOSED API"
-            break
+        if fname == "Interactive GraphQL Developer IDE Exposed" or fname == "GraphQL Introspection Query Enabled":
+            if api_surface == "No Public Spec Exposed":
+                api_surface = "API Surface Detected"
+                api_pill = "API DETECTED"
+                api_subtext = "GraphQL Playground (/graphql)" if "IDE" in fname else "GraphQL Introspection"
+            # Do not break in case a confirmed spec is found later
         
-        if ("API" in fname or "Swagger" in fname or "OpenAPI" in fname) and "Module" not in fname:
+        if fname == "Public OpenAPI / Swagger Specification Exposed":
             api_surface = "Public API Spec Exposed"
             api_pill = "EXPOSED API"
             # Extract specific path from evidence
@@ -248,16 +249,24 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
                 api_subtext = "OpenAPI Spec (/swagger.json)"
             elif "/openapi.json" in fevidence:
                 api_subtext = "OpenAPI Spec (/openapi.json)"
-            elif "/wp-json" in fevidence or "WordPress" in fname:
-                api_subtext = "WordPress REST API (/wp-json/)"
             elif "Public API Specification at" in fevidence:
                 path_match = fevidence.split("Public API Specification at")[-1].strip().rstrip("'\"}")
                 api_subtext = f"API Spec ({path_match})" if path_match else "Exposed Specification Found"
-            elif "Exposed Admin" in fevidence:
-                api_subtext = "Exposed Admin Portal Detected"
             else:
                 api_subtext = fname
             break
+
+        if ("API" in fname or "Swagger" in fname or "OpenAPI" in fname) and "Module" not in fname:
+            if api_surface == "No Public Spec Exposed":
+                api_surface = "API Surface Detected"
+                api_pill = "API DETECTED"
+                if "/wp-json" in fevidence or "WordPress" in fname:
+                    api_subtext = "WordPress REST API (/wp-json/)"
+                elif "Exposed Admin" in fevidence:
+                    api_subtext = "Exposed Admin Portal Detected"
+                else:
+                    api_subtext = fname
+            # Do not break, in case a confirmed spec is found later in the loop
 
     target_surface["api_surface"] = api_surface
     target_surface["api_subtext"] = api_subtext

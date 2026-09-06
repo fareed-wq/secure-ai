@@ -53,11 +53,15 @@ class JavaScriptSecurityModule(ScannerModule):
         "Google / Firebase Client API Key": re.compile(r'\b(AIzaSy[0-9A-Za-z\-_]{35})\b')
     }
 
-    # 2. INTERNAL INFRASTRUCTURE PATTERNS
-    INTERNAL_HOST_PATTERNS = [
-        re.compile(r'https?://(?:[a-zA-Z0-9\-]+\.)*(?:internal|staging|dev|corp)\.[a-zA-Z0-9\-]+\.[a-zA-Z]+(?::\d+)?'),
+    # 2. LOOPBACK / DEVELOPMENT PATTERNS (localhost, 127.x.x.x)
+    LOOPBACK_PATTERNS = [
         re.compile(r'https?://localhost(?::\d+)?'),
         re.compile(r'https?://127\.0\.0\.1(?::\d+)?'),
+    ]
+
+    # 2b. GENUINE PRIVATE INFRASTRUCTURE PATTERNS (RFC 1918, internal hostnames)
+    PRIVATE_INFRA_PATTERNS = [
+        re.compile(r'https?://(?:[a-zA-Z0-9\-]+\.)*(?:internal|staging|dev|corp)\.[a-zA-Z0-9\-]+\.[a-zA-Z]+(?::\d+)?'),
         re.compile(r'https?://10\.\d{1,3}\.\d{1,3}\.\d{1,3}(?::\d+)?'),
         re.compile(r'https?://192\.168\.\d{1,3}\.\d{1,3}(?::\d+)?'),
         re.compile(r'https?://172\.(?:1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}(?::\d+)?')
@@ -143,6 +147,7 @@ class JavaScriptSecurityModule(ScannerModule):
             raw_secrets_found = set()
             api_endpoints = set()
             internal_hosts = set()
+            loopback_hosts = set()
             frameworks = set()
             outdated_libs = set()
             debug_artifacts = set()
@@ -180,11 +185,18 @@ class JavaScriptSecurityModule(ScannerModule):
                             info_secrets_found.add(f"Pattern: {key_name} | Location: {filename} | Value: {self._mask_secret(raw_match)}")
                             raw_secrets_found.add(raw_match)
 
-                # 2. INTERNAL HOSTS
-                for pattern in self.INTERNAL_HOST_PATTERNS:
+                # 2. LOOPBACK / DEVELOPMENT HOSTS
+                for pattern in self.LOOPBACK_PATTERNS:
                     for match in pattern.finditer(js_text):
                         host = match.group(0)
-                        if "example.com" not in host.lower(): # exclude generic
+                        if "example.com" not in host.lower():
+                            loopback_hosts.add(host)
+
+                # 2b. PRIVATE INFRASTRUCTURE HOSTS
+                for pattern in self.PRIVATE_INFRA_PATTERNS:
+                    for match in pattern.finditer(js_text):
+                        host = match.group(0)
+                        if "example.com" not in host.lower():
                             internal_hosts.add(host)
 
                 # 3. DEBUG ARTIFACTS
@@ -310,6 +322,18 @@ class JavaScriptSecurityModule(ScannerModule):
                     remediation="Ensure public API keys have HTTP Referrer restrictions configured.",
                     owasp="Not Mapped",
                     category="information_exposure"
+                ))
+
+            if loopback_hosts:
+                findings.append(self.make_finding(
+                    "Development / Localhost References in Client-Side Code",
+                    "Informational",
+                    "Client-side JavaScript contains development or loopback URL references such as localhost or 127.0.0.1.",
+                    "\\n".join(list(loopback_hosts)[:5]),
+                    impact="These references point to the visitor's own device, not to an internal server. They commonly originate from development fallbacks or bundled third-party libraries. Removing unnecessary localhost references from production bundles is good hygiene but does not represent a direct security risk.",
+                    confidence="Medium",
+                    category="information_exposure",
+                    owasp="A05: Security Misconfiguration"
                 ))
 
             if internal_hosts:

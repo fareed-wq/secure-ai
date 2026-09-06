@@ -403,6 +403,12 @@ export const REMEDIATION_SNIPPETS = {
       code: `add_header Content-Security-Policy "default-src 'self'; script-src 'self'; object-src 'none';" always;`
     }
   ],
+  "CSP Allows Inline Styles": [
+    {
+      platform: "General",
+      code: `// Move inline styles (<div style="...">) to external CSS classes\n// Then remove 'unsafe-inline' from your style-src directive`
+    }
+  ],
   "Verbose Server Banner": [
     {
       platform: "Nginx",

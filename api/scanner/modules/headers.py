@@ -388,16 +388,19 @@ class CSPQualityModule(ScannerModule):
                 script_sources_lower = script_sources.lower()
                 has_nonce_or_hash_script = has_nonce_or_hash(script_sources)
 
+                script_weaknesses = []
+                style_weakness = False
+
                 if "'unsafe-inline'" in script_sources_lower and not has_nonce_or_hash_script:
-                    weaknesses.append("unsafe-inline in script-src")
+                    script_weaknesses.append("unsafe-inline in script-src")
 
                 style_sources = get_effective_sources('style-src')
                 if "'unsafe-inline'" in style_sources.lower() and not has_nonce_or_hash(style_sources):
-                    weaknesses.append("unsafe-inline in style-src")
+                    style_weakness = True
 
                 # 2. unsafe-eval evaluation (only in effective script policy)
                 if "'unsafe-eval'" in script_sources_lower:
-                    weaknesses.append("unsafe-eval")
+                    script_weaknesses.append("unsafe-eval")
 
                 # 3. http: sources and strict-dynamic
                 script_strict_dynamic = "'strict-dynamic'" in script_sources_lower and has_nonce_or_hash_script
@@ -418,23 +421,39 @@ class CSPQualityModule(ScannerModule):
                             break
 
                 if http_found:
-                    weaknesses.append("http: sources")
+                    script_weaknesses.append("http: sources")
 
-                if weaknesses:
+                if script_weaknesses:
+                    all_weaknesses = list(script_weaknesses)
+                    if style_weakness:
+                        all_weaknesses.append("unsafe-inline in style-src")
+
                     remediation = []
-                    if any("unsafe" in w for w in weaknesses):
+                    if any("unsafe" in w for w in all_weaknesses):
                         remediation.append("Remove unsafe-inline and unsafe-eval if possible.")
-                    if "http: sources" in weaknesses:
+                    if "http: sources" in all_weaknesses:
                         remediation.append("Replace insecure HTTP sources with HTTPS.")
 
                     findings.append(self.make_finding(
                         "Weak Content-Security-Policy",
                         "Medium",
                         "Your website's Content-Security-Policy allows potentially unsafe practices.",
-                        f"CSP Weaknesses: {', '.join(weaknesses)}\n\nFull CSP: {csp[:100]}...",
+                        f"CSP Weaknesses: {', '.join(all_weaknesses)}\n\nFull CSP: {csp[:100]}...",
                         impact="A permissive Content Security Policy reduces its effectiveness as a defense-in-depth control against script injection.",
                         confidence="High",
                         remediation=" ".join(remediation),
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers"
+                    ))
+                elif style_weakness:
+                    findings.append(self.make_finding(
+                        "CSP Allows Inline Styles",
+                        "Low",
+                        "The Content-Security-Policy allows inline CSS through style-src 'unsafe-inline'.",
+                        f"CSP Weaknesses: unsafe-inline in style-src\n\nFull CSP: {csp[:100]}...",
+                        impact="This weakens CSP style restrictions. It is a defense-in-depth hardening issue and is less severe than allowing inline JavaScript. Applications that rely on inline style attributes may require this setting until those styles are migrated to classes or stylesheets.",
+                        confidence="High",
+                        remediation="Migrate inline style attributes to external stylesheets or CSS classes where practical, then remove 'unsafe-inline' from style-src.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
                     ))

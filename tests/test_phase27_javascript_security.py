@@ -161,10 +161,16 @@ class TestJavaScriptSecurityModule(unittest.TestCase):
         self.assertEqual(len(infra_findings), 1)
         self.assertEqual(infra_findings[0]["severity"], "Low")
         evidence = str(infra_findings[0]["evidence"])
-        self.assertIn("http://localhost:5000", evidence)
         self.assertIn("http://192.168.1.10:8080", evidence)
-        self.assertNotIn("welcome to localhost", evidence)
-        self.assertNotIn("https://api.example.com", evidence)
+        self.assertNotIn("http://localhost:5000", evidence)
+
+        loopback_findings = [f for f in findings if f["name"] == "Development / Localhost References in Client-Side Code"]
+        self.assertEqual(len(loopback_findings), 1)
+        self.assertEqual(loopback_findings[0]["severity"], "Informational")
+        lb_evidence = str(loopback_findings[0]["evidence"])
+        self.assertIn("http://localhost:5000", lb_evidence)
+        self.assertNotIn("welcome to localhost", lb_evidence)
+        self.assertNotIn("https://api.example.com", lb_evidence)
 
 if __name__ == '__main__':
     unittest.main()

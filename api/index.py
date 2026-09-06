@@ -73,8 +73,15 @@ from api.scanner.validation import CANONICAL_URL_REGEX, canonicalize_url, normal
 
 
 
-app = FastAPI(title="Website Security Posture Checker (Advanced Modular)")
+import os
+is_prod = os.environ.get("VERCEL_ENV") == "production"
 
+app = FastAPI(
+    title="Website Security Posture Checker (Advanced Modular)",
+    openapi_url=None if is_prod else "/openapi.json",
+    docs_url=None if is_prod else "/docs",
+    redoc_url=None if is_prod else "/redoc"
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
