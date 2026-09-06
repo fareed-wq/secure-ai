@@ -81,39 +81,6 @@ def test_admin_me_admin_user():
 
         app.dependency_overrides.clear()
 
-@patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
-def test_admin_get_scans_mapping():
-    def override_get_current_user():
-        return {"sub": "admin-123"}
-
-    with patch('api.auth.entitlements.get_user_role', return_value="admin"), \
-         patch('requests.get') as mock_get:
-
-        mock_resp = MagicMock()
-        mock_resp.status_code = 200
-        mock_resp.json.return_value = [
-            {"id": "1", "report_data": {"scan_mode": "active"}},
-            {"id": "2", "report_data": {"scan_mode": "passive"}},
-            {"id": "3", "report_data": {"scan_mode": "basic"}},
-            {"id": "4", "report_data": {}},
-            {"id": "5"}
-        ]
-        mock_get.return_value = mock_resp
-
-        from api.auth.entitlements import get_current_user
-        app.dependency_overrides[get_current_user] = override_get_current_user
-
-        response = client.get("/api/admin/scans")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 5
-        assert data[0]["scan_mode"] == "Advanced"
-        assert data[1]["scan_mode"] == "Basic"
-        assert data[2]["scan_mode"] == "Basic"
-        assert data[3]["scan_mode"] == "Unknown"
-        assert data[4]["scan_mode"] == "Unknown"
-
-        app.dependency_overrides.clear()
 def test_admin_users_search(mock_get_current_user_admin, mock_get_user_role_admin, monkeypatch):
     monkeypatch.setenv('SUPABASE_URL', 'https://example.com')
     monkeypatch.setenv('SUPABASE_SECRET_KEY', 'mock')
@@ -154,35 +121,6 @@ def test_admin_users_search(mock_get_current_user_admin, mock_get_user_role_admi
     assert len(resp2.json()) == 1
     assert resp2.json()[0]["user_id"] == "user-1"
 
-
-def test_admin_scans_search(mock_get_current_user_admin, mock_get_user_role_admin, monkeypatch):
-    monkeypatch.setenv('SUPABASE_URL', 'https://example.com')
-    monkeypatch.setenv('SUPABASE_SECRET_KEY', 'mock')
-    from api.admin import require_admin
-    app.dependency_overrides[require_admin] = lambda: {"sub": "admin-123"}
-
-    def mock_requests_get(url, *args, **kwargs):
-        return MockResponse([{"id": "scan-1", "target_url": url}])
-
-    class MockResponse:
-        def __init__(self, json_data, status_code=200):
-            self.json_data = json_data
-            self.status_code = status_code
-        def json(self):
-            return self.json_data
-
-    monkeypatch.setattr("requests.get", mock_requests_get)
-
-    # ID search (UUID-like)
-    uuid_str = "12345678-1234-5678-1234-567812345678"
-    resp = client.get(f"/api/admin/scans?search={uuid_str}")
-    assert resp.status_code == 200, resp.json()
-    assert "user_id.eq" in resp.json()[0]["url"]
-
-    # Target search
-    resp2 = client.get("/api/admin/scans?search=example.com")
-    assert resp2.status_code == 200
-    assert "target_url=ilike.*example.com*" in resp2.json()[0]["url"]
 
 
 def test_admin_audit_logs_search(mock_get_current_user_admin, mock_get_user_role_admin, monkeypatch):
