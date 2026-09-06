@@ -18,8 +18,8 @@ export const REMEDIATION_SNIPPETS = {
     }
   ],
 
-  // 2. Missing COOP Header
-  "Missing COOP Header": [
+  // 2. COOP Not Configured
+  "COOP Not Configured": [
     {
       platform: "Nginx",
       code: `add_header Cross-Origin-Opener-Policy "same-origin" always;`,
@@ -42,8 +42,8 @@ export const REMEDIATION_SNIPPETS = {
     }
   ],
 
-  // 3. Missing COEP Header
-  "Missing COEP Header": [
+  // 3. COEP Not Configured
+  "COEP Not Configured": [
     {
       platform: "Nginx",
       code: `add_header Cross-Origin-Embedder-Policy "require-corp" always;`
@@ -129,8 +129,8 @@ export const REMEDIATION_SNIPPETS = {
     }
   ],
 
-  // 8. Missing X-Frame-Options
-  "Missing X-Frame-Options": [
+  // 8. Missing Clickjacking Protection
+  "Missing Clickjacking Protection": [
     {
       platform: "Nginx",
       code: `add_header X-Frame-Options "SAMEORIGIN" always;`
@@ -145,8 +145,8 @@ export const REMEDIATION_SNIPPETS = {
     }
   ],
 
-  // 9. Missing X-Content-Type-Options
-  "Missing X-Content-Type-Options": [
+  // 9. Missing or Invalid X-Content-Type-Options
+  "Missing or Invalid X-Content-Type-Options": [
     {
       platform: "Nginx",
       code: `add_header X-Content-Type-Options "nosniff" always;`

@@ -130,8 +130,8 @@ class TestScoringConsistency(unittest.TestCase):
         """Security header findings should be deduplicated for scoring."""
         findings = [
             {"name": "Missing Content-Security-Policy (CSP)", "severity": "High", "category": "http_headers"},
-            {"name": "Missing COOP Header", "severity": "Informational", "category": "http_headers"},
-            {"name": "Missing COEP Header", "severity": "Informational", "category": "http_headers"},
+            {"name": "COOP Not Configured", "severity": "Informational", "category": "http_headers"},
+            {"name": "COEP Not Configured", "severity": "Informational", "category": "http_headers"},
         ]
         res = calculate_score("https://example.com", findings, {}, None)
         self.assertEqual(len(res["findings"]), 3)

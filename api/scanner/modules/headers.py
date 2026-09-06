@@ -462,13 +462,13 @@ class CSPQualityModule(ScannerModule):
                     default_sources = csp_dict.get("default-src", "").lower()
                     if "'none'" not in default_sources.split():
                         findings.append(self.make_finding(
-                            "CSP Object Sources Not Explicitly Disabled",
+                            "CSP Object Sources Not Restricted",
                             "Low",
                             "The Content-Security-Policy does not explicitly disable object sources.",
                             f"Full CSP: {csp[:100]}...",
-                            impact="Failing to explicitly restrict object-src may leave the application open to legacy plugin risks if a user's browser environment still supports them.",
+                            impact="Failing to explicitly restrict object-src leaves the application open to unnecessary executable or embed attack surfaces via <object> and <embed> tags.",
                             confidence="High",
-                            remediation="Add object-src 'none' to your CSP to explicitly disable legacy plugin loading.",
+                            remediation="Add object-src 'none' to your CSP to explicitly disable object and embed loading.",
                             owasp="A05: Security Misconfiguration",
                             category="http_headers"
                         ))

@@ -76,15 +76,15 @@ class TestRegressionMatrix:
     def test_clickjacking(self, mock_safe_req):
         mod = SecurityHeadersModule()
 
-        # E) Neither -> Missing X-Frame-Options (Medium)
+        # E) Neither -> Missing Clickjacking Protection (Medium)
         mock_safe_req.return_value = make_mock_response(headers={"Content-Type": "text/html"})
         f = mod.run("https://example.com", "example.com", MagicMock())
-        assert any(x["name"] == "Missing X-Frame-Options" and x["severity"] == "Medium" for x in f)
+        assert any(x["name"] == "Missing Clickjacking Protection" and x["severity"] == "Medium" for x in f)
 
         # F) RO frame-ancestors -> still vulnerable
         mock_safe_req.return_value = make_mock_response(headers={"Content-Type": "text/html", "Content-Security-Policy-Report-Only": "frame-ancestors 'none'"})
         f = mod.run("https://example.com", "example.com", MagicMock())
-        assert any(x["name"] == "Missing X-Frame-Options" for x in f)
+        assert any(x["name"] == "Missing Clickjacking Protection" for x in f)
 
     # 4. Cookies
     @patch('api.scanner.modules.http_security.safe_request')
@@ -156,7 +156,7 @@ class TestRegressionMatrix:
         html = '<script src="https://google-analytics.com/script.js"></script>'
         mock_safe_req.return_value = make_mock_response(headers={"Content-Type": "text/html"}, text=html)
         f = mod.run("https://example.com", "example.com", MagicMock())
-        assert any(x["name"] == "Missing Subresource Integrity (SRI) on Third-Party Asset" for x in f)
+        assert any(x["name"] == "Missing Subresource Integrity" for x in f)
 
         # C) Malformed
         html = '<script src="https://google-analytics.com/script.js" integrity="invalid-hash"></script>'
@@ -168,7 +168,7 @@ class TestRegressionMatrix:
         html = '<script src="https://google-analytics.com/script.js" integrity="sha256-Abcdef=="></script>'
         mock_safe_req.return_value = make_mock_response(headers={"Content-Type": "text/html"}, text=html)
         f = mod.run("https://example.com", "example.com", MagicMock())
-        assert any(x["name"] == "Missing Cross-Origin Attribute for SRI Verification" for x in f)
+        assert any(x["name"] == "Missing crossorigin for SRI Resource" for x in f)
 
         # E) Same-origin missing SRI -> No SRI finding
         html = '<script src="/local.js"></script>'
@@ -187,7 +187,7 @@ class TestRegressionMatrix:
 
         mock_safe_req.return_value = make_mock_response(headers={"Content-Type": "text/html"})
         f = mod.run("https://example.com", "example.com", MagicMock())
-        assert any("Missing X-Content-Type-Options" in x["name"] for x in f)
+        assert any("Missing or Invalid X-Content-Type-Options" in x["name"] for x in f)
 
     # 8. COOP / COEP / CORP / Referrer
     @patch('api.scanner.modules.http_security.safe_request')
@@ -200,11 +200,11 @@ class TestRegressionMatrix:
             "Referrer-Policy": "no-referrer"
         })
         f = mod.run("https://example.com", "example.com", MagicMock())
-        assert not any(x["name"] == "Missing COEP Header" for x in f)
+        assert not any(x["name"] == "COEP Not Configured" for x in f)
 
         mock_safe_req.return_value = make_mock_response()
         f = mod.run("https://example.com", "example.com", MagicMock())
-        assert any(x["name"] == "Missing COEP Header" for x in f)
+        assert any(x["name"] == "COEP Not Configured" for x in f)
 
     # 10. DNS Security
     def test_dns_security(self):
