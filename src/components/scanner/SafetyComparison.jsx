@@ -5,7 +5,7 @@ const faqs = [
   {
     icon: Shield,
     question: "Do you need access to my systems?",
-    answer: "No. URLScannerOnline only needs your public website URL—no passwords, admin access, or credentials.\nDeeper testing requires your explicit approval and separate access."
+    answer: "No. URLScannerOnline only needs your public website URL; no passwords, admin access, or credentials are required.\nDeeper testing requires your explicit approval and separate access."
   },
   {
     icon: Scale,

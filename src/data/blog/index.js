@@ -139,52 +139,52 @@ export const articles = [
             },
             {
                 "id": "a01-broken-access-control",
-                "title": "A01:2025 \u2014 Broken Access Control",
+                "title": "A01:2025 - Broken Access Control",
                 "content": "Broken Access Control occurs when users can act outside of their intended permissions, leading to unauthorized information disclosure or data modification. In OWASP 2025, Server-Side Request Forgery (SSRF) is now incorporated into this category."
             },
             {
                 "id": "a02-security-misconfiguration",
-                "title": "A02:2025 \u2014 Security Misconfiguration",
+                "title": "A02:2025 - Security Misconfiguration",
                 "content": "This covers insecure default settings, incomplete configurations, misconfigured HTTP headers, and verbose error messages. It requires a repeatable hardening process to <a href=\"/blog/website-security-checklist\">secure the application stack</a>."
             },
             {
                 "id": "a03-software-supply-chain",
-                "title": "A03:2025 \u2014 Software Supply Chain Failures",
+                "title": "A03:2025 - Software Supply Chain Failures",
                 "content": "A new focus on the risks of relying on third-party libraries, frameworks, and tools that may contain vulnerabilities or malicious code inserted during the development lifecycle."
             },
             {
                 "id": "a04-cryptographic-failures",
-                "title": "A04:2025 \u2014 Cryptographic Failures",
+                "title": "A04:2025 - Cryptographic Failures",
                 "content": "Failures related to cryptography, leading to the exposure of sensitive data like passwords or health records, such as transmitting data in cleartext or using weak cryptographic algorithms."
             },
             {
                 "id": "a05-injection",
-                "title": "A05:2025 \u2014 Injection",
+                "title": "A05:2025 - Injection",
                 "content": "Injection flaws, such as SQL injection or Command Injection, occur when untrusted data is sent to an interpreter as part of a command or query. Cross-Site Scripting (XSS) is considered a form of injection."
             },
             {
                 "id": "a06-insecure-design",
-                "title": "A06:2025 \u2014 Insecure Design",
+                "title": "A06:2025 - Insecure Design",
                 "content": "Highlights risks related to design and architectural flaws, emphasizing the need for threat modeling, secure design patterns, and reference architectures."
             },
             {
                 "id": "a07-authentication-failures",
-                "title": "A07:2025 \u2014 Authentication Failures",
+                "title": "A07:2025 - Authentication Failures",
                 "content": "Failures allowing attackers to compromise passwords, keys, or session tokens, permitting them to temporarily or permanently assume the identities of other users."
             },
             {
                 "id": "a08-integrity-failures",
-                "title": "A08:2025 \u2014 Software or Data Integrity Failures",
+                "title": "A08:2025 - Software or Data Integrity Failures",
                 "content": "Focuses on making assumptions about software updates, critical data, and CI/CD pipelines without verifying integrity, such as relying upon plugins from untrusted sources."
             },
             {
                 "id": "a09-logging-failures",
-                "title": "A09:2025 \u2014 Security Logging and Alerting Failures",
+                "title": "A09:2025 - Security Logging and Alerting Failures",
                 "content": "Without proper logging and alerting, breaches cannot be detected. Failures include not logging auditable events or storing logs locally where an attacker can delete them."
             },
             {
                 "id": "a10-exceptional-conditions",
-                "title": "A10:2025 \u2014 Mishandling of Exceptional Conditions",
+                "title": "A10:2025 - Mishandling of Exceptional Conditions",
                 "content": "A new category addressing how applications handle errors and exceptional states, which can leak sensitive information or lead to unexpected behavior if not managed securely."
             },
             {

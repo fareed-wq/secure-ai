@@ -91,47 +91,47 @@ const ScannerCapabilities = () => {
                 </tr>
                 <tr className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
                   <td className="py-3 px-6">TLS / HTTPS Security</td>
-                  <td className="py-3 px-6 text-center text-slate-600">—</td>
+                  <td className="py-3 px-6 text-center text-slate-600">-</td>
                   <td className="py-3 px-6 text-center text-emerald-400 bg-indigo-900/10">✓</td>
                 </tr>
                 <tr className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
                   <td className="py-3 px-6">DNS & Email Security</td>
-                  <td className="py-3 px-6 text-center text-slate-600">—</td>
+                  <td className="py-3 px-6 text-center text-slate-600">-</td>
                   <td className="py-3 px-6 text-center text-emerald-400 bg-indigo-900/10">✓</td>
                 </tr>
                 <tr className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
                   <td className="py-3 px-6">CORS Configuration</td>
-                  <td className="py-3 px-6 text-center text-slate-600">—</td>
+                  <td className="py-3 px-6 text-center text-slate-600">-</td>
                   <td className="py-3 px-6 text-center text-emerald-400 bg-indigo-900/10">✓</td>
                 </tr>
                 <tr className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
                   <td className="py-3 px-6">API / Application Surface</td>
-                  <td className="py-3 px-6 text-center text-slate-600">—</td>
+                  <td className="py-3 px-6 text-center text-slate-600">-</td>
                   <td className="py-3 px-6 text-center text-emerald-400 bg-indigo-900/10">✓</td>
                 </tr>
                 <tr className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
                   <td className="py-3 px-6">Sensitive File Exposure</td>
-                  <td className="py-3 px-6 text-center text-slate-600">—</td>
+                  <td className="py-3 px-6 text-center text-slate-600">-</td>
                   <td className="py-3 px-6 text-center text-emerald-400 bg-indigo-900/10">✓</td>
                 </tr>
                 <tr className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
                   <td className="py-3 px-6">Subdomain / Infrastructure Discovery</td>
-                  <td className="py-3 px-6 text-center text-slate-600">—</td>
+                  <td className="py-3 px-6 text-center text-slate-600">-</td>
                   <td className="py-3 px-6 text-center text-emerald-400 bg-indigo-900/10">✓</td>
                 </tr>
                 <tr className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
                   <td className="py-3 px-6">robots.txt / sitemap / security.txt</td>
-                  <td className="py-3 px-6 text-center text-slate-600">—</td>
+                  <td className="py-3 px-6 text-center text-slate-600">-</td>
                   <td className="py-3 px-6 text-center text-emerald-400 bg-indigo-900/10">✓</td>
                 </tr>
                 <tr className="border-b border-slate-800/50 hover:bg-slate-800/20 transition-colors">
                   <td className="py-3 px-6">JavaScript / Client-Side Security</td>
-                  <td className="py-3 px-6 text-center text-slate-600">—</td>
+                  <td className="py-3 px-6 text-center text-slate-600">-</td>
                   <td className="py-3 px-6 text-center text-emerald-400 bg-indigo-900/10">✓</td>
                 </tr>
                 <tr className="hover:bg-slate-800/20 transition-colors">
                   <td className="py-3 px-6">Network Service Exposure</td>
-                  <td className="py-3 px-6 text-center text-slate-600">—</td>
+                  <td className="py-3 px-6 text-center text-slate-600">-</td>
                   <td className="py-3 px-6 text-center text-emerald-400 bg-indigo-900/10">✓</td>
                 </tr>
               </tbody>

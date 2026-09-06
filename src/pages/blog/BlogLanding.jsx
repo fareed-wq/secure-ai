@@ -159,7 +159,7 @@ const BlogLanding = () => {
               In today's digital landscape, a strong security posture is not optional. Attackers constantly scan for weaknesses like security misconfiguration, exposed information, weak security headers, and insecure authentication or session configurations.
             </p>
             <p>
-              A single oversight&mdash;such as exposed APIs, outdated software dependencies, poor TLS/HTTPS configuration, or client-side JavaScript exposure&mdash;can lead to severe breaches. Proactive security assessment helps you stay ahead of the threats.
+              A single oversight, such as exposed APIs, outdated software dependencies, poor TLS/HTTPS configuration, or client-side JavaScript exposure, can lead to severe breaches. Proactive security assessment helps you stay ahead of the threats.
             </p>
           </div>
         </section>

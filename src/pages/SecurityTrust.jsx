@@ -31,7 +31,7 @@ const SecurityTrust = () => {
             Our commitment to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">responsible security.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-400 leading-relaxed">
-            URLScanOnline is built around passive-first, non-intrusive security assessment. We believe security tools should help protect — not endanger — the websites they analyze.
+            URLScanOnline is built around passive-first, non-intrusive security assessment. We believe security tools should help protect, not endanger, the websites they analyze.
           </p>
         </div>
       </section>
