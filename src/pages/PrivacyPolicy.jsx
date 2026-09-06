@@ -14,7 +14,7 @@ const PrivacyPolicy = () => {
     <div className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-12 pb-24">
 
       {/* Back Link */}
-      <div className="-mb-4">
+      <div className="mb-2 pt-4">
         <Link
           to="/trust-policy"
           className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-indigo-400 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md px-1 py-0.5 -ml-1"

@@ -7,7 +7,16 @@ const SecurityTrust = () => {
   useSEO({ title: 'Security & Trust | URLScanOnline', description: 'Learn about our defensive scanning practices and commitment to platform security.', path: '/security-trust' });
 
   return (
-    <div className="space-y-16 pb-12">
+        <div className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-12 pb-24">
+      <div className="mb-2">
+        <Link
+          to="/trust-policy"
+          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-indigo-400 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Trust & Policy
+        </Link>
+      </div>
       {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-16 text-center mb-8">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl opacity-30 pointer-events-none">
@@ -22,7 +31,7 @@ const SecurityTrust = () => {
             Our commitment to <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">responsible security.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-400 leading-relaxed">
-            URLScanOnline is built around passive-first, non-intrusive security assessment. We believe security tools should help protect â€” not endanger â€” the websites they analyze.
+            URLScanOnline is built around passive-first, non-intrusive security assessment. We believe security tools should help protect — not endanger — the websites they analyze.
           </p>
         </div>
       </section>
