@@ -59,7 +59,7 @@ export const REMEDIATION_SNIPPETS = {
   ],
 
   // 4. Missing CORP Header
-  "Missing CORP Header": [
+  "CORP Not Configured": [
     {
       platform: "Nginx",
       code: `add_header Cross-Origin-Resource-Policy "same-origin" always;`
@@ -162,7 +162,7 @@ export const REMEDIATION_SNIPPETS = {
   ],
 
   // 10. Missing Referrer-Policy
-  "Missing Referrer-Policy": [
+  "Referrer-Policy Not Configured": [
     {
       platform: "Nginx",
       code: `add_header Referrer-Policy "strict-origin-when-cross-origin" always;`
@@ -178,7 +178,7 @@ export const REMEDIATION_SNIPPETS = {
   ],
 
   // 11. Missing Permissions-Policy
-  "Missing Permissions-Policy": [
+  "Permissions-Policy Not Configured": [
     {
       platform: "Nginx",
       code: `add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;`
@@ -263,7 +263,7 @@ export const REMEDIATION_SNIPPETS = {
   ],
 
   // 14. Missing Basic Files
-  "security.txt Missing": [
+  "security.txt Not Found": [
     {
       platform: "File Creation",
       code: `# Create /.well-known/security.txt\nContact: mailto:security@yourdomain.com\nExpires: 2026-12-31T23:59:00.000Z\nPreferred-Languages: en`,

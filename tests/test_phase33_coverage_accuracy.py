@@ -75,7 +75,7 @@ class TestPhase33CoverageAccuracy(unittest.TestCase):
         finding_names = [f["name"] for f in findings]
         self.assertIn("COOP Not Configured", finding_names)
         self.assertIn("COEP Not Configured", finding_names)
-        self.assertIn("Missing CORP Header", finding_names)
+        self.assertIn("CORP Not Configured", finding_names)
 
 if __name__ == '__main__':
     unittest.main()
