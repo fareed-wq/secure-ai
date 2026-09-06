@@ -394,39 +394,40 @@ const TechnicalReport = ({ reportData }) => {
                                               <span className="text-slate-500">Scanner Module</span>
                                               <span className="font-mono text-slate-300">{finding.module}</span>
                                             </div>
-                                          </div>
-                                        </div>
+                                            
+                                            {/* CVSS Metadata Block */}
+                                            {finding.severity !== 'Passed' && finding.severity !== 'Informational' && (
+                                              <div className="pt-3 mt-3 border-t border-slate-700/30 flex flex-col space-y-2">
+                                                {finding.cvss ? (
+                                                  <>
+                                                    <div className="flex justify-between items-center">
+                                                      <span className="text-xs font-bold text-slate-400">CVSS v3.1</span>
+                                                    </div>
 
-                                        <div className="mt-4 border-t border-slate-700/50 pt-4">
-                                          <div className="flex flex-col space-y-2">
-                                            {finding.cvss ? (
-                                              <>
-                                                <div className="flex justify-between items-center">
-                                                  <span className="text-xs font-bold text-slate-400">CVSS v3.1</span>
-                                                </div>
-
-                                                {(finding.cvss_score !== undefined && finding.cvss_score !== null) && (
-                                                  <div className="flex flex-col text-xs text-slate-300">
-                                                    <span>Base Score: {finding.cvss_score}</span>
-                                                    {finding.cvss_severity && (
-                                                      <span>CVSS Severity: {finding.cvss_severity}</span>
+                                                    {(finding.cvss_score !== undefined && finding.cvss_score !== null) && (
+                                                      <div className="flex flex-col text-xs text-slate-300">
+                                                        <span>Base Score: {finding.cvss_score}</span>
+                                                        {finding.cvss_severity && (
+                                                          <span>CVSS Severity: {finding.cvss_severity}</span>
+                                                        )}
+                                                      </div>
                                                     )}
+
+                                                    <div className="flex flex-col mt-2">
+                                                      <span className="text-xs text-slate-500 mb-1">Vector:</span>
+                                                      <div className="bg-slate-950 p-2 rounded border border-slate-800 min-w-0">
+                                                        <span className="text-xs font-mono text-slate-300 break-words whitespace-normal inline-block w-full text-left" style={{ overflowWrap: 'anywhere' }}>
+                                                          {finding.cvss}
+                                                        </span>
+                                                      </div>
+                                                    </div>
+                                                  </>
+                                                ) : (
+                                                  <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-slate-400">CVSS</span>
+                                                    <span className="text-xs text-slate-500 mt-1">Not Applicable</span>
                                                   </div>
                                                 )}
-
-                                                <div className="flex flex-col mt-2">
-                                                  <span className="text-xs text-slate-500 mb-1">Vector:</span>
-                                                  <div className="bg-slate-950 p-2 rounded border border-slate-800 min-w-0">
-                                                    <span className="text-xs font-mono text-slate-300 break-words whitespace-normal inline-block w-full text-left" style={{ overflowWrap: 'anywhere' }}>
-                                                      {finding.cvss}
-                                                    </span>
-                                                  </div>
-                                                </div>
-                                              </>
-                                            ) : (
-                                              <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-slate-400">CVSS</span>
-                                                <span className="text-xs text-slate-500 mt-1">Not Applicable</span>
                                               </div>
                                             )}
                                           </div>
