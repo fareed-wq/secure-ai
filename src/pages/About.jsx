@@ -7,7 +7,7 @@ import { useSEO } from '../hooks/useSEO';
 const About = () => {
   useSEO({
     title: 'About',
-    description: 'Learn about URLScannerOnline, our mission, and how we help teams secure their websites passively.',
+    description: 'Learn about URLScanOnline, our mission, and how we help teams secure their websites passively.',
     path: '/about'
   });
 
@@ -28,7 +28,7 @@ const About = () => {
             Making website security <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">easier to understand.</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-400 leading-relaxed">
-            URLScannerOnline helps website owners, developers, and security teams identify common security weaknesses, configuration issues, and exposure risks through practical, actionable security assessments.
+            URLScanOnline helps website owners, developers, and security teams identify common security weaknesses, configuration issues, and exposure risks through clear, actionable automated security assessments.
           </p>
         </div>
       </section>
@@ -58,11 +58,8 @@ const About = () => {
               <Lock className="w-5 h-5" />
             </div>
             <h3 className="text-xl font-bold text-slate-50 mb-3">Privacy & Responsible Testing</h3>
-            <p className="text-slate-400 leading-relaxed mb-2">
-              Our Passive Scan is designed to minimize impact on live websites. It analyzes publicly accessible security signals without attempting to exploit vulnerabilities or perform intrusive attacks.
-            </p>
-            <p className="text-slate-400 leading-relaxed text-sm">
-              Active Security Testing is available separately for users who explicitly choose additional testing and understand the associated risks.
+            <p className="text-slate-400 leading-relaxed">
+              URLScanOnline is designed to minimize unnecessary impact on live websites. Basic scans focus on passive observations of publicly accessible security signals. Advanced scans add bounded, non-destructive checks that may generate additional requests. Deeper manual security testing is available separately only with explicit written authorization and an agreed testing scope.
             </p>
           </div>
 
@@ -78,7 +75,7 @@ const About = () => {
         </div>
       </section>
 
-      {/* Built for practical website security / What URLScannerOnline Does */}
+      {/* Built for practical website security / What URLScanOnline Does */}
       <section className="max-w-6xl mx-auto px-4 md:px-0">
         <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden flex flex-col md:flex-row">
           <div className="md:w-1/2 p-8 md:p-12 lg:p-16 flex flex-col justify-center">
@@ -88,7 +85,7 @@ const About = () => {
                 Website security can be difficult to understand. Security tools often produce technical findings that are difficult for website owners and development teams to prioritize.
               </p>
               <p>
-                URLScannerOnline was created to make website security assessment simpler. We analyze publicly accessible security signals, identify potential weaknesses and misconfigurations, and explain what they mean and how they can be addressed.
+                URLScanOnline was created to make website security assessment simpler. We analyze publicly accessible security signals, identify potential weaknesses and misconfigurations, and explain what they mean and how they can be addressed.
               </p>
               <p>
                 Our goal is simple: help more people understand the security posture of their websites without requiring deep security expertise.
@@ -96,7 +93,7 @@ const About = () => {
             </div>
           </div>
           <div className="md:w-1/2 bg-slate-950 p-8 md:p-12 border-t md:border-t-0 md:border-l border-slate-800">
-            <h3 className="text-2xl font-bold text-slate-50 mb-6">What URLScannerOnline Does</h3>
+            <h3 className="text-2xl font-bold text-slate-50 mb-6">What URLScanOnline Does</h3>
             <ul className="space-y-4">
               {[
                 "Security configuration analysis",
@@ -117,10 +114,10 @@ const About = () => {
         </div>
       </section>
 
-      {/* Built for teams of every size */}
+      {/* Who URLScanOnline is built for */}
       <section className="max-w-6xl mx-auto px-4 md:px-0">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-slate-50 mb-4">Built for teams of every size</h2>
+          <h2 className="text-3xl font-bold text-slate-50 mb-4">Who URLScanOnline is built for</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6">
@@ -150,15 +147,20 @@ const About = () => {
             <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800">
               <h3 className="text-xl font-bold text-indigo-400 mb-3">BASIC SCAN</h3>
               <p className="text-slate-400">
-                Designed for low-impact assessment of publicly accessible security signals. It does not attempt to exploit vulnerabilities and is suitable for routine checks and production environments.
+                Designed for low-impact assessment of publicly accessible security signals. It focuses on passive observations and does not attempt to exploit vulnerabilities, making it suitable for routine website security checks.
               </p>
             </div>
             <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800">
               <h3 className="text-xl font-bold text-purple-400 mb-3">ADVANCED SCAN</h3>
               <p className="text-slate-400">
-                Performs additional security tests that generate more requests and may have greater impact on the target environment. Use only on systems you own or are authorized to test.
+                Performs additional bounded, non-destructive security checks beyond the Basic Scan and may generate additional requests to the target. Use Advanced Scan only on systems you own or are authorized to assess.
               </p>
             </div>
+          </div>
+          <div className="mt-8 text-center">
+            <Link to="/services/scanner-capabilities" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+              Compare all scanner capabilities &rarr;
+            </Link>
           </div>
         </div>
       </section>
@@ -174,11 +176,11 @@ const About = () => {
               "We do not guarantee that a website is completely secure.",
               "We do not replace a professional penetration test.",
               "We do not claim to detect every possible vulnerability.",
-              "Passive scanning does not exploit vulnerabilities.",
+              "Our automated scans do not intentionally exploit discovered vulnerabilities.",
               "Security findings should be reviewed in context."
             ].map((item, idx) => (
               <li key={idx} className="flex items-start gap-3 text-slate-300">
-                <span className="text-slate-600 font-bold mt-0.5">•</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
                 <span>{item}</span>
               </li>
             ))}
