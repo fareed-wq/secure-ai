@@ -196,13 +196,14 @@ const SimpleReport = ({ reportData }) => {
         const stackPill = detectedTech ? 'DETECTED STACK' : (ts.frontend_pill || 'VERIFIED STACK');
 
         // ── 3. API SURFACE ───────────────────────────────────────────────
-        const hasExposedApi = findings.some(f => {
+        const exposedApiFinding = findings.find(f => {
           const id = (f.id || '').toLowerCase();
           const name = (f.name || '').toLowerCase();
           const match = id.includes('api') || id.includes('swagger') || id.includes('graphql') || id.includes('openapi')
             || name.includes('api') || name.includes('swagger') || name.includes('graphql') || name.includes('admin portal');
           return match && f.severity !== 'Passed';
         });
+        const hasExposedApi = !!exposedApiFinding;
         const getApiSurfaceData = () => {
           if (!hasExposedApi) {
             return {
@@ -223,9 +224,9 @@ const SimpleReport = ({ reportData }) => {
             return { val: 'Public API Spec Exposed', sub: 'OpenAPI Schema Disclosed', pill: 'EXPOSED API' };
           }
           return {
-            val: 'Public API Spec Exposed',
-            sub: ts.api_subtext || 'Exposed Specification Found',
-            pill: 'EXPOSED API'
+            val: ts.api_surface || 'API Surface Detected',
+            sub: exposedApiFinding?.name || ts.api_subtext || 'API Surface Detected',
+            pill: ts.api_pill || 'API DETECTED'
           };
         };
         const { val: apiVal, sub: apiSub, pill: apiPill } = getApiSurfaceData();
