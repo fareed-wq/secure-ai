@@ -1,11 +1,10 @@
 import React, { useEffect } from 'react';
 import { Shield, Mail, CheckCircle2, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useSEO } from '../hooks/useSEO';
 
 const ResponsibleDisclosure = () => {
-  useEffect(() => {
-    document.title = "Responsible Disclosure | URLScannerOnline";
-  }, []);
+  useSEO({ title: 'Responsible Disclosure | URLScanOnline', description: 'Information for security researchers on how to report vulnerabilities in our platform.', path: '/responsible-disclosure' });
 
   return (
     <div className="space-y-16 pb-12">
@@ -23,7 +22,7 @@ const ResponsibleDisclosure = () => {
             Responsible Disclosure
           </h1>
           <p className="text-lg md:text-xl text-slate-400 leading-relaxed">
-            We value the security research community and welcome reports of vulnerabilities found in URLScannerOnline.
+            We value the security research community and welcome reports of vulnerabilities found in URLScanOnline.
           </p>
         </div>
       </section>
@@ -38,7 +37,7 @@ const ResponsibleDisclosure = () => {
             <div>
               <h2 className="text-3xl font-bold text-slate-50 mb-4">Reporting a Vulnerability</h2>
               <p className="text-slate-400 leading-relaxed mb-4">
-                If you discover a security vulnerability in URLScannerOnline (the platform itself, not in websites scanned by the tool), we encourage you to report it responsibly.
+                If you discover a security vulnerability in URLScanOnline (the platform itself, not in websites scanned by the tool), we encourage you to report it responsibly.
               </p>
             </div>
           </div>
@@ -81,10 +80,10 @@ const ResponsibleDisclosure = () => {
               "Do not publicly disclose the vulnerability before we have had a reasonable opportunity to investigate and address it.",
               "Do not access, modify, or delete data belonging to other users.",
               "Do not perform testing that could disrupt the service for other users.",
-              "Act in good faith and avoid actions that could cause harm to URLScannerOnline or its users."
+              "Act in good faith and avoid actions that could cause harm to URLScanOnline or its users."
             ].map((item, idx) => (
               <li key={idx} className="flex items-start gap-3">
-                <span className="text-slate-600 font-bold mt-0.5">•</span>
+                <span className="text-slate-600 font-bold mt-0.5">Ã¢â‚¬Â¢</span>
                 <span>{item}</span>
               </li>
             ))}
@@ -127,7 +126,7 @@ const ResponsibleDisclosure = () => {
             </div>
             <ul className="space-y-3 text-slate-400">
               {[
-                "URLScannerOnline web application",
+                "URLScanOnline web application",
                 "API endpoints",
                 "Authentication and authorization mechanisms"
               ].map((item, idx) => (
@@ -151,7 +150,7 @@ const ResponsibleDisclosure = () => {
                 "Denial-of-service testing"
               ].map((item, idx) => (
                 <li key={idx} className="flex items-start gap-3">
-                  <span className="text-slate-600 font-bold mt-0.5">•</span>
+                  <span className="text-slate-600 font-bold mt-0.5">Ã¢â‚¬Â¢</span>
                   <span>{item}</span>
                 </li>
               ))}

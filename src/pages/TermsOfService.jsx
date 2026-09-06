@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { FileText, Shield, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useSEO } from '../hooks/useSEO';
 
 const TermsOfService = () => {
-  useEffect(() => {
-    document.title = "Terms of Service | URLScannerOnline";
-  }, []);
+  useSEO({ title: 'Terms of Service | URLScanOnline', description: 'Read the terms governing the use of URLScanOnline and our scanning rules of engagement.', path: '/terms' });
 
   return (
     <div className="space-y-16 pb-12">
@@ -22,7 +22,7 @@ const TermsOfService = () => {
             Terms of Service
           </h1>
           <p className="text-lg md:text-xl text-slate-400 leading-relaxed">
-            Please read these terms carefully before using URLScannerOnline.
+            Please read these terms carefully before using URLScanOnline.
           </p>
           <p className="text-sm text-slate-500 mt-4">Last updated: August 2026</p>
         </div>
@@ -33,7 +33,7 @@ const TermsOfService = () => {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <h2 className="text-2xl font-bold text-slate-50 mb-4">1. Acceptance of Terms</h2>
           <p className="text-slate-400 leading-relaxed">
-            By accessing or using URLScannerOnline, you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the service.
+            By accessing or using URLScanOnline, you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the service.
           </p>
         </div>
       </section>
@@ -43,12 +43,15 @@ const TermsOfService = () => {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <h2 className="text-2xl font-bold text-slate-50 mb-4">2. Service Description</h2>
           <p className="text-slate-400 leading-relaxed">
-            URLScannerOnline provides automated website security scanning and assessment services. The service analyzes publicly accessible security signals and generates informational security reports. The service includes both passive security assessment and optional active testing features.
+            URLScanOnline provides automated website security scanning and assessment services. The service provides Basic passive scanning, Advanced bounded low-impact checks, and manual security testing only under explicit authorization and separate scope.
+            </p>
+            <p className="text-slate-400 leading-relaxed mt-4">
+              Use of personal and scan-related data is also governed by our <Link to="/privacy-policy" className="text-indigo-400 hover:text-indigo-300">Privacy Policy</Link>.
           </p>
         </div>
       </section>
 
-      {/* Authorization Requirement — highlighted */}
+      {/* Authorization Requirement â€” highlighted */}
       <section className="max-w-4xl mx-auto px-4 md:px-0">
         <div className="rounded-2xl border border-indigo-500/30 bg-slate-900/50 p-8">
           <div className="flex items-start gap-4 mb-4">
@@ -65,7 +68,7 @@ const TermsOfService = () => {
               Scanning websites without proper authorization may violate applicable laws and regulations, including computer fraud and abuse statutes. You are solely responsible for ensuring that you have the necessary rights and permissions before initiating any scan.
             </p>
             <p>
-              URLScannerOnline is not responsible for any unauthorized use of the scanning service by its users.
+              URLScanOnline is not responsible for any unauthorized use of the scanning service by its users.
             </p>
           </div>
         </div>
@@ -76,7 +79,7 @@ const TermsOfService = () => {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <h2 className="text-2xl font-bold text-slate-50 mb-4">4. Acceptable Use</h2>
           <p className="text-slate-400 leading-relaxed mb-4">
-            You agree to use URLScannerOnline for legitimate security assessment purposes only. You must not:
+            You agree to use URLScanOnline for legitimate security assessment purposes only. You must not:
           </p>
           <ul className="space-y-3 text-slate-400">
             {[
@@ -88,10 +91,10 @@ const TermsOfService = () => {
               "Use the service in any manner that violates applicable laws or regulations",
               "Attempt to obtain passwords, authentication tokens, or other credentials through credential theft or harvesting",
               "Distribute malware or malicious content through the use of the service",
-              "Use URLScannerOnline to facilitate attacks, unauthorized access, or harmful activity against third-party systems"
+              "Use URLScanOnline to facilitate attacks, unauthorized access, or harmful activity against third-party systems"
             ].map((item, idx) => (
               <li key={idx} className="flex items-start gap-3">
-                <span className="text-slate-600 font-bold mt-0.5">•</span>
+                <span className="text-slate-600 font-bold mt-0.5">â€¢</span>
                 <span>{item}</span>
               </li>
             ))}
@@ -104,7 +107,7 @@ const TermsOfService = () => {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <h2 className="text-2xl font-bold text-slate-50 mb-4">5. User Responsibilities</h2>
           <p className="text-slate-400 leading-relaxed mb-4">
-            As a user of URLScannerOnline, you are responsible for:
+            As a user of URLScanOnline, you are responsible for:
           </p>
           <ul className="space-y-3 text-slate-400">
             {[
@@ -115,7 +118,7 @@ const TermsOfService = () => {
               "Complying with all applicable laws and regulations in your jurisdiction"
             ].map((item, idx) => (
               <li key={idx} className="flex items-start gap-3">
-                <span className="text-slate-600 font-bold mt-0.5">•</span>
+                <span className="text-slate-600 font-bold mt-0.5">â€¢</span>
                 <span>{item}</span>
               </li>
             ))}
@@ -135,7 +138,7 @@ const TermsOfService = () => {
               Automated security scans can produce <strong className="text-slate-300">false positives</strong> (reporting issues that may not exist) and <strong className="text-slate-300">false negatives</strong> (missing issues that do exist).
             </p>
             <p>
-              Scan results are informational and do not constitute a professional security audit, penetration test, or compliance assessment. URLScannerOnline does not guarantee that any website is secure or vulnerability-free.
+              Scan results are informational and do not constitute a professional security audit, penetration test, or compliance assessment. URLScanOnline does not guarantee that any website is secure or vulnerability-free.
             </p>
             <p>
               Results should be reviewed by qualified personnel and considered alongside other security measures appropriate to your environment.
@@ -150,7 +153,7 @@ const TermsOfService = () => {
           <h2 className="text-2xl font-bold text-slate-50 mb-4">7. Limitation of Liability</h2>
           <div className="space-y-4 text-slate-400 leading-relaxed">
             <p>
-              URLScannerOnline is provided <strong className="text-slate-300">"as is"</strong> and <strong className="text-slate-300">"as available"</strong> without warranties of any kind, whether express or implied. To the fullest extent permitted by law, we are not liable for:
+              URLScanOnline is provided <strong className="text-slate-300">"as is"</strong> and <strong className="text-slate-300">"as available"</strong> without warranties of any kind, whether express or implied. To the fullest extent permitted by law, we are not liable for:
             </p>
             <ul className="space-y-3">
               {[
@@ -161,7 +164,7 @@ const TermsOfService = () => {
                 "Unauthorized access resulting from user credential compromise"
               ].map((item, idx) => (
                 <li key={idx} className="flex items-start gap-3">
-                  <span className="text-slate-600 font-bold mt-0.5">•</span>
+                  <span className="text-slate-600 font-bold mt-0.5">â€¢</span>
                   <span>{item}</span>
                 </li>
               ))}
