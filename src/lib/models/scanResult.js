@@ -11,7 +11,9 @@
  * @property {Object} [compliance]
  * @property {string} [module]
  * @property {string} [impact]
- * @property {number} [cvss]
+ * @property {string} [cvss]
+ * @property {number} [cvss_score]
+ * @property {string} [cvss_severity]
  * @property {string} [domain]
  * @property {Object|string|null} [evidence] - Exact backend structure, do NOT mutate.
  */

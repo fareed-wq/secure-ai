@@ -43,7 +43,7 @@ class ScannerModule(ABC):
         owasp: str = "N/A",
         compliance: Optional[dict] = None,
         category: str = "information_exposure",
-        cvss: Optional[float] = None,
+        cvss: Optional[str] = None,
         impact: Optional[str] = None,
         domain: str = ""
     ) -> dict:
@@ -94,15 +94,20 @@ class ScannerModule(ABC):
         snippets = REMEDIATION_SNIPPETS.get(name, {})
 
         # Phase 32: CVSS V3.1 Assignment
-        if cvss is None:
-            if severity == "Critical":
-                cvss = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H"
-            elif severity == "High":
-                cvss = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
-            elif severity == "Medium":
-                cvss = "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N"
-            elif severity == "Low":
-                cvss = "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:N/A:N"
+        cvss_score = None
+        cvss_severity = None
+
+        try:
+            from api.scanner.cvss_mapping import CVSS_REGISTRY, calculate_cvss31
+
+            if cvss is None:
+                cvss = CVSS_REGISTRY.get(name)
+
+            if cvss is not None:
+                cvss_score, cvss_severity = calculate_cvss31(cvss)
+        except Exception:
+            cvss_score = None
+            cvss_severity = None
 
         return {
             "name": name,
@@ -118,5 +123,7 @@ class ScannerModule(ABC):
             "module": self.module_name,
             "impact": impact,
             "cvss": cvss,
+            "cvss_score": cvss_score,
+            "cvss_severity": cvss_severity,
             "domain": domain
         }

@@ -84,14 +84,14 @@ class TestPhase32CoverageAudit(unittest.TestCase):
         self.assertEqual(findings[0]["name"], "Insecure CORS Policy (Arbitrary Origin Reflection with Credentials)")
 
     def test_cvss_vector_generation(self):
-        """Verify CVSS vector is generated from severity"""
+        """Verify CVSS vector is NO LONGER generated purely from severity"""
         class DummyModule(ScannerModule):
             def run(self, url, hostname, session):
                 return [self.make_finding("Test Critical", "Critical", "Desc", "Ev")]
 
         module = DummyModule()
         findings = module.run("http://test", "test", None)
-        self.assertEqual(findings[0]["cvss"], "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H")
+        self.assertIsNone(findings[0]["cvss"])
 
 if __name__ == '__main__':
     unittest.main()
