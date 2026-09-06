@@ -93,18 +93,22 @@ class ScannerModule(ABC):
 
         snippets = REMEDIATION_SNIPPETS.get(name, {})
 
-        # Phase 32: CVSS V3.1 Assignment
+        # Phase 32: CVSS Assignment
         cvss_score = None
         cvss_severity = None
 
         try:
-            from api.scanner.cvss_mapping import CVSS_REGISTRY, calculate_cvss31
+            from api.scanner.cvss_mapping import CVSS_REGISTRY, calculate_cvss40
 
             if cvss is None:
                 cvss = CVSS_REGISTRY.get(name)
 
             if cvss is not None:
-                cvss_score, cvss_severity = calculate_cvss31(cvss)
+                if cvss.startswith("CVSS:4.0/"):
+                    cvss_score, cvss_severity = calculate_cvss40(cvss)
+                else:
+                    # Explicit non-v4 vectors passed in are preserved, but not scored by the backend
+                    pass
         except Exception:
             cvss_score = None
             cvss_severity = None

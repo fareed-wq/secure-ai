@@ -400,13 +400,20 @@ const TechnicalReport = ({ reportData }) => {
                                               <div className="pt-3 mt-3 border-t border-slate-700/30 flex flex-col space-y-2">
                                                 {finding.cvss ? (
                                                   <>
-                                                    <div className="flex justify-between items-center">
-                                                      <span className="text-xs font-bold text-slate-400">CVSS v3.1</span>
+                                                    <div className="flex flex-col">
+                                                      <div className="flex justify-between items-center">
+                                                        <span className="text-xs font-bold text-slate-400">
+                                                          {finding.cvss.startsWith('CVSS:4.0') ? 'CVSS 4.0' : 'CVSS v3.1'}
+                                                        </span>
+                                                      </div>
+                                                      {finding.cvss.startsWith('CVSS:4.0') && (
+                                                        <span className="text-xs text-slate-500 font-medium">CVSS-B</span>
+                                                      )}
                                                     </div>
 
                                                     {(finding.cvss_score !== undefined && finding.cvss_score !== null) && (
                                                       <div className="flex flex-col text-xs text-slate-300">
-                                                        <span>Base Score: {finding.cvss_score}</span>
+                                                        <span>{finding.cvss.startsWith('CVSS:4.0') ? 'Score' : 'Base Score'}: {finding.cvss_score}</span>
                                                         {finding.cvss_severity && (
                                                           <span>CVSS Severity: {finding.cvss_severity}</span>
                                                         )}
