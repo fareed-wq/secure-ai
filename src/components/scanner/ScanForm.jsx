@@ -95,7 +95,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
           <div className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-slate-900 border border-emerald-500/30 mt-1">
             <ShieldAlert className="w-3.5 h-3.5 text-emerald-400" />
             <span className="text-slate-300">
-              Admin Access — Unlimited scan quota
+              Admin Access (Unlimited scan quota)
             </span>
           </div>
         )}
@@ -104,7 +104,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
             <AlertCircle className={`w-3.5 h-3.5 ${quotaReached ? 'text-rose-400' : 'text-indigo-400'}`} />
             <span className="text-slate-300">
               {plan === 'guest' ? 'Guest Quota: ' : 'Free Quota: '}
-              {quotaUsed}/{quotaLimit} used — {quotaRemaining} remaining.
+              {quotaUsed}/{quotaLimit} used, {quotaRemaining} remaining.
               {quotaReached && ' weekly limit reached.'}
             </span>
             <span className="text-slate-500 border-l border-slate-700 pl-2 ml-1">Resets Monday</span>
