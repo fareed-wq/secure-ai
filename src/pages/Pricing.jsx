@@ -35,7 +35,7 @@ const Pricing = () => {
         "Everything in Guest",
         "Advanced security scanning",
         "Scan history and saved reports",
-        "Account-based scan management"
+        "Manage scans from your account"
       ],
       ctaText: "Create Free Account",
       ctaLink: "/register",
@@ -99,10 +99,6 @@ const Pricing = () => {
               key={idx}
               className={`flex flex-col rounded-3xl border ${plan.disabled ? 'border-amber-500/20 bg-slate-900/40 relative overflow-hidden' : 'border-slate-800 bg-slate-900/50'} p-8`}
             >
-              {plan.disabled && (
-                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-bl-full pointer-events-none" />
-              )}
-
               <div className="flex items-center justify-between mb-6">
                 <div className={`w-12 h-12 rounded-xl border ${plan.disabled ? 'border-amber-500/20 bg-amber-500/10' : 'border-slate-700 bg-slate-800/50'} flex items-center justify-center`}>
                   {plan.icon}
