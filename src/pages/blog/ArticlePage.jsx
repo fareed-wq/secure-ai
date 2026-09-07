@@ -1,3 +1,4 @@
+import BackButton from '../../components/ui/BackButton';
 import React, { useEffect } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { articles } from '../../data/blog';
@@ -237,10 +238,7 @@ const ArticlePage = () => {
       <div className="flex flex-col min-h-screen bg-slate-950 text-slate-200 font-sans items-center justify-center p-8">
         <h1 className="text-4xl font-bold mb-4">Article Not Found</h1>
         <p className="text-slate-400 mb-8">The article you are looking for does not exist.</p>
-        <Link to="/blog" className="text-indigo-400 hover:text-indigo-300 flex items-center">
-          <ArrowLeft size={16} className="mr-2" />
-          Back to Blog
-        </Link>
+        <BackButton to="/blog">Back to Blog</BackButton>
       </div>
     );
   }
@@ -409,10 +407,7 @@ const ArticlePage = () => {
         </section>
 
         <div className="mt-16 text-center">
-          <Link to="/blog" className="inline-flex items-center text-slate-400 hover:text-slate-200 transition-colors font-medium">
-            <ArrowLeft size={16} className="mr-2" />
-            Back to Blog
-          </Link>
+          <BackButton to="/blog">Back to Blog</BackButton>
         </div>
 
       </div>

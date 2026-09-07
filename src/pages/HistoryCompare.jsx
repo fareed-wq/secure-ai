@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Plus, Minus, Equal } from
 
 import { scanApi } from '../lib/api/scanner';
 import { useAuth } from '../contexts/AuthContext';
+import BackButton from '../components/ui/BackButton';
 
 
 
@@ -212,22 +213,11 @@ export default function HistoryCompare() {
 
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
 
+      <div className="mb-4">
+        <BackButton to="/history">Back to Scan History</BackButton>
+      </div>
       <div className="flex items-center gap-4">
-
-        <button 
-
-          onClick={() => navigate('/history')}
-
-          className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white"
-
-        >
-
-          <ArrowLeft className="w-5 h-5" />
-
-        </button>
-
         <h1 className="text-2xl font-bold">Compare Scans</h1>
-
       </div>
 
 

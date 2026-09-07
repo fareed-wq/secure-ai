@@ -7,6 +7,7 @@ import TechnicalReport from '../components/scanner/TechnicalReport';
 import ReportHeader from '../components/scanner/ReportHeader';
 import usePdfGenerator from '../hooks/usePdfGenerator';
 import { AlertCircle, ArrowLeft } from 'lucide-react';
+import BackButton from '../components/ui/BackButton';
 
 const ScanReport = () => {
   const { scanId } = useParams();
@@ -114,14 +115,7 @@ const ScanReport = () => {
 
       {fromHistory && (
         <div className="mb-4">
-          <button
-            type="button"
-            onClick={() => navigate('/history')}
-            className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-200 transition-colors bg-slate-900 border border-slate-700 hover:border-slate-500 px-4 py-2 rounded-lg text-sm font-semibold"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Scan History
-          </button>
+          <BackButton to="/history">Back to Scan History</BackButton>
         </div>
       )}
       <ReportHeader

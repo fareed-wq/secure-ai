@@ -1,3 +1,4 @@
+import BackButton from '../components/ui/BackButton';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -131,9 +132,7 @@ const ForgotPassword = () => {
         </div>
 
         <div className="mt-6 text-center">
-          <Link to="/login" className="text-sm font-medium text-slate-400 hover:text-slate-300 transition-colors">
-            &larr; Back to Sign In
-          </Link>
+          <BackButton to="/login">Back to Sign In</BackButton>
         </div>
       </div>
     </div>
