@@ -1,3 +1,4 @@
+import BackButton from '../components/ui/BackButton';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, ArrowLeft, ChevronDown, AlertTriangle } from 'lucide-react';
@@ -235,13 +236,7 @@ const Contact = () => {
           <p className="text-slate-400 mb-8 max-w-lg text-center">
             We typically respond within 1–2 business days.
           </p>
-          <button
-            onClick={handleBack}
-            className="inline-flex items-center text-sm text-slate-500 hover:text-slate-300 transition-colors font-medium group"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Back
-          </button>
+          <BackButton onClick={handleBack}>Back</BackButton>
         </div>
 
       </div>

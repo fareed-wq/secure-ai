@@ -1,3 +1,4 @@
+import BackButton from '../components/ui/BackButton';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -227,9 +228,7 @@ const Register = () => {
         </div>
 
         <div className="mt-6 text-center">
-          <Link to="/" className="text-sm font-medium text-slate-400 hover:text-slate-300 transition-colors">
-            &larr; Back to Home
-          </Link>
+          <BackButton to="/">Back to Home</BackButton>
         </div>
       </div>
     </div>
