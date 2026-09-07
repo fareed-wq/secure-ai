@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ArrowLeft, Shield, Mail, CheckCircle2, Search } from 'lucide-react';
+import { ArrowLeft, Shield, Mail, CheckCircle2, Search, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 
@@ -7,16 +7,11 @@ const ResponsibleDisclosure = () => {
   useSEO({ title: 'Responsible Disclosure | URLScanOnline', description: 'Information for security researchers on how to report vulnerabilities in our platform.', path: '/responsible-disclosure' });
 
   return (
-        <div className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-12 pb-24">
-      <div className="mb-2">
-        <Link
-          to="/trust-policy"
-          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-indigo-400 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Trust & Policy
-        </Link>
-      </div>
+        <div className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-12 pb-24">      <nav className="flex items-center text-sm font-medium text-slate-400 mb-6 space-x-2">
+        <Link to="/trust-policy" className="hover:text-indigo-400 transition-colors">Trust & Policy</Link>
+        <ChevronRight size={14} className="text-slate-600" />
+        <span className="text-slate-200" aria-current="page">Responsible Disclosure</span>
+      </nav>
       {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-16 text-center mb-8">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl opacity-30 pointer-events-none">

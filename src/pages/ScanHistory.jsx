@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { History, ExternalLink, Calendar, ShieldAlert, Trash2, X, Search } from 'lucide-react';
+import { History, ExternalLink, Calendar, ShieldAlert, Trash2, X, Search, ChevronRight } from 'lucide-react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -139,6 +139,11 @@ const ScanHistory = () => {
 
   return (
     <div className="space-y-6 text-slate-200">
+      <nav className="flex items-center text-sm font-medium text-slate-400 mb-6 space-x-2">
+        <Link to="/dashboard" className="hover:text-indigo-400 transition-colors">Dashboard</Link>
+        <ChevronRight size={14} className="text-slate-600" />
+        <span className="text-slate-200" aria-current="page">Scan History</span>
+      </nav>
       <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Scan History</h1>

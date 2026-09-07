@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, ArrowLeft } from 'lucide-react';
+import { Shield, ArrowLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSEO } from '../hooks/useSEO';
 
@@ -13,16 +13,11 @@ const PrivacyPolicy = () => {
   return (
     <div className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-12 pb-24">
 
-      {/* Back Link */}
-      <div className="mb-2 pt-4">
-        <Link
-          to="/trust-policy"
-          className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-indigo-400 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-md px-1 py-0.5 -ml-1"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Trust & Policy
-        </Link>
-      </div>
+      <nav className="flex items-center text-sm font-medium text-slate-400 mb-6 space-x-2">
+        <Link to="/trust-policy" className="hover:text-indigo-400 transition-colors">Trust & Policy</Link>
+        <ChevronRight size={14} className="text-slate-600" />
+        <span className="text-slate-200" aria-current="page">Privacy Policy</span>
+      </nav>
 
       <header className="space-y-4">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-semibold mb-2">
