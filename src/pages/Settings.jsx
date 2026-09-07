@@ -91,24 +91,6 @@ const Settings = () => {
     setError(null);
     setSuccess(null);
 
-    // 1. Explicitly verify current password
-    if (user?.email) {
-      const { error: verifyError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: passwordData.currentPassword
-      });
-
-      if (verifyError) {
-        setError('Current password is incorrect.');
-        setPasswordLoading(false);
-        return;
-      }
-    } else {
-      setError('Unable to verify current password (missing user email).');
-      setPasswordLoading(false);
-      return;
-    }
-
     const { error: updateError } = await supabase.auth.updateUser({
       password: passwordData.newPassword,
       current_password: passwordData.currentPassword
@@ -116,12 +98,14 @@ const Settings = () => {
 
     if (updateError) {
       const errMsg = updateError.message?.toLowerCase() || '';
-      if (errMsg.includes("invalid password") || errMsg.includes("invalid current password") || errMsg.includes("incorrect password") || errMsg.includes("current password required") || updateError.status === 403) {
+      if (errMsg.includes("invalid password") || errMsg.includes("invalid current password") || errMsg.includes("incorrect password") || errMsg.includes("current password required")) {
         setError("Your current password is incorrect.");
       } else if (errMsg.includes("different from the old password") || errMsg.includes("different from the previous")) {
         setError("Your new password must be different from your current password.");
+      } else if (updateError.status === 401 || updateError.status === 403) {
+        setError("Session expired or reauthentication required. Please sign in again.");
       } else {
-        setError(updateError.message || 'Failed to update password. Please try again.');
+        setError('Failed to update password. Please try again.');
       }
     } else {
       setSuccess('Password updated successfully.');
