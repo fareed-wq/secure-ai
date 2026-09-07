@@ -194,7 +194,7 @@ const Settings = () => {
                     disabled
                     readOnly
                     value={formData.email}
-                    className="block w-full pl-10 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-400 cursor-not-allowed sm:text-sm"
+                    className="block w-full pl-10 pr-24 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-400 cursor-not-allowed sm:text-sm"
                   />
                   {isEmailVerified && (
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
