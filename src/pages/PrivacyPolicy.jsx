@@ -1,6 +1,7 @@
 import React from 'react';
 import { Shield, ArrowLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import OnThisPage from '../components/ui/OnThisPage';
 import { useSEO } from '../hooks/useSEO';
 
 const PrivacyPolicy = () => {
@@ -10,14 +11,31 @@ const PrivacyPolicy = () => {
     path: '/privacy-policy'
   });
 
+  const sections = [
+    { id: 'information-we-collect', label: 'Information We Collect' },
+    { id: 'scan-data', label: 'Scan Data & History' },
+    { id: 'guest-scans', label: 'Guest Scans' },
+    { id: 'how-we-use', label: 'How We Use Information' },
+    { id: 'access', label: 'Access to Scan Records' },
+    { id: 'data-security', label: 'Data Security' },
+    { id: 'retention', label: 'Retention & Deletion' },
+    { id: 'third-party', label: 'Third-Party Services' },
+    { id: 'your-responsibilities', label: 'Your Responsibilities' }
+  ];
+
   return (
-    <div className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-12 pb-24">
+    <div className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto pb-24">
 
       <nav className="flex items-center text-sm font-medium text-slate-400 mb-6 space-x-2">
         <Link to="/trust-policy" className="hover:text-indigo-400 transition-colors">Trust & Policy</Link>
         <ChevronRight size={14} className="text-slate-600" />
         <span className="text-slate-200" aria-current="page">Privacy Policy</span>
       </nav>
+      <div className="flex flex-col lg:flex-row gap-12 mt-8">
+        <div className="flex-1 lg:w-3/4 space-y-12">
+          <div className="lg:hidden">
+            <OnThisPage sections={sections} />
+          </div>
 
       <header className="space-y-4">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-semibold mb-2">
@@ -39,7 +57,7 @@ const PrivacyPolicy = () => {
 
         {/* Section 1 */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">1. Information We Collect</h2>
+          <h2 id="information-we-collect" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">1. Information We Collect</h2>
           <p className="text-slate-400 leading-relaxed mb-4">
             We only collect information necessary to operate URLScanOnline and provide its core security scanning functionality:
           </p>
@@ -69,7 +87,7 @@ const PrivacyPolicy = () => {
 
         {/* Section 2 */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">2. Scan Data & Scan History</h2>
+          <h2 id="scan-data" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">2. Scan Data & Scan History</h2>
           <div className="space-y-4 text-slate-400 leading-relaxed">
             <p>
               URLScanOnline does not maintain scan history for general administrative browsing or make one user's scan records available to another user.
@@ -88,7 +106,7 @@ const PrivacyPolicy = () => {
 
         {/* Section 3 */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">3. Guest Scans</h2>
+          <h2 id="guest-scans" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">3. Guest Scans</h2>
           <p className="text-slate-400 leading-relaxed">
             Guest scans are processed to generate the requested report and are not persisted to an account scan-history database. Technical information such as an IP address may be processed for rate limiting and abuse prevention.
           </p>
@@ -96,7 +114,7 @@ const PrivacyPolicy = () => {
 
         {/* Section 4 */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">4. How We Use Information</h2>
+          <h2 id="how-we-use" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">4. How We Use Information</h2>
           <p className="text-slate-400 leading-relaxed mb-4">
             We use collected information solely for legitimate service purposes, including:
           </p>
@@ -125,7 +143,7 @@ const PrivacyPolicy = () => {
 
         {/* Section 5 */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">5. Access to Scan Records</h2>
+          <h2 id="access" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">5. Access to Scan Records</h2>
           <p className="text-slate-400 leading-relaxed">
             Scan records are strictly associated with the authenticated user's account. Application access is owner-scoped, meaning users cannot browse another user's scan history. Global individual-scan browsing for administrators has been intentionally removed from the platform. Administrative dashboards rely on aggregate operational statistics.
           </p>
@@ -133,7 +151,7 @@ const PrivacyPolicy = () => {
 
         {/* Section 6 */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">6. Data Security</h2>
+          <h2 id="data-security" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">6. Data Security</h2>
           <p className="text-slate-400 leading-relaxed">
             URLScanOnline uses modern access controls and standard security practices appropriate to the application to protect your data. While we strive to protect your information, no system can guarantee absolute security, zero data breaches, or perfect confidentiality. We encourage users to practice good credential hygiene.
           </p>
@@ -141,7 +159,7 @@ const PrivacyPolicy = () => {
 
         {/* Section 7 */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">7. Retention & Deletion</h2>
+          <h2 id="retention" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">7. Retention & Deletion</h2>
           <p className="text-slate-400 leading-relaxed">
             Authenticated scan records are maintained to provide persistent Scan History and Saved Reports. Retention depends on the account feature and current service functionality; there is currently no fixed automated deletion period. Users who wish to have their account or associated scan records deleted can submit a request to contact@urlscanonline.com.
           </p>
@@ -149,7 +167,7 @@ const PrivacyPolicy = () => {
 
         {/* Section 8 */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">8. Third-Party Service Providers</h2>
+          <h2 id="third-party" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">8. Third-Party Service Providers</h2>
           <p className="text-slate-400 leading-relaxed">
             URLScanOnline relies on service providers needed to operate functions such as hosting, authentication, and email delivery. Those providers may process information on our behalf as necessary to provide their services. Information is not made available to other URLScanOnline users through these services.
           </p>
@@ -157,7 +175,7 @@ const PrivacyPolicy = () => {
 
         {/* Section 9 */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">9. Your Responsibilities</h2>
+          <h2 id="your-responsibilities" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">9. Your Responsibilities</h2>
           <p className="text-slate-400 leading-relaxed">
             As outlined in our <Link to="/terms" className="text-indigo-400 hover:text-indigo-300">Terms of Service</Link>, you are responsible for ensuring that you only scan systems you own or are authorized to assess. Avoid submitting highly sensitive URLs unnecessarily, and ensure you protect your account credentials.
           </p>
@@ -183,7 +201,15 @@ const PrivacyPolicy = () => {
         </section>
 
       </div>
-    </div>
+
+        </div>
+        <div className="hidden lg:block lg:w-1/4">
+          <div className="sticky top-8">
+            <OnThisPage sections={sections} />
+          </div>
+        </div>
+      </div>
+</div>
   );
 };
 
