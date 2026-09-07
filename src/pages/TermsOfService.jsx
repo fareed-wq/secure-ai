@@ -1,17 +1,34 @@
 import React, { useEffect } from 'react';
 import { ArrowLeft, FileText, Shield, AlertTriangle, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import OnThisPage from '../components/ui/OnThisPage';
 import { useSEO } from '../hooks/useSEO';
 
 const TermsOfService = () => {
   useSEO({ title: 'Terms of Service | URLScanOnline', description: 'Read the terms governing the use of URLScanOnline and our scanning rules of engagement.', path: '/terms' });
 
+  const sections = [
+    { id: 'acceptance', label: 'Acceptance of Terms' },
+    { id: 'service-description', label: 'Service Description' },
+    { id: 'authorization', label: 'Authorization Requirement' },
+    { id: 'acceptable-use', label: 'Acceptable Use' },
+    { id: 'responsibilities', label: 'User Responsibilities' },
+    { id: 'disclaimer', label: 'Scan Accuracy Disclaimer' },
+    { id: 'liability', label: 'Limitation of Liability' },
+    { id: 'changes', label: 'Changes to Terms' }
+  ];
+
   return (
-        <div className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-12 pb-24">      <nav className="flex items-center text-sm font-medium text-slate-400 mb-6 space-x-2">
+        <div className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto pb-24">      <nav className="flex items-center text-sm font-medium text-slate-400 mb-6 space-x-2">
         <Link to="/trust-policy" className="hover:text-indigo-400 transition-colors">Trust & Policy</Link>
         <ChevronRight size={14} className="text-slate-600" />
         <span className="text-slate-200" aria-current="page">Terms of Service</span>
       </nav>
+      <div className="flex flex-col lg:flex-row gap-12 mt-8">
+        <div className="flex-1 lg:w-3/4 space-y-12">
+          <div className="lg:hidden">
+            <OnThisPage sections={sections} />
+          </div>
       {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-16 text-center mb-8">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl opacity-30 pointer-events-none">
@@ -35,7 +52,7 @@ const TermsOfService = () => {
       {/* Acceptance of Terms */}
       <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">1. Acceptance of Terms</h2>
+          <h2 id="acceptance" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">1. Acceptance of Terms</h2>
           <p className="text-slate-400 leading-relaxed">
             By accessing or using URLScanOnline, you agree to be bound by these Terms of Service. If you do not agree to these terms, do not use the service.
           </p>
@@ -45,7 +62,7 @@ const TermsOfService = () => {
       {/* Service Description */}
       <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">2. Service Description</h2>
+          <h2 id="service-description" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">2. Service Description</h2>
           <p className="text-slate-400 leading-relaxed">
             URLScanOnline provides automated website security scanning and assessment services. The service provides Basic passive scanning, Advanced bounded low-impact checks, and manual security testing only under explicit authorization and separate scope.
             </p>
@@ -62,7 +79,7 @@ const TermsOfService = () => {
             <div className="w-10 h-10 rounded-lg border border-indigo-500/30 bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0">
               <Shield className="w-5 h-5" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-50">3. Authorization Requirement</h2>
+            <h2 id="authorization" className="text-2xl font-bold text-slate-50 scroll-mt-24">3. Authorization Requirement</h2>
           </div>
           <div className="space-y-4 text-slate-400 leading-relaxed ml-14">
             <p className="font-medium text-slate-300">
@@ -81,7 +98,7 @@ const TermsOfService = () => {
       {/* Acceptable Use */}
       <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">4. Acceptable Use</h2>
+          <h2 id="acceptable-use" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">4. Acceptable Use</h2>
           <p className="text-slate-400 leading-relaxed mb-4">
             You agree to use URLScanOnline for legitimate security assessment purposes only. You must not:
           </p>
@@ -109,7 +126,7 @@ const TermsOfService = () => {
       {/* User Responsibilities */}
       <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">5. User Responsibilities</h2>
+          <h2 id="responsibilities" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">5. User Responsibilities</h2>
           <p className="text-slate-400 leading-relaxed mb-4">
             As a user of URLScanOnline, you are responsible for:
           </p>
@@ -135,7 +152,7 @@ const TermsOfService = () => {
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <div className="flex items-start gap-4 mb-4">
             <AlertTriangle className="w-6 h-6 text-amber-400 shrink-0 mt-1" />
-            <h2 className="text-2xl font-bold text-slate-50">6. Scan Accuracy Disclaimer</h2>
+            <h2 id="disclaimer" className="text-2xl font-bold text-slate-50 scroll-mt-24">6. Scan Accuracy Disclaimer</h2>
           </div>
           <div className="space-y-4 text-slate-400 leading-relaxed">
             <p>
@@ -154,7 +171,7 @@ const TermsOfService = () => {
       {/* Limitation of Liability */}
       <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">7. Limitation of Liability</h2>
+          <h2 id="liability" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">7. Limitation of Liability</h2>
           <div className="space-y-4 text-slate-400 leading-relaxed">
             <p>
               URLScanOnline is provided <strong className="text-slate-300">"as is"</strong> and <strong className="text-slate-300">"as available"</strong> without warranties of any kind, whether express or implied. To the fullest extent permitted by law, we are not liable for:
@@ -180,7 +197,7 @@ const TermsOfService = () => {
       {/* Changes to Terms */}
       <section>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-          <h2 className="text-2xl font-bold text-slate-50 mb-4">8. Changes to Terms</h2>
+          <h2 id="changes" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">8. Changes to Terms</h2>
           <p className="text-slate-400 leading-relaxed">
             We may update these Terms of Service from time to time. Changes will be reflected by updating the "Last updated" date at the top of this page. Continued use of the service after changes are posted constitutes acceptance of the updated terms.
           </p>
@@ -196,7 +213,15 @@ const TermsOfService = () => {
           </a>
         </p>
       </section>
-    </div>
+
+        </div>
+        <div className="hidden lg:block lg:w-1/4">
+          <div className="sticky top-8">
+            <OnThisPage sections={sections} />
+          </div>
+        </div>
+      </div>
+</div>
   );
 };
 

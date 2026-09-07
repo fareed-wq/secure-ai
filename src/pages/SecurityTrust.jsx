@@ -1,17 +1,31 @@
 import React, { useEffect } from 'react';
 import { ArrowLeft, Shield, Lock, Eye, AlertTriangle, CheckCircle2, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import OnThisPage from '../components/ui/OnThisPage';
 import { useSEO } from '../hooks/useSEO';
 
 const SecurityTrust = () => {
   useSEO({ title: 'Security & Trust | URLScanOnline', description: 'Learn about our defensive scanning practices and commitment to platform security.', path: '/security-trust' });
 
+  const sections = [
+    { id: 'philosophy', label: 'Our Scanning Philosophy' },
+    { id: 'no-exploitation', label: 'No Exploitation' },
+    { id: 'data-handling', label: 'How We Handle Scan Data' },
+    { id: 'platform-security', label: 'Platform Security Practices' },
+    { id: 'transparency', label: 'Transparency & Limitations' }
+  ];
+
   return (
-        <div className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-12 pb-24">      <nav className="flex items-center text-sm font-medium text-slate-400 mb-6 space-x-2">
+        <div className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto pb-24">      <nav className="flex items-center text-sm font-medium text-slate-400 mb-6 space-x-2">
         <Link to="/trust-policy" className="hover:text-indigo-400 transition-colors">Trust & Policy</Link>
         <ChevronRight size={14} className="text-slate-600" />
         <span className="text-slate-200" aria-current="page">Security & Trust</span>
       </nav>
+      <div className="flex flex-col lg:flex-row gap-12 mt-8">
+        <div className="flex-1 lg:w-3/4 space-y-12">
+          <div className="lg:hidden">
+            <OnThisPage sections={sections} />
+          </div>
       {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-16 text-center mb-8">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl opacity-30 pointer-events-none">
@@ -34,7 +48,7 @@ const SecurityTrust = () => {
       {/* Scanning Philosophy */}
       <section>
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-slate-50 mb-4">Our Scanning Philosophy</h2>
+          <h2 id="philosophy" className="text-3xl font-bold text-slate-50 mb-4 scroll-mt-24">Our Scanning Philosophy</h2>
           <p className="text-slate-400 max-w-2xl mx-auto">
             URLScanOnline is designed as a passive-first, low-impact security scanner. Basic scans focus on passive observations, while Advanced scans perform additional bounded, non-destructive checks.
           </p>
@@ -69,7 +83,7 @@ const SecurityTrust = () => {
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-slate-50 mb-4">No Exploitation or Destructive Testing</h2>
+              <h2 id="no-exploitation" className="text-3xl font-bold text-slate-50 mb-4 scroll-mt-24">No Exploitation or Destructive Testing</h2>
               <p className="text-slate-400 leading-relaxed mb-6">
                 URLScanOnline's scans are explicitly designed to avoid harm to the websites it analyzes.
               </p>
@@ -95,7 +109,7 @@ const SecurityTrust = () => {
 
       {/* How We Protect Scan Data */}
       <section>
-        <h2 className="text-3xl font-bold text-slate-50 mb-8 text-center">How We Handle Scan Data</h2>
+        <h2 id="data-handling" className="text-3xl font-bold text-slate-50 mb-8 text-center scroll-mt-24">How We Handle Scan Data</h2>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <div className="space-y-4 text-slate-400 leading-relaxed">
             <p>
@@ -111,7 +125,7 @@ Administrative dashboards use aggregate platform statistics where appropriate an
 
       {/* Platform Security Practices */}
       <section>
-        <h2 className="text-3xl font-bold text-slate-50 mb-8 text-center">Platform Security Practices</h2>
+        <h2 id="platform-security" className="text-3xl font-bold text-slate-50 mb-8 text-center scroll-mt-24">Platform Security Practices</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[
             { title: "Secure Development", desc: "The platform follows secure development practices including input validation, output encoding, and protection against common web vulnerabilities." },
@@ -132,7 +146,7 @@ Administrative dashboards use aggregate platform statistics where appropriate an
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <div className="flex items-start gap-4 mb-4">
             <AlertTriangle className="w-6 h-6 text-amber-400 shrink-0 mt-1" />
-            <h2 className="text-2xl font-bold text-slate-50">Transparency & Limitations</h2>
+            <h2 id="transparency" className="text-2xl font-bold text-slate-50 scroll-mt-24">Transparency & Limitations</h2>
           </div>
           <ul className="space-y-4 ml-10">
             {[
@@ -175,7 +189,15 @@ Administrative dashboards use aggregate platform statistics where appropriate an
           </div>
         </div>
       </section>
-    </div>
+
+        </div>
+        <div className="hidden lg:block lg:w-1/4">
+          <div className="sticky top-8">
+            <OnThisPage sections={sections} />
+          </div>
+        </div>
+      </div>
+</div>
   );
 };
 

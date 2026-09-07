@@ -1,17 +1,30 @@
 import React, { useEffect } from 'react';
 import { ArrowLeft, Shield, Mail, CheckCircle2, Search, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import OnThisPage from '../components/ui/OnThisPage';
 import { useSEO } from '../hooks/useSEO';
 
 const ResponsibleDisclosure = () => {
   useSEO({ title: 'Responsible Disclosure | URLScanOnline', description: 'Information for security researchers on how to report vulnerabilities in our platform.', path: '/responsible-disclosure' });
 
+  const sections = [
+    { id: 'reporting', label: 'Reporting a Vulnerability' },
+    { id: 'what-we-ask', label: 'What We Ask' },
+    { id: 'response-process', label: 'Our Response Process' },
+    { id: 'scope', label: 'Scope' }
+  ];
+
   return (
-        <div className="flex-1 w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-12 pb-24">      <nav className="flex items-center text-sm font-medium text-slate-400 mb-6 space-x-2">
+        <div className="flex-1 w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto pb-24">      <nav className="flex items-center text-sm font-medium text-slate-400 mb-6 space-x-2">
         <Link to="/trust-policy" className="hover:text-indigo-400 transition-colors">Trust & Policy</Link>
         <ChevronRight size={14} className="text-slate-600" />
         <span className="text-slate-200" aria-current="page">Responsible Disclosure</span>
       </nav>
+      <div className="flex flex-col lg:flex-row gap-12 mt-8">
+        <div className="flex-1 lg:w-3/4 space-y-12">
+          <div className="lg:hidden">
+            <OnThisPage sections={sections} />
+          </div>
       {/* Hero */}
       <section className="relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-16 text-center mb-8">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-4xl opacity-30 pointer-events-none">
@@ -39,7 +52,7 @@ const ResponsibleDisclosure = () => {
               <Mail className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold text-slate-50 mb-4">Reporting a Vulnerability</h2>
+              <h2 id="reporting" className="text-3xl font-bold text-slate-50 mb-4 scroll-mt-24">Reporting a Vulnerability</h2>
               <p className="text-slate-400 leading-relaxed mb-4">
                 If you discover a security vulnerability in URLScanOnline (the platform itself, not in websites scanned by the tool), we encourage you to report it responsibly.
               </p>
@@ -77,7 +90,7 @@ const ResponsibleDisclosure = () => {
 
       {/* What We Ask */}
       <section>
-        <h2 className="text-3xl font-bold text-slate-50 mb-8 text-center">What We Ask</h2>
+        <h2 id="what-we-ask" className="text-3xl font-bold text-slate-50 mb-8 text-center scroll-mt-24">What We Ask</h2>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
           <ul className="space-y-4 text-slate-400 leading-relaxed">
             {[
@@ -97,7 +110,7 @@ const ResponsibleDisclosure = () => {
 
       {/* Our Response Process */}
       <section>
-        <h2 className="text-3xl font-bold text-slate-50 mb-8 text-center">Our Response Process</h2>
+        <h2 id="response-process" className="text-3xl font-bold text-slate-50 mb-8 text-center scroll-mt-24">Our Response Process</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[
             { step: "1", title: "Acknowledgment", desc: "We will acknowledge receipt of your report within a reasonable timeframe." },
@@ -121,12 +134,12 @@ const ResponsibleDisclosure = () => {
 
       {/* Scope */}
       <section>
-        <h2 className="text-3xl font-bold text-slate-50 mb-8 text-center">Scope</h2>
+        <h2 id="scope" className="text-3xl font-bold text-slate-50 mb-8 text-center scroll-mt-24">Scope</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
             <div className="flex items-center gap-3 mb-4">
               <Search className="w-5 h-5 text-indigo-400" />
-              <h3 className="text-xl font-bold text-slate-50">In Scope</h3>
+              <h3 id="scope" className="text-xl font-bold text-slate-50">In Scope</h3>
             </div>
             <ul className="space-y-3 text-slate-400">
               {[
@@ -144,7 +157,7 @@ const ResponsibleDisclosure = () => {
           <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
             <div className="flex items-center gap-3 mb-4">
               <Shield className="w-5 h-5 text-slate-500" />
-              <h3 className="text-xl font-bold text-slate-50">Out of Scope</h3>
+              <h3 id="scope" className="text-xl font-bold text-slate-50">Out of Scope</h3>
             </div>
             <ul className="space-y-3 text-slate-400">
               {[
@@ -183,7 +196,15 @@ const ResponsibleDisclosure = () => {
           </Link>
         </div>
       </section>
-    </div>
+
+        </div>
+        <div className="hidden lg:block lg:w-1/4">
+          <div className="sticky top-8">
+            <OnThisPage sections={sections} />
+          </div>
+        </div>
+      </div>
+</div>
   );
 };
 
