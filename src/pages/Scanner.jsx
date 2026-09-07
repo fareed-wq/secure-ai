@@ -257,11 +257,16 @@ function Scanner() {
               <div className="flex flex-col items-center justify-center space-y-8 py-12 relative z-10">
                 <RadarLoader />
 
-                <div className="space-y-4 text-center w-full px-4">
-                  <h2 className="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-emerald-300 break-all">
-                    Establishing Secure Uplink to {url}...
-                  </h2>
-                  <div className="text-sm text-slate-400" aria-live="polite">
+                <div className="flex flex-col items-center space-y-5 text-center w-full px-4 max-w-lg mx-auto">
+                  <div className="space-y-1.5 w-full">
+                    <h2 className="text-xl md:text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-emerald-300">
+                      Establishing Secure Uplink
+                    </h2>
+                    <div className="text-sm md:text-base font-medium text-teal-400 break-words w-full overflow-hidden">
+                      {url}
+                    </div>
+                  </div>
+                  <div className="text-sm md:text-sm font-medium text-slate-300" aria-live="polite">
                     {executedScanMode === 'active'
                       ? 'Running advanced security analysis...'
                       : 'Running passive security analysis...'}
