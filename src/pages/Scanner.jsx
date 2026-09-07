@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import WhatsAppWidget from '../WhatsAppWidget';
 import usePdfGenerator from '../hooks/usePdfGenerator';
 
+import RadarLoader from '../components/scanner/RadarLoader';
 import ScanForm from '../components/scanner/ScanForm';
 
 import ReportHeader from '../components/scanner/ReportHeader';
@@ -254,18 +255,17 @@ function Scanner() {
               <div className="absolute inset-0 bg-slate-800/[0.2] bg-[size:20px_20px]" style={{backgroundImage: 'radial-gradient(circle, #334155 1px, transparent 1px)'}}></div>
 
               <div className="flex flex-col items-center justify-center space-y-8 py-12 relative z-10">
-                <div className="relative">
-                  <div className="absolute inset-0 border-4 border-indigo-500/30 rounded-full blur-xl animate-pulse"></div>
-                  <div className="absolute inset-0 border-2 border-emerald-500/20 rounded-full animate-[spin_3s_linear_infinite] scale-125"></div>
-                  <div className="absolute inset-0 border-2 border-purple-500/20 rounded-full animate-[spin_4s_linear_infinite_reverse] scale-150"></div>
-                  <Loader2 className="w-20 h-20 text-indigo-400 animate-spin relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
-                </div>
+                <RadarLoader />
 
-                <div className="space-y-4 text-center w-full">
-                  <h2 className="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-emerald-300">
+                <div className="space-y-4 text-center w-full px-4">
+                  <h2 className="text-2xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-emerald-300 break-all">
                     Establishing Secure Uplink to {url}...
                   </h2>
-                  <div className="text-sm text-slate-400">Please wait while our engine performs passive analysis.</div>
+                  <div className="text-sm text-slate-400" aria-live="polite">
+                    {executedScanMode === 'active'
+                      ? 'Running advanced security analysis...'
+                      : 'Running passive security analysis...'}
+                  </div>
                 </div>
               </div>
             </motion.div>
