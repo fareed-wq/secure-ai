@@ -72,7 +72,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
       )}
 
       <aside
-        className={`fixed top-0 left-0 bottom-0 md:relative z-50 flex flex-col bg-slate-950 border-r border-slate-800 h-screen transition-transform md:transition-all duration-300
+        className={`fixed top-0 left-0 bottom-0 md:relative z-50 flex flex-col bg-slate-950 border-r border-slate-800 h-[100dvh] transition-transform md:transition-all duration-300
           ${isMobileOpen ? 'translate-x-0 w-60' : '-translate-x-full md:translate-x-0'}
           ${isCollapsed ? 'md:w-16' : 'md:w-60'}
         `}
@@ -97,7 +97,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
             {/* Mobile Close Button */}
             <button
               onClick={() => setIsMobileOpen(false)}
-              className="md:hidden p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="md:hidden p-3 text-slate-400 hover:bg-slate-800 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
               title="Close Sidebar"
               aria-label="Close Sidebar"
             >

@@ -1,5 +1,5 @@
 import BackButton from '../components/ui/BackButton';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ShieldCheck, Mail, Lock, User, Loader2, Building, Eye, EyeOff } from 'lucide-react';
@@ -20,6 +20,15 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
+    const [isNarrowViewport, setIsNarrowViewport] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 360 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => setIsNarrowViewport(window.innerWidth < 360);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const turnstileRef = React.useRef();
   const navigate = useNavigate();
 
@@ -211,6 +220,7 @@ const Register = () => {
                 <Turnstile
                   ref={turnstileRef}
                   siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                  options={{ size: isNarrowViewport ? "compact" : "flexible" }}
                   onSuccess={(token) => setCaptchaToken(token)}
                   onExpire={() => setCaptchaToken(null)}
                   onError={() => setCaptchaToken(null)}
