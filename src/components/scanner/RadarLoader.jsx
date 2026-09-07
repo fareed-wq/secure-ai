@@ -6,7 +6,7 @@ const RadarLoader = () => {
       {/* Radar Container */}
       <div
         className="relative flex items-center justify-center rounded-full border border-indigo-500/30 bg-slate-900/50 shadow-[0_0_20px_rgba(99,102,241,0.15)]"
-        style={{ width: '120px', height: '120px' }}
+        style={{ width: '135px', height: '135px' }}
         aria-hidden="true"
       >
         {/* Middle Ring - dashed */}
