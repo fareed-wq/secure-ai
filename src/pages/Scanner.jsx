@@ -116,7 +116,7 @@ function Scanner() {
         }
 
         if (user && data.id) {
-          navigate(`/history/${data.id}`, { replace: true });
+          navigate(`/history/${data.id}?mode=${reportModeValue}`, { replace: true });
         } else {
           sessionStorage.setItem('guestScanResult', JSON.stringify(data));
           setReportData(data);

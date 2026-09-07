@@ -15,11 +15,12 @@ const ScanReport = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const fromHistory = searchParams.get('from') === 'history';
+  const modeParam = searchParams.get('mode');
 
   const [scan, setScan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeMode, setActiveMode] = useState('simple');
+  const [activeMode, setActiveMode] = useState(modeParam === 'technical' ? 'technical' : 'simple');
 
   const reportRef = useRef(null);
 
@@ -39,6 +40,9 @@ const ScanReport = () => {
 
         if (err) throw err;
         setScan(data);
+        if (!modeParam && data?.report_data?.report_mode) {
+          setActiveMode(data.report_data.report_mode);
+        }
       } catch (err) {
         console.error('Error fetching scan:', err);
         setError('Report not found or access denied.');
@@ -48,7 +52,7 @@ const ScanReport = () => {
     };
 
     fetchScan();
-  }, [scanId, user]);
+  }, [scanId, user, modeParam]);
 
   if (!user) {
     return <Navigate to="/login" replace />;
