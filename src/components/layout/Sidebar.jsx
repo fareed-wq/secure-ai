@@ -11,6 +11,7 @@ import {
   Info,
   Settings,
   User,
+  UserPlus,
   MessageSquare,
   LogOut,
   LayoutDashboard,
@@ -186,15 +187,26 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               </button>
             </>
           ) : (
-            <Link
-              to="/login"
-              className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isCollapsed ? 'justify-center' : ''}`}
-              title={isCollapsed ? "Log In" : undefined}
-              aria-label="Log In"
-            >
-              <User size={18} className="text-slate-500" />
-              {!isCollapsed && <span>Log In</span>}
-            </Link>
+            <>
+              <Link
+                to="/login"
+                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isCollapsed ? 'justify-center' : ''}`}
+                title={isCollapsed ? "Log In" : undefined}
+                aria-label="Log In"
+              >
+                <User size={18} className="text-slate-500" />
+                {!isCollapsed && <span>Log In</span>}
+              </Link>
+              <Link
+                to="/register"
+                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isCollapsed ? 'justify-center' : ''}`}
+                title={isCollapsed ? "Sign Up" : undefined}
+                aria-label="Sign Up"
+              >
+                <UserPlus size={18} className="text-slate-500" />
+                {!isCollapsed && <span>Sign Up</span>}
+              </Link>
+            </>
           )}
         </div>
       </aside>
