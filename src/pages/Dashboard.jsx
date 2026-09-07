@@ -11,7 +11,7 @@ const CustomTooltip = ({ active, payload, label }) => {
     return (
       <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl">
         <p className="text-slate-50 font-medium mb-1">{data.domain}</p>
-        <p className="text-slate-400 text-xs mb-2">{data.date} at {label}</p>
+        <p className="text-slate-400 text-xs mb-2">{data.timestamp}</p>
         <p className="text-indigo-400 font-bold">Score: {data.score}/100</p>
       </div>
     );
@@ -39,6 +39,10 @@ const getSeverityColor = (severity) => {
     case 'low': return 'text-blue-400';
     default: return 'text-slate-400';
   }
+};
+
+const formatDateCompact = (d) => {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 };
 
 const Dashboard = () => {
@@ -105,7 +109,7 @@ const Dashboard = () => {
     ? Math.round(latestScans.reduce((acc, curr) => acc + curr.score, 0) / uniqueTargets)
     : '--';
 
-  // Total High + Critical findings from latest scans
+  // Total severity findings from latest posture scans
   let totalCritical = 0;
   let totalHigh = 0;
   let totalMedium = 0;
@@ -117,24 +121,17 @@ const Dashboard = () => {
   latestScans.forEach(scan => {
     const findings = scan.report_data?.findings || [];
 
-    let targetCritical = 0;
-    let targetHigh = 0;
-    let targetMedium = 0;
-
     findings.forEach(f => {
       if (f.severity === 'Critical') {
         totalCritical++;
-        targetCritical++;
         needsAttention.push({ target: getDomain(scan.target_url), scanId: scan.id, ...f });
       }
       else if (f.severity === 'High') {
         totalHigh++;
-        targetHigh++;
         needsAttention.push({ target: getDomain(scan.target_url), scanId: scan.id, ...f });
       }
       else if (f.severity === 'Medium') {
         totalMedium++;
-        targetMedium++;
         needsAttention.push({ target: getDomain(scan.target_url), scanId: scan.id, ...f });
       }
       else if (f.severity === 'Low') {
@@ -144,11 +141,6 @@ const Dashboard = () => {
         totalInfo++;
       }
     });
-
-    // Attach severity counts to scan object for easy access
-    scan.targetCritical = targetCritical;
-    scan.targetHigh = targetHigh;
-    scan.targetMedium = targetMedium;
   });
 
   // Sort needsAttention: Critical > High > Medium
@@ -198,8 +190,7 @@ const Dashboard = () => {
     return targetScans.reverse().map((scan) => {
       const d = new Date(scan.created_at);
       return {
-        timestamp: d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        date: d.toLocaleDateString(),
+        timestamp: formatDateCompact(d),
         score: scan.score,
         domain: selectedTarget
       };
@@ -238,7 +229,7 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Portfolio Score</p>
                 <p className="text-3xl font-bold text-emerald-400 mt-2">{portfolioScore}{portfolioScore !== '--' ? '/100' : ''}</p>
-                <p className="text-xs text-slate-500 mt-2">Latest scan per target</p>
+                <p className="text-xs text-slate-500 mt-2">Latest posture scan per target</p>
               </div>
               <div className="p-3 bg-emerald-500/10 rounded-lg"><ShieldCheck className="w-6 h-6 text-emerald-500" /></div>
             </div>
@@ -254,12 +245,14 @@ const Dashboard = () => {
 
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">High / Critical</p>
+                <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+                  {totalCritical > 0 ? 'High / Critical' : 'High Findings'}
+                </p>
                 <p className={`text-3xl font-bold mt-2 ${totalHighCritical === 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {totalHighCritical}
+                  {totalCritical > 0 ? totalHighCritical : totalHigh}
                 </p>
                 <p className="text-xs text-slate-400 mt-2 font-medium">
-                  {totalCritical} Critical · {totalHigh} High
+                  {totalCritical > 0 ? `${totalCritical} Critical · ${totalHigh} High` : 'Across latest posture scans'}
                 </p>
               </div>
               <div className={`p-3 rounded-lg border ${
@@ -331,7 +324,13 @@ const Dashboard = () => {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                      <XAxis dataKey="timestamp" padding={{ left: 25, right: 25 }} stroke="#64748b" tick={{ fontSize: 11, fill: '#64748b' }} />
+                      <XAxis
+                        dataKey="timestamp"
+                        padding={{ left: 25, right: 25 }}
+                        stroke="#64748b"
+                        tick={{ fontSize: 11, fill: '#64748b' }}
+                        minTickGap={40}
+                      />
                       <YAxis domain={[0, 100]} stroke="#64748b" />
                       <Tooltip content={<CustomTooltip />} />
                       <Area
@@ -363,10 +362,12 @@ const Dashboard = () => {
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col">
               <h2 className="text-lg font-semibold text-slate-50 mb-6">Findings Overview</h2>
               <div className="space-y-4 flex-1 justify-center flex flex-col">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-rose-500 flex items-center gap-2"><AlertCircle size={16}/> Critical</span>
-                  <span className="text-lg font-bold text-slate-300">{totalCritical}</span>
-                </div>
+                {totalCritical > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-rose-500 flex items-center gap-2"><AlertCircle size={16}/> Critical</span>
+                    <span className="text-lg font-bold text-slate-300">{totalCritical}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-rose-400 flex items-center gap-2"><AlertTriangle size={16}/> High</span>
                   <span className="text-lg font-bold text-slate-300">{totalHigh}</span>
@@ -405,9 +406,9 @@ const Dashboard = () => {
                         <span className={`text-xs font-bold uppercase ${getSeverityColor(finding.severity)}`}>
                           {finding.severity}
                         </span>
-                        {finding.cvss ? (
+                        {finding.cvss_score !== null && finding.cvss_score !== undefined ? (
                           <span className="text-xs text-slate-400 font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded">
-                            {finding.cvss.startsWith('CVSS:4') ? 'CVSS 4.0' : 'CVSS 3.1'} · {finding.cvss_score || 'N/A'}
+                            {finding.cvss?.startsWith('CVSS:4') ? 'CVSS 4.0' : (finding.cvss?.startsWith('CVSS:3') ? 'CVSS 3.1' : 'CVSS')} · {finding.cvss_score}
                           </span>
                         ) : (
                           <span className="text-xs text-slate-500 font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded">CVSS N/A</span>
@@ -439,16 +440,35 @@ const Dashboard = () => {
               <div className="p-4 space-y-3">
                 {scans.slice(0, 5).map((scan) => {
                   const cleanDomain = getDomain(scan.target_url);
-                  const crit = scan.targetCritical !== undefined ? scan.targetCritical : 0;
-                  const high = scan.targetHigh !== undefined ? scan.targetHigh : 0;
-                  const med = scan.targetMedium !== undefined ? scan.targetMedium : 0;
-
                   const d = new Date(scan.created_at);
-                  const formattedDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                  const formattedDate = formatDateCompact(d);
 
                   // Extract actual mode
                   const modeStr = scan.report_data?.scan_mode;
                   const scanMode = modeStr === 'active' ? 'Advanced' : 'Basic';
+
+                  // Compute actual severity counts fallback safely
+                  const hasSeverityCounts = scan.report_data?.severity_counts;
+                  const hasFindings = scan.report_data?.findings && Array.isArray(scan.report_data.findings);
+
+                  let crit = 0, high = 0, med = 0, low = 0;
+                  let breakdownAvailable = false;
+
+                  if (hasSeverityCounts) {
+                    crit = scan.report_data.severity_counts.Critical || 0;
+                    high = scan.report_data.severity_counts.High || 0;
+                    med = scan.report_data.severity_counts.Medium || 0;
+                    low = scan.report_data.severity_counts.Low || 0;
+                    breakdownAvailable = true;
+                  } else if (hasFindings) {
+                    scan.report_data.findings.forEach(f => {
+                      if (f.severity === 'Critical') crit++;
+                      else if (f.severity === 'High') high++;
+                      else if (f.severity === 'Medium') med++;
+                      else if (f.severity === 'Low') low++;
+                    });
+                    breakdownAvailable = true;
+                  }
 
                   return (
                     <div
@@ -477,9 +497,15 @@ const Dashboard = () => {
                           }`}>
                             {scan.score}/100
                           </span>
-                          <span className="text-xs font-medium text-slate-400 hidden sm:block">
-                            {crit} Critical · {high} High · {med} Medium
-                          </span>
+                          {breakdownAvailable ? (
+                            <span className="text-xs font-medium text-slate-400 hidden sm:block">
+                              {crit > 0 && `${crit} Critical · `}{high} High · {med} Medium · {low} Low
+                            </span>
+                          ) : (
+                            <span className="text-xs font-medium text-slate-400 hidden sm:block">
+                              Severity breakdown unavailable
+                            </span>
+                          )}
                         </div>
 
                         <span className="text-xs font-medium text-slate-400 group-hover:text-indigo-400 flex items-center gap-1 transition-colors shrink-0">
