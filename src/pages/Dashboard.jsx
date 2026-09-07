@@ -229,7 +229,7 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Portfolio Score</p>
                 <p className="text-3xl font-bold text-emerald-400 mt-2">{portfolioScore}{portfolioScore !== '--' ? '/100' : ''}</p>
-                <p className="text-xs text-slate-500 mt-2">Latest posture scan per target</p>
+                <p className="text-xs text-slate-500 mt-2">Average score across your targets</p>
               </div>
               <div className="p-3 bg-emerald-500/10 rounded-lg"><ShieldCheck className="w-6 h-6 text-emerald-500" /></div>
             </div>
