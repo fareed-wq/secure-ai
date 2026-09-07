@@ -8,6 +8,10 @@ export const PasswordChecklist = ({ password, confirmPassword, showConfirm }) =>
   const isConfirmEmpty = !confirmPassword;
   const confirmMatch = password && confirmPassword && password === confirmPassword;
 
+  if (isEmpty && isConfirmEmpty) {
+    return null;
+  }
+
   return (
     <div className="mt-2 space-y-1.5 text-xs">
       {results.map((req) => (
