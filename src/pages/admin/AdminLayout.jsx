@@ -39,42 +39,56 @@ export default function AdminLayout() {
   return (
     <div className="flex-1 flex flex-col bg-slate-950 text-slate-50">
       {/* Top Nav */}
-      <header className="border-b border-slate-800 bg-slate-900/50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <h1 className="text-xl font-bold text-indigo-400 flex items-center gap-2">
-              <ShieldAlert className="w-6 h-6" />
-              Admin Control
-            </h1>
-            <nav className="hidden md:flex items-center gap-1">
-              <Link
-                to="/admin"
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${location.pathname === '/admin' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                Overview
+            <header className="border-b border-slate-800 bg-slate-900/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between md:h-16 gap-3 md:gap-8 py-3 md:py-0">
+            {/* Title and Mobile Exit */}
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-bold text-indigo-400 flex items-center gap-2">
+                <ShieldAlert className="w-6 h-6" />
+                Admin Control
+              </h1>
+              {/* Mobile Exit */}
+              <Link to="/dashboard" className="md:hidden text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1">
+                <ArrowLeft className="w-4 h-4" />
+                Exit
               </Link>
-              <Link
-                to="/admin/users"
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${location.pathname.startsWith('/admin/users') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
-              >
-                <Users className="w-4 h-4" />
-                Users
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="overflow-x-auto no-scrollbar flex-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+              <nav className="flex items-center gap-1 min-w-max pb-1 md:pb-0">
+                <Link
+                  to="/admin"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${location.pathname === '/admin' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  Overview
+                </Link>
+                <Link
+                  to="/admin/users"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${location.pathname.startsWith('/admin/users') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+                >
+                  <Users className="w-4 h-4" />
+                  Users
+                </Link>
+                <Link
+                  to="/admin/audit-logs"
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${location.pathname.startsWith('/admin/audit-logs') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+                >
+                  <List className="w-4 h-4" />
+                  Audit Logs
+                </Link>
+              </nav>
+            </div>
+
+            {/* Desktop Exit */}
+            <div className="hidden md:block shrink-0">
+              <Link to="/dashboard" className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-2">
+                <ArrowLeft className="w-4 h-4" />
+                Exit Admin
               </Link>
-              <Link
-                to="/admin/audit-logs"
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${location.pathname.startsWith('/admin/audit-logs') ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
-              >
-                <List className="w-4 h-4" />
-                Audit Logs
-              </Link>
-            </nav>
-          </div>
-          <div>
-            <Link to="/dashboard" className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Exit Admin
-            </Link>
+            </div>
           </div>
         </div>
       </header>
