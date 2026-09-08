@@ -374,5 +374,46 @@ class TestSchedules(unittest.TestCase):
         mock_delete.assert_called_once()
         api.index.app.dependency_overrides.clear()
 
+
+    @patch('api.scheduling.router.uuid.uuid4', return_value='00000000-0000-0000-0000-000000000000')
+    @patch('api.scheduling.router.get_db_headers', return_value={})
+    @patch('api.scheduling.router.requests.get')
+    @patch('api.scheduling.router.requests.post')
+    @patch('api.scheduling.router.QSTASH_TOKEN', 'token')
+    @patch('api.scheduling.router.QStashClient')
+    @patch('api.auth.entitlements.get_user_role', return_value='admin')
+    @patch('api.auth.entitlements.get_user_plan_and_status', return_value=('free', 'active'))
+    @patch('api.auth.entitlements.verify_jwt', return_value={"sub": "123", "role": "authenticated"})
+    def test_qstash_create_exact_arguments(self, mock_jwt, mock_plan, mock_role, MockQStash, mock_post, mock_get, mock_headers, mock_uuid):
+        import api.index
+        api.index.app.dependency_overrides[api.auth.entitlements.get_current_user] = lambda: {"sub": "123"}
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = []
+        mock_post.return_value.status_code = 201
+        mock_post.return_value.json.return_value = [{"id": "00000000-0000-0000-0000-000000000000", "qstash_schedule_id": "urlscan-00000000-0000-0000-0000-000000000000"}]
+
+        mock_client = unittest.mock.MagicMock()
+        MockQStash.return_value = mock_client
+        mock_client.schedule.create.return_value = "msg-id"
+
+        resp = client.post("/api/schedules", headers={"Authorization": "Bearer fake"}, json={
+            "target_url": "https://example.com", "frequency": "daily", "time_of_day": "00:50:00",
+            "timezone": "Asia/Riyadh", "authorization_acknowledged": True
+        })
+        
+        self.assertEqual(resp.status_code, 200)
+        
+        mock_client.schedule.create.assert_called_once()
+        _, kwargs = mock_client.schedule.create.call_args
+        self.assertEqual(kwargs['destination'], "https://www.urlscanonline.com/api/internal/scheduled-scan")
+        self.assertEqual(kwargs['cron'], "50 0 * * *")
+        import json
+        self.assertEqual(kwargs['body'], json.dumps({"schedule_id": "00000000-0000-0000-0000-000000000000"}))
+        self.assertEqual(kwargs['headers'], {"Upstash-Cron-Tz": "Asia/Riyadh", "Content-Type": "application/json"})
+        self.assertEqual(kwargs['retries'], 0)
+        self.assertTrue(kwargs['schedule_id'].startswith("urlscan-"))
+        
+        api.index.app.dependency_overrides.clear()
+
 if __name__ == '__main__':
     unittest.main()
