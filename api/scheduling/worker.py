@@ -100,7 +100,7 @@ async def handle_scheduled_scan(request: Request):
         from api.scheduling.router import QStashClient, QSTASH_TOKEN
         if QStashClient and QSTASH_TOKEN and sched.get("qstash_schedule_id"):
             try:
-                QStashClient(QSTASH_TOKEN).schedule.pause(sched["qstash_schedule_id"])
+                QStashClient(QSTASH_TOKEN, base_url=os.environ.get("QSTASH_URL", "https://eu.qstash.upstash.io")).schedule.pause(sched["qstash_schedule_id"])
             except Exception:
                 pass
                 

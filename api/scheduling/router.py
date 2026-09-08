@@ -27,7 +27,7 @@ router = APIRouter()
 SUPABASE_URL = os.environ.get("VITE_SUPABASE_URL") or os.environ.get("SUPABASE_URL")
 SUPABASE_SECRET_KEY = os.environ.get("SUPABASE_SECRET_KEY")
 QSTASH_TOKEN = os.environ.get("QSTASH_TOKEN")
-APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://urlscanonline.com")
+APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://www.urlscanonline.com")
 
 def get_db_headers():
     if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
@@ -116,7 +116,7 @@ async def create_schedule(req: ScheduleCreateRequest, user: dict = Depends(requi
     # Create QStash schedule if client is available
     if QStashClient and QSTASH_TOKEN:
         try:
-            client = QStashClient(QSTASH_TOKEN)
+            client = QStashClient(QSTASH_TOKEN, base_url=os.environ.get("QSTASH_URL", "https://eu.qstash.upstash.io"))
             cron_expr = _get_qstash_cron(req.frequency, req.time_of_day, req.day_of_week, req.day_of_month)
             destination = f"{APP_BASE_URL.rstrip('/')}/api/internal/scheduled-scan"
             
@@ -184,7 +184,7 @@ async def pause_schedule(schedule_id: str, user: dict = Depends(require_schedule
     sched = resp.json()[0]
     
     if QStashClient and QSTASH_TOKEN and sched.get('qstash_schedule_id'):
-        client = QStashClient(QSTASH_TOKEN)
+        client = QStashClient(QSTASH_TOKEN, base_url=os.environ.get("QSTASH_URL", "https://eu.qstash.upstash.io"))
         try:
             client.schedule.pause(sched['qstash_schedule_id'])
         except Exception as e:
@@ -212,7 +212,7 @@ async def resume_schedule(schedule_id: str, user: dict = Depends(require_schedul
         return JSONResponse(status_code=400, content={"error": "Target no longer valid for scanning"})
         
     if QStashClient and QSTASH_TOKEN and sched.get('qstash_schedule_id'):
-        client = QStashClient(QSTASH_TOKEN)
+        client = QStashClient(QSTASH_TOKEN, base_url=os.environ.get("QSTASH_URL", "https://eu.qstash.upstash.io"))
         try:
             client.schedule.resume(sched['qstash_schedule_id'])
         except Exception as e:
@@ -241,7 +241,7 @@ async def delete_schedule(schedule_id: str, user: dict = Depends(require_schedul
     sched = resp.json()[0]
     
     if QStashClient and QSTASH_TOKEN and sched.get('qstash_schedule_id'):
-        client = QStashClient(QSTASH_TOKEN)
+        client = QStashClient(QSTASH_TOKEN, base_url=os.environ.get("QSTASH_URL", "https://eu.qstash.upstash.io"))
         try:
             client.schedule.delete(sched['qstash_schedule_id'])
         except Exception as e:
