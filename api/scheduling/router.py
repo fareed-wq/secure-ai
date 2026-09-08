@@ -1,7 +1,7 @@
 import os
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, HttpUrl, field_validator
 import logging
@@ -10,7 +10,7 @@ import requests
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import JSONResponse
 
-from api.auth.entitlements import get_current_user, Entitlements
+from api.auth.entitlements import require_scheduled_scans_access
 from api.scanner.orchestrator import validate_scan_target, canonicalize_url
 from api.scheduling.time_utils import get_next_run_at, is_valid_timezone
 
@@ -72,10 +72,7 @@ def _get_qstash_cron(frequency: str, time_of_day: str, day_of_week: int = None, 
     return ""
 
 @router.get("")
-async def list_schedules(user: dict = Depends(get_current_user)):
-    entitlements = Entitlements(user)
-    if not entitlements.can_use_scheduled_scans:
-        return JSONResponse(status_code=403, content={"error": "Access denied"})
+async def list_schedules(user: dict = Depends(require_scheduled_scans_access)):
         
     url = f"{SUPABASE_URL}/rest/v1/scan_schedules?user_id=eq.{user['sub']}&select=*"
     resp = requests.get(url, headers=get_db_headers())
@@ -84,10 +81,7 @@ async def list_schedules(user: dict = Depends(get_current_user)):
     return resp.json()
 
 @router.post("")
-async def create_schedule(req: ScheduleCreateRequest, user: dict = Depends(get_current_user)):
-    entitlements = Entitlements(user)
-    if not entitlements.can_use_scheduled_scans:
-        return JSONResponse(status_code=403, content={"error": "Access denied"})
+async def create_schedule(req: ScheduleCreateRequest, user: dict = Depends(require_scheduled_scans_access)):
         
     if not req.authorization_acknowledged:
         return JSONResponse(status_code=400, content={"error": "Must acknowledge authorization"})
@@ -156,11 +150,10 @@ async def create_schedule(req: ScheduleCreateRequest, user: dict = Depends(get_c
         "frequency": req.frequency,
         "time_of_day": req.time_of_day,
         "timezone": req.timezone,
-        "day_of_week": req.day_of_week,
-        "day_of_month": req.day_of_month,
+        
         "is_enabled": True,
         "qstash_schedule_id": qstash_schedule_id,
-        "authorization_acknowledged_at": datetime.utcnow().isoformat(),
+        "authorization_acknowledged_at": datetime.now(timezone.utc).isoformat(),
         "next_run_at": next_run.isoformat()
     }
 
@@ -181,10 +174,7 @@ async def create_schedule(req: ScheduleCreateRequest, user: dict = Depends(get_c
     return db_res.json()[0]
 
 @router.post("/{schedule_id}/pause")
-async def pause_schedule(schedule_id: str, user: dict = Depends(get_current_user)):
-    entitlements = Entitlements(user)
-    if not entitlements.can_use_scheduled_scans:
-        return JSONResponse(status_code=403, content={"error": "Access denied"})
+async def pause_schedule(schedule_id: str, user: dict = Depends(require_scheduled_scans_access)):
         
     url = f"{SUPABASE_URL}/rest/v1/scan_schedules?id=eq.{schedule_id}&user_id=eq.{user['sub']}&select=*"
     resp = requests.get(url, headers=get_db_headers())
@@ -208,10 +198,7 @@ async def pause_schedule(schedule_id: str, user: dict = Depends(get_current_user
     return {"status": "paused"}
 
 @router.post("/{schedule_id}/resume")
-async def resume_schedule(schedule_id: str, user: dict = Depends(get_current_user)):
-    entitlements = Entitlements(user)
-    if not entitlements.can_use_scheduled_scans:
-        return JSONResponse(status_code=403, content={"error": "Access denied"})
+async def resume_schedule(schedule_id: str, user: dict = Depends(require_scheduled_scans_access)):
         
     url = f"{SUPABASE_URL}/rest/v1/scan_schedules?id=eq.{schedule_id}&user_id=eq.{user['sub']}&select=*"
     resp = requests.get(url, headers=get_db_headers())
@@ -244,10 +231,7 @@ async def resume_schedule(schedule_id: str, user: dict = Depends(get_current_use
     return {"status": "resumed"}
 
 @router.delete("/{schedule_id}")
-async def delete_schedule(schedule_id: str, user: dict = Depends(get_current_user)):
-    entitlements = Entitlements(user)
-    if not entitlements.can_use_scheduled_scans:
-        return JSONResponse(status_code=403, content={"error": "Access denied"})
+async def delete_schedule(schedule_id: str, user: dict = Depends(require_scheduled_scans_access)):
         
     url = f"{SUPABASE_URL}/rest/v1/scan_schedules?id=eq.{schedule_id}&user_id=eq.{user['sub']}&select=*"
     resp = requests.get(url, headers=get_db_headers())
