@@ -7,3 +7,4 @@ python-whois
 urllib3
 PyJWT
 cvss==3.6
+qstash==3.4.0
