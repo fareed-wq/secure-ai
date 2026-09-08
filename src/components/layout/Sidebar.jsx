@@ -20,14 +20,15 @@ import {
   Sun,
   Moon,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  CalendarDays
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { signOut, user, isAdmin } = useAuth();
+  const { signOut, user, isAdmin, canUseScheduledScans } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const [isLightMode, setIsLightMode] = useState(() => {
@@ -46,14 +47,21 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
 
   const navItems = [
     { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={18} /> },
+  ];
+
+  if (canUseScheduledScans) {
+    navItems.push({ label: "Scheduled Scans", href: "/schedules", icon: <CalendarDays size={18} /> });
+  }
+
+  navItems.push(
     { label: "Services", href: "/services", icon: <Shield size={18} /> },
     { label: "About Us", href: "/about", icon: <Info size={18} /> },
     { label: "Security Blog", href: "/blog", icon: <Book size={18} /> },
     { label: "Pricing", href: "/pricing", icon: <CreditCard size={18} /> },
     { label: "Contact Us", href: "/contact", icon: <MessageSquare size={18} /> },
     { label: "API Docs", href: "/docs", icon: <Code size={18} /> },
-    { label: "Trust & Policy", href: "/trust-policy", icon: <Shield size={18} /> },
-  ];
+    { label: "Trust & Policy", href: "/trust-policy", icon: <Shield size={18} /> }
+  );
 
   if (isAdmin) {
     navItems.push({ label: "Admin", href: "/admin", icon: <Shield size={18} className="text-red-400" /> });

@@ -234,7 +234,12 @@ const ScanHistory = () => {
                           )}
                         </td>
                         <td className="p-4 font-medium text-slate-50">
-                          <span className="flex items-center gap-2">{scan.target_url}</span>
+                          <span className="flex items-center gap-2">
+                            {scan.target_url}
+                            {scan.trigger_type === 'scheduled' && (
+                              <span className="text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">Scheduled</span>
+                            )}
+                          </span>
                         </td>
                         <td className="p-4 text-slate-400 whitespace-nowrap">
                           {modeLabel}

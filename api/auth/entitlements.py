@@ -141,6 +141,12 @@ class Entitlements:
         return self.role == "admin"
 
     @property
+    def can_use_scheduled_scans(self) -> bool:
+        # V1: Admin only.
+        # Future: return self.is_admin or self.plan == "professional"
+        return self.is_admin
+
+    @property
     def can_basic_scan(self) -> bool:
         return True
         
