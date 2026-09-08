@@ -397,3 +397,18 @@ def reset_free_quota(user_id: str) -> bool:
         import sys
         print(f"Redis reset_free_quota error: {e}", file=sys.stderr)
         return False
+
+
+def is_scheduled_scans_eligible(user_id: str) -> bool:
+    '''Future seam for paid access. Currently delegates to Admin Control.'''
+    role = get_user_role(user_id)
+    _, status = get_user_plan_and_status(user_id)
+    return role == "admin" and status != "suspended"
+
+def require_scheduled_scans_access(user: dict = Security(require_current_user)) -> dict:
+    '''Future seam for paid access. Currently delegates to Admin Control.'''
+    user_id = user.get("sub")
+    if not user_id or not is_scheduled_scans_eligible(user_id):
+        raise HTTPException(status_code=403, detail="Access denied for scheduled scans.")
+    user["role"] = get_user_role(user_id)
+    return user
