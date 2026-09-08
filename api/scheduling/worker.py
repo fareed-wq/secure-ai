@@ -23,7 +23,7 @@ SUPABASE_URL = os.environ.get("VITE_SUPABASE_URL") or os.environ.get("SUPABASE_U
 SUPABASE_SECRET_KEY = os.environ.get("SUPABASE_SECRET_KEY")
 QSTASH_CURRENT_SIGNING_KEY = os.environ.get("QSTASH_CURRENT_SIGNING_KEY")
 QSTASH_NEXT_SIGNING_KEY = os.environ.get("QSTASH_NEXT_SIGNING_KEY")
-APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://urlscanonline.com")
+APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://www.urlscanonline.com")
 
 def get_db_headers():
     return {
@@ -100,7 +100,11 @@ async def handle_scheduled_scan(request: Request):
         from api.scheduling.router import QStashClient, QSTASH_TOKEN
         if QStashClient and QSTASH_TOKEN and sched.get("qstash_schedule_id"):
             try:
-                QStashClient(QSTASH_TOKEN, base_url=os.environ.get("QSTASH_URL", "https://eu.qstash.upstash.io")).schedule.pause(sched["qstash_schedule_id"])
+                qstash_url = os.environ.get("QSTASH_URL")
+                if qstash_url:
+                    QStashClient(QSTASH_TOKEN, base_url=qstash_url).schedule.pause(sched["qstash_schedule_id"])
+                else:
+                    QStashClient(QSTASH_TOKEN).schedule.pause(sched["qstash_schedule_id"])
             except Exception:
                 pass
                 

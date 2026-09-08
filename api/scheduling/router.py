@@ -38,6 +38,12 @@ def get_db_headers():
         "Content-Type": "application/json"
     }
 
+def _get_qstash_client():
+    qstash_url = os.environ.get("QSTASH_URL")
+    if qstash_url:
+        return QStashClient(QSTASH_TOKEN, base_url=qstash_url)
+    return QStashClient(QSTASH_TOKEN)
+
 class ScheduleCreateRequest(BaseModel):
     target_url: str
     frequency: str
@@ -59,17 +65,19 @@ class ScheduleCreateRequest(BaseModel):
             raise ValueError('Invalid IANA timezone')
         return v
 
-def _get_qstash_cron(frequency: str, time_of_day: str, day_of_week: int = None, day_of_month: int = None) -> str:
+def _get_qstash_cron(frequency: str, time_of_day: str, timezone: str, day_of_week: int = None, day_of_month: int = None) -> str:
     parts = time_of_day.split(':')
     h = int(parts[0])
     m = int(parts[1])
     if frequency == 'daily':
-        return f"{m} {h} * * *"
+        cron_expr = f"{m} {h} * * *"
     elif frequency == 'weekly':
-        return f"{m} {h} * * {day_of_week}"
+        cron_expr = f"{m} {h} * * {day_of_week}"
     elif frequency == 'monthly':
-        return f"{m} {h} {day_of_month} * *"
-    return ""
+        cron_expr = f"{m} {h} {day_of_month} * *"
+    else:
+        return ""
+    return f"CRON_TZ={timezone} {cron_expr}"
 
 @router.get("")
 async def list_schedules(user: dict = Depends(require_scheduled_scans_access)):
@@ -116,8 +124,8 @@ async def create_schedule(req: ScheduleCreateRequest, user: dict = Depends(requi
     # Create QStash schedule if client is available
     if QStashClient and QSTASH_TOKEN:
         try:
-            client = QStashClient(QSTASH_TOKEN, base_url=os.environ.get("QSTASH_URL", "https://eu.qstash.upstash.io"))
-            cron_expr = _get_qstash_cron(req.frequency, req.time_of_day, req.day_of_week, req.day_of_month)
+            client = _get_qstash_client()
+            cron_expr = _get_qstash_cron(req.frequency, req.time_of_day, req.timezone, req.day_of_week, req.day_of_month)
             destination = f"{APP_BASE_URL.rstrip('/')}/api/internal/scheduled-scan"
             
             res_id = client.schedule.create(
@@ -125,7 +133,6 @@ async def create_schedule(req: ScheduleCreateRequest, user: dict = Depends(requi
                 cron=cron_expr,
                 body=json.dumps({"schedule_id": new_id}),
                 headers={
-                    "Upstash-Cron-Tz": req.timezone,
                     "Content-Type": "application/json"
                 },
                 retries=0,
@@ -184,7 +191,7 @@ async def pause_schedule(schedule_id: str, user: dict = Depends(require_schedule
     sched = resp.json()[0]
     
     if QStashClient and QSTASH_TOKEN and sched.get('qstash_schedule_id'):
-        client = QStashClient(QSTASH_TOKEN, base_url=os.environ.get("QSTASH_URL", "https://eu.qstash.upstash.io"))
+        client = _get_qstash_client()
         try:
             client.schedule.pause(sched['qstash_schedule_id'])
         except Exception as e:
@@ -212,7 +219,7 @@ async def resume_schedule(schedule_id: str, user: dict = Depends(require_schedul
         return JSONResponse(status_code=400, content={"error": "Target no longer valid for scanning"})
         
     if QStashClient and QSTASH_TOKEN and sched.get('qstash_schedule_id'):
-        client = QStashClient(QSTASH_TOKEN, base_url=os.environ.get("QSTASH_URL", "https://eu.qstash.upstash.io"))
+        client = _get_qstash_client()
         try:
             client.schedule.resume(sched['qstash_schedule_id'])
         except Exception as e:
@@ -241,7 +248,7 @@ async def delete_schedule(schedule_id: str, user: dict = Depends(require_schedul
     sched = resp.json()[0]
     
     if QStashClient and QSTASH_TOKEN and sched.get('qstash_schedule_id'):
-        client = QStashClient(QSTASH_TOKEN, base_url=os.environ.get("QSTASH_URL", "https://eu.qstash.upstash.io"))
+        client = _get_qstash_client()
         try:
             client.schedule.delete(sched['qstash_schedule_id'])
         except Exception as e:

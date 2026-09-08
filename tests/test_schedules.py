@@ -1,3 +1,4 @@
+import os
 import unittest
 from datetime import datetime, time, timedelta
 import zoneinfo
@@ -406,14 +407,33 @@ class TestSchedules(unittest.TestCase):
         mock_client.schedule.create.assert_called_once()
         _, kwargs = mock_client.schedule.create.call_args
         self.assertEqual(kwargs['destination'], "https://www.urlscanonline.com/api/internal/scheduled-scan")
-        self.assertEqual(kwargs['cron'], "50 0 * * *")
+        self.assertEqual(kwargs['cron'], "CRON_TZ=Asia/Riyadh 50 0 * * *")
         import json
         self.assertEqual(kwargs['body'], json.dumps({"schedule_id": "00000000-0000-0000-0000-000000000000"}))
-        self.assertEqual(kwargs['headers'], {"Upstash-Cron-Tz": "Asia/Riyadh", "Content-Type": "application/json"})
+        self.assertEqual(kwargs['headers'], {"Content-Type": "application/json"})
         self.assertEqual(kwargs['retries'], 0)
         self.assertTrue(kwargs['schedule_id'].startswith("urlscan-"))
         
         api.index.app.dependency_overrides.clear()
+
+
+    @patch('api.scheduling.router.QStashClient')
+    def test_qstash_client_init(self, MockQStash):
+        from api.scheduling.router import _get_qstash_client
+        
+        # Test with QSTASH_URL present
+        with patch.dict(os.environ, {"QSTASH_URL": "https://qstash-eu-central-1.upstash.io"}):
+            _get_qstash_client()
+            MockQStash.assert_called_with(unittest.mock.ANY, base_url="https://qstash-eu-central-1.upstash.io")
+            
+        MockQStash.reset_mock()
+        
+        # Test with QSTASH_URL absent
+        with patch.dict(os.environ, {}, clear=False):
+            if "QSTASH_URL" in os.environ:
+                del os.environ["QSTASH_URL"]
+            _get_qstash_client()
+            MockQStash.assert_called_with(unittest.mock.ANY)
 
 if __name__ == '__main__':
     unittest.main()
