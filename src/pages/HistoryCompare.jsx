@@ -6,6 +6,7 @@ import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Plus, Minus, Equal } from
 
 import { scanApi } from '../lib/api/scanner';
 import { useAuth } from '../contexts/AuthContext';
+import { Navigate } from 'react-router-dom';
 import BackButton from '../components/ui/BackButton';
 
 
@@ -131,9 +132,22 @@ const FindingCard = ({ item, type }) => {
 
 
 export default function HistoryCompare() {
-  const { user } = useAuth();
+  const { canUseScanCompare, loading: authIsLoading, isAdminLoading } = useAuth();
+  const authLoading = authIsLoading || isAdminLoading;
 
   const [searchParams] = useSearchParams();
+
+  if (authLoading) {
+    return (
+      <div className="flex justify-center p-8">
+        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!canUseScanCompare) {
+    return <Navigate to="/history" replace />;
+  }
 
   const navigate = useNavigate();
 

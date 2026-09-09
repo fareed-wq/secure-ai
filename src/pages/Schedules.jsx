@@ -6,7 +6,7 @@ import { useSEO } from '../hooks/useSEO';
 
 export default function Schedules() {
   useSEO({
-    title: 'Scheduled Scans | URLScan Online',
+    title: 'Schedule Scans | URLScan Online',
     description: 'Manage automated recurring security scans.',
     path: '/schedules'
   });
@@ -67,7 +67,7 @@ export default function Schedules() {
           <div>
             <h1 className="text-2xl font-bold text-slate-50 flex items-center gap-2">
               <CalendarDays className="text-indigo-400" />
-              Scheduled Scans
+              Schedule Scans
             </h1>
             <p className="text-slate-400 mt-1">
               Automatically run recurring security scans on authorized targets.
@@ -168,7 +168,7 @@ export default function Schedules() {
         <div>
           <h1 className="text-2xl font-bold text-slate-50 flex items-center gap-2">
             <CalendarDays className="text-indigo-400" />
-            Scheduled Scans
+            Schedule Scans
           </h1>
           <p className="text-slate-400 mt-1">
             Automatically run recurring security scans on authorized targets.

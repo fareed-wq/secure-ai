@@ -1,7 +1,23 @@
 import React from 'react';
-import { ArrowRight, GitCommit } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { ArrowRight, GitCommit, Loader2 } from 'lucide-react';
 
 const Compare = () => {
+  const { canUseScanCompare, loading, isAdminLoading } = useAuth();
+  const authLoading = loading || isAdminLoading;
+
+  if (authLoading) {
+    return (
+      <div className="flex justify-center p-8">
+        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!canUseScanCompare) {
+    return <Navigate to="/dashboard" replace />;
+  }
   return (
     <div className="space-y-6 text-slate-200">
       <div>
@@ -17,7 +33,7 @@ const Compare = () => {
               <option>example.com - 2026-08-01 (Score: 85)</option>
             </select>
           </div>
-          
+
           <div className="hidden md:flex mt-6 items-center justify-center">
             <ArrowRight className="w-6 h-6 text-slate-600" />
           </div>
@@ -29,7 +45,7 @@ const Compare = () => {
             </select>
           </div>
         </div>
-        
+
         <div className="mt-8 flex justify-center">
           <button className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">
             Generate Diff
@@ -46,19 +62,19 @@ const Compare = () => {
           </h2>
           <div className="text-emerald-400 font-bold">+7 Points</div>
         </div>
-        
+
         <div className="p-6">
           <div className="space-y-4">
             <div className="flex items-center gap-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
               <span className="bg-emerald-500 text-slate-900 text-xs font-bold px-2 py-1 rounded">FIXED</span>
               <p className="text-sm text-emerald-100">Missing Content-Security-Policy (CSP) has been resolved.</p>
             </div>
-            
+
             <div className="flex items-center gap-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
               <span className="bg-emerald-500 text-slate-900 text-xs font-bold px-2 py-1 rounded">FIXED</span>
               <p className="text-sm text-emerald-100">Missing Strict-Transport-Security (HSTS) has been resolved.</p>
             </div>
-            
+
             <div className="flex items-center gap-4 p-4 bg-slate-800/50 border border-slate-700 rounded-xl opacity-60">
               <span className="bg-slate-600 text-slate-50 text-xs font-bold px-2 py-1 rounded">UNCHANGED</span>
               <p className="text-sm text-slate-300">X-Powered-By Header Exposed remains present.</p>
