@@ -52,6 +52,8 @@ class ScheduleCreateRequest(BaseModel):
     day_of_week: Optional[int] = None
     day_of_month: Optional[int] = None
     authorization_acknowledged: bool
+    scan_mode: str = "passive"
+    advanced_authorization_acknowledged: bool = False
 
     @field_validator('frequency')
     def validate_frequency(cls, v):
@@ -94,7 +96,13 @@ async def create_schedule(req: ScheduleCreateRequest, user: dict = Depends(requi
     if not req.authorization_acknowledged:
         return JSONResponse(status_code=400, content={"error": "Must acknowledge authorization"})
 
-    validation_error = validate_scan_target(req.target_url, "passive")
+    if req.scan_mode not in ("passive", "active"):
+        return JSONResponse(status_code=400, content={"error": "Invalid scan_mode"})
+
+    if req.scan_mode == "active" and not req.advanced_authorization_acknowledged:
+        return JSONResponse(status_code=400, content={"error": "Must acknowledge advanced authorization for active scans"})
+
+    validation_error = validate_scan_target(req.target_url, req.scan_mode)
     if validation_error:
         return JSONResponse(status_code=400, content=validation_error)
         
@@ -153,7 +161,7 @@ async def create_schedule(req: ScheduleCreateRequest, user: dict = Depends(requi
         "user_id": user['sub'],
         "target_url": req.target_url,
         "normalized_target": normalized,
-        "scan_mode": "passive",
+        "scan_mode": req.scan_mode,
         "frequency": req.frequency,
         "time_of_day": req.time_of_day,
         "timezone": req.timezone,
@@ -214,7 +222,7 @@ async def resume_schedule(schedule_id: str, user: dict = Depends(require_schedul
         
     sched = resp.json()[0]
     
-    validation_error = validate_scan_target(sched['target_url'], "passive")
+    validation_error = validate_scan_target(sched['target_url'], sched.get('scan_mode', 'passive'))
     if validation_error:
         return JSONResponse(status_code=400, content={"error": "Target no longer valid for scanning"})
         
