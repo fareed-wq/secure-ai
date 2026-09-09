@@ -155,7 +155,7 @@ const ScannerCapabilities = () => {
               <div className="mt-6 pt-4 border-t border-slate-800 flex items-center text-xs font-mono text-slate-500 uppercase">
                 Find it in:
                 <span className="ml-2 text-indigo-400 flex items-center">
-                  Dashboard <ChevronRight size={12} className="mx-1" /> View Scan History
+                  Scan History
                 </span>
               </div>
             </div>
