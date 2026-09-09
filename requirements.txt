@@ -8,3 +8,4 @@ urllib3
 PyJWT
 cvss==3.6
 qstash==3.4.0
+reportlab==5.0.1

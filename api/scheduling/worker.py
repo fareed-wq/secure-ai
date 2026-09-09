@@ -1,4 +1,4 @@
-import os
+﻿import os
 import json
 import logging
 from datetime import datetime, timedelta
@@ -58,7 +58,7 @@ async def handle_scheduled_scan(request: Request):
             url=worker_url
         )
     except Exception as e:
-        logger.error(f"Invalid signature: {e}")
+        logger.error("Invalid signature")
         return JSONResponse(status_code=403, content={"error": "Invalid signature"})
 
     msg_id = request.headers.get("Upstash-Message-Id")
@@ -203,7 +203,7 @@ async def handle_scheduled_scan(request: Request):
             status = "failed"
             err_code = "db_insert_failed"
     except Exception as e:
-        logger.error(f"Scheduled scan failed: {e}")
+        logger.error(f"Scheduled scan failed: {type(e).__name__}")
         status = "failed"
         err_code = "scan_exception"
     finally:
@@ -227,13 +227,47 @@ async def handle_scheduled_scan(request: Request):
             )
             next_run_at = next_run_dt.isoformat()
         except Exception as e:
-            logger.error(f"Failed to calculate next_run_at: {e}")
+            logger.error(f"Failed to calculate next_run_at: {type(e).__name__}")
             next_run_at = None
 
         if run_id:
-            requests.patch(f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", headers=db_headers, json={
+            run_patch = {
                 "status": status, "completed_at": completed_at, "error_code": err_code, "scan_id": scan_id
-            })
+            }
+            
+            # Handle Email Snapshot
+            email_status = "not_requested"
+            email_error_code = None
+            if status == "completed" and sched.get("email_report_enabled"):
+                email_status = "pending"
+                
+                # Publish QStash job
+                from api.scheduling.router import QStashClient, QSTASH_TOKEN
+                if QStashClient and QSTASH_TOKEN:
+                    try:
+                        qstash_url = os.environ.get("QSTASH_URL")
+                        client = QStashClient(QSTASH_TOKEN, base_url=qstash_url) if qstash_url else QStashClient(QSTASH_TOKEN)
+                        client.message.publish_json(
+                            url=f"{APP_BASE_URL.rstrip('/')}/api/internal/scheduled-report-email",
+                            body={"run_id": run_id},
+                            retries=3
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to enqueue email report job: {type(e).__name__}")
+                        email_status = "failed"
+                        email_error_code = "enqueue_failed"
+                        run_patch["email_lease_until"] = None
+                else:
+                    logger.error("QStash not configured for email enqueue")
+                    email_status = "failed"
+                    email_error_code = "enqueue_failed"
+                    run_patch["email_lease_until"] = None
+                    
+            run_patch["email_status"] = email_status
+            if email_error_code:
+                run_patch["email_error_code"] = email_error_code
+
+            requests.patch(f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", headers=db_headers, json=run_patch)
 
         update_payload = {
             "last_status": status,
@@ -248,3 +282,5 @@ async def handle_scheduled_scan(request: Request):
         requests.patch(f"{SUPABASE_URL}/rest/v1/scan_schedules?id=eq.{schedule_id}", headers=db_headers, json=update_payload)
 
     return JSONResponse(status_code=200, content={"status": status})
+
+

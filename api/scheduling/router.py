@@ -54,6 +54,7 @@ class ScheduleCreateRequest(BaseModel):
     authorization_acknowledged: bool
     scan_mode: str = "passive"
     advanced_authorization_acknowledged: bool = False
+    email_report_enabled: bool = False
 
     @field_validator('frequency')
     def validate_frequency(cls, v):
@@ -169,6 +170,7 @@ async def create_schedule(req: ScheduleCreateRequest, user: dict = Depends(requi
         "is_enabled": True,
         "qstash_schedule_id": qstash_schedule_id,
         "authorization_acknowledged_at": datetime.now(timezone.utc).isoformat(),
+        "email_report_enabled": req.email_report_enabled,
         "next_run_at": next_run.isoformat()
     }
 
