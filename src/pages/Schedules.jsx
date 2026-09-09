@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { CalendarDays, Plus, Trash2, Pause, Play, AlertCircle, CheckCircle2, ShieldCheck, ChevronRight, Loader2 } from 'lucide-react';
+import { CalendarDays, Plus, Trash2, Pause, Play, AlertCircle, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
 
 export default function Schedules() {
@@ -70,7 +70,7 @@ export default function Schedules() {
               Scheduled Scans
             </h1>
             <p className="text-slate-400 mt-1">
-              Automatically run recurring passive security scans on authorized targets.
+              Automatically run recurring security scans on authorized targets.
             </p>
           </div>
         </div>
@@ -171,7 +171,7 @@ export default function Schedules() {
             Scheduled Scans
           </h1>
           <p className="text-slate-400 mt-1">
-            Automatically run recurring passive security scans on authorized targets.
+            Automatically run recurring security scans on authorized targets.
           </p>
         </div>
         {!isCreating && schedules.length < 3 && (
@@ -204,12 +204,7 @@ export default function Schedules() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">Scan Type</label>
-              <div className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-400 flex items-center gap-2">
-                <ShieldCheck size={16} /> Basic (Passive)
-              </div>
-            </div>
+
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
