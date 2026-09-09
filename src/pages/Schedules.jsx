@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { CalendarDays, Plus, Trash2, Pause, Play, AlertCircle, CheckCircle2, ShieldCheck, ChevronRight } from 'lucide-react';
+import { CalendarDays, Plus, Trash2, Pause, Play, AlertCircle, CheckCircle2, ShieldCheck, ChevronRight, Loader2 } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
 
 export default function Schedules() {
@@ -14,6 +14,12 @@ export default function Schedules() {
   const { canUseScheduledScans, loading, session } = useAuth();
   const [schedules, setSchedules] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [pendingActions, setPendingActions] = useState({});
+  const createPendingRef = useRef(false);
+  const actionPendingRef = useRef(new Set());
   
   // Form State
   const [targetUrl, setTargetUrl] = useState('');
@@ -31,15 +37,22 @@ export default function Schedules() {
   }, [canUseScheduledScans, session]);
 
   const fetchSchedules = async () => {
+    setLoadError(false);
+    setIsInitialLoading(true);
     try {
       const res = await fetch('/api/schedules', {
         headers: { Authorization: `Bearer ${session.access_token}` }
       });
       if (res.ok) {
         setSchedules(await res.json());
+      } else {
+        setLoadError(true);
       }
     } catch (e) {
       console.error(e);
+      setLoadError(true);
+    } finally {
+      setIsInitialLoading(false);
     }
   };
 
@@ -51,7 +64,9 @@ export default function Schedules() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!authChecked) return;
+    if (!authChecked || isSaving || createPendingRef.current) return;
+    createPendingRef.current = true;
+    setIsSaving(true);
     
     try {
       const res = await fetch('/api/schedules', {
@@ -76,11 +91,17 @@ export default function Schedules() {
       }
     } catch (e) {
       console.error(e);
+    } finally {
+      createPendingRef.current = false;
+      setIsSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
+    if (pendingActions[id] || actionPendingRef.current.has(id)) return;
     if (!window.confirm('Deleting this schedule stops future scans. Previous scan history will remain.')) return;
+    actionPendingRef.current.add(id);
+    setPendingActions(prev => ({ ...prev, [id]: 'delete' }));
     try {
       const res = await fetch(`/api/schedules/${id}`, {
         method: 'DELETE',
@@ -89,12 +110,18 @@ export default function Schedules() {
       if (res.ok) fetchSchedules();
     } catch (e) {
       console.error(e);
+    } finally {
+      actionPendingRef.current.delete(id);
+      setPendingActions(prev => { const next = {...prev}; delete next[id]; return next; });
     }
   };
 
   const handleToggle = async (sched) => {
+    if (pendingActions[sched.id] || actionPendingRef.current.has(sched.id)) return;
+    actionPendingRef.current.add(sched.id);
     try {
       const action = sched.is_enabled ? 'pause' : 'resume';
+      setPendingActions(prev => ({ ...prev, [sched.id]: action }));
       const res = await fetch(`/api/schedules/${sched.id}/${action}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.access_token}` }
@@ -102,6 +129,9 @@ export default function Schedules() {
       if (res.ok) fetchSchedules();
     } catch (e) {
       console.error(e);
+    } finally {
+      actionPendingRef.current.delete(sched.id);
+      setPendingActions(prev => { const next = {...prev}; delete next[sched.id]; return next; });
     }
   };
 
@@ -219,18 +249,39 @@ export default function Schedules() {
             </div>
             
             <div className="flex justify-end gap-3 pt-4">
-              <button type="button" onClick={() => setIsCreating(false)} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors">
+              <button type="button" onClick={() => setIsCreating(false)} disabled={isSaving} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 Cancel
               </button>
-              <button type="submit" disabled={!authChecked} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
-                Save Schedule
+              <button type="submit" disabled={!authChecked || isSaving} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center min-w-[140px]">
+                {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : 'Save Schedule'}
               </button>
             </div>
           </div>
         </form>
       )}
 
-      {!isCreating && schedules.length === 0 && (
+      {isInitialLoading && !isCreating && (
+        <div className="grid grid-cols-1 gap-4" aria-busy="true">
+          {[1, 2].map(i => (
+            <div key={i} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 h-32 animate-pulse" />
+          ))}
+        </div>
+      )}
+
+      {loadError && !isInitialLoading && (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center flex flex-col items-center justify-center">
+          <AlertCircle className="w-12 h-12 text-rose-500 mb-4" />
+          <h3 className="text-xl font-bold text-slate-200 mb-2">Unable to load scheduled scans</h3>
+          <p className="text-slate-400 mb-6 max-w-md">
+            There was a problem loading your schedules. Please try again.
+          </p>
+          <button onClick={fetchSchedules} className="bg-slate-800 hover:bg-slate-700 text-slate-200 px-6 py-2 rounded-lg font-medium transition-colors border border-slate-700">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!isInitialLoading && !loadError && !isCreating && schedules.length === 0 && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center flex flex-col items-center justify-center">
           <CalendarDays className="w-16 h-16 text-slate-700 mb-4" />
           <h3 className="text-xl font-bold text-slate-200 mb-2">No scheduled scans yet.</h3>
@@ -243,7 +294,7 @@ export default function Schedules() {
         </div>
       )}
 
-      {!isCreating && schedules.length > 0 && (
+      {!isInitialLoading && !loadError && !isCreating && schedules.length > 0 && (
         <div className="grid grid-cols-1 gap-4">
           {schedules.map(sched => (
             <div key={sched.id} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -273,11 +324,11 @@ export default function Schedules() {
               </div>
               
               <div className="flex items-center gap-2 w-full md:w-auto border-t border-slate-800 md:border-none pt-4 md:pt-0">
-                <button onClick={() => handleToggle(sched)} className="p-2 text-slate-400 hover:text-slate-50 transition-colors bg-slate-800 hover:bg-slate-700 rounded-lg">
-                  {sched.is_enabled ? <Pause size={18} /> : <Play size={18} />}
+                <button onClick={() => handleToggle(sched)} disabled={!!pendingActions[sched.id]} aria-disabled={!!pendingActions[sched.id]} aria-busy={!!pendingActions[sched.id]} className="p-2 text-slate-400 hover:text-slate-50 transition-colors bg-slate-800 hover:bg-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed w-9 h-9 flex items-center justify-center">
+                  {pendingActions[sched.id] === 'pause' || pendingActions[sched.id] === 'resume' ? <Loader2 size={18} className="animate-spin text-indigo-400" /> : (sched.is_enabled ? <Pause size={18} /> : <Play size={18} />)}
                 </button>
-                <button onClick={() => handleDelete(sched.id)} className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors bg-slate-800 rounded-lg">
-                  <Trash2 size={18} />
+                <button onClick={() => handleDelete(sched.id)} disabled={!!pendingActions[sched.id]} aria-disabled={!!pendingActions[sched.id]} aria-busy={!!pendingActions[sched.id]} className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors bg-slate-800 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed w-9 h-9 flex items-center justify-center">
+                  {pendingActions[sched.id] === 'delete' ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
                 </button>
               </div>
             </div>
