@@ -79,17 +79,17 @@ async def handle_scheduled_email(request: Request):
     db_headers = get_db_headers()
 
     # 3. Authoritative Run Lookup
-    run_url = f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}&select=*"
+    run_url = f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}&select=id,user_id,scan_id,schedule_id,status,email_status,email_lease_until"
     run_resp = requests.get(run_url, headers=db_headers)
     if run_resp.status_code != 200 or len(run_resp.json()) == 0:
-        logger.info("Email worker skipped", extra={"reason": "run_not_found", "run_id": run_id})
+        logger.info(f"Email worker skipped run={run_id} reason=run_not_found")
         return JSONResponse(status_code=200, content={"status": "skipped", "reason": "run_not_found"})
     
     run_row = run_resp.json()[0]
     email_status = run_row.get("email_status")
     
     if email_status in ["sent", "failed", "not_requested"]:
-        logger.info("Email worker skipped", extra={"reason": f"status_{email_status}", "run_id": run_id})
+        logger.info(f"Email worker skipped run={run_id} reason=terminal_email_status status={email_status}")
         return JSONResponse(status_code=200, content={"status": "skipped", "reason": f"status_{email_status}"})
         
     user_id = run_row.get("user_id")
@@ -121,23 +121,33 @@ async def handle_scheduled_email(request: Request):
 
     # 4. Atomic Email Claim
     now_utc = datetime.now(timezone.utc)
-    current_time_str = now_utc.isoformat()
+    import urllib.parse
+    current_time_str = urllib.parse.quote(now_utc.isoformat())
     lease_until_str = (now_utc + timedelta(minutes=5)).isoformat()
     
     # Claim if status is pending OR (status is sending AND lease expired)
     claim_query = f"?id=eq.{run_id}&or=(email_status.eq.pending,and(email_status.eq.sending,email_lease_until.lt.{current_time_str}))"
-    claim_resp = requests.patch(
-        f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs{claim_query}",
-        headers={**db_headers, "Prefer": "return=representation"},
-        json={
-            "email_status": "sending",
-            "email_lease_until": lease_until_str,
-            "email_error_code": None
-        }
-    )
-    if claim_resp.status_code != 200 or len(claim_resp.json()) == 0:
-        logger.info("Email worker skipped", extra={"reason": "lease_active", "run_id": run_id})
-        return JSONResponse(status_code=503, content={"status": "retry", "reason": "lease_active"})
+    try:
+        claim_resp = requests.patch(
+            f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs{claim_query}",
+            headers={**db_headers, "Prefer": "return=representation"},
+            json={
+                "email_status": "sending",
+                "email_lease_until": lease_until_str,
+                "email_error_code": None
+            },
+            timeout=10.0
+        )
+        if claim_resp.status_code == 200:
+            if len(claim_resp.json()) == 0:
+                logger.info(f"Email worker skipped run={run_id} reason=lease_active")
+                return JSONResponse(status_code=503, content={"status": "retry", "reason": "lease_active"})
+        else:
+            logger.error(f"Claim patch failed {claim_resp.status_code}")
+            return JSONResponse(status_code=503, content={"status": "retry", "reason": "db_claim_error"})
+    except Exception as e:
+        logger.error(f"Claim patch exception: {type(e).__name__}")
+        return JSONResponse(status_code=503, content={"status": "retry", "reason": "db_claim_exception"})
 
         # 5. Fetch Recipient via Supabase Admin Auth API
     try:
