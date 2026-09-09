@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
 const ScanHistory = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, canUseScanCompare } = useAuth();
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -149,7 +149,7 @@ const ScanHistory = () => {
             <h1 className="text-3xl font-bold text-slate-50 tracking-tight">Scan History</h1>
             <p className="text-slate-400 mt-1">Review all your previous security assessments.</p>
           </div>
-          {isAdmin && (
+          {canUseScanCompare && (
             <button
               onClick={handleCompare}
               disabled={selectedScans.length !== 2}
@@ -223,7 +223,7 @@ const ScanHistory = () => {
                     return (
                       <tr key={scan.id} className={`hover:bg-slate-800/30 transition-colors ${!selectable && !isSelected ? 'opacity-50 grayscale' : ''}`}>
                         <td className="p-4 text-center">
-                          {isAdmin && (
+                          {canUseScanCompare && (
                             <input
                               type="checkbox"
                               className="w-4 h-4 bg-slate-800 border-slate-600 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer disabled:cursor-not-allowed"

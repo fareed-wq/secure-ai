@@ -49,8 +49,12 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
     { label: "Dashboard", href: "/dashboard", icon: <LayoutDashboard size={18} /> },
   ];
 
+  if (user) {
+    navItems.push({ label: "Scan History", href: "/history", icon: <Activity size={18} /> });
+  }
+
   if (canUseScheduledScans) {
-    navItems.push({ label: "Scheduled Scans", href: "/schedules", icon: <CalendarDays size={18} /> });
+    navItems.push({ label: "Schedule Scans", href: "/schedules", icon: <CalendarDays size={18} /> });
   }
 
   navItems.push(
