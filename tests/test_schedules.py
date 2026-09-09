@@ -498,5 +498,62 @@ class TestSchedules(unittest.TestCase):
         self.assertTrue(any('scheduled_entitlement_lookup_failed' in msg for msg in cm2.output))
 
 
+
+    @patch('api.scheduling.worker.scan_url', return_value={"score": 100})
+    @patch('api.scheduling.worker.validate_scan_target', return_value=None)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.requests.post')
+    @patch('api.scheduling.worker.requests.patch')
+    @patch('api.scheduling.worker.requests.get')
+    @patch('api.scheduling.worker.Receiver')
+    @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
+    @patch('api.scheduling.worker.QSTASH_NEXT_SIGNING_KEY', 'x')
+    @patch('api.scheduling.worker.datetime')
+    def test_worker_success_payloads_and_next_run(self, mock_dt, mock_rec, mock_get, mock_patch, mock_post, mock_elig, mock_val, mock_scan):
+        import datetime
+        mock_dt.utcnow.return_value = datetime.datetime(2026, 9, 9, 14, 10, tzinfo=datetime.timezone.utc)
+        self._mock_worker_deps(mock_get, mock_patch, mock_post, {"frequency": "daily", "timezone": "Asia/Riyadh", "time_of_day": "17:10:00"})
+        resp = client.post("/api/internal/scheduled-scan", data=b'{"schedule_id": "sched-123"}', headers={"Upstash-Signature": "sig"})
+        self.assertEqual(resp.status_code, 200)
+
+        # 1. Check scan metadata
+        post_calls = [c for c in mock_post.mock_calls if c.args and "/scans" in c.args[0]]
+        self.assertEqual(post_calls[0].kwargs["json"]["report_data"]["scan_mode"], "passive")
+
+        # 2. Check next_run_at
+        patch_calls = [c for c in mock_patch.mock_calls if c.args and "/scan_schedules" in c.args[0]]
+        finalize_payload = patch_calls[-1].kwargs["json"]
+        self.assertIn("next_run_at", finalize_payload)
+        self.assertEqual(finalize_payload["next_run_at"], "2026-09-10T14:10:00+00:00") # Asia/Riyadh is +03:00, so local 17:10 is UTC 14:10. Next day is Sep 10.
+
+    @patch('api.scheduling.worker.scan_url', side_effect=Exception("Failed"))
+    @patch('api.scheduling.worker.validate_scan_target', return_value=None)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.requests.post')
+    @patch('api.scheduling.worker.requests.patch')
+    @patch('api.scheduling.worker.requests.get')
+    @patch('api.scheduling.worker.Receiver')
+    @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
+    @patch('api.scheduling.worker.QSTASH_NEXT_SIGNING_KEY', 'x')
+    @patch('api.scheduling.worker.datetime')
+    def test_worker_failed_next_run(self, mock_dt, mock_rec, mock_get, mock_patch, mock_post, mock_elig, mock_val, mock_scan):
+        import datetime
+        mock_dt.utcnow.return_value = datetime.datetime(2026, 9, 9, 14, 10, tzinfo=datetime.timezone.utc)
+        self._mock_worker_deps(mock_get, mock_patch, mock_post, {"frequency": "weekly", "timezone": "Asia/Riyadh", "time_of_day": "17:10:00", "day_of_week": 2}) # Wed is 2
+        resp = client.post("/api/internal/scheduled-scan", data=b'{"schedule_id": "sched-123"}', headers={"Upstash-Signature": "sig"})
+        self.assertEqual(resp.status_code, 200)
+
+        patch_calls = [c for c in mock_patch.mock_calls if c.args and "/scan_schedules" in c.args[0]]
+        finalize_payload = patch_calls[-1].kwargs["json"]
+        self.assertIn("next_run_at", finalize_payload)
+        self.assertEqual(finalize_payload["next_run_at"], "2026-09-16T14:10:00+00:00") # Next week
+
+    def test_time_utils_monthly(self):
+        from api.scheduling.time_utils import get_next_run_at
+        from datetime import time, datetime, timezone
+        now_utc = datetime(2026, 9, 9, 14, 10, tzinfo=timezone.utc)
+        next_run = get_next_run_at("monthly", time(17, 10), "Asia/Riyadh", day_of_month=9, now_utc=now_utc)
+        self.assertEqual(next_run.isoformat(), "2026-10-09T14:10:00+00:00")
+
 if __name__ == '__main__':
     unittest.main()
