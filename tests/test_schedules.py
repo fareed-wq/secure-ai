@@ -18,6 +18,24 @@ import api.index
 client = TestClient(api.index.app)
 
 class TestSchedules(unittest.TestCase):
+    def setUp(self):
+        import os
+        self.env_patcher = unittest.mock.patch.dict(os.environ, {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
+        self.env_patcher.start()
+
+        # Also patch module vars in api.auth.entitlements since they are read at load time
+        import api.auth.entitlements
+        self.ent_url = api.auth.entitlements.SUPABASE_URL
+        self.ent_key = api.auth.entitlements.SUPABASE_SECRET_KEY
+        api.auth.entitlements.SUPABASE_URL = 'http://mock'
+        api.auth.entitlements.SUPABASE_SECRET_KEY = 'token'
+
+    def tearDown(self):
+        self.env_patcher.stop()
+        import api.auth.entitlements
+        api.auth.entitlements.SUPABASE_URL = self.ent_url
+        api.auth.entitlements.SUPABASE_SECRET_KEY = self.ent_key
+
     # ==========================
     # TESTS 1-4: AUTH & ENTITLEMENT
     # ==========================
@@ -25,8 +43,8 @@ class TestSchedules(unittest.TestCase):
     @patch('api.auth.entitlements.get_user_plan_and_status', return_value=('free', 'active'))
     def test_auth_admin_create_allowed(self, mock_plan, mock_role):
         self.assertTrue(is_scheduled_scans_eligible("admin_user_id"))
-        
-        
+
+
     @patch('api.auth.entitlements.get_user_role', return_value='user')
     @patch('api.auth.entitlements.get_user_plan_and_status', return_value=('professional', 'active'))
     def test_auth_paid_metadata_alone_blocked(self, mock_plan, mock_role):
@@ -75,24 +93,24 @@ class TestSchedules(unittest.TestCase):
         mock_get.return_value.json.return_value = [] # no duplicates, count < 3
         mock_post.return_value.status_code = 201
         mock_post.return_value.json.return_value = [{"id": "db-id-123"}]
-        
+
         mock_client = MagicMock()
         MockQStash.return_value = mock_client
         mock_client.schedule.create.return_value = "msg-id"
-        
+
         # Test
         resp = client.post("/api/schedules", json={
             "target_url": "https://example.com", "frequency": "daily", "time_of_day": "09:00:00",
             "timezone": "UTC", "authorization_acknowledged": True
         })
         self.assertEqual(resp.status_code, 200)
-        
+
         # Verify deterministic schedule ID (Test 6) & Retries=0 (Test 5) & body contains only schedule_id (Test 7)
         mock_client.schedule.create.assert_called_once()
         kwargs = mock_client.schedule.create.call_args.kwargs
         self.assertEqual(kwargs['retries'], 0)
         self.assertTrue(kwargs['schedule_id'].startswith("urlscan-"))
-        
+
         body_dict = json.loads(kwargs['body'])
         self.assertIn("schedule_id", body_dict)
         self.assertEqual(len(body_dict), 1)
@@ -111,11 +129,11 @@ class TestSchedules(unittest.TestCase):
         mock_get.return_value.json.return_value = []
         # DB fails
         mock_post.return_value.status_code = 500
-        
+
         mock_client = MagicMock()
         MockQStash.return_value = mock_client
         mock_client.schedule.create.return_value = "msg-id"
-        
+
         resp = client.post("/api/schedules", json={
             "target_url": "https://example.com", "frequency": "daily", "time_of_day": "09:00:00",
             "timezone": "UTC", "authorization_acknowledged": True
@@ -134,7 +152,7 @@ class TestSchedules(unittest.TestCase):
     def test_missing_signature_rejected(self): # Test 9
         resp = client.post("/api/internal/scheduled-scan", data=b'{"schedule_id": "123"}')
         self.assertEqual(resp.status_code, 401)
-        
+
     @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
     @patch('api.scheduling.worker.QSTASH_NEXT_SIGNING_KEY', 'x')
     @patch('api.scheduling.worker.Receiver')
@@ -142,7 +160,7 @@ class TestSchedules(unittest.TestCase):
         mock_rec = MagicMock()
         mock_rec.verify.side_effect = Exception("invalid")
         MockReceiver.return_value = mock_rec
-        
+
         resp = client.post("/api/internal/scheduled-scan", data=b'{"schedule_id": "123"}', headers={"Upstash-Signature": "bad"})
         self.assertEqual(resp.status_code, 403)
 
@@ -151,7 +169,7 @@ class TestSchedules(unittest.TestCase):
     # ==========================
     def _mock_worker_deps(self, mock_get, mock_patch, mock_post, sched_overrides=None):
         base_sched = {
-            "id": "sched-123", "user_id": "u-123", "qstash_schedule_id": "q-sched", 
+            "id": "sched-123", "user_id": "u-123", "qstash_schedule_id": "q-sched",
             "is_enabled": True, "target_url": "https://example.com", "frequency": "daily", "time_of_day": "09:00", "timezone": "UTC"
         }
         if sched_overrides: base_sched.update(sched_overrides)
@@ -211,7 +229,7 @@ class TestSchedules(unittest.TestCase):
         self._mock_worker_deps(mock_get, mock_patch, mock_post)
         resp = client.post("/api/internal/scheduled-scan", data=b'{"schedule_id": "sched-123"}', headers={"Upstash-Signature": "sig"})
         self.assertEqual(resp.json()["reason"], "entitlement_lost")
-        
+
     @patch('api.scheduling.worker.scan_url', return_value={"score": 100})
     @patch('api.scheduling.worker.validate_scan_target', return_value=None)
     @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
@@ -258,7 +276,7 @@ class TestSchedules(unittest.TestCase):
         mock_post.return_value.status_code = 409 # Simulate unique violation on scheduled_scan_runs
         resp = client.post("/api/internal/scheduled-scan", data=b'{"schedule_id": "sched-123"}', headers={"Upstash-Signature": "sig"})
         self.assertEqual(resp.json()["reason"], "already_processed")
-        
+
     @patch('api.scheduling.worker.validate_scan_target', return_value=None)
     @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
     @patch('api.scheduling.worker.requests.post')
@@ -307,7 +325,7 @@ class TestSchedules(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         mock_patch.assert_called_once()
         api.index.app.dependency_overrides.clear()
-        
+
     @patch('api.auth.entitlements.get_user_role', return_value='admin')
     @patch('api.scheduling.router.get_db_headers', return_value={})
     @patch('api.scheduling.router.QStashClient')
@@ -324,7 +342,7 @@ class TestSchedules(unittest.TestCase):
         self.assertEqual(resp.status_code, 500)
         mock_patch.assert_not_called()
         api.index.app.dependency_overrides.clear()
-        
+
     @patch('api.auth.entitlements.get_user_role', return_value='admin')
     @patch('api.scheduling.router.get_db_headers', return_value={})
     @patch('api.scheduling.router.QStashClient')
@@ -340,7 +358,7 @@ class TestSchedules(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         mock_patch.assert_called_once()
         api.index.app.dependency_overrides.clear()
-        
+
     @patch('api.auth.entitlements.get_user_role', return_value='admin')
     @patch('api.scheduling.router.get_db_headers', return_value={})
     @patch('api.scheduling.router.QStashClient')
@@ -352,7 +370,7 @@ class TestSchedules(unittest.TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = [{"id": "1", "qstash_schedule_id": "qs1"}]
         MockQStash.return_value.schedule.delete.side_effect = Exception("Service Unavailable")
-        
+
         resp = client.delete("/api/schedules/1")
         self.assertEqual(resp.status_code, 500)
         mock_delete.assert_not_called()
@@ -369,7 +387,7 @@ class TestSchedules(unittest.TestCase):
         mock_get.return_value.status_code = 200
         mock_get.return_value.json.return_value = [{"id": "1", "qstash_schedule_id": "qs1"}]
         MockQStash.return_value.schedule.delete.side_effect = Exception("404 not found")
-        
+
         resp = client.delete("/api/schedules/1")
         self.assertEqual(resp.status_code, 200)
         mock_delete.assert_called_once()
@@ -401,9 +419,9 @@ class TestSchedules(unittest.TestCase):
             "target_url": "https://example.com", "frequency": "daily", "time_of_day": "00:50:00",
             "timezone": "Asia/Riyadh", "authorization_acknowledged": True
         })
-        
+
         self.assertEqual(resp.status_code, 200)
-        
+
         mock_client.schedule.create.assert_called_once()
         _, kwargs = mock_client.schedule.create.call_args
         self.assertEqual(kwargs['destination'], "https://www.urlscanonline.com/api/internal/scheduled-scan")
@@ -413,27 +431,72 @@ class TestSchedules(unittest.TestCase):
         self.assertEqual(kwargs['headers'], {"Content-Type": "application/json"})
         self.assertEqual(kwargs['retries'], 0)
         self.assertTrue(kwargs['schedule_id'].startswith("urlscan-"))
-        
+
         api.index.app.dependency_overrides.clear()
 
 
     @patch('api.scheduling.router.QStashClient')
     def test_qstash_client_init(self, MockQStash):
         from api.scheduling.router import _get_qstash_client
-        
+
         # Test with QSTASH_URL present
         with patch.dict(os.environ, {"QSTASH_URL": "https://qstash-eu-central-1.upstash.io"}):
             _get_qstash_client()
             MockQStash.assert_called_with(unittest.mock.ANY, base_url="https://qstash-eu-central-1.upstash.io")
-            
+
         MockQStash.reset_mock()
-        
+
         # Test with QSTASH_URL absent
         with patch.dict(os.environ, {}, clear=False):
             if "QSTASH_URL" in os.environ:
                 del os.environ["QSTASH_URL"]
             _get_qstash_client()
             MockQStash.assert_called_with(unittest.mock.ANY)
+
+
+    @patch('api.auth.entitlements.requests.get')
+    def test_entitlement_eligibility_logic(self, mock_get):
+        from api.auth.entitlements import is_scheduled_scans_eligible
+        import unittest.mock
+
+        # Test 1: admin, free, active -> TRUE
+        mock_get.side_effect = [
+            unittest.mock.Mock(status_code=200, json=lambda: [{'role': 'admin'}]),
+            unittest.mock.Mock(status_code=200, json=lambda: [{'plan': 'free', 'status': 'active'}])
+        ]
+        self.assertTrue(is_scheduled_scans_eligible('u1'))
+
+        # Test 2: admin, suspended -> FALSE
+        mock_get.side_effect = [
+            unittest.mock.Mock(status_code=200, json=lambda: [{'role': 'admin'}]),
+            unittest.mock.Mock(status_code=200, json=lambda: [{'plan': 'free', 'status': 'suspended'}])
+        ]
+        self.assertFalse(is_scheduled_scans_eligible('u2'))
+
+        # Test 3: user, active -> FALSE
+        mock_get.side_effect = [
+            unittest.mock.Mock(status_code=200, json=lambda: [{'role': 'user'}]),
+            unittest.mock.Mock(status_code=200, json=lambda: [{'plan': 'free', 'status': 'active'}])
+        ]
+        self.assertFalse(is_scheduled_scans_eligible('u3'))
+
+        # Test 4: backend lookup failure -> FALSE
+        mock_get.side_effect = [
+            unittest.mock.Mock(status_code=500)
+        ]
+        with self.assertLogs('api.auth.entitlements', level='ERROR') as cm:
+            self.assertFalse(is_scheduled_scans_eligible('u4'))
+        self.assertTrue(any('scheduled_entitlement_lookup_failed' in msg for msg in cm.output))
+
+        # Test 5: role succeeds, plan fails -> FALSE
+        mock_get.side_effect = [
+            unittest.mock.Mock(status_code=200, json=lambda: [{'role': 'admin'}]),
+            unittest.mock.Mock(status_code=500)
+        ]
+        with self.assertLogs('api.auth.entitlements', level='ERROR') as cm2:
+            self.assertFalse(is_scheduled_scans_eligible('u5'))
+        self.assertTrue(any('scheduled_entitlement_lookup_failed' in msg for msg in cm2.output))
+
 
 if __name__ == '__main__':
     unittest.main()
