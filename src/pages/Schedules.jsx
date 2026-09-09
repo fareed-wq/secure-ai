@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { CalendarDays, Plus, Trash2, Pause, Play, AlertCircle, CheckCircle2, ChevronRight, Loader2 } from 'lucide-react';
@@ -24,6 +24,7 @@ export default function Schedules() {
   // Form State
   const [targetUrl, setTargetUrl] = useState('');
   const [scanMode, setScanMode] = useState('passive');
+  const [emailReportEnabled, setEmailReportEnabled] = useState(false);
   const [advancedAuthChecked, setAdvancedAuthChecked] = useState(false);
   const [frequency, setFrequency] = useState('daily');
   const [timeOfDay, setTimeOfDay] = useState('09:00');
@@ -104,6 +105,7 @@ export default function Schedules() {
           target_url: targetUrl,
           scan_mode: scanMode,
           advanced_authorization_acknowledged: advancedAuthChecked,
+        email_report_enabled: emailReportEnabled,
           frequency,
           time_of_day: timeOfDay + ':00',
           timezone,
@@ -301,6 +303,20 @@ export default function Schedules() {
                   </span>
                 </label>
               )}
+              
+              <label className="flex items-start gap-3 cursor-pointer mt-4">
+                <input type="checkbox" checked={emailReportEnabled} onChange={e => setEmailReportEnabled(e.target.checked)}
+                  className="mt-1 w-4 h-4 bg-slate-950 border-slate-700 rounded text-indigo-600 focus:ring-indigo-500"
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm text-slate-300 font-medium">
+                    Email PDF report after each completed scan
+                  </span>
+                  <span className="text-sm text-slate-500 mt-1">
+                    The completed report will be sent to your verified account email.
+                  </span>
+                </div>
+              </label>
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
@@ -393,3 +409,4 @@ export default function Schedules() {
     </div>
   );
 }
+

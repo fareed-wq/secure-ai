@@ -230,10 +230,12 @@ from api.scanner.core import acquire_scan_lease, release_scan_lease, acquire_gue
 from api.admin import admin_router
 from api.scheduling.router import router as scheduling_router
 from api.scheduling.worker import worker_router
+from api.scheduling.email_worker import router as email_worker_router
 
 app.include_router(admin_router)
 app.include_router(scheduling_router, prefix="/api/schedules", tags=["schedules"])
 app.include_router(worker_router, prefix="/api/internal", tags=["internal"])
+app.include_router(email_worker_router, prefix="/api/internal", tags=["internal"])
 
 @app.post("/api/scan")
 @app.post("/scan")
