@@ -73,8 +73,8 @@ def require_current_user(user: Optional[dict] = Security(get_current_user)) -> d
 def get_user_role(user_id: str) -> str:
     """Fetch user role securely using the Secret Key bypassing RLS."""
     if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
-        logger.warning("Missing Supabase Secret Key; defaulting to 'user'.")
-        return "user"
+        logger.error("scheduled_entitlement_lookup_failed: Missing credentials")
+        return "error"
     
     url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/user_roles?user_id=eq.{user_id}&select=role"
     headers = {
@@ -82,18 +82,23 @@ def get_user_role(user_id: str) -> str:
         "Authorization": f"Bearer {SUPABASE_SECRET_KEY}"
     }
     try:
-        resp = requests.get(url, headers=headers, timeout=2.0)
+        resp = requests.get(url, headers=headers, timeout=5.0)
         if resp.status_code == 200:
             data = resp.json()
             if len(data) > 0:
                 return data[0].get("role", "user")
+            else:
+                return "user"
+        else:
+            logger.error(f"scheduled_entitlement_lookup_failed: HTTP {resp.status_code}")
     except Exception as e:
-        logger.error(f"Failed to fetch user role: {e}")
-    return "user"
+        logger.error(f"scheduled_entitlement_lookup_failed: {type(e).__name__}")
+    return "error"
 
 def get_user_plan_and_status(user_id: str) -> tuple[str, str]:
     if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
-        return "free", "active"
+        logger.error("scheduled_entitlement_lookup_failed: Missing credentials")
+        return "error", "error"
     
     url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/user_plans?user_id=eq.{user_id}&select=plan,status"
     headers = {
@@ -101,14 +106,18 @@ def get_user_plan_and_status(user_id: str) -> tuple[str, str]:
         "Authorization": f"Bearer {SUPABASE_SECRET_KEY}"
     }
     try:
-        resp = requests.get(url, headers=headers, timeout=2.0)
+        resp = requests.get(url, headers=headers, timeout=5.0)
         if resp.status_code == 200:
             data = resp.json()
             if len(data) > 0:
                 return data[0].get("plan", "free"), data[0].get("status", "active")
+            else:
+                return "free", "active"
+        else:
+            logger.error(f"scheduled_entitlement_lookup_failed: HTTP {resp.status_code}")
     except Exception as e:
-        logger.error(f"Failed to fetch user plan/status: {e}")
-    return "free", "active"
+        logger.error(f"scheduled_entitlement_lookup_failed: {type(e).__name__}")
+    return "error", "error"
 
 def require_admin(user: dict = Security(require_current_user)) -> dict:
     user_id = user.get("sub")
@@ -402,7 +411,11 @@ def reset_free_quota(user_id: str) -> bool:
 def is_scheduled_scans_eligible(user_id: str) -> bool:
     '''Future seam for paid access. Currently delegates to Admin Control.'''
     role = get_user_role(user_id)
+    if role == "error":
+        return False
     _, status = get_user_plan_and_status(user_id)
+    if status == "error":
+        return False
     return role == "admin" and status != "suspended"
 
 def require_scheduled_scans_access(user: dict = Security(require_current_user)) -> dict:
