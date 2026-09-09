@@ -81,6 +81,7 @@ export const AuthProvider = ({ children }) => {
     session,
     user,
     isAdmin,
+    isAdminLoading,
     canUseScheduledScans: isAdmin,
     isRecovery,
     setIsRecovery,

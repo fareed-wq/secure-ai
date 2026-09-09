@@ -11,7 +11,7 @@ export default function Schedules() {
     path: '/schedules'
   });
 
-  const { canUseScheduledScans, loading, session } = useAuth();
+  const { canUseScheduledScans, loading, isAdminLoading, session } = useAuth();
   const [schedules, setSchedules] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -56,7 +56,30 @@ export default function Schedules() {
     }
   };
 
-  if (loading) return null;
+  const authLoading = loading || isAdminLoading;
+
+  if (authLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-50 flex items-center gap-2">
+              <CalendarDays className="text-indigo-400" />
+              Scheduled Scans
+            </h1>
+            <p className="text-slate-400 mt-1">
+              Automatically run recurring passive security scans on authorized targets.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 gap-4" aria-busy="true">
+          {[1, 2].map(i => (
+            <div key={i} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 h-32 animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (!canUseScheduledScans) {
     return <Navigate to="/dashboard" replace />;
