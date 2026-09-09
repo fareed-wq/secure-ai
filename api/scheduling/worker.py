@@ -78,15 +78,18 @@ async def handle_scheduled_scan(request: Request):
     url = f"{SUPABASE_URL}/rest/v1/scan_schedules?id=eq.{schedule_id}&select=*"
     resp = requests.get(url, headers=db_headers)
     if resp.status_code != 200 or len(resp.json()) == 0:
+        logger.info("Scheduled worker skipped", extra={"reason": "schedule_deleted"})
         return JSONResponse(status_code=200, content={"status": "skipped", "reason": "schedule_deleted"})
         
     sched = resp.json()[0]
     
     # Check schedule_id from header if present
     if qs_schedule_id and sched.get("qstash_schedule_id") != qs_schedule_id:
+        logger.info("Scheduled worker skipped", extra={"reason": "schedule_id_mismatch"})
         return JSONResponse(status_code=200, content={"status": "skipped", "reason": "schedule_id_mismatch"})
         
     if not sched.get("is_enabled"):
+        logger.info("Scheduled worker skipped", extra={"reason": "disabled"})
         return JSONResponse(status_code=200, content={"status": "skipped", "reason": "disabled"})
         
     user_id = sched["user_id"]
@@ -108,6 +111,7 @@ async def handle_scheduled_scan(request: Request):
             except Exception:
                 pass
                 
+        logger.info("Scheduled worker skipped", extra={"reason": "entitlement_lost"})
         return JSONResponse(status_code=200, content={"status": "skipped", "reason": "entitlement_lost"})
         
     # Revalidate target
@@ -116,6 +120,7 @@ async def handle_scheduled_scan(request: Request):
         requests.patch(f"{SUPABASE_URL}/rest/v1/scan_schedules?id=eq.{schedule_id}", headers=db_headers, json={
             "is_enabled": False, "last_status": "failed", "last_error_code": "target_invalid"
         })
+        logger.info("Scheduled worker skipped", extra={"reason": "target_invalid"})
         return JSONResponse(status_code=200, content={"status": "skipped", "reason": "target_invalid"})
         
     now = datetime.utcnow()
@@ -140,6 +145,7 @@ async def handle_scheduled_scan(request: Request):
     
     if run_resp.status_code == 409:
         # duplicate
+        logger.info("Scheduled worker skipped", extra={"reason": "already_processed"})
         return JSONResponse(status_code=200, content={"status": "skipped", "reason": "already_processed"})
     elif run_resp.status_code not in (200, 201):
         # some other error
@@ -159,6 +165,7 @@ async def handle_scheduled_scan(request: Request):
     if claim_resp.status_code != 200 or len(claim_resp.json()) == 0:
         if run_id:
             requests.patch(f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", headers=db_headers, json={"status": "skipped"})
+        logger.info("Scheduled worker skipped", extra={"reason": "lease_active"})
         return JSONResponse(status_code=200, content={"status": "skipped", "reason": "lease_active"})
         
     # Execute Scan
