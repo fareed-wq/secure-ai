@@ -85,11 +85,27 @@ def _get_qstash_cron(frequency: str, time_of_day: str, timezone: str, day_of_wee
 @router.get("")
 async def list_schedules(user: dict = Depends(require_scheduled_scans_access)):
         
-    url = f"{SUPABASE_URL}/rest/v1/scan_schedules?user_id=eq.{user['sub']}&select=*"
+    url = f"{SUPABASE_URL}/rest/v1/scan_schedules?user_id=eq.{user['sub']}&select=id,user_id,target_url,normalized_target,scan_mode,frequency,time_of_day,timezone,day_of_week,day_of_month,is_enabled,authorization_acknowledged_at,last_run_at,last_status,email_report_enabled"
     resp = requests.get(url, headers=get_db_headers())
     if resp.status_code != 200:
         return JSONResponse(status_code=500, content={"error": "Failed to fetch schedules"})
-    return resp.json()
+    
+    schedules = resp.json()
+    schedule_ids = [s["id"] for s in schedules if s.get("email_report_enabled")]
+    if schedule_ids:
+        ids_str = ",".join(schedule_ids)
+        runs_url = f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?schedule_id=in.({ids_str})&status=eq.completed&select=schedule_id,email_status&order=scheduled_for.desc"
+        runs_resp = requests.get(runs_url, headers=get_db_headers())
+        if runs_resp.status_code == 200:
+            runs_by_sched = {}
+            for r in runs_resp.json():
+                if r["schedule_id"] not in runs_by_sched:
+                    runs_by_sched[r["schedule_id"]] = r.get("email_status")
+            for s in schedules:
+                if s["id"] in runs_by_sched:
+                    s["latest_email_status"] = runs_by_sched[s["id"]]
+    
+    return schedules
 
 @router.post("")
 async def create_schedule(req: ScheduleCreateRequest, user: dict = Depends(require_scheduled_scans_access)):

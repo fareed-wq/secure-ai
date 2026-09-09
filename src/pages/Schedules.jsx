@@ -390,6 +390,11 @@ export default function Schedules() {
                     {sched.last_status === 'completed' && <CheckCircle2 size={14} className="text-emerald-500" />}
                     {sched.last_status === 'failed' && <AlertCircle size={14} className="text-rose-500" />}
                     <span>({sched.last_status})</span>
+                    {sched.email_report_enabled && sched.latest_email_status && (
+                      <span className="ml-2 pl-2 border-l border-slate-700">
+                        Email: {sched.latest_email_status.charAt(0).toUpperCase() + sched.latest_email_status.slice(1)}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

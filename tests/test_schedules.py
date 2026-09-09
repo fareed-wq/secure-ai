@@ -660,6 +660,44 @@ class TestSchedules(unittest.TestCase):
         self.assertEqual(response.status_code, 500)
         self.assertEqual(response.json()["reason"], "invalid_scan_mode")
 
+
+    @patch('api.scheduling.router.requests.get')
+    @patch('api.scheduling.router.get_db_headers')
+    def test_list_schedules_email_reports(self, mock_headers, mock_get):
+        import api.index
+        api.index.app.dependency_overrides[api.auth.entitlements.require_scheduled_scans_access] = lambda: {"sub": "123"}
+        
+        def mock_get_side_effect(url, **kwargs):
+            if "scan_schedules" in url:
+                assert "select=id,user_id" in url
+                assert "email_report_enabled" in url
+                resp = MagicMock()
+                resp.status_code = 200
+                resp.json.return_value = [
+                    {"id": "sched1", "email_report_enabled": True},
+                    {"id": "sched2", "email_report_enabled": False}
+                ]
+                return resp
+            if "scheduled_scan_runs" in url:
+                assert "schedule_id=in.(sched1)" in url
+                resp = MagicMock()
+                resp.status_code = 200
+                resp.json.return_value = [
+                    {"schedule_id": "sched1", "email_status": "sent"}
+                ]
+                return resp
+                
+        mock_get.side_effect = mock_get_side_effect
+        
+        response = client.get("/api/schedules")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["email_report_enabled"], True)
+        self.assertEqual(data[0]["latest_email_status"], "sent")
+        self.assertEqual(data[1]["email_report_enabled"], False)
+        self.assertNotIn("latest_email_status", data[1])
+
     def test_time_utils_monthly(self):
         from api.scheduling.time_utils import get_next_run_at
         from datetime import time, datetime, timezone
