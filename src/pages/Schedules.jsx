@@ -20,9 +20,11 @@ export default function Schedules() {
   const [pendingActions, setPendingActions] = useState({});
   const createPendingRef = useRef(false);
   const actionPendingRef = useRef(new Set());
-  
+
   // Form State
   const [targetUrl, setTargetUrl] = useState('');
+  const [scanMode, setScanMode] = useState('passive');
+  const [advancedAuthChecked, setAdvancedAuthChecked] = useState(false);
   const [frequency, setFrequency] = useState('daily');
   const [timeOfDay, setTimeOfDay] = useState('09:00');
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
@@ -90,16 +92,18 @@ export default function Schedules() {
     if (!authChecked || isSaving || createPendingRef.current) return;
     createPendingRef.current = true;
     setIsSaving(true);
-    
+
     try {
       const res = await fetch('/api/schedules', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           target_url: targetUrl,
+          scan_mode: scanMode,
+          advanced_authorization_acknowledged: advancedAuthChecked,
           frequency,
           time_of_day: timeOfDay + ':00',
           timezone,
@@ -171,7 +175,7 @@ export default function Schedules() {
           </p>
         </div>
         {!isCreating && schedules.length < 3 && (
-          <button 
+          <button
             onClick={() => setIsCreating(true)}
             className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
           >
@@ -189,17 +193,17 @@ export default function Schedules() {
       {isCreating && (
         <form onSubmit={handleCreate} className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 max-w-2xl">
           <h2 className="text-xl font-bold text-slate-50 mb-6">Create New Schedule</h2>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Target URL</label>
-              <input 
+              <input
                 type="url" required value={targetUrl} onChange={e => setTargetUrl(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
                 placeholder="https://example.com"
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1">Scan Type</label>
               <div className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-400 flex items-center gap-2">
@@ -261,21 +265,54 @@ export default function Schedules() {
             </div>
 
             <div className="pt-4">
+              <label className="block text-sm font-medium text-slate-300 mb-2">Scan Type</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className={`relative flex cursor-pointer rounded-lg border bg-slate-900/50 p-4 focus:outline-none ${scanMode === 'passive' ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-slate-700 hover:border-slate-600'}`}>
+                  <input type="radio" name="scanMode" value="passive" className="sr-only" checked={scanMode === 'passive'} onChange={() => { setScanMode('passive'); setAdvancedAuthChecked(false); }} />
+                  <span className="flex flex-col">
+                    <span className="block text-sm font-medium text-slate-50">Basic (Passive)</span>
+                    <span className="mt-1 flex items-center text-sm text-slate-400">Low-impact passive security checks.</span>
+                  </span>
+                  <span className={`pointer-events-none absolute -inset-px rounded-lg border-2 ${scanMode === 'passive' ? 'border-indigo-500' : 'border-transparent'}`} aria-hidden="true"></span>
+                </label>
+                <label className={`relative flex cursor-pointer rounded-lg border bg-slate-900/50 p-4 focus:outline-none ${scanMode === 'active' ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-slate-700 hover:border-slate-600'}`}>
+                  <input type="radio" name="scanMode" value="active" className="sr-only" checked={scanMode === 'active'} onChange={() => setScanMode('active')} />
+                  <span className="flex flex-col">
+                    <span className="block text-sm font-medium text-slate-50">Advanced</span>
+                    <span className="mt-1 flex items-center text-sm text-slate-400">Includes additional bounded HTTP, DNS, and network checks.</span>
+                  </span>
+                  <span className={`pointer-events-none absolute -inset-px rounded-lg border-2 ${scanMode === 'active' ? 'border-indigo-500' : 'border-transparent'}`} aria-hidden="true"></span>
+                </label>
+              </div>
+            </div>
+
+            <div className="pt-4 space-y-4">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" required checked={authChecked} onChange={e => setAuthChecked(e.target.checked)}
                   className="mt-1 w-4 h-4 bg-slate-950 border-slate-700 rounded text-indigo-600 focus:ring-indigo-500"
                 />
-                <span className="text-sm text-slate-400">
+                <span className="text-sm text-slate-300">
                   I confirm I am authorized to scan this target and will maintain authorization while this schedule is active.
                 </span>
               </label>
+
+              {scanMode === 'active' && (
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="checkbox" required checked={advancedAuthChecked} onChange={e => setAdvancedAuthChecked(e.target.checked)}
+                    className="mt-1 w-4 h-4 bg-slate-950 border-slate-700 rounded text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm text-slate-300 font-medium">
+                    I confirm I am authorized to perform recurring advanced security testing against this target.
+                  </span>
+                </label>
+              )}
             </div>
-            
+
             <div className="flex justify-end gap-3 pt-4">
               <button type="button" onClick={() => setIsCreating(false)} disabled={isSaving} className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 Cancel
               </button>
-              <button type="submit" disabled={!authChecked || isSaving} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center min-w-[140px]">
+              <button type="submit" disabled={!authChecked || (scanMode === 'active' && !advancedAuthChecked) || isSaving} className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center min-w-[140px]">
                 {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : 'Save Schedule'}
               </button>
             </div>
@@ -309,7 +346,7 @@ export default function Schedules() {
           <CalendarDays className="w-16 h-16 text-slate-700 mb-4" />
           <h3 className="text-xl font-bold text-slate-200 mb-2">No scheduled scans yet.</h3>
           <p className="text-slate-400 mb-6 max-w-md">
-            Create a recurring Basic security scan for an authorized target.
+            Create a recurring security scan for an authorized target.
           </p>
           <button onClick={() => setIsCreating(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg font-medium transition-colors">
             Create Schedule
@@ -327,8 +364,8 @@ export default function Schedules() {
                   <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${sched.is_enabled ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
                     {sched.is_enabled ? 'Active' : 'Paused'}
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                    Basic
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${sched.scan_mode === 'active' ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20' : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'}`}>
+                    {sched.scan_mode === 'active' ? 'Advanced' : 'Basic'}
                   </span>
                 </div>
                 <div className="text-sm text-slate-400 flex flex-wrap gap-x-6 gap-y-1">
@@ -345,7 +382,7 @@ export default function Schedules() {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-2 w-full md:w-auto border-t border-slate-800 md:border-none pt-4 md:pt-0">
                 <button onClick={() => handleToggle(sched)} disabled={!!pendingActions[sched.id]} aria-disabled={!!pendingActions[sched.id]} aria-busy={!!pendingActions[sched.id]} className="p-2 text-slate-400 hover:text-slate-50 transition-colors bg-slate-800 hover:bg-slate-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed w-9 h-9 flex items-center justify-center">
                   {pendingActions[sched.id] === 'pause' || pendingActions[sched.id] === 'resume' ? <Loader2 size={18} className="animate-spin text-indigo-400" /> : (sched.is_enabled ? <Pause size={18} /> : <Play size={18} />)}

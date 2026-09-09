@@ -548,6 +548,118 @@ class TestSchedules(unittest.TestCase):
         self.assertIn("next_run_at", finalize_payload)
         self.assertEqual(finalize_payload["next_run_at"], "2026-09-16T14:10:00+00:00") # Next week
 
+
+    @patch('api.scheduling.router.QSTASH_TOKEN', 'token')
+    @patch('api.scheduling.router.requests.post')
+    @patch('api.scheduling.router.requests.get')
+    @patch('api.scheduling.router.QStashClient')
+    @patch('api.scheduling.router.get_db_headers')
+    @patch('api.auth.entitlements.get_user_role', return_value='admin')
+    def test_advanced_create_accepted(self, mock_role, mock_headers, mock_qstash, mock_get, mock_post):
+        import api.index
+        api.index.app.dependency_overrides[api.auth.entitlements.require_scheduled_scans_access] = lambda: {"sub": "123"}
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = []
+        mock_post.return_value.status_code = 201
+        mock_post.return_value.json.return_value = [{"id": "xyz"}]
+
+        req = {
+            "target_url": "https://example.com",
+            "frequency": "daily",
+            "time_of_day": "09:00",
+            "timezone": "UTC",
+            "authorization_acknowledged": True,
+            "scan_mode": "active",
+            "advanced_authorization_acknowledged": True
+        }
+        response = client.post("/api/schedules", json=req, headers={"Authorization": "Bearer admin"})
+        api.index.app.dependency_overrides.clear()
+        self.assertEqual(response.status_code, 200)
+        mock_qstash.return_value.schedule.create.assert_called_once()
+        body = mock_qstash.return_value.schedule.create.call_args[1]["body"]
+        self.assertNotIn("scan_mode", body)
+        self.assertIn("schedule_id", body)
+
+    @patch('api.scheduling.router.QSTASH_TOKEN', 'token')
+    @patch('api.scheduling.router.requests.post')
+    @patch('api.scheduling.router.requests.get')
+    @patch('api.scheduling.router.QStashClient')
+    @patch('api.scheduling.router.get_db_headers')
+    @patch('api.auth.entitlements.get_user_role', return_value='admin')
+    def test_advanced_create_rejected_no_auth(self, mock_role, mock_headers, mock_qstash, mock_get, mock_post):
+        import api.index
+        api.index.app.dependency_overrides[api.auth.entitlements.require_scheduled_scans_access] = lambda: {"sub": "123"}
+        req = {
+            "target_url": "https://example.com",
+            "frequency": "daily",
+            "time_of_day": "09:00",
+            "timezone": "UTC",
+            "authorization_acknowledged": True,
+            "scan_mode": "active",
+            "advanced_authorization_acknowledged": False
+        }
+        response = client.post("/api/schedules", json=req, headers={"Authorization": "Bearer admin"})
+        api.index.app.dependency_overrides.clear()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Must acknowledge advanced authorization", response.json()["error"])
+
+    @patch('api.scheduling.router.QSTASH_TOKEN', 'token')
+    @patch('api.scheduling.router.requests.post')
+    @patch('api.scheduling.router.requests.get')
+    @patch('api.scheduling.router.QStashClient')
+    @patch('api.scheduling.router.get_db_headers')
+    @patch('api.auth.entitlements.get_user_role', return_value='admin')
+    def test_invalid_scan_mode_rejected(self, mock_role, mock_headers, mock_qstash, mock_get, mock_post):
+        import api.index
+        api.index.app.dependency_overrides[api.auth.entitlements.require_scheduled_scans_access] = lambda: {"sub": "123"}
+        req = {
+            "target_url": "https://example.com",
+            "frequency": "daily",
+            "time_of_day": "09:00",
+            "timezone": "UTC",
+            "authorization_acknowledged": True,
+            "scan_mode": "hacked"
+        }
+        response = client.post("/api/schedules", json=req, headers={"Authorization": "Bearer admin"})
+        api.index.app.dependency_overrides.clear()
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid scan_mode", response.json()["error"])
+
+    @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
+    @patch('api.scheduling.worker.QSTASH_NEXT_SIGNING_KEY', 'x')
+    @patch('api.scheduling.worker.scan_url')
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.requests.post')
+    @patch('api.scheduling.worker.requests.patch')
+    @patch('api.scheduling.worker.requests.get')
+    @patch('api.scheduling.worker.Receiver.verify')
+    def test_worker_advanced_success(self, mock_rec, mock_get, mock_patch, mock_post, mock_elig, mock_scan):
+        self._mock_worker_deps(mock_get, mock_patch, mock_post, {"scan_mode": "active"})
+        mock_scan.return_value = {"url": "https://example.com", "score": 100, "scan_mode": "active"}
+
+        response = client.post("/api/internal/scheduled-scan", data=b'{"schedule_id": "sched-123"}', headers={"Upstash-Signature": "valid"})
+        self.assertEqual(response.status_code, 200)
+
+        mock_scan.assert_called_once_with("https://example.com", False, "active")
+        scans_post = [call for call in mock_post.mock_calls if call.args and "scans" in call.args[0]]
+        self.assertTrue(len(scans_post) > 0)
+        payload = scans_post[-1].kwargs["json"]
+        self.assertEqual(payload["report_data"]["scan_mode"], "active")
+
+    @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
+    @patch('api.scheduling.worker.QSTASH_NEXT_SIGNING_KEY', 'x')
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.requests.post')
+    @patch('api.scheduling.worker.requests.patch')
+    @patch('api.scheduling.worker.requests.get')
+    @patch('api.scheduling.worker.Receiver.verify')
+    def test_worker_invalid_mode_fails_closed(self, mock_rec, mock_get, mock_patch, mock_post, mock_elig):
+        self._mock_worker_deps(mock_get, mock_patch, mock_post, {"scan_mode": "hacked"})
+
+        response = client.post("/api/internal/scheduled-scan", data=b'{"schedule_id": "sched-123"}', headers={"Upstash-Signature": "valid"})
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json()["reason"], "invalid_scan_mode")
+
     def test_time_utils_monthly(self):
         from api.scheduling.time_utils import get_next_run_at
         from datetime import time, datetime, timezone

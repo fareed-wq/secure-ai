@@ -170,13 +170,20 @@ async def handle_scheduled_scan(request: Request):
 
     # Execute Scan
     scan_id = None
+    status = "failed"
+    err_code = "scan_exception"
     try:
-        # ALWAYS passive
-        result = scan_url(sched["target_url"], False, "passive")
+        scan_mode = sched.get("scan_mode", "passive")
+        if scan_mode not in ("passive", "active"):
+            status = "failed"
+            err_code = "invalid_scan_mode"
+            return JSONResponse(status_code=500, content={"status": "failed", "reason": "invalid_scan_mode"})
+
+        result = scan_url(sched["target_url"], False, scan_mode)
 
         # Insert to scans
         if "scan_mode" not in result:
-            result["scan_mode"] = "passive"
+            result["scan_mode"] = scan_mode
 
         scan_payload = {
             "user_id": user_id,
