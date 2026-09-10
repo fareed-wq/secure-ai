@@ -1,37 +1,37 @@
 ---
 name: secure-ai-development
-description: Project-specific security development guidelines for the Secure-AI scanner. Use this skill when making changes to the scanner engine, frontend, backend, or infrastructure to ensure safe, passive, and non-destructive development.
+description: Project-specific security development guidelines for the Secure-AI scanner. Use this skill when making changes to the scanner engine, frontend, backend, or infrastructure to ensure safe, passive-first, and non-destructive development.
 ---
 
 # Secure-AI Development Skill
 
-This skill provides comprehensive secure coding practices specifically tailored for the **Secure-AI** web security scanner. As an AI assistant, your role is to ensure all modifications maintain the strict passive-scanning philosophy of the project while protecting the application's own infrastructure.
+This skill provides comprehensive secure coding practices specifically tailored for the **URLScannerOnline / Secure-AI** web security scanner. As an AI assistant, your role is to ensure all modifications maintain the strict passive-first, low-impact scanning philosophy of the project while protecting the application's own infrastructure.
 
 ## A. Read Project Context First
 Before making significant changes, you must understand the existing architecture:
-1. Read `README.md`
-2. Read `ARCHITECTURE.md`
-3. Read `SCANNER.md`
-4. Read `SECURITY.md`
-5. Inspect the relevant implementation (`api/index.py`, `api/scanner/`, `src/`)
+1. Read README.md
+2. Read ARCHITECTURE.md
+3. Read SCANNER.md
+4. Read SECURITY.md
+5. Inspect the relevant implementation (pi/index.py, pi/scanner/, src/)
 6. Understand existing behavior
 7. Make the smallest safe change
 
 ## B. Preserve Existing Security Controls
 Never casually weaken the following established security boundaries:
-- **SSRF Protections:** Do not bypass `is_public_hostname` checks in `api/scanner/transport.py`.
+- **SSRF Protections:** Do not bypass is_public_hostname checks in pi/scanner/transport.py. This applies to both Basic and Advanced scans.
 - **Private/Internal IP Blocking:** RFC 1918, localhost, and cloud metadata (169.254.169.254) must remain blocked.
 - **Authentication & Authorization:** Supabase RLS and token verification must remain intact.
-- **Rate Limiting:** Do not alter the 10 scans/min IP rate limit in `api/index.py`.
-- **Request Timeouts:** Respect the 45-second execution limit for Vercel serverless functions.
-- **Evidence Truncation:** Do not capture or log full sensitive payloads (e.g., raw `.env` contents).
+- **Rate Limiting:** Do not alter the 10 scans/min IP rate limit in pi/index.py.
+- **Request Timeouts:** Respect the global 45-second execution budget (SCAN_BUDGET_SECONDS) enforced in pi/scanner/orchestrator.py.
+- **Evidence Truncation:** Do not capture or log full sensitive payloads (e.g., raw .env contents).
 
 *If a requested change conflicts with an existing security control, **STOP** and explain the conflict before modifying it.*
 
 ## C. Secure-AI Scanner Philosophy
-The Secure-AI scanner is **PASSIVE / NON-INTRUSIVE** by default.
+The Secure-AI scanner is **PASSIVE-FIRST / LOW-IMPACT**.
 
-**PASSIVE (Allowed):**
+**Basic Scan (Passive):**
 - HTTP metadata inspection
 - GET/HEAD requests where appropriate
 - OPTIONS where required for CORS analysis
@@ -41,13 +41,20 @@ The Secure-AI scanner is **PASSIVE / NON-INTRUSIVE** by default.
 - Cookie flag analysis
 - Publicly exposed metadata discovery
 
-**ACTIVE / DESTRUCTIVE (Forbidden):**
-Never add these without explicit product-level approval:
-- Exploit payloads (SQLi, XSS, Command Injection)
-- Brute forcing, credential attacks, or password spraying
-- Destructive requests or DoS/stress testing
+**Advanced Scan (Authorized Bounded Active/Low-Impact):**
+- Includes all Basic checks.
+- Bounded HTTP/DNS/limited TCP behavior.
+- Ad-hoc Advanced scans require explicit authorization acknowledgement. Scheduled Advanced scans require a recurring authorization acknowledgement.
+- Low-impact, non-exploitative.
+
+**ACTIVE / DESTRUCTIVE (Explicitly Forbidden unless separately approved):**
+- SQLi exploitation
+- XSS exploitation
+- Command execution
+- Brute force / password spraying
 - Authentication bypass attempts
-- Arbitrary POST/PUT/PATCH/DELETE requests
+- Destructive requests
+- DoS/load/stress testing
 - Exploitation of discovered vulnerabilities
 
 ## D. SSRF (Server-Side Request Forgery)
@@ -65,9 +72,9 @@ When developing new modules, consider:
 *Never bypass an existing hostname/IP validation mechanism simply to make a scanner check work.*
 
 ## E. Scanner Modules
-For every new scanner module inside `api/scanner/modules/`, you must document:
+For every new scanner module inside pi/scanner/modules/, you must document:
 - Module name and Purpose
-- Passive/active classification
+- Basic (passive) or Advanced (active) classification
 - HTTP methods used
 - External network requests and Timeout behavior
 - SSRF implications
@@ -82,11 +89,11 @@ Be careful with:
 - API keys and access tokens
 - Passwords and cookies
 - Authorization headers
-- `.env` contents
+- .env contents
 - Private configuration and database credentials
-- Personally identifiable information
+- Personally identifiable information (PII)
 
-*Evidence should contain only the minimum information necessary to explain a finding. Truncate sensitive payloads.*
+*Evidence should contain only the minimum information necessary to explain a finding. Truncate sensitive payloads. No PII or sensitive report data should be written to server logs.*
 
 ## G. Frontend Security
 When modifying the React frontend:
@@ -98,6 +105,7 @@ When modifying the React frontend:
 
 ## H. Backend/API Security
 When modifying the FastAPI backend:
+- Server-side authorization must remain authoritative.
 - Enforce server-side validation.
 - Implement authentication where required.
 - Maintain rate limiting and safe error handling.
@@ -106,9 +114,11 @@ When modifying the FastAPI backend:
 - Securely handle environment variables.
 
 ## I. Dependency Changes
-Before adding a package to `package.json` or `requirements.txt`:
+Before adding a package to package.json or
+equirements.txt:
 - Determine whether it is actually necessary.
-- Prefer existing dependencies (e.g., use `urllib3` or `requests` if already imported).
+- Prefer existing dependencies (e.g., use urllib3 or
+equests if already imported).
 - Consider maintenance and security reputation.
 - Avoid unnecessary dependencies.
 - Never silently install packages during unrelated tasks.
@@ -133,11 +143,3 @@ Because this is an AI-agent development skill, you must adhere to the following 
 - **Git Safety:** Do not perform destructive Git operations. Do not force-push. Do not reset the repository unless explicitly requested.
 - **Dependencies:** Do not install packages unless explicitly necessary and approved.
 - **Conflict Resolution:** Stop and ask for clarification when requirements conflict with existing security controls.
-
----
-
-## Influence
-This project-specific skill is informed by general secure-development principles and was reviewed against the VibeSec project:
-[https://github.com/BehiSecc/VibeSec-Skill](https://github.com/BehiSecc/VibeSec-Skill)
-
-It is independently adapted for Secure-AI's architecture, passive-scanning model, and strict operational security requirements.

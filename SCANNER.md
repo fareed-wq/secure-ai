@@ -1,40 +1,59 @@
-# Scanner Engine & Modules
+# Scanner Engine & Modes
 
-The Secure-AI scanner is built on a concurrent, modular execution engine. All checks operate **passively** over HTTP/HTTPS/DNS and do not perform active vulnerability exploitation.
+The URLScannerOnline / Secure-AI scanner is built on a concurrent, modular execution engine. The engine enforces a **passive-first, low-impact** philosophy.
 
-## Discovery & Reconnaissance
-*(`discovery.py`, `infrastructure.py`)*
-- **Exposed Files & Directories:** Checks common paths (e.g., `.git/`, `.env`, `phpinfo.php`) for 200 OK responses to detect severe information disclosure.
-- **Metadata Files:** Validates the presence and format of `robots.txt`, `sitemap.xml`, and `security.txt`.
-- **Tech Fingerprint:** Analyzes `Server` and `X-Powered-By` headers to detect exposed technology stacks and version numbers, mapped to OWASP A05 (Security Misconfiguration).
+## Basic Scan
+- **Passive Assessment:** Operates exclusively as a passive scanner.
+- **Scope:** 9 passive modules (as verified in the registry) (e.g., header analysis, basic metadata discovery).
+- **Behavior:** Acts like a standard, well-behaved web client. Analyzes publicly broadcasted data without intrusive probing.
 
-## HTTP & Header Security
-*(`http_security.py`, `headers.py`)*
-- **Core Security Headers:** Enforces the presence of `Strict-Transport-Security` (HSTS), `X-Content-Type-Options`, and `X-Frame-Options` to prevent MIME-sniffing and Clickjacking.
-- **Advanced Security Headers:** Checks for `Content-Security-Policy` (CSP) and modern isolation headers (`Cross-Origin-Embedder-Policy`, `Cross-Origin-Opener-Policy`).
-- **CORS Misconfiguration:** Actively tests the `Access-Control-Allow-Origin` behavior by sending a dummy `Origin` header to detect wildcard (`*`) or dynamically reflected origin vulnerabilities.
-- **HTTPS Redirection:** Verifies that HTTP requests successfully upgrade to HTTPS.
+## Advanced Scan
+- **Authorized Bounded Active/Low-Impact:** Includes all 9 Basic checks plus an additional 20 active/low-impact modules.
+- **Scope:** 20 additional active/low-impact modules (verified in registry). May perform bounded additional HTTP, DNS, and limited TCP checks.
+- **Requirements:** Requires explicit authorization acknowledgement from the user.
+- **Behavior:** Remains low-impact and non-exploitative. It does **not** perform penetration testing.
 
-## Authentication & Session Security
-*(`auth_session_security.py`, `http_security.py`)*
-- **Advanced Cookies:** Analyzes all `Set-Cookie` directives to ensure the `Secure`, `HttpOnly`, and `SameSite` flags are explicitly defined. Missing flags map to OWASP A05 and result in Medium severity findings.
+## Shared Safety Rules
+- **Public Targets Only:** The scanner actively rejects requests to loopback addresses, RFC1918 private IPs, link-local addresses, and cloud metadata endpoints.
+- **SSRF Protections:** Strong Server-Side Request Forgery protections are enforced in both Basic and Advanced modes.
+- **Bounded Requests & Timeouts:** All modules are constrained by a global 45-second execution budget (SCAN_BUDGET_SECONDS).
+- **No Active Exploitation:** The scanner will never inject SQLi, XSS, or OS Command payloads.
+- **No Destructive Actions:** No brute forcing, password spraying, authentication bypass attempts, or DoS/stress testing.
 
-## TLS & Encryption
-*(`tls.py`, `network_checks.py`)*
-- **Enhanced TLS:** Evaluates the SSL/TLS certificate validity, expiration date, and protocol version.
-- **Cipher Strength:** Connects over sockets to evaluate if deprecated/weak ciphers (e.g., RC4, DES, 3DES, NULL ciphers) are supported by the host.
+## Scanner Modules
+Modules are executed concurrently to respect serverless platform execution limits.
 
-## DNS & Infrastructure
-*(`dns.py`, `network_checks.py`)*
-- **DNS CAA:** Checks for Certification Authority Authorization records.
-- **Email Security:** Validates the presence of SPF and DMARC TXT records on the domain to prevent email spoofing (OWASP A05).
-- **Subdomain Enumeration:** Passively resolves common subdomains (e.g., `dev`, `staging`, `api`) to map the external attack surface. Checks for potential dangling DNS records indicating Subdomain Takeover risks.
+*(discovery.py, infrastructure.py)*
+- **Discovery & Reconnaissance:** Validates the presence of
+obots.txt, sitemap.xml, and security.txt. Analyzes Server and X-Powered-By headers.
+- **Exposed Files:** Checks common paths (e.g., .git/, .env) for accidental information disclosure.
 
-## APIs & Web Security
-*(`api_web_security.py`, `content.py`, `javascript_security.py`)*
-- **GraphQL Introspection:** Probes common GraphQL endpoints to detect if the introspection query is left enabled in production, leading to full API schema disclosure.
-- **Mixed Content:** Scans the homepage DOM for `http://` assets loaded over HTTPS.
+*(http_security.py, headers.py)*
+- **HTTP & Header Security:** Enforces the presence of HSTS, CSP, X-Content-Type-Options, and X-Frame-Options.
+- **CORS Misconfiguration:** Analyzes Access-Control-Allow-Origin behavior for insecure configurations.
+- **Authentication & Session Security:** Analyzes Set-Cookie directives for Secure, HttpOnly, and SameSite flags.
+
+*(	ls.py, dns.py,
+etwork_checks.py)*
+- **TLS & Encryption:** Evaluates SSL/TLS certificate validity and checks for deprecated/weak ciphers.
+- **DNS & Infrastructure:** Checks DNS CAA, validates SPF/DMARC TXT records, and passively resolves common subdomains.
+
+*(pi_web_security.py, content.py, javascript_security.py)*
+- **APIs & Web Security:** Probes common GraphQL endpoints for exposed introspection and checks for mixed content.
+
+## Finding Semantics
+Findings are assigned the following severities:
+- **Actionable:** Critical, High, Medium, Low
+- **Non-actionable:** Informational, Inconclusive
+- **Successful:** Passed
+
+*Note: Aliases Info -> Informational and Skipped -> Inconclusive apply. Informational and Inconclusive findings are not counted as "Issues Found".*
+
+## Failure Handling
+- **Graceful Degradation:** Network errors or module timeouts do not automatically become vulnerability findings.
+- **Inconclusive Semantics:** Uncertain results, timeouts, or unreachable targets fail safely and are reported as Inconclusive. A network/infrastructure failure must not automatically become an Informational finding.
+- **Global Timeouts:** If a module exceeds its time budget, the scan continues with partial results rather than failing the entire request.
 
 ## Limitations
 - **No Authentication:** The scanner cannot traverse authenticated routes or login portals.
-- **Timeouts:** Long-running modules (like deep subdomain discovery) may be truncated to respect serverless platform execution limits.
+- **Timeouts:** Long-running modules may be truncated to respect the overall execution budget.
