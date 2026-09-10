@@ -346,7 +346,7 @@ def test_email_worker_success(mock_send_email, mock_generate_pdf):
                 mock_send_email.assert_called_once()
                 args, kwargs = mock_send_email.call_args
                 assert kwargs["to"] == "test@example.com"
-                assert kwargs["from_email"] == "URLScanOnline Reports <contact@urlscanonline.com>"
+                assert kwargs["from_email"] == "URLScannerOnline Reports <contact@urlscanonline.com>"
                 assert kwargs["idempotency_key"] == "scheduled-report-550e8400-e29b-41d4-a716-446655440000"
 
                 atts = kwargs["attachments"]
@@ -1013,7 +1013,7 @@ def test_email_report_formatting():
         assert attachment["content"] == base64.b64encode(b"%PDF-1.4 mock deterministic").decode("utf-8")
 
         # subject deterministic and correctly formatted
-        assert call_kwargs.get("subject") == "URLScanOnline Report — example.com — 95/100"
+        assert call_kwargs.get("subject") == "URLScannerOnline Report — example.com — 95/100"
 
         # HTML body correctly formats issues
         html_body = call_kwargs.get("html", "")

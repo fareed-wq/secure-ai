@@ -246,7 +246,7 @@ async def handle_scheduled_email(request: Request):
     # subject must be safe from CRLF injection
     safe_hostname = hostname.replace('\n', '').replace('\r', '')
     safe_score_val = str(score_val).replace('\n', '').replace('\r', '')
-    subject = f"URLScanOnline Report \u2014 {safe_hostname} \u2014 {safe_score_val}/100"
+    subject = f"URLScannerOnline Report \u2014 {safe_hostname} \u2014 {safe_score_val}/100"
 
     # Severity counting
     severity_counts = {}
@@ -347,7 +347,7 @@ async def handle_scheduled_email(request: Request):
         to=recipient_email,
         subject=subject,
         html=html,
-        from_email="URLScanOnline Reports <contact@urlscanonline.com>",
+        from_email="URLScannerOnline Reports <contact@urlscanonline.com>",
         attachments=attachments,
         idempotency_key=idempotency_key
     )

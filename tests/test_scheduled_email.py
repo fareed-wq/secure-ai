@@ -34,7 +34,7 @@ def test_send_email_success(mock_pool_manager):
     args, kwargs = mock_http.request.call_args
     assert kwargs['headers']['Authorization'] == 'Bearer test_key'
     assert kwargs['headers']['Idempotency-Key'] == 'idemp-123'
-    assert kwargs['headers']['User-Agent'] == 'URLScanOnline/1.0'
+    assert kwargs['headers']['User-Agent'] == 'URLScannerOnline/1.0'
     # Attachment preserved
     assert b'"filename": "test.pdf"' in kwargs['body']
 
@@ -348,3 +348,53 @@ def test_generate_pdf_advanced_disclaimer():
 
         assert "passive-first, low-impact assessment" in all_text
         assert "does NOT perform exploitation" in all_text
+
+
+def test_generate_pdf_evidence_rendering():
+    report_data = {
+        "target_url": "https://example.com",
+        "score": 90,
+        "findings": [
+            {
+                "name": "Dict Evidence",
+                "severity": "Low",
+                "evidence": {"raw": "Detected: Vercel\nEvidence: Server header"}
+            },
+            {
+                "name": "String Evidence",
+                "severity": "Informational",
+                "evidence": "Simple string\nevidence"
+            },
+            {
+                "name": "Empty Evidence",
+                "severity": "Low"
+            }
+        ]
+    }
+
+    with patch('api.utils.pdf_generator.SimpleDocTemplate.build') as mock_build:
+        generate_pdf(report_data)
+        elements = mock_build.call_args[0][0]
+
+        text_content = ""
+        for el in elements:
+            if hasattr(el, 'text'):
+                text_content += el.text + "\n"
+
+        # Ensure dict repr is NOT in text
+        assert "{'raw':" not in text_content
+
+        # Ensure newline is converted to <br/> and exact text is present
+        assert "Detected: Vercel<br/>Evidence: Server header" in text_content
+        assert "Simple string<br/>evidence" in text_content
+
+def test_resolve_scan_timestamp_iso():
+    report_data = {"scan_start": "2026-09-10T15:30:00Z"}
+    from api.utils.pdf_generator import _resolve_scan_timestamp
+    val = _resolve_scan_timestamp(report_data)
+    assert val == "2026-09-10 15:30 UTC"
+
+    # Fallback
+    report_data2 = {"scan_start": "2026-09-10"}
+    val2 = _resolve_scan_timestamp(report_data2)
+    assert val2 == "2026-09-10"

@@ -7,7 +7,7 @@ from typing import Optional
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 
@@ -35,11 +35,20 @@ class NumberedCanvas(canvas.Canvas):
         self.drawRightString(200 * 2.8, 20, f"Page {self._pageNumber} of {page_count}")
 
 def _resolve_scan_timestamp(report_data: dict, scan_created_at: Optional[str] = None) -> str:
-    if scan_created_at:
-        return str(scan_created_at)[:10]
-    if report_data.get("scan_start"):
-        return str(report_data["scan_start"])[:10]
-    return "undated"
+    from datetime import datetime
+    raw_ts = scan_created_at or report_data.get("scan_start")
+    if not raw_ts:
+        return "undated"
+    raw_ts_str = str(raw_ts).strip()
+    if len(raw_ts_str) >= 19:
+        try:
+            # Parse ISO formats like 2026-09-10T15:00:00Z or 2026-09-10 15:00:00+00
+            dt_str = raw_ts_str[:19].replace('T', ' ')
+            dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+            return dt.strftime("%Y-%m-%d %H:%M UTC")
+        except Exception:
+            pass
+    return raw_ts_str[:10]
 
 def generate_pdf(report_data: dict, scan_created_at: Optional[str] = None) -> bytes:
     buffer = io.BytesIO()
@@ -94,9 +103,10 @@ def generate_pdf(report_data: dict, scan_created_at: Optional[str] = None) -> by
     elements.append(Paragraph("URLScannerOnline Scheduled Security Assessment Report", title_style))
     elements.append(Spacer(1, 10))
 
+    date_label = "Scan Date/Time" if "UTC" in date_val else "Scan Date"
     header_data = [
         ["Target URL", escape(url_val)],
-        ["Scan Date/Time", escape(date_val)],
+        [date_label, escape(date_val)],
         ["Scan Type", scan_mode_val],
         ["Overall Security Score", f"{escape(score_val)}/100"]
     ]
@@ -195,7 +205,15 @@ def generate_pdf(report_data: dict, scan_created_at: Optional[str] = None) -> by
 
             evidence = f.get("evidence")
             if evidence:
-                elements.append(Paragraph(f"<b>Evidence:</b> {escape(str(evidence))}", normal_style))
+                if isinstance(evidence, dict):
+                    # Prefer raw if available
+                    ev_text = evidence.get("raw") or " ".join(f"{k}: {v}" for k, v in evidence.items())
+                else:
+                    ev_text = str(evidence)
+                ev_text = escape(str(ev_text))
+                # Convert newlines to HTML <br/> for ReportLab
+                ev_text = ev_text.replace("\n", "<br/>")
+                elements.append(Paragraph(f"<b>Evidence:</b><br/>{ev_text}", normal_style))
 
             elements.append(Spacer(1, 15))
     else:
