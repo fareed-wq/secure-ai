@@ -217,23 +217,127 @@ async def handle_scheduled_email(request: Request):
     # 7. Safe Attachment & Content
     import base64
     import re
+    import urllib.parse
+    from xml.sax.saxutils import escape
 
-    target_url = scan_row.get("target_url") or "unknown"
-    safe_target = re.sub(r'[^a-zA-Z0-9.\-]', '_', target_url).strip('_')
-    if not safe_target:
-        safe_target = "report"
-    filename = f"urlscanonline-report-{safe_target}.pdf"
+    target_url = scan_row.get("target_url") or report_data.get("target_url") or "unknown"
+    parsed_url = urllib.parse.urlparse(target_url)
+    hostname = parsed_url.hostname or target_url
+    safe_host = re.sub(r'[^a-zA-Z0-9.\-]', '_', hostname).strip('_').lower()
+    if not safe_host:
+        safe_host = "report"
+
+    dt_str = "undated"
+    if scan_row.get("created_at"):
+        dt_str = scan_row["created_at"][:10]
+    elif report_data.get("scan_start"):
+        dt_str = report_data["scan_start"][:10]
+
+    scan_mode_raw = report_data.get("scan_mode", "passive")
+    scan_mode_display = "Advanced" if scan_mode_raw == "active" else "Basic"
+    scan_mode_lower = scan_mode_display.lower()
+
+    filename = f"{safe_host}-{scan_mode_lower}-security-report-{dt_str}.pdf"
 
     encoded_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
     attachments = [{"filename": filename, "content": encoded_pdf, "content_type": "application/pdf"}]
 
-    scan_mode_display = "Advanced" if report_data.get("scan_mode") == "active" else "Basic"
-    subject = f"Your scheduled security report is ready - {target_url}"
+    score_val = report_data.get("score", "N/A")
+    # subject must be safe from CRLF injection
+    safe_hostname = hostname.replace('\n', '').replace('\r', '')
+    safe_score_val = str(score_val).replace('\n', '').replace('\r', '')
+    subject = f"URLScanOnline Report \u2014 {safe_hostname} \u2014 {safe_score_val}/100"
+
+    # Severity counting
+    severity_counts = {}
+    actionable_severities = ["Critical", "High", "Medium", "Low"]
+    informational_severities = ["Informational", "Info"]
+    inconclusive_severities = ["Inconclusive", "Skipped"]
+    all_known_severities = actionable_severities + informational_severities + inconclusive_severities + ["Passed"]
+
+    for f in report_data.get("findings", []):
+        raw_sev = str(f.get("severity", "Info")).strip()
+        sev = raw_sev.title()
+        if sev in ["Info", "Informational"]:
+            sev = "Informational"
+        elif sev in ["Skipped", "Inconclusive"]:
+            sev = "Inconclusive"
+        elif sev not in all_known_severities:
+            sev = "Inconclusive"
+        severity_counts[sev] = severity_counts.get(sev, 0) + 1
+
+    issues_count = sum(severity_counts.get(s, 0) for s in actionable_severities)
+    passed_count = severity_counts.get("Passed", 0)
+    info_count = sum(severity_counts.get(s, 0) for s in informational_severities)
+    inconclusive_count = sum(severity_counts.get(s, 0) for s in inconclusive_severities)
+
+    top_finding = None
+    for sev in actionable_severities:
+        if severity_counts.get(sev, 0) > 0 and not top_finding:
+            for f in report_data.get("findings", []):
+                raw_fsev = str(f.get("severity", "Info")).title()
+                if raw_fsev == "Info": raw_fsev = "Informational"
+                if raw_fsev == sev:
+                    top_finding = f
+                    break
+
+    top_finding_html = ""
+    if top_finding:
+        fname = escape(str(top_finding.get("name", "Unknown")))
+        fsev = escape(str(top_finding.get("severity", "Unknown")))
+        top_finding_html = f"""
+        <h3 style="color: #2c3e50; margin-top: 20px;">Top Finding</h3>
+        <p><strong>{fname}</strong> &mdash; {fsev}</p>
+        """
+
+    from api.scheduling.router import APP_BASE_URL
+    history_url = f"{APP_BASE_URL.rstrip('/')}/history"
+    scan_id_val = run_row.get('scan_id')
+    full_report_url = f"{history_url}/{scan_id_val}?from=history" if scan_id_val else history_url
+
+    esc_hostname = escape(hostname)
+    esc_scan_mode = escape(scan_mode_display)
+    esc_score = escape(str(score_val))
 
     html = f"""
-    <p>Your {scan_mode_display} scheduled security scan for <strong>{target_url}</strong> has completed.</p>
-    <p>The PDF report is attached to this email.</p>
-    <p>You can view your full scan history anytime in URLScanOnline.</p>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.5;">
+        <h2 style="color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;">URLScannerOnline</h2>
+        <p style="font-size: 16px;">Your scheduled security scan is complete.</p>
+
+        <table style="width: 100%; text-align: left; margin: 20px 0; border-collapse: collapse;">
+            <tr><th style="padding: 8px 0; border-bottom: 1px solid #eee; width: 40%;">Target</th><td style="padding: 8px 0; border-bottom: 1px solid #eee;">{esc_hostname}</td></tr>
+            <tr><th style="padding: 8px 0; border-bottom: 1px solid #eee;">Scan Type</th><td style="padding: 8px 0; border-bottom: 1px solid #eee;">{esc_scan_mode}</td></tr>
+            <tr><th style="padding: 8px 0;">Security Score</th><td style="padding: 8px 0;"><strong>{esc_score}/100</strong></td></tr>
+        </table>
+
+        <h3 style="color: #2c3e50; margin-top: 25px;">Summary</h3>
+        <ul style="list-style: none; padding: 0;">
+            <li><strong>Issues Found:</strong> {issues_count}</li>
+            <li><strong>Informational:</strong> {info_count}</li>
+            {f"<li><strong>Inconclusive:</strong> {inconclusive_count}</li>" if inconclusive_count > 0 else ""}
+            <li><strong>Passed:</strong> {passed_count}</li>
+        </ul>
+        <table style="width: 100%; max-width: 300px; margin-bottom: 20px;">
+            <tr><td style="color: #8b0000;">Critical:</td><td>{severity_counts.get('Critical', 0)}</td></tr>
+            <tr><td style="color: #cc0000;">High:</td><td>{severity_counts.get('High', 0)}</td></tr>
+            <tr><td style="color: #e68a00;">Medium:</td><td>{severity_counts.get('Medium', 0)}</td></tr>
+            <tr><td style="color: #0000cc;">Low:</td><td>{severity_counts.get('Low', 0)}</td></tr>
+        </table>
+
+        {top_finding_html}
+
+        <p style="margin-top: 25px;">The complete security assessment is attached as a PDF, including prioritized recommendations and technical details.</p>
+
+        <div style="margin-top: 30px;">
+            <a href="{full_report_url}" style="display: inline-block; padding: 10px 20px; background-color: #0f172a; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; margin-right: 10px;">View Full Report</a>
+            <a href="{history_url}" style="display: inline-block; padding: 10px 20px; background-color: #f8f9fa; color: #333; text-decoration: none; border-radius: 6px; border: 1px solid #ddd; font-weight: 500;">View Scan History</a>
+        </div>
+
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #64748b;">
+            <strong>URLScannerOnline</strong><br />
+            Automated security assessment
+        </div>
+    </div>
     """
 
     idempotency_key = f"scheduled-report-{run_id}"
