@@ -14,13 +14,13 @@ from api.utils.pdf_generator import generate_pdf, MAX_EMAIL_PDF_BYTES
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_URL = os.environ.get("VITE_SUPABASE_URL") or os.environ.get("SUPABASE_URL")
+SUPABASE_SECRET_KEY = os.environ.get("SUPABASE_SECRET_KEY")
 
 def get_db_headers():
     return {
-        "apikey": SUPABASE_SERVICE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "apikey": SUPABASE_SECRET_KEY,
+        "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
         "Content-Type": "application/json"
     }
 
@@ -45,7 +45,7 @@ async def handle_scheduled_email(request: Request):
         current_signing_key=current_signing_key,
         next_signing_key=next_signing_key,
     )
-    
+
     from api.scheduling.router import APP_BASE_URL
     worker_url = f"{APP_BASE_URL.rstrip('/')}/api/internal/scheduled-report-email"
 
@@ -80,21 +80,36 @@ async def handle_scheduled_email(request: Request):
 
     # 3. Authoritative Run Lookup
     run_url = f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}&select=id,user_id,scan_id,schedule_id,status,email_status,email_lease_until"
-    run_resp = requests.get(run_url, headers=db_headers)
-    if run_resp.status_code != 200 or len(run_resp.json()) == 0:
-        logger.info(f"Email worker skipped run={run_id} reason=run_not_found")
-        return JSONResponse(status_code=200, content={"status": "skipped", "reason": "run_not_found"})
-    
-    run_row = run_resp.json()[0]
+    try:
+        run_resp = requests.get(run_url, headers=db_headers, timeout=10.0)
+    except Exception as e:
+        logger.error(f"Email worker run lookup retry run={run_id} reason=run_lookup_exception")
+        return JSONResponse(status_code=503, content={"status": "retry", "reason": "run_lookup_transient"})
+
+    if run_resp.status_code != 200:
+        logger.error(f"Email worker run lookup retry run={run_id} reason=run_lookup_http_error")
+        return JSONResponse(status_code=503, content={"status": "retry", "reason": "run_lookup_transient"})
+
+    try:
+        run_json = run_resp.json()
+    except Exception:
+        logger.error(f"Email worker run lookup retry run={run_id} reason=run_lookup_invalid_json")
+        return JSONResponse(status_code=503, content={"status": "retry", "reason": "run_lookup_transient"})
+
+    if len(run_json) == 0:
+        logger.info(f"Email worker run lookup retry run={run_id} reason=run_lookup_empty")
+        return JSONResponse(status_code=503, content={"status": "retry", "reason": "run_lookup_pending"})
+
+    run_row = run_json[0]
     email_status = run_row.get("email_status")
-    
+
     if email_status in ["sent", "failed", "not_requested"]:
         logger.info(f"Email worker skipped run={run_id} reason=terminal_email_status status={email_status}")
         return JSONResponse(status_code=200, content={"status": "skipped", "reason": f"status_{email_status}"})
-        
+
     user_id = run_row.get("user_id")
     scan_id = run_row.get("scan_id")
-    
+
     if not scan_id:
         logger.error("No scan_id found for run")
         requests.patch(f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", headers=db_headers, json={"email_status": "failed", "email_error_code": "missing_scan", "email_lease_until": None})
@@ -107,7 +122,7 @@ async def handle_scheduled_email(request: Request):
         logger.error("Scan not found")
         requests.patch(f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", headers=db_headers, json={"email_status": "failed", "email_error_code": "missing_scan", "email_lease_until": None})
         return JSONResponse(status_code=200, content={"status": "failed", "reason": "missing_scan"})
-        
+
     scan_row = scan_resp.json()[0]
     if scan_row.get("user_id") != user_id:
         logger.error("Scan user_id mismatch")
@@ -124,7 +139,7 @@ async def handle_scheduled_email(request: Request):
     import urllib.parse
     current_time_str = urllib.parse.quote(now_utc.isoformat())
     lease_until_str = (now_utc + timedelta(minutes=5)).isoformat()
-    
+
     # Claim if status is pending OR (status is sending AND lease expired)
     claim_query = f"?id=eq.{run_id}&or=(email_status.eq.pending,and(email_status.eq.sending,email_lease_until.lt.{current_time_str}))"
     try:
@@ -153,7 +168,7 @@ async def handle_scheduled_email(request: Request):
     try:
         auth_url = f"{SUPABASE_URL.rstrip('/')}/auth/v1/admin/users/{user_id}"
         user_resp = requests.get(auth_url, headers=db_headers, timeout=10.0)
-        
+
         if user_resp.status_code != 200:
             if user_resp.status_code == 404:
                 requests.patch(f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", headers=db_headers, json={"email_status": "failed", "email_error_code": "recipient_missing", "email_lease_until": None})
@@ -165,22 +180,22 @@ async def handle_scheduled_email(request: Request):
                 logger.error(f"Auth fetch failed {user_resp.status_code}")
                 requests.patch(f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", headers=db_headers, json={"email_status": "failed", "email_error_code": "account_lookup_error", "email_lease_until": None})
                 return JSONResponse(status_code=200, content={"status": "failed", "reason": "account_lookup_error"})
-        
+
         auth_user = user_resp.json()
     except Exception as e:
         logger.error(f"Auth fetch error: {type(e).__name__}")
         requests.patch(f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", headers=db_headers, json={"email_status": "pending", "email_error_code": "account_lookup_transient", "email_lease_until": None})
         return JSONResponse(status_code=503, content={"status": "retry", "reason": "account_lookup_transient"})
-        
+
 
 
     if not auth_user:
         requests.patch(f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", headers=db_headers, json={"email_status": "failed", "email_error_code": "recipient_missing", "email_lease_until": None})
         return JSONResponse(status_code=200, content={"status": "failed", "reason": "recipient_missing"})
-        
+
     recipient_email = auth_user.get('email')
     email_confirmed_at = auth_user.get('email_confirmed_at')
-    
+
 
 
     if not recipient_email or not email_confirmed_at:
@@ -202,19 +217,19 @@ async def handle_scheduled_email(request: Request):
     # 7. Safe Attachment & Content
     import base64
     import re
-    
+
     target_url = scan_row.get("target_url") or "unknown"
     safe_target = re.sub(r'[^a-zA-Z0-9.\-]', '_', target_url).strip('_')
     if not safe_target:
         safe_target = "report"
     filename = f"urlscanonline-report-{safe_target}.pdf"
-    
+
     encoded_pdf = base64.b64encode(pdf_bytes).decode('utf-8')
     attachments = [{"filename": filename, "content": encoded_pdf, "content_type": "application/pdf"}]
-    
+
     scan_mode_display = "Advanced" if report_data.get("scan_mode") == "active" else "Basic"
     subject = f"Your scheduled security report is ready - {target_url}"
-    
+
     html = f"""
     <p>Your {scan_mode_display} scheduled security scan for <strong>{target_url}</strong> has completed.</p>
     <p>The PDF report is attached to this email.</p>
@@ -236,8 +251,8 @@ async def handle_scheduled_email(request: Request):
     # 9. Handle Result
     if result.success:
         requests.patch(
-            f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", 
-            headers=db_headers, 
+            f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}",
+            headers=db_headers,
             json={
                 "email_status": "sent",
                 "email_sent_at": datetime.now(timezone.utc).isoformat(),
@@ -249,8 +264,8 @@ async def handle_scheduled_email(request: Request):
     else:
         if result.is_transient:
             requests.patch(
-                f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", 
-                headers=db_headers, 
+                f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}",
+                headers=db_headers,
                 json={
                     "email_status": "pending",
                     "email_lease_until": None,
@@ -261,8 +276,8 @@ async def handle_scheduled_email(request: Request):
             return JSONResponse(status_code=503, content={"status": "retry", "reason": result.error_category})
         else:
             requests.patch(
-                f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}", 
-                headers=db_headers, 
+                f"{SUPABASE_URL}/rest/v1/scheduled_scan_runs?id=eq.{run_id}",
+                headers=db_headers,
                 json={
                     "email_status": "failed",
                     "email_lease_until": None,
