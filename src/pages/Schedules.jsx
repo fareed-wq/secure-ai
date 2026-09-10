@@ -28,7 +28,7 @@ export default function Schedules() {
   const [advancedAuthChecked, setAdvancedAuthChecked] = useState(false);
   const [frequency, setFrequency] = useState('daily');
   const [timeOfDay, setTimeOfDay] = useState('09:00');
-  const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [timezone, setTimezone] = useState('Asia/Riyadh');
   const [dayOfWeek, setDayOfWeek] = useState(0);
   const [dayOfMonth, setDayOfMonth] = useState(1);
   const [authChecked, setAuthChecked] = useState(false);
@@ -255,9 +255,27 @@ export default function Schedules() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">Timezone</label>
-                <input type="text" required value={timezone} onChange={e => setTimezone(e.target.value)}
+                <select value={timezone} onChange={e => setTimezone(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
-                />
+                >
+                  <option value="Asia/Riyadh">Saudi Arabia — Asia/Riyadh</option>
+                  <option value="Asia/Dubai">UAE — Asia/Dubai</option>
+                  <option value="Asia/Qatar">Qatar — Asia/Qatar</option>
+                  <option value="Asia/Kuwait">Kuwait — Asia/Kuwait</option>
+                  <option value="Asia/Bahrain">Bahrain — Asia/Bahrain</option>
+                  <option value="Asia/Muscat">Oman — Asia/Muscat</option>
+                  <option value="Asia/Kolkata">India — Asia/Kolkata</option>
+                  <option value="Asia/Karachi">Pakistan — Asia/Karachi</option>
+                  <option value="Asia/Singapore">Singapore — Asia/Singapore</option>
+                  <option value="Asia/Tokyo">Japan — Asia/Tokyo</option>
+                  <option value="Europe/London">United Kingdom — Europe/London</option>
+                  <option value="Europe/Berlin">Germany — Europe/Berlin</option>
+                  <option value="America/New_York">US Eastern — America/New_York</option>
+                  <option value="America/Chicago">US Central — America/Chicago</option>
+                  <option value="America/Denver">US Mountain — America/Denver</option>
+                  <option value="America/Los_Angeles">US Pacific — America/Los_Angeles</option>
+                  <option value="UTC">UTC</option>
+                </select>
               </div>
             </div>
 
