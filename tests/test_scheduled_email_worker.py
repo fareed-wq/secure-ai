@@ -346,7 +346,7 @@ def test_email_worker_success(mock_send_email, mock_generate_pdf):
                 mock_send_email.assert_called_once()
                 args, kwargs = mock_send_email.call_args
                 assert kwargs["to"] == "test@example.com"
-                assert kwargs["from_email"] == "URLScanOnline Reports <contact@urlscanonline.com>"
+                assert kwargs["from_email"] == "URLScannerOnline Reports <contact@urlscanonline.com>"
                 assert kwargs["idempotency_key"] == "scheduled-report-550e8400-e29b-41d4-a716-446655440000"
 
                 atts = kwargs["attachments"]
@@ -943,3 +943,152 @@ def test_email_worker_run_lookup_success(mock_send, mock_pdf, mock_patch, mock_g
 
     called_url = mock_get.call_args_list[0][0][0]
     assert "rest/v1/scheduled_scan_runs?id=eq.550e8400-e29b-41d4-a716-446655440000&select=id,user_id,scan_id,schedule_id,status,email_status,email_lease_until" in called_url
+
+
+def test_email_report_formatting():
+    with patch('api.scheduling.email_worker.requests.get') as mock_get, \
+         patch('api.scheduling.email_worker.requests.patch') as mock_patch, \
+         patch('api.scheduling.email_worker.generate_pdf') as mock_pdf, \
+         patch('api.scheduling.email_worker.send_email') as mock_send, \
+         patch('qstash.Receiver.verify'):
+
+        def mock_get_side_effect(url, **kwargs):
+            resp = MagicMock()
+            resp.status_code = 200
+            if "scheduled_scan_runs" in url:
+                resp.json = lambda: [{
+                    "id": "550e8400-e29b-41d4-a716-446655440000",
+                    "user_id": "u1",
+                    "scan_id": "s1",
+                    "email_status": "pending",
+                    "target_url": "https://example.com"
+                }]
+            elif "scans" in url:
+                resp.json = lambda: [{
+                    "user_id": "u1",
+                    "created_at": "2026-09-10T15:00:00Z",
+                    "target_url": "https://example.com",
+                    "report_data": {
+                        "scan_mode": "active",
+                        "score": 95,
+                        "findings": [
+                            {"name": "Low Finding", "severity": "Low"},
+                            {"name": "Info Finding", "severity": "Info"},
+                            {"name": "Skipped Finding", "severity": "Skipped"},
+                            {"name": "Passed Finding", "severity": "Passed"}
+                        ]
+                    }
+                }]
+            elif "users" in url:
+                resp.json = lambda: {"email": "test@example.com", "email_confirmed_at": "2026-09-10T00:00:00Z"}
+            else:
+                resp.json = lambda: []
+            return resp
+
+        mock_get.side_effect = mock_get_side_effect
+
+        def mock_patch_side_effect(url, **kwargs):
+            resp = MagicMock()
+            resp.status_code = 200
+            resp.json = lambda: [{"id": "550e8400-e29b-41d4-a716-446655440000"}]
+            return resp
+
+        mock_patch.side_effect = mock_patch_side_effect
+
+        mock_pdf.return_value = b"%PDF-1.4 mock deterministic"
+        mock_send.return_value = MagicMock(success=True)
+
+        resp = client.post("/api/internal/scheduled-report-email", json={"run_id": "550e8400-e29b-41d4-a716-446655440000"}, headers={"Upstash-Signature": "sig"})
+
+        assert resp.status_code == 200
+        assert mock_send.call_count == 1
+
+        call_kwargs = mock_send.call_args[1]
+
+        # EXACTLY ONE attachment
+        assert len(call_kwargs.get("attachments", [])) == 1
+        attachment = call_kwargs["attachments"][0]
+        assert attachment["filename"] == "example.com-advanced-security-report-2026-09-10.pdf"
+        import base64
+        assert attachment["content"] == base64.b64encode(b"%PDF-1.4 mock deterministic").decode("utf-8")
+
+        # subject deterministic and correctly formatted
+        assert call_kwargs.get("subject") == "URLScannerOnline Report — example.com — 95/100"
+
+        # HTML body correctly formats issues
+        html_body = call_kwargs.get("html", "")
+        assert "Issues Found:</strong> 1" in html_body
+        assert "Informational:</strong> 1" in html_body
+        assert "Inconclusive:</strong> 1" in html_body
+        assert "Passed:</strong> 1" in html_body
+        assert "<strong>Low Finding</strong> &mdash; Low" in html_body
+
+        # Correct CTA link
+        assert "/history/s1?from=history" in html_body
+
+        # Excludes sensitive data
+        assert "run_id" not in html_body
+        assert "u1" not in html_body
+        assert "test@example.com" not in html_body
+
+        # Idempotency key
+        assert call_kwargs.get("idempotency_key") == "scheduled-report-550e8400-e29b-41d4-a716-446655440000"
+
+def test_email_report_no_actionable_findings():
+    with patch('api.scheduling.email_worker.requests.get') as mock_get, \
+         patch('api.scheduling.email_worker.requests.patch') as mock_patch, \
+         patch('api.scheduling.email_worker.generate_pdf') as mock_pdf, \
+         patch('api.scheduling.email_worker.send_email') as mock_send, \
+         patch('qstash.Receiver.verify'):
+
+        def mock_get_side_effect(url, **kwargs):
+            resp = MagicMock()
+            resp.status_code = 200
+            if "scheduled_scan_runs" in url:
+                resp.json = lambda: [{
+                    "id": "550e8400-e29b-41d4-a716-446655440001",
+                    "user_id": "u1",
+                    "scan_id": "s1",
+                    "email_status": "pending",
+                    "target_url": "example.com"
+                }]
+            elif "scans" in url:
+                resp.json = lambda: [{
+                    "user_id": "u1",
+                    "report_data": {
+                        "scan_mode": "passive",
+                        "score": 100,
+                        "findings": [
+                            {"name": "Info Finding", "severity": "Info"},
+                            {"name": "Passed Finding", "severity": "Passed"}
+                        ]
+                    }
+                }]
+            elif "users" in url:
+                resp.json = lambda: {"email": "test@example.com", "email_confirmed_at": "2026-09-10T00:00:00Z"}
+            else:
+                resp.json = lambda: []
+            return resp
+
+        mock_get.side_effect = mock_get_side_effect
+
+        def mock_patch_side_effect(url, **kwargs):
+            resp = MagicMock()
+            resp.status_code = 200
+            resp.json = lambda: [{"id": "550e8400-e29b-41d4-a716-446655440001"}]
+            return resp
+
+        mock_patch.side_effect = mock_patch_side_effect
+        mock_pdf.return_value = b"%PDF-1.4"
+        mock_send.return_value = MagicMock(success=True)
+
+        resp = client.post("/api/internal/scheduled-report-email", json={"run_id": "550e8400-e29b-41d4-a716-446655440001"}, headers={"Upstash-Signature": "sig"})
+
+        assert resp.status_code == 200
+        assert mock_send.call_count == 1
+
+        html_body = mock_send.call_args[1]["html"]
+        assert "Issues Found:</strong> 0" in html_body
+        assert "Top Finding" not in html_body
+        assert "Informational:</strong> 1" in html_body
+        assert "Inconclusive:" not in html_body

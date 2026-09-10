@@ -310,11 +310,11 @@ export default function Schedules() {
                 />
                 <div className="flex flex-col">
                   <span className="text-sm text-slate-300 font-medium">
-                    Email PDF report after each completed scan
-                  </span>
-                  <span className="text-sm text-slate-500 mt-1">
-                    The completed report will be sent to your verified account email.
-                  </span>
+                      Email report after each completed scan
+                    </span>
+                    <span className="text-sm text-slate-500 mt-1">
+                      Receive an executive summary and complete PDF security report after each scheduled scan. The report will be sent to your verified account email.
+                    </span>
                 </div>
               </label>
             </div>
