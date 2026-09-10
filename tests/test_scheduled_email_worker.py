@@ -30,10 +30,10 @@ def setup_env():
 def test_create_schedule_email_opt_in(mock_qs, mock_post, mock_get):
     mock_get.return_value.status_code = 200
     mock_get.return_value.json.return_value = []
-    
+
     mock_post.return_value.status_code = 201
     mock_post.return_value.json.return_value = [{"id": "660e8400-e29b-41d4-a716-446655440000"}]
-    
+
     payload_basic = {
         "target_url": "https://example.com",
         "authorization_acknowledged": True,
@@ -41,16 +41,16 @@ def test_create_schedule_email_opt_in(mock_qs, mock_post, mock_get):
         "time_of_day": "09:00:00",
         "timezone": "UTC"
     }
-    
-    
+
+
     import api.scheduling.router
     app.dependency_overrides[api.scheduling.router.require_scheduled_scans_access] = lambda: {"sub": "880e8400-e29b-41d4-a716-446655440000"}
-    
+
     resp = client.post("/api/schedules/", json=payload_basic)
     assert resp.status_code == 200
     args, kwargs = mock_post.call_args
     assert kwargs["json"]["email_report_enabled"] is False
-    
+
     payload_basic["email_report_enabled"] = True
     resp = client.post("/api/schedules/", json=payload_basic)
     assert resp.status_code == 200
@@ -64,10 +64,10 @@ def test_create_schedule_email_opt_in(mock_qs, mock_post, mock_get):
 def test_create_schedule_advanced_email_opt_in(mock_qs, mock_post, mock_get):
     mock_get.return_value.status_code = 200
     mock_get.return_value.json.return_value = []
-    
+
     mock_post.return_value.status_code = 201
     mock_post.return_value.json.return_value = [{"id": "660e8400-e29b-41d4-a716-446655440000"}]
-    
+
     payload_advanced = {
         "target_url": "https://example.com",
         "authorization_acknowledged": True,
@@ -78,18 +78,18 @@ def test_create_schedule_advanced_email_opt_in(mock_qs, mock_post, mock_get):
         "time_of_day": "09:00:00",
         "timezone": "UTC"
     }
-    
-    
+
+
     import api.scheduling.router
     app.dependency_overrides[api.scheduling.router.require_scheduled_scans_access] = lambda: {"sub": "880e8400-e29b-41d4-a716-446655440000"}
-    
+
     try:
         resp = client.post("/api/schedules/", json=payload_advanced)
         assert resp.status_code == 200
         args, kwargs = mock_post.call_args
         assert kwargs["json"]["email_report_enabled"] is True
         assert kwargs["json"]["scan_mode"] == "active"
-        
+
         assert "email" not in kwargs["json"]
         assert "recipient" not in kwargs["json"]
         assert "cc" not in kwargs["json"]
@@ -112,7 +112,7 @@ def test_scan_worker_publish_arguments(mock_elig, mock_scan, mock_patch, mock_po
     from datetime import datetime
     mock_next_run.return_value = datetime.utcnow()
     mock_scan.return_value = {"score": 90, "url": "https://example.com"}
-    
+
     def mock_get_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 200
@@ -129,7 +129,7 @@ def test_scan_worker_publish_arguments(mock_elig, mock_scan, mock_patch, mock_po
             }]
         return resp
     mock_get.side_effect = mock_get_side_effect
-    
+
     def mock_post_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 201
@@ -141,7 +141,7 @@ def test_scan_worker_publish_arguments(mock_elig, mock_scan, mock_patch, mock_po
     mock_post.side_effect = mock_post_side_effect
     mock_patch.return_value.status_code = 200
     mock_patch.return_value.json.return_value = [{'id': '660e8400-e29b-41d4-a716-446655440000'}]
-    
+
     import api.scheduling.worker as worker_module
     old_base_url = worker_module.APP_BASE_URL
     worker_module.APP_BASE_URL = "http://mock"
@@ -150,18 +150,18 @@ def test_scan_worker_publish_arguments(mock_elig, mock_scan, mock_patch, mock_po
             with patch('api.scheduling.router.QStashClient') as mock_qs_cls:
                 mock_qs_client = MagicMock()
                 mock_qs_cls.return_value = mock_qs_client
-                
-                resp = client.post("/api/internal/scheduled-scan", 
-                                   json={"schedule_id": "660e8400-e29b-41d4-a716-446655440000"}, 
+
+                resp = client.post("/api/internal/scheduled-scan",
+                                   json={"schedule_id": "660e8400-e29b-41d4-a716-446655440000"},
                                    headers={"Upstash-Signature": "valid", "Upstash-Message-Id": "msg-123"})
-                
+
                 assert resp.status_code == 200
                 mock_qs_client.message.publish_json.assert_called_once_with(
                     url="http://mock/api/internal/scheduled-report-email",
                     body={"run_id": "550e8400-e29b-41d4-a716-446655440000"},
                     retries=3
                 )
-                
+
                 args, kwargs = mock_qs_client.message.publish_json.call_args
                 assert set(kwargs["body"].keys()) == {"run_id"}
     finally:
@@ -179,11 +179,11 @@ def test_scan_worker_publish_arguments(mock_elig, mock_scan, mock_patch, mock_po
 @patch('api.scheduling.router.APP_BASE_URL', 'http://mock')
 @patch('api.scheduling.worker.QSTASH_NEXT_SIGNING_KEY', 'x')
 def test_scan_worker_snapshot_opt_in(mock_elig, mock_scan, mock_patch, mock_post, mock_get, mock_next_run):
-    
+
     from datetime import datetime
     mock_next_run.return_value = datetime.utcnow()
     mock_scan.return_value = {"score": 90, "url": "https://example.com"}
-    
+
     def mock_get_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 200
@@ -200,7 +200,7 @@ def test_scan_worker_snapshot_opt_in(mock_elig, mock_scan, mock_patch, mock_post
             }]
         return resp
     mock_get.side_effect = mock_get_side_effect
-    
+
     def mock_post_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 201
@@ -212,19 +212,19 @@ def test_scan_worker_snapshot_opt_in(mock_elig, mock_scan, mock_patch, mock_post
     mock_post.side_effect = mock_post_side_effect
     mock_patch.return_value.status_code = 200
     mock_patch.return_value.json.return_value = [{'id': '660e8400-e29b-41d4-a716-446655440000'}]
-    
+
     with patch('qstash.Receiver.verify'):
         with patch('api.scheduling.router.QStashClient') as mock_qs_cls:
             mock_qs_client = MagicMock()
             mock_qs_cls.return_value = mock_qs_client
-            
-            resp = client.post("/api/internal/scheduled-scan", 
-                               json={"schedule_id": "660e8400-e29b-41d4-a716-446655440000"}, 
+
+            resp = client.post("/api/internal/scheduled-scan",
+                               json={"schedule_id": "660e8400-e29b-41d4-a716-446655440000"},
                                headers={"Upstash-Signature": "valid", "Upstash-Message-Id": "msg-123"})
-            
+
             assert resp.status_code == 200
             mock_qs_client.message.publish_json.assert_called_once()
-            
+
             patch_calls = mock_patch.call_args_list
             run_patch = None
             for call in patch_calls:
@@ -243,11 +243,11 @@ def test_scan_worker_snapshot_opt_in(mock_elig, mock_scan, mock_patch, mock_post
 @patch('api.scheduling.router.APP_BASE_URL', 'http://mock')
 @patch('api.scheduling.worker.QSTASH_NEXT_SIGNING_KEY', 'x')
 def test_scan_worker_snapshot_opt_out(mock_elig, mock_scan, mock_patch, mock_post, mock_get, mock_next_run):
-    
+
     from datetime import datetime
     mock_next_run.return_value = datetime.utcnow()
     mock_scan.return_value = {"score": 90, "url": "https://example.com"}
-    
+
     def mock_get_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 200
@@ -264,7 +264,7 @@ def test_scan_worker_snapshot_opt_out(mock_elig, mock_scan, mock_patch, mock_pos
             }]
         return resp
     mock_get.side_effect = mock_get_side_effect
-    
+
     def mock_post_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 201
@@ -276,19 +276,19 @@ def test_scan_worker_snapshot_opt_out(mock_elig, mock_scan, mock_patch, mock_pos
     mock_post.side_effect = mock_post_side_effect
     mock_patch.return_value.status_code = 200
     mock_patch.return_value.json.return_value = [{'id': '660e8400-e29b-41d4-a716-446655440000'}]
-    
+
     with patch('qstash.Receiver.verify'):
         with patch('api.scheduling.router.QStashClient') as mock_qs_cls:
             mock_qs_client = MagicMock()
             mock_qs_cls.return_value = mock_qs_client
-            
-            resp = client.post("/api/internal/scheduled-scan", 
-                               json={"schedule_id": "660e8400-e29b-41d4-a716-446655440000"}, 
+
+            resp = client.post("/api/internal/scheduled-scan",
+                               json={"schedule_id": "660e8400-e29b-41d4-a716-446655440000"},
                                headers={"Upstash-Signature": "valid", "Upstash-Message-Id": "msg-123"})
-            
+
             assert resp.status_code == 200
             mock_qs_client.message.publish_json.assert_not_called()
-            
+
             patch_calls = mock_patch.call_args_list
             run_patch = None
             for call in patch_calls:
@@ -304,7 +304,7 @@ def test_email_worker_success(mock_send_email, mock_generate_pdf):
     import base64
     mock_send_email.return_value = EmailResult(success=True, status_code=200)
     mock_generate_pdf.return_value = b"%PDF-1.4"
-    
+
     def mock_get_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 200
@@ -328,7 +328,7 @@ def test_email_worker_success(mock_send_email, mock_generate_pdf):
                 "report_data": {"findings": []}
             }]
         return resp
-        
+
     with patch('api.scheduling.email_worker.requests.get', side_effect=mock_get_side_effect):
         with patch('api.scheduling.email_worker.requests.patch') as mock_patch:
             mock_patch.return_value.status_code = 200
@@ -337,10 +337,10 @@ def test_email_worker_success(mock_send_email, mock_generate_pdf):
                 resp = client.post("/api/internal/scheduled-report-email",
                                    json={"run_id": "550e8400-e29b-41d4-a716-446655440000"},
                                    headers={"Upstash-Signature": "valid"})
-                                   
+
                 assert resp.status_code == 200
                 assert resp.json()["status"] == "sent"
-                
+
                 # Check assertions
                 mock_generate_pdf.assert_called_once_with({"findings": []}, scan_created_at="2023-01-01T00:00:00Z")
                 mock_send_email.assert_called_once()
@@ -348,7 +348,7 @@ def test_email_worker_success(mock_send_email, mock_generate_pdf):
                 assert kwargs["to"] == "test@example.com"
                 assert kwargs["from_email"] == "URLScanOnline Reports <contact@urlscanonline.com>"
                 assert kwargs["idempotency_key"] == "scheduled-report-550e8400-e29b-41d4-a716-446655440000"
-                
+
                 atts = kwargs["attachments"]
                 assert len(atts) == 1
                 assert atts[0]["content"] == base64.b64encode(b"%PDF-1.4").decode('utf-8')
@@ -400,11 +400,11 @@ def test_email_worker_malformed_run_id(mock_verify):
 @patch('api.scheduling.router.APP_BASE_URL', 'http://mock')
 @patch('api.scheduling.worker.QSTASH_NEXT_SIGNING_KEY', 'x')
 def test_scan_worker_enqueue_failure(mock_elig, mock_scan, mock_patch, mock_post, mock_get, mock_next_run):
-    
+
     from datetime import datetime
     mock_next_run.return_value = datetime.utcnow()
     mock_scan.return_value = {"score": 90, "url": "https://example.com"}
-    
+
     def mock_get_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 200
@@ -421,7 +421,7 @@ def test_scan_worker_enqueue_failure(mock_elig, mock_scan, mock_patch, mock_post
             }]
         return resp
     mock_get.side_effect = mock_get_side_effect
-    
+
     def mock_post_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 201
@@ -438,13 +438,13 @@ def test_scan_worker_enqueue_failure(mock_elig, mock_scan, mock_patch, mock_post
             mock_qs_client = MagicMock()
             mock_qs_client.message.publish_json.side_effect = Exception("network error")
             mock_qs_cls.return_value = mock_qs_client
-            
-            resp = client.post("/api/internal/scheduled-scan", 
-                               json={"schedule_id": "660e8400-e29b-41d4-a716-446655440000"}, 
+
+            resp = client.post("/api/internal/scheduled-scan",
+                               json={"schedule_id": "660e8400-e29b-41d4-a716-446655440000"},
                                headers={"Upstash-Signature": "valid", "Upstash-Message-Id": "msg-123"})
-            
+
             assert resp.status_code == 200
-            
+
             patch_calls = mock_patch.call_args_list
             run_patch = None
             for call in patch_calls:
@@ -501,7 +501,7 @@ def test_email_worker_active_lease(mock_send_email, mock_generate_pdf):
                 resp = client.post("/api/internal/scheduled-report-email",
                                    json={"run_id": "550e8400-e29b-41d4-a716-446655440000"},
                                    headers={"Upstash-Signature": "valid"})
-                
+
                 assert resp.status_code == 503
                 assert resp.json().get("reason") == "lease_active"
                 mock_send_email.assert_not_called()
@@ -524,7 +524,7 @@ def test_email_worker_terminal_states(mock_send_email, mock_generate_pdf, termin
             resp = client.post("/api/internal/scheduled-report-email",
                                json={"run_id": "550e8400-e29b-41d4-a716-446655440000"},
                                headers={"Upstash-Signature": "valid"})
-            
+
             assert resp.status_code == 200
             assert resp.json().get("status") == "skipped"
             mock_send_email.assert_not_called()
@@ -622,7 +622,7 @@ def test_email_worker_auth_lookup(mock_send_email, mock_generate_pdf, scenario, 
                                    headers={"Upstash-Signature": "valid"})
                 assert resp.status_code == expected_status
                 mock_send_email.assert_not_called()
-                
+
                 if expected_db_status == "failed":
                     patch_calls = mock_patch.call_args_list
                     failed_call = next((c for c in patch_calls if c[1]["json"].get("email_status") == "failed"), None)
@@ -637,7 +637,7 @@ def test_email_worker_pdf_failures(mock_send_email, mock_generate_pdf, fail_type
     else:
         from api.scheduling.email_worker import MAX_EMAIL_PDF_BYTES
         mock_generate_pdf.return_value = b"x" * (MAX_EMAIL_PDF_BYTES + 1)
-        
+
     def mock_get_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 200
@@ -677,7 +677,7 @@ def test_email_worker_provider_failure(mock_send_email, mock_generate_pdf, trans
     from api.utils.email_helper import EmailResult
     mock_send_email.return_value = EmailResult(success=False, is_transient=transient, error_category="err")
     mock_generate_pdf.return_value = b"%PDF-1.4"
-    
+
     def mock_get_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 200
@@ -710,7 +710,7 @@ def test_email_worker_explicit_projection(mock_send_email, mock_generate_pdf):
     from api.utils.email_helper import EmailResult
     mock_send_email.return_value = EmailResult(success=True, status_code=200)
     mock_generate_pdf.return_value = b"%PDF-1.4"
-    
+
     def mock_get_side_effect(url, **kwargs):
         if "scheduled_scan_runs" in url:
             assert "select=id,user_id,scan_id,schedule_id,status,email_status,email_lease_until" in url
@@ -748,7 +748,7 @@ def test_email_worker_explicit_projection(mock_send_email, mock_generate_pdf):
                 resp = client.post("/api/internal/scheduled-report-email",
                                    json={"run_id": "550e8400-e29b-41d4-a716-446655440000"},
                                    headers={"Upstash-Signature": "valid"})
-                
+
                 assert resp.status_code == 200
                 assert resp.json().get("status") == "sent"
 
@@ -765,7 +765,7 @@ def test_email_worker_claim_patch_responses(mock_send_email, mock_generate_pdf, 
     from api.utils.email_helper import EmailResult
     mock_send_email.return_value = EmailResult(success=True, status_code=200)
     mock_generate_pdf.return_value = b"%PDF-1.4"
-    
+
     def mock_get_side_effect(url, **kwargs):
         resp = MagicMock()
         resp.status_code = 200
@@ -794,7 +794,7 @@ def test_email_worker_claim_patch_responses(mock_send_email, mock_generate_pdf, 
                 resp = client.post("/api/internal/scheduled-report-email",
                                    json={"run_id": "550e8400-e29b-41d4-a716-446655440000"},
                                    headers={"Upstash-Signature": "valid"})
-                
+
                 assert resp.status_code == expected_status
                 if expected_status == 503:
                     assert resp.json()["reason"] == expected_reason
@@ -822,13 +822,124 @@ def test_email_worker_claim_network_exception(mock_get, mock_patch):
             }]
         return resp
     mock_get.side_effect = mock_get_side_effect
-    
+
     mock_patch.side_effect = Exception("Network timeout")
-    
+
     with patch('qstash.Receiver.verify'):
         resp = client.post("/api/internal/scheduled-report-email",
                            json={"run_id": "550e8400-e29b-41d4-a716-446655440000"},
                            headers={"Upstash-Signature": "valid"})
-        
+
         assert resp.status_code == 503
         assert resp.json()["reason"] == "db_claim_exception"
+
+# ==========================
+# RUN LOOKUP REGRESSION TESTS
+# ==========================
+
+@patch('api.scheduling.email_worker.requests.get')
+@patch('api.scheduling.email_worker.requests.patch')
+@patch('api.scheduling.email_worker.generate_pdf')
+@patch('api.scheduling.email_worker.send_email')
+def test_email_worker_run_lookup_empty_retry(mock_send, mock_pdf, mock_patch, mock_get):
+    mock_get.return_value.status_code = 200
+    mock_get.return_value.json.return_value = []
+
+    with patch('qstash.Receiver.verify'):
+        resp = client.post("/api/internal/scheduled-report-email", json={"run_id": "550e8400-e29b-41d4-a716-446655440000"}, headers={"Upstash-Signature": "sig"})
+
+    assert resp.status_code == 503
+    assert resp.json()["reason"] == "run_lookup_pending"
+    mock_pdf.assert_not_called()
+    mock_send.assert_not_called()
+    mock_patch.assert_not_called()
+
+    # Assert exact URL called
+    called_url = mock_get.call_args[0][0]
+    assert "rest/v1/scheduled_scan_runs?id=eq.550e8400-e29b-41d4-a716-446655440000&select=id,user_id,scan_id,schedule_id,status,email_status,email_lease_until" in called_url
+
+
+@patch('api.scheduling.email_worker.requests.get')
+@patch('api.scheduling.email_worker.requests.patch')
+@patch('api.scheduling.email_worker.generate_pdf')
+@patch('api.scheduling.email_worker.send_email')
+def test_email_worker_run_lookup_500_retry(mock_send, mock_pdf, mock_patch, mock_get):
+    mock_get.return_value.status_code = 500
+
+    with patch('qstash.Receiver.verify'):
+        resp = client.post("/api/internal/scheduled-report-email", json={"run_id": "550e8400-e29b-41d4-a716-446655440000"}, headers={"Upstash-Signature": "sig"})
+
+    assert resp.status_code == 503
+    assert resp.json()["reason"] == "run_lookup_transient"
+    mock_pdf.assert_not_called()
+    mock_send.assert_not_called()
+    mock_patch.assert_not_called()
+
+
+@patch('api.scheduling.email_worker.requests.get')
+@patch('api.scheduling.email_worker.requests.patch')
+@patch('api.scheduling.email_worker.generate_pdf')
+@patch('api.scheduling.email_worker.send_email')
+def test_email_worker_run_lookup_429_retry(mock_send, mock_pdf, mock_patch, mock_get):
+    mock_get.return_value.status_code = 429
+
+    with patch('qstash.Receiver.verify'):
+        resp = client.post("/api/internal/scheduled-report-email", json={"run_id": "550e8400-e29b-41d4-a716-446655440000"}, headers={"Upstash-Signature": "sig"})
+
+    assert resp.status_code == 503
+    assert resp.json()["reason"] == "run_lookup_transient"
+    mock_pdf.assert_not_called()
+    mock_send.assert_not_called()
+    mock_patch.assert_not_called()
+
+
+@patch('api.scheduling.email_worker.requests.get')
+@patch('api.scheduling.email_worker.requests.patch')
+@patch('api.scheduling.email_worker.generate_pdf')
+@patch('api.scheduling.email_worker.send_email')
+def test_email_worker_run_lookup_network_retry(mock_send, mock_pdf, mock_patch, mock_get):
+    mock_get.side_effect = Exception("network failure")
+
+    with patch('qstash.Receiver.verify'):
+        resp = client.post("/api/internal/scheduled-report-email", json={"run_id": "550e8400-e29b-41d4-a716-446655440000"}, headers={"Upstash-Signature": "sig"})
+
+    assert resp.status_code == 503
+    assert resp.json()["reason"] == "run_lookup_transient"
+    mock_pdf.assert_not_called()
+    mock_send.assert_not_called()
+    mock_patch.assert_not_called()
+
+@patch('api.scheduling.email_worker.requests.get')
+@patch('api.scheduling.email_worker.requests.patch')
+@patch('api.scheduling.email_worker.generate_pdf')
+@patch('api.scheduling.email_worker.send_email')
+def test_email_worker_run_lookup_success(mock_send, mock_pdf, mock_patch, mock_get):
+    def mock_get_side_effect(url, **kwargs):
+        resp = MagicMock()
+        resp.status_code = 200
+        if "scheduled_scan_runs" in url:
+            resp.json.return_value = [{
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "user_id": "880e8400-e29b-41d4-a716-446655440000",
+                "scan_id": "770e8400-e29b-41d4-a716-446655440000",
+                "email_status": "pending"
+            }]
+        elif "scans" in url:
+            resp.json.return_value = [{
+                "report_data": {"test": "data"}
+            }]
+        else:
+            resp.json.return_value = []
+        return resp
+
+    mock_get.side_effect = mock_get_side_effect
+
+    with patch('qstash.Receiver.verify'):
+        resp = client.post("/api/internal/scheduled-report-email", json={"run_id": "550e8400-e29b-41d4-a716-446655440000"}, headers={"Upstash-Signature": "sig"})
+
+    # It should bypass the run_lookup blocks and fail later or continue.
+    # Here it might fail at Auth fetch or something else, but definitely not 503 from lookup
+    assert resp.json()["reason"] not in ["run_lookup_pending", "run_lookup_transient"]
+
+    called_url = mock_get.call_args_list[0][0][0]
+    assert "rest/v1/scheduled_scan_runs?id=eq.550e8400-e29b-41d4-a716-446655440000&select=id,user_id,scan_id,schedule_id,status,email_status,email_lease_until" in called_url
