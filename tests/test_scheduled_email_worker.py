@@ -1,4 +1,5 @@
-﻿import os
+from api.auth.entitlements import ScheduledEligibility
+import os
 os.environ['SUPABASE_URL'] = 'http://mock'
 os.environ['SUPABASE_SECRET_KEY'] = 'token'
 
@@ -102,7 +103,7 @@ def test_create_schedule_advanced_email_opt_in(mock_qs, mock_post, mock_get):
 @patch('api.scheduling.worker.requests.post')
 @patch('api.scheduling.worker.requests.patch')
 @patch('api.scheduling.worker.scan_url')
-@patch('api.scheduling.worker.is_scheduled_scans_eligible')
+@patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
 @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
 @patch('api.scheduling.router.QSTASH_TOKEN', 'token')
 @patch('api.scheduling.router.APP_BASE_URL', 'http://mock')
@@ -172,7 +173,7 @@ def test_scan_worker_publish_arguments(mock_elig, mock_scan, mock_patch, mock_po
 @patch('api.scheduling.worker.requests.post')
 @patch('api.scheduling.worker.requests.patch')
 @patch('api.scheduling.worker.scan_url')
-@patch('api.scheduling.worker.is_scheduled_scans_eligible')
+@patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
 @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
 @patch('api.scheduling.router.QSTASH_TOKEN', 'token')
 @patch('api.scheduling.router.APP_BASE_URL', 'http://mock')
@@ -236,7 +237,7 @@ def test_scan_worker_snapshot_opt_in(mock_elig, mock_scan, mock_patch, mock_post
 @patch('api.scheduling.worker.requests.post')
 @patch('api.scheduling.worker.requests.patch')
 @patch('api.scheduling.worker.scan_url')
-@patch('api.scheduling.worker.is_scheduled_scans_eligible')
+@patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
 @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
 @patch('api.scheduling.router.QSTASH_TOKEN', 'token')
 @patch('api.scheduling.router.APP_BASE_URL', 'http://mock')
@@ -393,7 +394,7 @@ def test_email_worker_malformed_run_id(mock_verify):
 @patch('api.scheduling.worker.requests.post')
 @patch('api.scheduling.worker.requests.patch')
 @patch('api.scheduling.worker.scan_url')
-@patch('api.scheduling.worker.is_scheduled_scans_eligible')
+@patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
 @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
 @patch('api.scheduling.router.QSTASH_TOKEN', 'token')
 @patch('api.scheduling.router.APP_BASE_URL', 'http://mock')

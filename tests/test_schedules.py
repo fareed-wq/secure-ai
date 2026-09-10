@@ -1,3 +1,4 @@
+from api.auth.entitlements import ScheduledEligibility
 import os
 import unittest
 from datetime import datetime, time, timedelta
@@ -42,19 +43,19 @@ class TestSchedules(unittest.TestCase):
     @patch('api.auth.entitlements.get_user_role', return_value='admin')
     @patch('api.auth.entitlements.get_user_plan_and_status', return_value=('free', 'active'))
     def test_auth_admin_create_allowed(self, mock_plan, mock_role):
-        self.assertTrue(is_scheduled_scans_eligible("admin_user_id"))
+        self.assertEqual(is_scheduled_scans_eligible("admin_user_id"), ScheduledEligibility.ELIGIBLE)
 
 
     @patch('api.auth.entitlements.get_user_role', return_value='user')
     @patch('api.auth.entitlements.get_user_plan_and_status', return_value=('professional', 'active'))
     def test_auth_paid_metadata_alone_blocked(self, mock_plan, mock_role):
-        self.assertFalse(is_scheduled_scans_eligible("paid_user_id"))
+        self.assertEqual(is_scheduled_scans_eligible("paid_user_id"), ScheduledEligibility.INELIGIBLE)
          # V1 policy is admin ONLY
 
     @patch('api.auth.entitlements.get_user_role', return_value='admin')
     @patch('api.auth.entitlements.get_user_plan_and_status', return_value=('free', 'suspended'))
     def test_auth_suspended_admin_blocked(self, mock_plan, mock_role):
-        self.assertFalse(is_scheduled_scans_eligible('suspended_admin'))
+        self.assertEqual(is_scheduled_scans_eligible('suspended_admin'), ScheduledEligibility.INELIGIBLE)
 
     def test_auth_guest_create_401(self):
         resp = client.post("/api/schedules", json={
@@ -63,12 +64,9 @@ class TestSchedules(unittest.TestCase):
         })
         self.assertIn(resp.status_code, (401, 403))
 
-    @patch('api.auth.entitlements.Entitlements.can_use_scheduled_scans', new_callable=unittest.mock.PropertyMock)
-    @patch('api.auth.entitlements.get_current_user')
-    def test_auth_non_admin_create_403(self, mock_user, mock_can_use):
-        mock_user.return_value = {"sub": "123"}
-        mock_can_use.return_value = False
-        # Override dependency
+    @patch('api.auth.entitlements.is_scheduled_scans_eligible', return_value=ScheduledEligibility.INELIGIBLE)
+    def test_auth_non_admin_create_403(self, mock_elig):
+        import api.index
         api.index.app.dependency_overrides[api.auth.entitlements.require_current_user] = lambda: {"sub": "123"}
         resp = client.post("/api/schedules", json={
             "target_url": "https://example.com", "frequency": "daily", "time_of_day": "09:00:00",
@@ -206,7 +204,7 @@ class TestSchedules(unittest.TestCase):
         self.assertEqual(resp.json()["reason"], "schedule_id_mismatch")
 
     @patch('api.scheduling.worker.validate_scan_target', return_value={"error": "bad"})
-    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
     @patch('api.scheduling.worker.requests.post')
     @patch('api.scheduling.worker.requests.patch')
     @patch('api.scheduling.worker.requests.get')
@@ -218,7 +216,7 @@ class TestSchedules(unittest.TestCase):
         resp = client.post("/api/internal/scheduled-scan", data=b'{"schedule_id": "sched-123"}', headers={"Upstash-Signature": "sig"})
         self.assertEqual(resp.json()["reason"], "target_invalid")
 
-    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=False)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.INELIGIBLE)
     @patch('api.scheduling.worker.requests.post')
     @patch('api.scheduling.worker.requests.patch')
     @patch('api.scheduling.worker.requests.get')
@@ -232,7 +230,7 @@ class TestSchedules(unittest.TestCase):
 
     @patch('api.scheduling.worker.scan_url', return_value={"score": 100})
     @patch('api.scheduling.worker.validate_scan_target', return_value=None)
-    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
     @patch('api.scheduling.worker.requests.post')
     @patch('api.scheduling.worker.requests.patch')
     @patch('api.scheduling.worker.requests.get')
@@ -248,7 +246,7 @@ class TestSchedules(unittest.TestCase):
 
     @patch('api.scheduling.worker.scan_url', side_effect=Exception("Crash"))
     @patch('api.scheduling.worker.validate_scan_target', return_value=None)
-    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
     @patch('api.scheduling.worker.requests.post')
     @patch('api.scheduling.worker.requests.patch')
     @patch('api.scheduling.worker.requests.get')
@@ -264,7 +262,7 @@ class TestSchedules(unittest.TestCase):
     # TESTS 17-18: IDEMPOTENCY & CONCURRENCY
     # ==========================
     @patch('api.scheduling.worker.validate_scan_target', return_value=None)
-    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
     @patch('api.scheduling.worker.requests.post')
     @patch('api.scheduling.worker.requests.patch')
     @patch('api.scheduling.worker.requests.get')
@@ -278,7 +276,7 @@ class TestSchedules(unittest.TestCase):
         self.assertEqual(resp.json()["reason"], "already_processed")
 
     @patch('api.scheduling.worker.validate_scan_target', return_value=None)
-    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
     @patch('api.scheduling.worker.requests.post')
     @patch('api.scheduling.worker.requests.patch')
     @patch('api.scheduling.worker.requests.get')
@@ -456,52 +454,60 @@ class TestSchedules(unittest.TestCase):
 
     @patch('api.auth.entitlements.requests.get')
     def test_entitlement_eligibility_logic(self, mock_get):
-        from api.auth.entitlements import is_scheduled_scans_eligible
+        from api.auth.entitlements import is_scheduled_scans_eligible, ScheduledEligibility
         import unittest.mock
 
-        # Test 1: admin, free, active -> TRUE
+        # Test 1: admin, free, active -> ELIGIBLE
         mock_get.side_effect = [
             unittest.mock.Mock(status_code=200, json=lambda: [{'role': 'admin'}]),
             unittest.mock.Mock(status_code=200, json=lambda: [{'plan': 'free', 'status': 'active'}])
         ]
-        self.assertTrue(is_scheduled_scans_eligible('u1'))
+        self.assertEqual(is_scheduled_scans_eligible('u1'), ScheduledEligibility.ELIGIBLE)
 
-        # Test 2: admin, suspended -> FALSE
+        # Test 2: admin, suspended -> INELIGIBLE
         mock_get.side_effect = [
             unittest.mock.Mock(status_code=200, json=lambda: [{'role': 'admin'}]),
             unittest.mock.Mock(status_code=200, json=lambda: [{'plan': 'free', 'status': 'suspended'}])
         ]
-        self.assertFalse(is_scheduled_scans_eligible('u2'))
+        self.assertEqual(is_scheduled_scans_eligible('u2'), ScheduledEligibility.INELIGIBLE)
 
-        # Test 3: user, active -> FALSE
+        # Test 3: user, active -> INELIGIBLE
         mock_get.side_effect = [
             unittest.mock.Mock(status_code=200, json=lambda: [{'role': 'user'}]),
             unittest.mock.Mock(status_code=200, json=lambda: [{'plan': 'free', 'status': 'active'}])
         ]
-        self.assertFalse(is_scheduled_scans_eligible('u3'))
+        self.assertEqual(is_scheduled_scans_eligible('u3'), ScheduledEligibility.INELIGIBLE)
 
-        # Test 4: backend lookup failure -> FALSE
+        # Test 4: role lookup fails (HTTP 500) -> ERROR
         mock_get.side_effect = [
-            unittest.mock.Mock(status_code=500)
+            unittest.mock.Mock(status_code=500, text='Internal Server Error')
         ]
-        with self.assertLogs('api.auth.entitlements', level='ERROR') as cm:
-            self.assertFalse(is_scheduled_scans_eligible('u4'))
-        self.assertTrue(any('scheduled_entitlement_lookup_failed' in msg for msg in cm.output))
 
-        # Test 5: role succeeds, plan fails -> FALSE
+        # Test 5: role lookup exception (timeout) -> ERROR
+        mock_get.side_effect = Exception("Timeout")
+        self.assertEqual(is_scheduled_scans_eligible('u5'), ScheduledEligibility.ERROR)
+
+        # Test 6: plan lookup fails (HTTP 429) -> ERROR
         mock_get.side_effect = [
             unittest.mock.Mock(status_code=200, json=lambda: [{'role': 'admin'}]),
-            unittest.mock.Mock(status_code=500)
+            unittest.mock.Mock(status_code=429, text='Too Many Requests')
         ]
-        with self.assertLogs('api.auth.entitlements', level='ERROR') as cm2:
-            self.assertFalse(is_scheduled_scans_eligible('u5'))
-        self.assertTrue(any('scheduled_entitlement_lookup_failed' in msg for msg in cm2.output))
+        self.assertEqual(is_scheduled_scans_eligible('u6'), ScheduledEligibility.ERROR)
+
+        # Test 7: plan lookup exception (timeout) -> ERROR
+        mock_get.side_effect = [
+            unittest.mock.Mock(status_code=200, json=lambda: [{'role': 'admin'}]),
+            Exception("Timeout")
+        ]
+        self.assertEqual(is_scheduled_scans_eligible('u7'), ScheduledEligibility.ERROR)
+
+
 
 
 
     @patch('api.scheduling.worker.scan_url', return_value={"score": 100})
     @patch('api.scheduling.worker.validate_scan_target', return_value=None)
-    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
     @patch('api.scheduling.worker.requests.post')
     @patch('api.scheduling.worker.requests.patch')
     @patch('api.scheduling.worker.requests.get')
@@ -528,7 +534,7 @@ class TestSchedules(unittest.TestCase):
 
     @patch('api.scheduling.worker.scan_url', side_effect=Exception("Failed"))
     @patch('api.scheduling.worker.validate_scan_target', return_value=None)
-    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
     @patch('api.scheduling.worker.requests.post')
     @patch('api.scheduling.worker.requests.patch')
     @patch('api.scheduling.worker.requests.get')
@@ -628,7 +634,7 @@ class TestSchedules(unittest.TestCase):
     @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
     @patch('api.scheduling.worker.QSTASH_NEXT_SIGNING_KEY', 'x')
     @patch('api.scheduling.worker.scan_url')
-    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
     @patch('api.scheduling.worker.requests.post')
     @patch('api.scheduling.worker.requests.patch')
     @patch('api.scheduling.worker.requests.get')
@@ -648,7 +654,7 @@ class TestSchedules(unittest.TestCase):
 
     @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
     @patch('api.scheduling.worker.QSTASH_NEXT_SIGNING_KEY', 'x')
-    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=True)
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ELIGIBLE)
     @patch('api.scheduling.worker.requests.post')
     @patch('api.scheduling.worker.requests.patch')
     @patch('api.scheduling.worker.requests.get')
@@ -666,7 +672,7 @@ class TestSchedules(unittest.TestCase):
     def test_list_schedules_email_reports(self, mock_headers, mock_get):
         import api.index
         api.index.app.dependency_overrides[api.auth.entitlements.require_scheduled_scans_access] = lambda: {"sub": "123"}
-        
+
         def mock_get_side_effect(url, **kwargs):
             if "scan_schedules" in url:
                 assert "select=id,user_id" in url
@@ -686,9 +692,9 @@ class TestSchedules(unittest.TestCase):
                     {"schedule_id": "sched1", "email_status": "sent"}
                 ]
                 return resp
-                
+
         mock_get.side_effect = mock_get_side_effect
-        
+
         response = client.get("/api/schedules")
         self.assertEqual(response.status_code, 200)
         data = response.json()
@@ -697,6 +703,44 @@ class TestSchedules(unittest.TestCase):
         self.assertEqual(data[0]["latest_email_status"], "sent")
         self.assertEqual(data[1]["email_report_enabled"], False)
         self.assertNotIn("latest_email_status", data[1])
+
+
+    @patch('api.auth.entitlements.get_user_role', return_value='error')
+    @patch('api.auth.entitlements.get_user_plan_and_status', return_value=('error', 'error'))
+    def test_auth_entitlement_lookup_failed_503(self, mock_plan, mock_role):
+        import api.index
+        api.index.app.dependency_overrides[api.auth.entitlements.require_current_user] = lambda: {"sub": "123"}
+        resp = client.post("/api/schedules", json={
+            "target_url": "https://example.com", "frequency": "daily", "time_of_day": "09:00:00",
+            "timezone": "UTC", "authorization_acknowledged": True
+        })
+        self.assertEqual(resp.status_code, 503)
+        api.index.app.dependency_overrides.clear()
+
+    @patch('api.scheduling.worker.scan_url')
+    @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ERROR)
+    @patch('api.scheduling.worker.requests.post')
+    @patch('api.scheduling.worker.requests.patch')
+    @patch('api.scheduling.worker.requests.get')
+    @patch('api.scheduling.worker.Receiver')
+    @patch('api.scheduling.router.QStashClient')
+    @patch('api.scheduling.worker.QSTASH_CURRENT_SIGNING_KEY', 'x')
+    @patch('api.scheduling.worker.QSTASH_NEXT_SIGNING_KEY', 'x')
+    def test_worker_entitlement_lookup_failed(self, mock_qstash, mock_rec, mock_get, mock_patch, mock_post, mock_elig, mock_scan):
+        self._mock_worker_deps(mock_get, mock_patch, mock_post)
+        resp = client.post("/api/internal/scheduled-scan", data=b'{"schedule_id": "sched-123"}', headers={"Upstash-Signature": "sig"})
+        self.assertEqual(resp.status_code, 503)
+        self.assertEqual(resp.json()["reason"], "entitlement_lookup_failed")
+
+        # scan_url NOT called
+        mock_scan.assert_not_called()
+
+        # no PATCH setting is_enabled=false / last_status=paused_entitlement
+        patch_urls = [args[0][0] for args in mock_patch.call_args_list]
+        self.assertFalse(any("scan_schedules" in url for url in patch_urls))
+
+        # QStash schedule.pause NOT called
+        mock_qstash.return_value.schedule.pause.assert_not_called()
 
     def test_time_utils_monthly(self):
         from api.scheduling.time_utils import get_next_run_at

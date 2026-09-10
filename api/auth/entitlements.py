@@ -1,3 +1,4 @@
+from enum import Enum
 import os
 import time
 import requests
@@ -32,14 +33,14 @@ def verify_jwt(token: str) -> dict:
         # Extract the unverified header to check alg and kid
         unverified_header = jwt.get_unverified_header(token)
         alg = unverified_header.get("alg")
-        
+
         # Enforce ES256 since project is confirmed to use asymmetric signing
         if alg != "ES256":
             raise HTTPException(status_code=401, detail="Unsupported signing algorithm.")
 
         # Dynamically fetch the signing key from the JWKS cache
         signing_key = jwks_client.get_signing_key_from_jwt(token)
-        
+
         payload = jwt.decode(
             token,
             key=signing_key.key,
@@ -75,7 +76,7 @@ def get_user_role(user_id: str) -> str:
     if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
         logger.error("scheduled_entitlement_lookup_failed: Missing credentials")
         return "error"
-    
+
     url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/user_roles?user_id=eq.{user_id}&select=role"
     headers = {
         "apikey": SUPABASE_SECRET_KEY,
@@ -99,7 +100,7 @@ def get_user_plan_and_status(user_id: str) -> tuple[str, str]:
     if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
         logger.error("scheduled_entitlement_lookup_failed: Missing credentials")
         return "error", "error"
-    
+
     url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/user_plans?user_id=eq.{user_id}&select=plan,status"
     headers = {
         "apikey": SUPABASE_SECRET_KEY,
@@ -123,15 +124,15 @@ def require_admin(user: dict = Security(require_current_user)) -> dict:
     user_id = user.get("sub")
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid user subject.")
-        
+
     role = get_user_role(user_id)
     if role != "admin":
         raise HTTPException(status_code=403, detail="Admin privileges required.")
-        
+
     _, status = get_user_plan_and_status(user_id)
     if status == "suspended":
         raise HTTPException(status_code=403, detail="Account suspended.")
-        
+
     user["role"] = "admin"
     return user
 
@@ -158,7 +159,7 @@ class Entitlements:
     @property
     def can_basic_scan(self) -> bool:
         return True
-        
+
     @property
     def can_advanced_scan(self) -> bool:
         return self.is_admin or self.plan in ["free", "professional"]
@@ -174,7 +175,7 @@ class Entitlements:
     @property
     def can_export_report(self) -> bool:
         return self.is_admin or self.plan in ["free", "professional"]
-        
+
     @property
     def can_download_pdf(self) -> bool:
         return self.is_admin or self.plan in ["free", "professional"]
@@ -215,13 +216,13 @@ def check_guest_quota(ip: str) -> dict:
 
     redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
     redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
-    
+
     if not redis_url or not redis_token:
         return {"quota_limit": limit, "quota_used": limit, "quota_remaining": 0, "reset_at": next_week_start}
 
     key = f"guest_quota:{ip}:{week_start}"
     headers = {"Authorization": f"Bearer {redis_token}"}
-    
+
     try:
         resp = requests.get(f"{redis_url}/get/{key}", headers=headers, timeout=1.0)
         if resp.status_code == 200:
@@ -249,12 +250,12 @@ def consume_guest_quota(ip: str) -> bool:
         ttl_seconds = 604800 # Fallback
 
     key = f"guest_quota:{ip}:{week_start}"
-    
+
     redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
     redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
-    
+
     if not redis_url or not redis_token:
-        return False 
+        return False
 
     lua_script = """
     local current = redis.call('GET', KEYS[1])
@@ -291,14 +292,14 @@ def check_free_quota(user_id: str) -> dict:
 
     redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
     redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
-    
+
     if not redis_url or not redis_token:
         # FAIL CLOSED
         return {"quota_limit": limit, "quota_used": limit, "quota_remaining": 0, "reset_at": next_week_start}
 
     key = get_free_quota_key(user_id, week_start)
     headers = {"Authorization": f"Bearer {redis_token}"}
-    
+
     try:
         resp = requests.get(f"{redis_url}/get/{key}", headers=headers, timeout=1.0)
         if resp.status_code == 200:
@@ -326,12 +327,12 @@ def consume_free_quota(user_id: str) -> bool:
         ttl_seconds = 604800 # Fallback
 
     key = get_free_quota_key(user_id, week_start)
-    
+
     redis_url = os.environ.get("UPSTASH_REDIS_REST_URL")
     redis_token = os.environ.get("UPSTASH_REDIS_REST_TOKEN")
-    
+
     if not redis_url or not redis_token:
-        return False 
+        return False
 
     lua_script = """
     local current = redis.call('GET', KEYS[1])
@@ -378,7 +379,7 @@ def audit_log(admin_user_id: str, action: str, resource_type: str, resource_id: 
         payload["before_state"] = before_state
     if after_state is not None:
         payload["after_state"] = after_state
-        
+
     try:
         resp = requests.post(url, json=payload, headers=headers, timeout=2.0)
         if resp.status_code not in (200, 201, 204):
@@ -408,20 +409,34 @@ def reset_free_quota(user_id: str) -> bool:
         return False
 
 
-def is_scheduled_scans_eligible(user_id: str) -> bool:
+class ScheduledEligibility(str, Enum):
+    ELIGIBLE = "eligible"
+    INELIGIBLE = "ineligible"
+    ERROR = "error"
+
+def is_scheduled_scans_eligible(user_id: str) -> ScheduledEligibility:
     '''Future seam for paid access. Currently delegates to Admin Control.'''
     role = get_user_role(user_id)
     if role == "error":
-        return False
+        return ScheduledEligibility.ERROR
     _, status = get_user_plan_and_status(user_id)
     if status == "error":
-        return False
-    return role == "admin" and status != "suspended"
+        return ScheduledEligibility.ERROR
+
+    if role == "admin" and status != "suspended":
+        return ScheduledEligibility.ELIGIBLE
+    return ScheduledEligibility.INELIGIBLE
 
 def require_scheduled_scans_access(user: dict = Security(require_current_user)) -> dict:
     '''Future seam for paid access. Currently delegates to Admin Control.'''
     user_id = user.get("sub")
-    if not user_id or not is_scheduled_scans_eligible(user_id):
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    eligibility = is_scheduled_scans_eligible(user_id)
+    if eligibility == ScheduledEligibility.ERROR:
+        raise HTTPException(status_code=503, detail="Service Unavailable")
+    elif eligibility == ScheduledEligibility.INELIGIBLE:
         raise HTTPException(status_code=403, detail="Access denied for scheduled scans.")
-    user["role"] = get_user_role(user_id)
+
     return user

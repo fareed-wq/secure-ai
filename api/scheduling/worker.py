@@ -7,7 +7,7 @@ import requests
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.responses import JSONResponse
 
-from api.auth.entitlements import is_scheduled_scans_eligible
+from api.auth.entitlements import is_scheduled_scans_eligible, ScheduledEligibility
 from api.scanner.orchestrator import scan_url, validate_scan_target
 from api.scheduling.time_utils import get_next_run_at
 
@@ -95,7 +95,11 @@ async def handle_scheduled_scan(request: Request):
     user_id = sched["user_id"]
 
     # Check entitlement via centralized eligibility
-    if not is_scheduled_scans_eligible(user_id):
+    eligibility = is_scheduled_scans_eligible(user_id)
+    if eligibility == ScheduledEligibility.ERROR:
+        logger.error(f"scheduled_entitlement_lookup_failed for user {user_id}")
+        return JSONResponse(status_code=503, content={"status": "error", "reason": "entitlement_lookup_failed"})
+    elif eligibility == ScheduledEligibility.INELIGIBLE:
         requests.patch(f"{SUPABASE_URL}/rest/v1/scan_schedules?id=eq.{schedule_id}", headers=db_headers, json={
             "is_enabled": False, "last_status": "paused_entitlement"
         })
