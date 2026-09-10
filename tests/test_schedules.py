@@ -749,5 +749,28 @@ class TestSchedules(unittest.TestCase):
         next_run = get_next_run_at("monthly", time(17, 10), "Asia/Riyadh", day_of_month=9, now_utc=now_utc)
         self.assertEqual(next_run.isoformat(), "2026-10-09T14:10:00+00:00")
 
+
+    def test_invalid_timezone_rejected(self):
+        from api.auth.entitlements import require_scheduled_scans_access
+        api.index.app.dependency_overrides[require_scheduled_scans_access] = lambda: {"sub": "123"}
+        resp = client.post("/api/schedules", json={
+            "target_url": "https://example.com", "frequency": "daily", "time_of_day": "09:00:00",
+            "timezone": "Invalid/Timezone", "authorization_acknowledged": True
+        })
+        self.assertEqual(resp.status_code, 422)
+        api.index.app.dependency_overrides.clear()
+
+    def test_dst_aware_timezone(self):
+        from api.scheduling.time_utils import get_next_run_at
+        from datetime import time, datetime, timezone
+
+        now_utc = datetime(2026, 7, 1, 12, 0, tzinfo=timezone.utc)
+        next_run = get_next_run_at("daily", time(9, 0), "America/New_York", now_utc=now_utc)
+        self.assertEqual(next_run.hour, 13)
+
+        now_utc2 = datetime(2026, 1, 1, 12, 0, tzinfo=timezone.utc)
+        next_run2 = get_next_run_at("daily", time(9, 0), "America/New_York", now_utc=now_utc2)
+        self.assertEqual(next_run2.hour, 14)
+
 if __name__ == '__main__':
     unittest.main()
