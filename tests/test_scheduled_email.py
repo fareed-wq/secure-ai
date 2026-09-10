@@ -13,11 +13,11 @@ from api.utils.pdf_generator import generate_pdf, MAX_EMAIL_PDF_BYTES, _resolve_
 def test_send_email_success(mock_pool_manager):
     mock_http = MagicMock()
     mock_pool_manager.return_value = mock_http
-    
+
     mock_resp = MagicMock()
     mock_resp.status = 200
     mock_http.request.return_value = mock_resp
-    
+
     result = send_email(
         to="test@example.com",
         subject="Test Subject",
@@ -25,12 +25,12 @@ def test_send_email_success(mock_pool_manager):
         attachments=[{"filename": "test.pdf", "content": "base64bytes"}],
         idempotency_key="idemp-123"
     )
-    
+
     assert isinstance(result, EmailResult)
     assert result.success is True
     assert result.status_code == 200
     assert result.is_transient is False
-    
+
     args, kwargs = mock_http.request.call_args
     assert kwargs['headers']['Authorization'] == 'Bearer test_key'
     assert kwargs['headers']['Idempotency-Key'] == 'idemp-123'
@@ -46,7 +46,7 @@ def test_send_email_no_idempotency(mock_pool_manager):
     mock_resp = MagicMock()
     mock_resp.status = 200
     mock_http.request.return_value = mock_resp
-    
+
     send_email(to="test@example.com", subject="Test", html="<p>Test</p>")
     args, kwargs = mock_http.request.call_args
     assert 'Idempotency-Key' not in kwargs['headers']
@@ -59,7 +59,7 @@ def test_send_email_3xx(mock_pool_manager):
     mock_resp = MagicMock()
     mock_resp.status = 301
     mock_http.request.return_value = mock_resp
-    
+
     result = send_email(to="test@example.com", subject="Test", html="<p>Test</p>")
     assert result.success is False
 
@@ -72,7 +72,7 @@ def test_send_email_400_permanent(mock_pool_manager):
     mock_resp.status = 400
     mock_resp.data = json.dumps({"name": "validation_error"}).encode()
     mock_http.request.return_value = mock_resp
-    
+
     result = send_email(to="test@example.com", subject="Test", html="<p>Test</p>")
     assert result.success is False
     assert result.is_transient is False
@@ -87,7 +87,7 @@ def test_send_email_409_concurrent(mock_pool_manager):
     mock_resp.status = 409
     mock_resp.data = json.dumps({"name": "concurrent_idempotent_requests"}).encode()
     mock_http.request.return_value = mock_resp
-    
+
     result = send_email(to="test@example.com", subject="Test", html="<p>Test</p>")
     assert result.success is False
     assert result.is_transient is True
@@ -102,7 +102,7 @@ def test_send_email_409_invalid(mock_pool_manager):
     mock_resp.status = 409
     mock_resp.data = json.dumps({"name": "invalid_idempotent_request"}).encode()
     mock_http.request.return_value = mock_resp
-    
+
     result = send_email(to="test@example.com", subject="Test", html="<p>Test</p>")
     assert result.success is False
     assert result.is_transient is False
@@ -117,7 +117,7 @@ def test_send_email_429_rate_limit(mock_pool_manager):
     mock_resp.status = 429
     mock_resp.data = json.dumps({"name": "rate_limit_exceeded"}).encode()
     mock_http.request.return_value = mock_resp
-    
+
     result = send_email(to="test@example.com", subject="Test", html="<p>Test</p>")
     assert result.success is False
     assert result.is_transient is True
@@ -132,7 +132,7 @@ def test_send_email_429_quota(mock_pool_manager):
     mock_resp.status = 429
     mock_resp.data = json.dumps({"name": "daily_quota_exceeded"}).encode()
     mock_http.request.return_value = mock_resp
-    
+
     result = send_email(to="test@example.com", subject="Test", html="<p>Test</p>")
     assert result.success is False
     assert result.is_transient is False
@@ -147,7 +147,7 @@ def test_send_email_429_quota_monthly(mock_pool_manager):
     mock_resp.status = 429
     mock_resp.data = json.dumps({"name": "monthly_quota_exceeded"}).encode()
     mock_http.request.return_value = mock_resp
-    
+
     result = send_email(to="test@example.com", subject="Test", html="<p>Test</p>")
     assert result.success is False
     assert result.is_transient is False
@@ -162,7 +162,7 @@ def test_send_email_429_unknown(mock_pool_manager):
     mock_resp.status = 429
     mock_resp.data = json.dumps({"name": "some_future_throttling"}).encode()
     mock_http.request.return_value = mock_resp
-    
+
     result = send_email(to="test@example.com", subject="Test", html="<p>Test</p>")
     assert result.success is False
     assert result.is_transient is True
@@ -176,7 +176,7 @@ def test_send_email_5xx(mock_pool_manager):
     mock_resp = MagicMock()
     mock_resp.status = 502
     mock_http.request.return_value = mock_resp
-    
+
     result = send_email(to="test@example.com", subject="Test", html="<p>Test</p>")
     assert result.success is False
     assert result.is_transient is True
@@ -188,7 +188,7 @@ def test_send_email_timeout(mock_pool_manager):
     mock_http = MagicMock()
     mock_pool_manager.return_value = mock_http
     mock_http.request.side_effect = urllib3.exceptions.TimeoutError("timeout")
-    
+
     result = send_email(to="test@example.com", subject="Test", html="<p>Test</p>")
     assert result.success is False
     assert result.is_transient is True
@@ -250,18 +250,101 @@ def test_resolve_scan_timestamp():
     # 3. both supplied -> scan_created_at wins
     assert _resolve_scan_timestamp({"scan_start": "2024-02-01"}, "2024-01-01") == "2024-01-01"
     # 4. neither supplied
-    assert _resolve_scan_timestamp({}, None) == "N/A"
+    assert _resolve_scan_timestamp({}, None) == "undated"
 
 # 3. Test Migration file syntax loosely
 def test_migration_file_exists():
     migrations = os.listdir("supabase/migrations")
     email_mig = [m for m in migrations if "scheduled_email_reports" in m]
     assert len(email_mig) == 1
-    
+
     with open(f"supabase/migrations/{email_mig[0]}", 'r') as f:
         content = f.read()
-        
+
     assert "email_report_enabled boolean NOT NULL DEFAULT false" in content
     assert "email_status text NOT NULL DEFAULT 'not_requested'" in content
     assert "ON DELETE SET NULL" in content
     assert "DROP NOT NULL" in content
+def test_generate_pdf_deterministic():
+    report_data = {
+        "target_url": "https://example.com",
+        "score": 85,
+        "scan_mode": "passive",
+        "findings": [
+            {
+                "name": "Bad <script>",
+                "severity": "Critical",
+                "description": "& whatever",
+                "remediation": "nothing"
+            }
+        ]
+    }
+    b1 = generate_pdf(report_data, scan_created_at="2023-01-01T00:00:00Z")
+    b2 = generate_pdf(report_data, scan_created_at="2023-01-01T00:00:00Z")
+    assert b1 == b2, "PDF bytes should be byte-for-byte deterministic"
+
+
+from unittest.mock import patch
+def test_generate_pdf_sections_basic():
+    report_data = {
+        "target_url": "https://example.com",
+        "score": 85,
+        "scan_mode": "passive",
+        "findings": [
+            {
+                "name": "Bad <script>",
+                "severity": "Critical",
+                "description": "& whatever",
+                "remediation": "Do this action"
+            },
+            {
+                "name": "Info Leak",
+                "severity": "Info",
+                "description": "Some info leak",
+                "remediation": "Fix it"
+            },
+            {
+                "name": "Check Passed",
+                "severity": "Passed"
+            }
+        ]
+    }
+    with patch('api.utils.pdf_generator.SimpleDocTemplate.build') as mock_build:
+        generate_pdf(report_data, scan_created_at="2023-01-01T00:00:00Z")
+        elements = mock_build.call_args[0][0]
+
+        # Combine all paragraph texts
+        all_text = ""
+        for el in elements:
+            if hasattr(el, 'text'):
+                all_text += el.text + " "
+            elif hasattr(el, '_cellvalues'):
+                all_text += str(el._cellvalues) + " "
+
+        assert "Executive Summary" in all_text
+        assert "Key Risks" in all_text
+        assert "Recommendation:</b> Do this action" in all_text
+        assert "Technical Details" in all_text
+        assert "Info Leak" in all_text
+        assert "Passed Security Checks" in all_text
+        assert "Check Passed" in all_text
+        assert "passive security assessment" in all_text
+        assert "&lt;script&gt;" in all_text
+
+def test_generate_pdf_advanced_disclaimer():
+    report_data = {
+        "target_url": "https://example.com",
+        "score": 85,
+        "scan_mode": "active",
+        "findings": []
+    }
+    with patch('api.utils.pdf_generator.SimpleDocTemplate.build') as mock_build:
+        generate_pdf(report_data, scan_created_at="2023-01-01T00:00:00Z")
+        elements = mock_build.call_args[0][0]
+        all_text = ""
+        for el in elements:
+            if hasattr(el, 'text'):
+                all_text += el.text + " "
+
+        assert "passive-first, low-impact assessment" in all_text
+        assert "does NOT perform exploitation" in all_text
