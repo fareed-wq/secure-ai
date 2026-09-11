@@ -35,23 +35,23 @@ def test_compare_reports_logic():
             ]
         }
     }
-    
+
     result = compare_reports(old_scan, new_scan)
     assert result["old_score"] == 80
     assert result["new_score"] == 90
     assert result["score_change"] == 10
-    
+
     assert len(result["improved"]) == 1
     assert result["improved"][0]["name"] == "No CSP"
-    
+
     assert len(result["regressed"]) == 1
     assert result["regressed"][0]["name"] == "Outdated TLS"
-    
+
     assert len(result["added"]) == 1
     assert result["added"][0]["name"] == "New Issue"
-    
+
     assert len(result["removed"]) == 0
-    
+
     assert len(result["unchanged"]) == 1
     assert result["unchanged"][0]["name"] == "Missing Headers"
 
@@ -78,7 +78,7 @@ def test_compare_reports_unknown_mode():
 @patch("api.admin.requests.get")
 def test_admin_compare_endpoint(mock_requests_get):
     app.dependency_overrides[require_admin] = lambda: {"sub": "admin123", "role": "admin"}
-    
+
     # Mock supabase responses
     def mock_get(url, *args, **kwargs):
         mock_resp = MagicMock()
@@ -100,7 +100,7 @@ def test_admin_compare_endpoint(mock_requests_get):
         return mock_resp
 
     mock_requests_get.side_effect = mock_get
-    
+
     try:
         response = client.get("/api/admin/scans/compare?scan_id_1=1&scan_id_2=2", headers={"Authorization": "Bearer token"})
         assert response.status_code == 200
@@ -132,13 +132,13 @@ def test_compare_reports_score_increase_only():
             ]
         }
     }
-    
+
     from api.scanner.compare import compare_reports
     result = compare_reports(old_scan, new_scan)
     assert result["old_score"] == 80
     assert result["new_score"] == 90
     assert result["score_change"] == 10
-    
+
     assert len(result["improved"]) == 0
     assert len(result["regressed"]) == 0
     assert len(result["added"]) == 0
@@ -296,16 +296,16 @@ def test_compare_reports_qa_mixed():
     result = compare_reports(old_scan, new_scan)
     assert len(result["improved"]) == 1
     assert result["improved"][0]["name"] == "Improved Finding"
-    
+
     assert len(result["regressed"]) == 1
     assert result["regressed"][0]["name"] == "Regressed Finding"
-    
+
     assert len(result["added"]) == 1
     assert result["added"][0]["name"] == "Added Finding"
-    
+
     assert len(result["removed"]) == 1
     assert result["removed"][0]["name"] == "Removed Finding"
-    
+
     assert len(result["unchanged"]) == 1
     assert result["unchanged"][0]["name"] == "Unchanged Finding"
 
@@ -489,3 +489,288 @@ def test_admin_compare_scans_other_user(monkeypatch):
     assert resp.status_code == 403
 
     app.dependency_overrides.clear()
+
+# === NEW PHASE 1 REGRESSION TESTS ===
+
+def test_compare_duplicate_not_discarded():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Duplicate Name", "module": "modA", "severity": "Medium"},
+                {"name": "Duplicate Name", "module": "modA", "severity": "High"}
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Duplicate Name", "module": "modA", "severity": "Medium"},
+                {"name": "Duplicate Name", "module": "modA", "severity": "High"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 2
+
+def test_compare_duplicate_removed():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Duplicate Name", "module": "modA", "severity": "Medium"},
+                {"name": "Duplicate Name", "module": "modA", "severity": "Medium"}
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Duplicate Name", "module": "modA", "severity": "Medium"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+    assert len(res["removed"]) == 1
+
+def test_compare_duplicate_added():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Duplicate Name", "module": "modA", "severity": "Medium"}
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Duplicate Name", "module": "modA", "severity": "Medium"},
+                {"name": "Duplicate Name", "module": "modA", "severity": "Medium"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+    assert len(res["added"]) == 1
+
+def test_compare_exact_severity_pairing_first():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Test", "module": "mod", "severity": "Medium"},
+                {"name": "Test", "module": "mod", "severity": "High"}
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Test", "module": "mod", "severity": "Medium"},
+                {"name": "Test", "module": "mod", "severity": "Critical"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    # Medium matches Medium (unchanged)
+    # High -> Critical (regressed)
+    assert len(res["unchanged"]) == 1
+    assert res["unchanged"][0]["severity"] == "Medium"
+    assert len(res["regressed"]) == 1
+    assert res["regressed"][0]["old"]["severity"] == "High"
+    assert res["regressed"][0]["new"]["severity"] == "Critical"
+
+def test_compare_same_name_different_module():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "CommonName", "module": "ModuleA", "severity": "Low"}
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "CommonName", "module": "ModuleB", "severity": "Low"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    # Should not collide. Old is removed, new is added.
+    assert len(res["unchanged"]) == 0
+    assert len(res["removed"]) == 1
+    assert res["removed"][0]["module"] == "ModuleA"
+    assert len(res["added"]) == 1
+    assert res["added"][0]["module"] == "ModuleB"
+
+def test_compare_missing_module_legacy_fallback():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "LegacyName", "severity": "Medium"}
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "LegacyName", "severity": "Medium"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_conservation():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "A", "module": "mod", "severity": "High"},
+                {"name": "A", "module": "mod", "severity": "High"},
+                {"name": "A", "module": "mod", "severity": "Medium"}
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "A", "module": "mod", "severity": "High"},
+                {"name": "A", "module": "mod", "severity": "Critical"},
+                {"name": "A", "module": "mod", "severity": "Low"},
+                {"name": "A", "module": "mod", "severity": "Low"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    # OLD: 3 findings. NEW: 4 findings.
+    # Total matched pairs + removed = 3 (size of OLD)
+    # Total matched pairs + added = 4 (size of NEW)
+    num_unchanged = len(res["unchanged"])
+    num_improved = len(res["improved"])
+    num_regressed = len(res["regressed"])
+    num_added = len(res["added"])
+    num_removed = len(res["removed"])
+
+    total_matched_pairs = num_unchanged + num_improved + num_regressed
+    assert total_matched_pairs + num_removed == 3
+    assert total_matched_pairs + num_added == 4
+
+# === NEW CROSS-VERSION MODULE FALLBACK TESTS ===
+
+def test_compare_old_missing_module_new_has():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "module": "ModuleA", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+    assert len(res["added"]) == 0
+    assert len(res["removed"]) == 0
+
+def test_compare_old_has_module_new_missing():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "module": "ModuleA", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+    assert len(res["added"]) == 0
+    assert len(res["removed"]) == 0
+
+def test_compare_ambiguous_legacy_matching():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "X", "module": "ModuleA", "severity": "Medium"},
+                {"name": "X", "module": "ModuleB", "severity": "Medium"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    # Ambiguous! Old X shouldn't map to either because it lacks module and there's 2 matches.
+    # Total findings conserved: Old has 1, New has 2.
+    assert len(res["unchanged"]) == 0
+    assert len(res["removed"]) == 1
+    assert len(res["added"]) == 2
+
+def test_compare_duplicates_with_legacy_absence():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "X", "severity": "Medium"},
+                {"name": "X", "severity": "High"}
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "X", "module": "ModuleA", "severity": "Medium"},
+                {"name": "X", "module": "ModuleA", "severity": "High"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    # Unambiguous merge, both lists combined
+    assert len(res["unchanged"]) == 2
+    assert len(res["added"]) == 0
+    assert len(res["removed"]) == 0
