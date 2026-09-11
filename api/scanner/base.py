@@ -45,7 +45,9 @@ class ScannerModule(ABC):
         category: str = "information_exposure",
         cvss: Optional[str] = None,
         impact: Optional[str] = None,
-        domain: str = ""
+        domain: str = "",
+        rule_id: Optional[str] = None,
+        instance_key: Optional[str] = None
     ) -> dict:
         try:
             limit = 1000 if name in ["Exposed Secret in JS Bundle", "Source Map Leak Detected", "Verbose Error / Stack Trace Detected", "Subdomains Discovered"] else 180
@@ -113,7 +115,7 @@ class ScannerModule(ABC):
             cvss_score = None
             cvss_severity = None
 
-        return {
+        ret = {
             "name": name,
             "severity": severity,
             "category": category,
@@ -131,3 +133,10 @@ class ScannerModule(ABC):
             "cvss_severity": cvss_severity,
             "domain": domain
         }
+
+        if rule_id and str(rule_id).strip():
+            ret["rule_id"] = str(rule_id).strip()
+        if instance_key and str(instance_key).strip():
+            ret["instance_key"] = str(instance_key).strip()
+
+        return ret
