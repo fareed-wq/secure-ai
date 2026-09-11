@@ -138,3 +138,33 @@ def test_cookie_classification_true_positives(module, monkeypatch):
         monkeypatch.setattr("api.scanner.modules.http_security.safe_request", lambda *a, **kw: mock_resp([f"{name}=abc"]))
         findings = module.run("https://example.com", "example.com", MagicMock())
         assert any(f["severity"] == "Medium" for f in findings), f"{name} SHOULD be session"
+
+def test_cookie_identity_metadata(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.http_security.safe_request", lambda *a, **kw: mock_resp(["session_token=123", "OtherCookie=456"]))
+    findings = module.run("https://example.com", "example.com", MagicMock())
+
+    # 1. Verify session cookie identity
+    session_finding = next(f for f in findings if "Session Cookie Missing Secure Flag" in f["name"])
+    assert session_finding.get("rule_id") == "cookies_session_missing_secure"
+    assert session_finding.get("instance_key") == "session_token"
+
+    # Verify cookie values are not in instance_key
+    assert "123" not in session_finding.get("instance_key", "")
+
+    # 2. Verify non-session aggregate identity
+    non_session_finding = next(f for f in findings if "Unsecured Non-Session Cookie" in f["name"])
+    assert non_session_finding.get("rule_id") == "cookies_non_session_unsecured"
+    assert "instance_key" not in non_session_finding or non_session_finding["instance_key"] == ""
+
+def test_cookie_identity_multiple_same_rule(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.http_security.safe_request", lambda *a, **kw: mock_resp(["session_token=123", "auth_token=456"]))
+    findings = module.run("https://example.com", "example.com", MagicMock())
+
+    secure_findings = [f for f in findings if "Session Cookie Missing Secure Flag" in f["name"]]
+    assert len(secure_findings) == 2
+
+    assert secure_findings[0]["rule_id"] == "cookies_session_missing_secure"
+    assert secure_findings[1]["rule_id"] == "cookies_session_missing_secure"
+
+    keys = {f["instance_key"] for f in secure_findings}
+    assert keys == {"session_token", "auth_token"}

@@ -183,3 +183,25 @@ def test_cors_non_integer_status_code(module, monkeypatch):
     monkeypatch.setattr("api.scanner.modules.headers.safe_request", mock_non_int_status)
     findings = module.run("http://example.com", "example.com", MagicMock())
     assert len(findings) == 0
+
+
+def test_cors_identity_metadata(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({"Access-Control-Allow-Origin": "https://cors-test.invalid", "Access-Control-Allow-Credentials": "true"}))
+    findings = module.run("https://example.com", "example.com", MagicMock())
+
+    insecure_finding = next(f for f in findings if "Arbitrary Origin Reflection with Credentials" in f["name"])
+    assert insecure_finding.get("rule_id") == "cors_insecure_arbitrary_credentials"
+    assert "instance_key" not in insecure_finding or insecure_finding["instance_key"] == ""
+
+def test_cors_null_origin_identity(module, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({"Access-Control-Allow-Origin": "null", "Access-Control-Allow-Credentials": "false"}))
+    findings1 = module.run("https://example.com", "example.com", MagicMock())
+    null_finding1 = next(f for f in findings1 if "Null-Origin" in f["name"])
+    assert null_finding1.get("rule_id") == "cors_null_origin"
+    assert null_finding1["severity"] == "Informational"
+
+    monkeypatch.setattr("api.scanner.modules.headers.safe_request", lambda *a, **kw: mock_response({"Access-Control-Allow-Origin": "null", "Access-Control-Allow-Credentials": "true"}))
+    findings2 = module.run("https://example.com", "example.com", MagicMock())
+    null_finding2 = next(f for f in findings2 if "Null-Origin" in f["name"])
+    assert null_finding2.get("rule_id") == "cors_null_origin"
+    assert null_finding2["severity"] == "Low"
