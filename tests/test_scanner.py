@@ -205,3 +205,67 @@ class TestScannerModules(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class TestScannerBaseFactory(unittest.TestCase):
+    def setUp(self):
+        class DummyModule(ScannerModule):
+            module_name = "DummyFactoryModule"
+            enabled = True
+            def run(self, url, hostname, session):
+                return []
+        self.module = DummyModule()
+
+    def test_make_finding_legacy_unchanged(self):
+        # Call without new fields
+        f = self.module.make_finding("Test", "High", "Desc", "Ev")
+        self.assertNotIn("rule_id", f)
+        self.assertNotIn("instance_key", f)
+        self.assertEqual(f["name"], "Test")
+        self.assertEqual(f["severity"], "High")
+
+    def test_make_finding_rule_id_only(self):
+        f = self.module.make_finding(
+            "Test", "High", "Desc", "Ev",
+            rule_id="test_rule_1"
+        )
+        self.assertEqual(f["rule_id"], "test_rule_1")
+        self.assertNotIn("instance_key", f)
+
+    def test_make_finding_rule_id_and_instance_key(self):
+        f = self.module.make_finding(
+            "Test", "High", "Desc", "Ev",
+            rule_id="test_rule_2",
+            instance_key="/api/test"
+        )
+        self.assertEqual(f["rule_id"], "test_rule_2")
+        self.assertEqual(f["instance_key"], "/api/test")
+
+    def test_make_finding_instance_key_only(self):
+        f = self.module.make_finding(
+            "Test", "High", "Desc", "Ev",
+            instance_key="/api/only"
+        )
+        self.assertNotIn("rule_id", f)
+        self.assertEqual(f["instance_key"], "/api/only")
+
+    def test_make_finding_blank_optional_values(self):
+        f = self.module.make_finding(
+            "Test", "High", "Desc", "Ev",
+            rule_id="",
+            instance_key="   "
+        )
+        self.assertNotIn("rule_id", f)
+        self.assertNotIn("instance_key", f)
+
+    def test_make_finding_existing_fields_preserved(self):
+        f = self.module.make_finding(
+            "Test", "High", "Desc", "Ev",
+            category="custom_cat",
+            rule_id="r1"
+        )
+        self.assertEqual(f["name"], "Test")
+        self.assertEqual(f["severity"], "High")
+        self.assertEqual(f["category"], "custom_cat")
+        self.assertEqual(f["description"], "Desc")
+        self.assertEqual(f["evidence"]["raw"], "Ev")
+        self.assertEqual(f["module"], "DummyFactoryModule")
