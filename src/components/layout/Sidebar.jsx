@@ -91,10 +91,10 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         `}
       >
         {/* 1. HEADER */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-800">
+        <div className="flex items-center p-4 border-b border-slate-800">
           {!isCollapsed && (
-            <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity" aria-label="URLScanOnline">
-              <div className="relative flex items-center justify-center shrink-0 w-8 h-8">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0" aria-label="URLScanOnline">
+              <div className="relative flex items-center justify-center shrink-0 w-7 h-7">
                 <svg width="0" height="0" className="absolute">
                   <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop stopColor="#a855f7" offset="0%" />
@@ -102,20 +102,20 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                     <stop stopColor="#22d3ee" offset="100%" />
                   </linearGradient>
                 </svg>
-                <Shield className="w-8 h-8" stroke="url(#logo-gradient)" strokeWidth={1.5} />
-                <Search className="absolute w-4 h-4 text-slate-50" strokeWidth={2.5} />
+                <Shield className="w-7 h-7" stroke="url(#logo-gradient)" strokeWidth={1.5} />
+                <Search className="absolute w-[14px] h-[14px] text-slate-50" strokeWidth={2.5} />
               </div>
-              <span className="font-bold text-[15px] tracking-wide flex items-center mt-0.5">
+              <span className="font-bold text-[14px] tracking-tight flex items-center mt-0.5 truncate">
                 <span className="text-white">URL</span>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-400">SCAN</span>
                 <span className="text-white">ONLINE</span>
               </span>
             </Link>
           )}
-          <div className={`flex items-center ${isCollapsed ? 'flex-col gap-4 w-full' : 'gap-2'}`}>
+          <div className={`flex items-center shrink-0 ${isCollapsed ? 'flex-col gap-4 w-full justify-center' : 'ml-auto pl-3'}`}>
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden md:block p-1.5 text-slate-400 hover:bg-slate-800 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="hidden md:flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               title="Toggle Sidebar"
               aria-label="Toggle Sidebar"
             >
@@ -125,7 +125,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
             {/* Mobile Close Button */}
             <button
               onClick={() => setIsMobileOpen(false)}
-              className="md:hidden p-3 text-slate-400 hover:bg-slate-800 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="md:hidden flex items-center justify-center w-8 h-8 text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
               title="Close Sidebar"
               aria-label="Close Sidebar"
             >
