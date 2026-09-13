@@ -111,6 +111,8 @@ class TestScannerModules(unittest.TestCase):
         module = HTTPSRedirectModule()
         findings = module.run(self.url, self.hostname, self.session)
         self.assertEqual(findings[0]['severity'], 'Passed')
+        self.assertEqual(findings[0]['rule_id'], 'https_redirect_configured')
+
 
     @patch('socket.create_connection')
     @patch('ssl.create_default_context')
@@ -141,6 +143,10 @@ class TestScannerModules(unittest.TestCase):
         module = SecurityHeadersModule()
         findings = module.run(self.url, self.hostname, self.session)
         self.assertEqual(len(findings), 8) # All missing headers
+        hsts_finding = next((f for f in findings if "Missing Strict-Transport-Security" in f["name"]), None)
+        self.assertIsNotNone(hsts_finding)
+        self.assertEqual(hsts_finding["rule_id"], "headers_hsts_missing")
+
 
     @patch('requests.Session.request')
     def test_advanced_security_headers_module(self, mock_get):

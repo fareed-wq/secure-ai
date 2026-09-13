@@ -182,7 +182,7 @@ class CORSModule(ScannerModule):
                         remediation="Never dynamically reflect the Origin header. Statically define a list of trusted domains.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
-                    ))
+                    , rule_id="cors_insecure_arbitrary_credentials"))
                 else:
                     findings.append(self.make_finding(
                         "Insecure CORS Policy (Arbitrary Origin Reflection)",
@@ -194,7 +194,7 @@ class CORSModule(ScannerModule):
                         remediation="Statically define a list of trusted domains instead of echoing the request Origin.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
-                    ))
+                    , rule_id="cors_insecure_arbitrary"))
             elif acao == "*":
                 if acac:
                     findings.append(self.make_finding(
@@ -207,7 +207,7 @@ class CORSModule(ScannerModule):
                         remediation="Fix the CORS middleware configuration. Access-Control-Allow-Credentials: true must only be used with a specific, statically defined Origin, never a wildcard (*).",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
-                    ))
+                    , rule_id="cors_insecure_wildcard_credentials"))
                 else:
                     findings.append(self.make_finding(
                         "CORS Enabled (Wildcard)",
@@ -219,7 +219,7 @@ class CORSModule(ScannerModule):
                         remediation="Restrict CORS to specific trusted origins if the endpoint handles sensitive data.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
-                    ))
+                    , rule_id="cors_enabled_wildcard"))
             elif acao == "null":
                 if acac:
                     findings.append(self.make_finding(
@@ -232,7 +232,7 @@ class CORSModule(ScannerModule):
                         remediation="Do not trust the 'null' origin. Statically define a list of trusted domains.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
-                    ))
+                    , rule_id="cors_null_origin"))
                 else:
                     findings.append(self.make_finding(
                         "CORS Null-Origin Configuration Observed",
@@ -244,7 +244,7 @@ class CORSModule(ScannerModule):
                         remediation="Ensure that the 'null' origin is intentionally trusted.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
-                    ))
+                    , rule_id="cors_null_origin"))
             elif acao:
                 findings.append(self.make_finding(
                     "CORS Configured for Specific Origin",
@@ -253,7 +253,7 @@ class CORSModule(ScannerModule):
                     evidence_str,
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
-                ))
+                , rule_id="cors_specific_origin_configured"))
 
             # Reached end of evaluation successfully
             request_successful = True
@@ -280,7 +280,7 @@ class CORSModule(ScannerModule):
                 "Origin sent: " + synthetic_origin + chr(10) + "Access-Control-Allow-Origin: not present",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
-            ))
+            , rule_id="cors_strict_enforced"))
 
         return findings
 
