@@ -201,3 +201,32 @@ class TestPhase17Accuracy(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+def test_3b3a_network_checks_identities(monkeypatch):
+    import requests
+    from api.scanner.modules.network_checks import GraphQLIntrospectionModule, VerboseStackTraceModule
+    session = requests.Session()
+
+    # GraphQL Introspection
+    module_gql = GraphQLIntrospectionModule()
+    def mock_safe_request_gql(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.headers = {"Content-Type": "application/json"}
+        mock_resp._content = b'{"__schema": {}}'
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_safe_request_gql)
+    findings = module_gql.run("https://example.com/graphql", "example.com", session)
+    assert findings[0].get("rule_id") == "api_graphql_introspection_enabled"
+
+    # Verbose Stack Trace
+    module_st = VerboseStackTraceModule()
+    def mock_safe_request_st(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp._content = b'Traceback (most recent call last):'
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_safe_request_st)
+    findings = module_st.run("https://example.com/error", "example.com", session)
+    assert findings[0].get("rule_id") == "api_verbose_error_messages_disclosed"

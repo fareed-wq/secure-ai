@@ -175,3 +175,113 @@ class TestPhase29ApiWebSecurity(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+def test_3b3a_api_web_identities(monkeypatch):
+    import requests
+    from api.scanner.modules.api_web_security import ApiWebSecurityModule
+    module = ApiWebSecurityModule()
+    session = requests.Session()
+
+    # 1. Test Redirects
+    def mock_safe_request_redirect(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.url = "http://example.com" # Insecure
+        h1, h2, h3 = requests.Response(), requests.Response(), requests.Response()
+        h1.url, h2.url, h3.url = "https://example.com/1", "https://example.com/2", "https://example.com/3"
+        # 3 redirects > 2 means excessive
+        h4 = requests.Response(); h4.url = "https://example.com/4"
+        mock_resp.history = [h1, h2, h3, h4, h4, h4, h4]
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.api_web_security.safe_request", mock_safe_request_redirect)
+    findings = module.run("https://example.com", "example.com", session)
+    assert next((f for f in findings if f["name"] == "HTTP to HTTPS Redirect Security Issue"), None).get("rule_id") == "api_insecure_redirect"
+    assert next((f for f in findings if f["name"] == "Excessive HTTP Redirect Chain Detected"), None).get("rule_id") == "api_excessive_redirect_chain"
+
+    def mock_safe_request_cross(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.url = "https://example.com"
+        h1 = requests.Response()
+        h1.url = "https://evildomain.com"
+        mock_resp.history = [h1]
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.api_web_security.safe_request", mock_safe_request_cross)
+    findings = module.run("https://example.com", "example.com", session)
+    assert next((f for f in findings if f["name"] == "Unexpected Cross-Domain Redirect Detected"), None).get("rule_id") == "api_cross_domain_redirect"
+
+    # 2. Options TRACE
+    def mock_safe_request_options(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.headers = {"Access-Control-Allow-Methods": "GET, POST, TRACE"}
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.api_web_security.safe_request", mock_safe_request_options)
+    findings = module.run("https://example.com", "example.com", session)
+    assert next((f for f in findings if f["name"] == "TRACE HTTP Method Advertised"), None).get("rule_id") == "api_trace_method_advertised"
+
+    # 3. Cache & Content Type
+    def mock_safe_request_cache(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.url = "https://example.com/api/v1/user/data"
+        mock_resp.headers = {
+            "Content-Type": "text/html",
+            "Cache-Control": "no-store, max-age=3600",
+            "CDN-Cache-Control": "public, max-age=3600",
+            "ETag": "W/\"12345\""
+        }
+        mock_resp._content = b'{"secret": "data"}'
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.api_web_security.safe_request", mock_safe_request_cache)
+    findings = module.run("https://example.com/api/v1/user/data", "example.com", session)
+    assert next((f for f in findings if f["name"] == "API Content-Type Mismatch Detected"), None).get("rule_id") == "api_content_type_mismatch"
+    assert next((f for f in findings if f["name"] == "Contradictory Cache-Control Directives"), None).get("rule_id") == "api_cache_contradictory_directives"
+
+    assert next((f for f in findings if f["name"] == "Sensitive Response Tracking Indicator (ETag/Last-Modified)"), None).get("rule_id") == "api_cache_tracking_indicator"
+
+    def mock_safe_request_cache2(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.url = "https://example.com/api/me"
+        mock_resp.headers = {
+            "Content-Type": "application/json",
+            "Cache-Control": "public, max-age=3600"
+        }
+        mock_resp._content = b'{"secret": "data"}'
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.api_web_security.safe_request", mock_safe_request_cache2)
+    findings = module.run("https://example.com/api/me", "example.com", session)
+    # The normal public cache (without CDN)
+
+    assert next((f for f in findings if f["name"] == "Cache Variation Header Not Observed"), None).get("rule_id") == "api_cache_missing_vary_header"
+
+    # 4. Error, WS, Version, Portal, GQL, Docs
+    def mock_safe_request_body(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.url = "https://example.com"
+        mock_resp.headers = {"Content-Type": "text/html"}
+        mock_resp._content = b'Error: java.lang.NullPointerException \n new WebSocket("ws://x") \n wss://y \n api/v1/ \n /login/admin \n /graphql \n /swagger-ui.html \n'
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.api_web_security.safe_request", mock_safe_request_body)
+    findings = module.run("https://example.com", "example.com", session)
+
+    assert next((f for f in findings if f["name"] == "API Error Information Disclosure"), None).get("rule_id") == "api_error_information_disclosure"
+    assert next((f for f in findings if f["name"] == "WebSocket Endpoint Discovered"), None).get("rule_id") == "api_websocket_discovered"
+    assert next((f for f in findings if f["name"] == "API Version Disclosed"), None).get("rule_id") == "api_version_disclosed"
+    assert next((f for f in findings if f["name"] == "Authentication / Administrative Portal Discovered"), None).get("rule_id") == "api_auth_portal_discovered"
+    assert next((f for f in findings if f["name"] == "GraphQL Endpoint Reference Discovered"), None).get("rule_id") == "api_graphql_reference_discovered"
+    assert next((f for f in findings if f["name"] == "API Documentation Reference Discovered"), None).get("rule_id") == "api_documentation_reference_discovered"
+
+    # 5. OIDC
+    def mock_safe_request_oidc(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.headers = {"Content-Type": "application/json"}
+        mock_resp._content = b'{"issuer": "x", "authorization_endpoint": "y"}'
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.api_web_security.safe_request", mock_safe_request_oidc)
+    findings = module.run("https://example.com/.well-known/openid-configuration", "example.com", session)
+    assert next((f for f in findings if f["name"] == "OpenID Connect Configuration Discovered"), None).get("rule_id") == "api_oidc_configuration_discovered"
