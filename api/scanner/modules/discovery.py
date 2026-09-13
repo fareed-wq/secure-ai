@@ -735,7 +735,7 @@ class OpenApiModule(ScannerModule):
                                 confidence="High",
                                 category="information_exposure",
                                 owasp="Not Mapped"
-                            ))
+                            , rule_id="api_openapi_exposed"))
 
                             # PHASE 31: AUTHORIZATION & ACCESS CONTROL INTELLIGENCE
                             schemes_found = set()
@@ -765,7 +765,7 @@ class OpenApiModule(ScannerModule):
                                     confidence="High",
                                     category="authentication",
                                     owasp="Not Mapped"
-                                ))
+                                , rule_id="api_openapi_auth_scheme_disclosed"))
 
                             has_global_security = bool(data.get("security", []))
                             privileged_routes = set()
@@ -802,7 +802,7 @@ class OpenApiModule(ScannerModule):
                                     confidence="High",
                                     category="api_surface",
                                     owasp="A01: Broken Access Control"
-                                ))
+                                , rule_id="api_openapi_privileged_routes"))
 
                             if unprotected_privileged:
                                 local_findings.append(self.make_finding(
@@ -814,7 +814,7 @@ class OpenApiModule(ScannerModule):
                                 confidence="High",
                                 category="authentication",
                                 owasp="Not Mapped"
-                                ))
+                                , rule_id="api_openapi_unprotected_privileged_routes"))
 
                             if api_versions:
                                 local_findings.append(self.make_finding(
@@ -826,7 +826,7 @@ class OpenApiModule(ScannerModule):
                                     confidence="High",
                                     category="api_surface",
                                     owasp="Not Mapped"
-                                ))
+                                , rule_id="api_openapi_versioned_surface"))
 
                             return local_findings
                     except ValueError:
@@ -863,7 +863,7 @@ class GraphqlIdeModule(ScannerModule):
                             confidence="High",
                             category="information_exposure",
                             owasp="Not Mapped"
-                        )
+                        , rule_id="api_graphql_ide_exposed")
             except Exception as e:
                 logger.debug("GraphqlIdeModule check failed: %s", e)
             return None
@@ -908,7 +908,7 @@ class ActuatorModule(ScannerModule):
                                     category="information_exposure",
                                     owasp="A05: Security Misconfiguration",
                                     remediation="Restrict access to actuator endpoints."
-                                )
+                                , rule_id="api_actuator_sensitive_exposed")
                             elif is_health or is_base or is_env_info:
                                 return self.make_finding(
                                     "Spring Boot Actuator Endpoint Exposed",
@@ -919,7 +919,7 @@ class ActuatorModule(ScannerModule):
                                     confidence="High",
                                     category="information_exposure",
                                     owasp="Not Mapped"
-                                )
+                                , rule_id="api_actuator_endpoint_exposed")
                     except ValueError:
                         pass
             except Exception as e:
@@ -961,7 +961,7 @@ class XmlRpcModule(ScannerModule):
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration",
                     remediation="Disable XML-RPC if it is not required by your CMS."
-                ))
+                , rule_id="api_xmlrpc_exposed"))
         except Exception as e:
             logger.debug("XmlRpcModule check failed: %s", e)
 

@@ -214,3 +214,75 @@ class TestPhase26ApiWebExpansion(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+def test_3b3a_openapi_actuator_identities(monkeypatch):
+    import requests
+    from api.scanner.modules.discovery import OpenApiModule, GraphqlIdeModule, ActuatorModule, XmlRpcModule
+    session = requests.Session()
+
+    # 1. OpenAPI
+    module = OpenApiModule()
+    def mock_safe_request_openapi(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.headers = {"Content-Type": "application/json"}
+        mock_resp._content = b'{"openapi": "3.0.0", "info": {"version": "1.0"}, "components": {"securitySchemes": {"x": {}}}, "paths": {"/admin": {"get": {}}, "/v1/user": {"get": {"security": []}}}}'
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.discovery.safe_request", mock_safe_request_openapi)
+    findings = module.run("https://example.com", "example.com", session)
+
+    assert next((f for f in findings if f["name"] == "Public OpenAPI / Swagger Specification Exposed"), None).get("rule_id") == "api_openapi_exposed"
+    assert next((f for f in findings if f["name"] == "API Authorization Scheme Disclosed"), None).get("rule_id") == "api_openapi_auth_scheme_disclosed"
+    assert next((f for f in findings if f["name"] == "Privileged API Routes Publicly Documented"), None).get("rule_id") == "api_openapi_privileged_routes"
+    assert next((f for f in findings if f["name"] == "Privileged API Operation Documented Without Security Requirement"), None).get("rule_id") == "api_openapi_unprotected_privileged_routes"
+    assert next((f for f in findings if f["name"] == "Versioned API Surface Discovered"), None).get("rule_id") == "api_openapi_versioned_surface"
+
+    # 2. GraphQL IDE
+    module_gql = GraphqlIdeModule()
+    def mock_safe_request_gqlide(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.headers = {"Content-Type": "text/html"}
+        mock_resp._content = b'graphiql'
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.discovery.safe_request", mock_safe_request_gqlide)
+    findings = module_gql.run("https://example.com", "example.com", session)
+    assert findings[0].get("rule_id") == "api_graphql_ide_exposed"
+
+    # 3. Actuator Sensitive
+    module_act = ActuatorModule()
+    def mock_safe_request_act_sens(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.url = "https://example.com/actuator/env"
+        mock_resp.headers = {"Content-Type": "application/json"}
+        mock_resp._content = b'{"propertySources": []}'
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.discovery.safe_request", mock_safe_request_act_sens)
+    findings = module_act.run("https://example.com/actuator/env", "example.com", session)
+    assert findings[0].get("rule_id") == "api_actuator_sensitive_exposed"
+
+    # 4. Actuator Base
+    def mock_safe_request_act_base(*a, **kw):
+        mock_resp = requests.Response()
+        mock_resp.status_code = 200
+        mock_resp.url = "https://example.com/actuator"
+        mock_resp.headers = {"Content-Type": "application/json"}
+        mock_resp._content = b'{"_links": {}}'
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.discovery.safe_request", mock_safe_request_act_base)
+    findings = module_act.run("https://example.com/actuator", "example.com", session)
+    assert findings[0].get("rule_id") == "api_actuator_endpoint_exposed"
+
+    # 5. XML-RPC
+    module_xml = XmlRpcModule()
+    def mock_safe_request_xml(*a, **kw):
+        from unittest.mock import MagicMock
+        mock_resp = MagicMock()
+        mock_resp.status_code = 405
+        mock_resp.text = 'XML-RPC server accepts POST requests only'
+        return mock_resp
+    monkeypatch.setattr("api.scanner.modules.discovery.safe_request", mock_safe_request_xml)
+    findings = module_xml.run("https://example.com/xmlrpc.php", "example.com", session)
+    assert findings[0].get("rule_id") == "api_xmlrpc_exposed"

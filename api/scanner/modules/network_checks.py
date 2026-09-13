@@ -164,7 +164,7 @@ class GraphQLIntrospectionModule(ScannerModule):
                             impact="Exposed GraphQL introspection provides a complete schema map, assisting reconnaissance.",
                             owasp="Not Mapped",
                             category="information_exposure"
-                        ))
+                        , rule_id="api_graphql_introspection_enabled"))
         except Exception:
             pass
         return findings
@@ -189,7 +189,7 @@ class VerboseStackTraceModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="information_disclosure",
                         confidence="High"
-                    ))
+                    , rule_id="api_verbose_error_messages_disclosed"))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass
         except Exception:

@@ -54,7 +54,7 @@ class ApiWebSecurityModule(ScannerModule):
                         category="encryption_tls",
                         owasp="A02: Cryptographic Failures",
                         impact="Unencrypted traffic can expose sensitive user data to network interception."
-                    ))
+                    , rule_id="api_insecure_redirect"))
 
                 # Excessive redirect chain
                 if len(resp.history) > 5:
@@ -69,7 +69,7 @@ class ApiWebSecurityModule(ScannerModule):
                         category="misconfiguration",
                         owasp="A05: Security Misconfiguration",
                         impact="Unnecessarily large responses can obscure malicious payloads and impact performance."
-                    ))
+                    , rule_id="api_excessive_redirect_chain"))
 
                 # Cross-domain redirect
                 first_domain = urlparse(first_url).hostname
@@ -94,7 +94,7 @@ class ApiWebSecurityModule(ScannerModule):
                                 category="misconfiguration",
                                 owasp="A05: Security Misconfiguration",
                                 impact="Open redirects may facilitate phishing attacks by redirecting users to untrusted domains."
-                            ))
+                            , rule_id="api_cross_domain_redirect"))
 
             # 3. HTTP Method Posture
             allow = self.get_header_safe(resp, "Allow", "").upper()
@@ -110,7 +110,7 @@ class ApiWebSecurityModule(ScannerModule):
                     category="misconfiguration",
                     owasp="A05: Security Misconfiguration",
                     impact="Trace methods may be abused to bypass HttpOnly cookies or expose request headers."
-                ))
+                , rule_id="api_trace_method_advertised"))
 
             # 4. API Content-Type Mismatch
             content_type = self.get_header_safe(resp, "Content-Type", "").lower()
@@ -139,7 +139,7 @@ class ApiWebSecurityModule(ScannerModule):
                         category="http_headers",
                         owasp="A05: Security Misconfiguration",
                         impact="Content-type inconsistencies can occasionally lead to unexpected MIME-sniffing behavior."
-                    ))
+                    , rule_id="api_content_type_mismatch"))
 
             # 5. API Cache Security
             path = urlparse(resp.url).path.lower()
@@ -174,7 +174,7 @@ class ApiWebSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
                         impact="Different network proxies may interpret these conflicting rules differently, potentially caching sensitive data unexpectedly."
-                    ))
+                    , rule_id="api_cache_contradictory_directives"))
 
                 is_publicly_cacheable = ("public" in cache_lower or (cache_lower and ("max-age" in cache_lower or "s-maxage" in cache_lower) and "max-age=0" not in cache_lower and "no-store" not in cache_lower and "private" not in cache_lower))
 
@@ -196,7 +196,7 @@ class ApiWebSecurityModule(ScannerModule):
                                     owasp="A05: Security Misconfiguration",
                                     category="http_headers",
                                     impact="The CDN may serve this sensitive data to unauthorized users or store it on public edge servers."
-                                ))
+                                , rule_id="api_cache_public_json"))
 
                 if is_json_response and is_publicly_cacheable and not cdn_cacheable:
                     findings.append(self.make_finding(
@@ -209,7 +209,7 @@ class ApiWebSecurityModule(ScannerModule):
                         category="http_headers",
                         owasp="A05: Security Misconfiguration",
                         impact="Other people on the same network or public computers could view your users' private information."
-                    ))
+                    , rule_id="api_cache_public_json"))
 
                 if is_json_response and is_publicly_cacheable and is_highly_sensitive:
                     vary = self.get_header_safe(resp, "Vary", "").lower()
@@ -223,7 +223,7 @@ class ApiWebSecurityModule(ScannerModule):
                             owasp="A05: Security Misconfiguration",
                             category="http_headers",
                             impact="A shared cache might mistakenly serve one user's private data to a completely different user."
-                        ))
+                        , rule_id="api_cache_missing_vary_header"))
 
 
                 if "no-store" in cache_lower and is_highly_sensitive:
@@ -240,7 +240,7 @@ class ApiWebSecurityModule(ScannerModule):
                             owasp="Not Mapped",
                             category="http_headers",
                             impact="Even without caching the content, browsers may send these values back, potentially allowing cross-session tracking."
-                        ))
+                        , rule_id="api_cache_tracking_indicator"))
 
             # 6. API Error Information Disclosure
             if body:
@@ -258,7 +258,7 @@ class ApiWebSecurityModule(ScannerModule):
                             category="information_exposure",
                             owasp="A05: Security Misconfiguration",
                             impact="Verbose error messages expose internal application state and structure."
-                        ))
+                        , rule_id="api_error_information_disclosure"))
                         break
 
             # 7. Passive Web Reconnaissance
@@ -275,7 +275,7 @@ class ApiWebSecurityModule(ScannerModule):
                         category="information_exposure",
                         owasp="Not Mapped",
                         impact="Unauthenticated WebSockets may be vulnerable to Cross-Site WebSocket Hijacking (CSWSH)."
-                    ))
+                    , rule_id="api_websocket_discovered"))
                 elif "new WebSocket(" in body or 'WebSocket("' in body or "WebSocket('" in body:
                     findings.append(self.make_finding(
                         "WebSocket Endpoint Discovered",
@@ -286,7 +286,7 @@ class ApiWebSecurityModule(ScannerModule):
                         category="information_exposure",
                         owasp="Not Mapped",
                         impact="Unauthenticated Server-Sent Events may expose data streams to unauthorized origins."
-                    ))
+                    , rule_id="api_websocket_discovered"))
 
                 # API Versions
                 ver_matches = set(self.VER_PATTERN.findall(body.lower()))
@@ -300,7 +300,7 @@ class ApiWebSecurityModule(ScannerModule):
                         category="information_exposure",
                         owasp="Not Mapped",
                         impact="Exposing exact version information gives external observers additional context that may assist reconnaissance."
-                    ))
+                    , rule_id="api_version_disclosed"))
 
                 # Auth Portals
                 auth_matches = set(self.AUTH_PATTERN.findall(body.lower()))
@@ -314,7 +314,7 @@ class ApiWebSecurityModule(ScannerModule):
                         category="information_exposure",
                         owasp="Not Mapped",
                         impact="Exposed management interfaces provide targets for unauthorized access attempts."
-                    ))
+                    , rule_id="api_auth_portal_discovered"))
 
                 # GraphQL refs
                 gql_matches = set(self.GQL_PATTERN.findall(body.lower()))
@@ -328,7 +328,7 @@ class ApiWebSecurityModule(ScannerModule):
                         category="information_exposure",
                         owasp="Not Mapped",
                         impact="Unauthenticated API endpoints can lead to bulk data exposure."
-                    ))
+                    , rule_id="api_graphql_reference_discovered"))
 
                 # API Docs
                 doc_matches = set(self.DOC_PATTERN.findall(body.lower()))
@@ -342,7 +342,7 @@ class ApiWebSecurityModule(ScannerModule):
                         category="information_exposure",
                         owasp="Not Mapped",
                         impact="Exposed API documentation assists external reconnaissance by providing detailed interface maps."
-                    ))
+                    , rule_id="api_documentation_reference_discovered"))
 
         except requests.exceptions.RequestException:
             pass
@@ -369,7 +369,7 @@ class ApiWebSecurityModule(ScannerModule):
                                     category="information_exposure",
                                     owasp="Not Mapped",
                                     impact="Verbose configuration files may inadvertently disclose sensitive application details."
-                                ))
+                                , rule_id="api_oidc_configuration_discovered"))
                         except Exception:
                             pass
         except Exception as e:
