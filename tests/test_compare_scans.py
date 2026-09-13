@@ -774,3 +774,485 @@ def test_compare_duplicates_with_legacy_absence():
     assert len(res["unchanged"]) == 2
     assert len(res["added"]) == 0
     assert len(res["removed"]) == 0
+
+
+# === PHASE 4 STABLE IDENTITY TESTS ===
+
+def test_compare_stable_stable_same_id():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Old Name", "module": "mod", "rule_id": "rule_1", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "New Name", "module": "mod", "rule_id": "rule_1", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_stable_stable_different_rule_id():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Name", "module": "mod", "rule_id": "rule_a", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Name", "module": "mod", "rule_id": "rule_b", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 0
+    assert len(res["removed"]) == 1
+    assert len(res["added"]) == 1
+
+def test_compare_stable_multi_instance_same_key():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Name", "rule_id": "tech", "instance_key": "react", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Name", "rule_id": "tech", "instance_key": "react", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_stable_multi_instance_different_key():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Name", "rule_id": "tech", "instance_key": "react", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Name", "rule_id": "tech", "instance_key": "vue", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 0
+    assert len(res["removed"]) == 1
+    assert len(res["added"]) == 1
+
+def test_compare_stable_duplicates():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Name", "rule_id": "dup", "severity": "Medium"},
+                {"name": "Name", "rule_id": "dup", "severity": "Medium"}
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Name", "rule_id": "dup", "severity": "Medium"},
+                {"name": "Name", "rule_id": "dup", "severity": "High"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+    assert len(res["regressed"]) == 1
+
+def test_compare_mixed_safe_unambiguous_bridge():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Legacy", "module": "mod", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Legacy", "module": "mod", "rule_id": "stable_rule", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_mixed_ambiguous_multi_instance_bucket():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Tech", "module": "mod", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Tech", "module": "mod", "rule_id": "tech", "instance_key": "react", "severity": "Medium"},
+                {"name": "Tech", "module": "mod", "rule_id": "tech", "instance_key": "vue", "severity": "Medium"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 0
+    assert len(res["removed"]) == 1
+    assert len(res["added"]) == 2
+
+def test_compare_mixed_multiple_stable_rule_ids_same_legacy_bucket():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Tech", "module": "mod", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Tech", "module": "mod", "rule_id": "rule_a", "severity": "Medium"},
+                {"name": "Tech", "module": "mod", "rule_id": "rule_b", "severity": "Medium"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 0
+    assert len(res["removed"]) == 1
+    assert len(res["added"]) == 2
+
+def test_compare_mixed_duplicate_stable_findings_same_identity():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Dup", "module": "mod", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Dup", "module": "mod", "rule_id": "rule_a", "severity": "Medium"},
+                {"name": "Dup", "module": "mod", "rule_id": "rule_a", "severity": "Medium"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    # The legacy bucket bridges unambiguously because there is only ONE distinct stable identity!
+    assert len(res["unchanged"]) == 1
+    assert len(res["added"]) == 1
+
+def test_compare_blank_rule_id_behaves_as_legacy():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod", "rule_id": "   ", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_blank_instance_key_behaves_as_absent():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod", "rule_id": "rule_a", "instance_key": "   ", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod", "rule_id": "rule_a", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_stable_id_module_change():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod_a", "rule_id": "rule_a", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod_b", "rule_id": "rule_a", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_both_stable_legacy_looks_identical():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod", "rule_id": "rule_a", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod", "rule_id": "rule_b", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 0
+    assert len(res["removed"]) == 1
+    assert len(res["added"]) == 1
+
+
+def test_compare_non_string_rule_id_behaves_as_legacy():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod", "rule_id": 123, "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod", "rule_id": {"id": "rule"}, "severity": "Medium"}]
+        }
+    }
+    # Both behave as legacy and match on (mod, A)
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_non_string_instance_key_behaves_as_absent():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod", "rule_id": "rule_a", "instance_key": 123, "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "A", "module": "mod", "rule_id": "rule_a", "severity": "Medium"}]
+        }
+    }
+    # Both behave as ("rule_a", None)
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_reverse_safe_mixed_bridge():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Legacy", "module": "mod", "rule_id": "stable_rule", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "Legacy", "module": "mod", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_legacy_first_partial_migration_regression():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Shared", "module": "mod", "severity": "High"}, # legacy
+                {"name": "Shared", "module": "mod", "rule_id": "stable_a", "severity": "Medium"} # stable
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Shared", "module": "mod", "severity": "Medium"} # legacy
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    # The two LEGACY findings match each other: High -> Medium (improved = 1)
+    # The unmatched old stable finding is removed = 1
+    assert len(res["improved"]) == 1
+    assert len(res["removed"]) == 1
+    assert len(res["unchanged"]) == 0
+    assert len(res["added"]) == 0
+    assert len(res["regressed"]) == 0
+
+def test_compare_legacy_first_partial_migration_regression_reverse():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Shared", "module": "mod", "severity": "Medium"} # legacy
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "Shared", "module": "mod", "severity": "High"}, # legacy
+                {"name": "Shared", "module": "mod", "rule_id": "stable_a", "severity": "Medium"} # stable
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["regressed"]) == 1
+    assert len(res["added"]) == 1
+    assert len(res["removed"]) == 0
+
+def test_compare_mixed_moduleless_safe_bridge():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "module": "mod", "rule_id": "stable_x", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+
+def test_compare_stable_identity_sorting_mixed_types():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "A", "module": "mod", "rule_id": "rule_a", "severity": "Medium"},
+                {"name": "A", "module": "mod", "rule_id": "rule_a", "instance_key": "instance_1", "severity": "Medium"}
+            ]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "A", "module": "mod", "rule_id": "rule_a", "severity": "Medium"},
+                {"name": "A", "module": "mod", "rule_id": "rule_a", "instance_key": "instance_1", "severity": "Medium"}
+            ]
+        }
+    }
+    # Should not raise TypeError and should match perfectly
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 2
+    assert len(res["added"]) == 0
+    assert len(res["removed"]) == 0
+
+def test_compare_mixed_moduleless_reverse_safe_bridge():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "rule_id": "stable_x", "severity": "Medium"}] # no module
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "module": "SomeModule", "severity": "Medium"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_mixed_moduleless_reverse_safe_bridge_other_direction():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "module": "SomeModule", "severity": "Medium"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "rule_id": "stable_x", "severity": "Medium"}] # no module
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["unchanged"]) == 1
+
+def test_compare_mixed_moduleless_reverse_ambiguity_no_guess():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [{"name": "X", "rule_id": "stable_x", "severity": "Medium"}] # no module
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "findings": [
+                {"name": "X", "module": "ModA", "severity": "Medium"},
+                {"name": "X", "module": "ModB", "severity": "Medium"}
+            ]
+        }
+    }
+    res = compare_reports(old, new)
+    # Ambiguous. Should not bridge.
+    assert len(res["unchanged"]) == 0
+    assert len(res["removed"]) == 1
+    assert len(res["added"]) == 2
