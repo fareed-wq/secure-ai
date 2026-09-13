@@ -1,4 +1,4 @@
-import json
+﻿import json
 from collections import defaultdict
 from typing import Dict, Any, List
 
@@ -21,12 +21,82 @@ def _get_severity_weight(sev: str) -> int:
     if sev == "info": return 0
     return 0
 
-def _get_identity(f: dict) -> tuple:
+def _get_legacy_identity(f: dict) -> tuple:
     name = str(f.get("name", "")).strip()
     module = str(f.get("module", "")).strip()
     if module == "None":
         module = ""
     return (module, name)
+
+def _normalize_rule_id(val):
+    if not isinstance(val, str):
+        return None
+    val = val.strip()
+    return val if val else None
+
+def _normalize_instance_key(val):
+    if not isinstance(val, str):
+        return None
+    val = val.strip()
+    return val if val else None
+
+def _get_stable_identity(f: dict):
+    r_id = _normalize_rule_id(f.get("rule_id"))
+    if not r_id:
+        return None
+    i_key = _normalize_instance_key(f.get("instance_key"))
+    return (r_id, i_key)
+
+def _pair_findings(old_list, new_list, unchanged, improved, regressed, unmatched_old, unmatched_new):
+    local_unmatched_old = []
+    used_new_indices = set()
+
+    for old_f in old_list:
+        old_sev = _get_severity_weight(old_f.get("severity"))
+        matched = False
+        for i, new_f in enumerate(new_list):
+            if i not in used_new_indices:
+                new_sev = _get_severity_weight(new_f.get("severity"))
+                if old_sev == new_sev:
+                    unchanged.append(new_f)
+                    used_new_indices.add(i)
+                    matched = True
+                    break
+        if not matched:
+            local_unmatched_old.append(old_f)
+
+    local_unmatched_new = [new_f for i, new_f in enumerate(new_list) if i not in used_new_indices]
+
+    match_count = min(len(local_unmatched_old), len(local_unmatched_new))
+    for i in range(match_count):
+        old_f = local_unmatched_old[i]
+        new_f = local_unmatched_new[i]
+        old_sev = _get_severity_weight(old_f.get("severity"))
+        new_sev = _get_severity_weight(new_f.get("severity"))
+
+        disp_name = new_f.get("name") or old_f.get("name", "")
+        if new_sev < old_sev:
+            improved.append({"name": disp_name, "old": old_f, "new": new_f})
+        elif new_sev > old_sev:
+            regressed.append({"name": disp_name, "old": old_f, "new": new_f})
+        else:
+            unchanged.append(new_f)
+
+    for i in range(match_count, len(local_unmatched_old)):
+        unmatched_old.append(local_unmatched_old[i])
+    for i in range(match_count, len(local_unmatched_new)):
+        unmatched_new.append(local_unmatched_new[i])
+
+def _resolve_moduleless(groups, other_groups):
+    moduleless = [k for k in list(groups.keys()) if k[0] == ""]
+    for k in moduleless:
+        if k in other_groups:
+            continue
+        candidates = [ok for ok in other_groups.keys() if ok[1] == k[1] and ok[0] != ""]
+        if len(candidates) == 1:
+            target_key = candidates[0]
+            groups[target_key].extend(groups[k])
+            del groups[k]
 
 def compare_reports(old_scan: Dict[str, Any], new_scan: Dict[str, Any]) -> Dict[str, Any]:
     if old_scan.get("target_url") != new_scan.get("target_url"):
@@ -49,34 +119,23 @@ def compare_reports(old_scan: Dict[str, Any], new_scan: Dict[str, Any]) -> Dict[
     old_findings = old_data.get("findings", [])
     new_findings = new_data.get("findings", [])
 
-    old_groups = defaultdict(list)
+    old_stable_groups = defaultdict(list)
+    old_legacy_groups = defaultdict(list)
     for f in old_findings:
-        old_groups[_get_identity(f)].append(f)
+        sid = _get_stable_identity(f)
+        if sid:
+            old_stable_groups[sid].append(f)
+        else:
+            old_legacy_groups[_get_legacy_identity(f)].append(f)
 
-    new_groups = defaultdict(list)
+    new_stable_groups = defaultdict(list)
+    new_legacy_groups = defaultdict(list)
     for f in new_findings:
-        new_groups[_get_identity(f)].append(f)
-
-    # Safe cross-version legacy matching for missing modules
-    old_moduleless = [k for k in list(old_groups.keys()) if k[0] == ""]
-    for k in old_moduleless:
-        if k in new_groups:
-            continue
-        candidates = [nk for nk in new_groups.keys() if nk[1] == k[1] and nk[0] != ""]
-        if len(candidates) == 1:
-            target_key = candidates[0]
-            old_groups[target_key].extend(old_groups[k])
-            del old_groups[k]
-
-    new_moduleless = [k for k in list(new_groups.keys()) if k[0] == ""]
-    for k in new_moduleless:
-        if k in old_groups:
-            continue
-        candidates = [ok for ok in old_groups.keys() if ok[1] == k[1] and ok[0] != ""]
-        if len(candidates) == 1:
-            target_key = candidates[0]
-            new_groups[target_key].extend(new_groups[k])
-            del new_groups[k]
+        sid = _get_stable_identity(f)
+        if sid:
+            new_stable_groups[sid].append(f)
+        else:
+            new_legacy_groups[_get_legacy_identity(f)].append(f)
 
     added = []
     removed = []
@@ -84,54 +143,114 @@ def compare_reports(old_scan: Dict[str, Any], new_scan: Dict[str, Any]) -> Dict[
     regressed = []
     unchanged = []
 
-    # Sort to ensure deterministic output
-    all_identities = sorted(list(set(old_groups.keys()) | set(new_groups.keys())))
+    unmatched_old_stable = []
+    unmatched_new_stable = []
 
-    for identity in all_identities:
-        old_list = old_groups[identity]
-        new_list = new_groups[identity]
+    # 1. STABLE <-> STABLE
+    all_stable = sorted(
+        list(set(old_stable_groups.keys()) | set(new_stable_groups.keys())),
+        key=lambda sid: (sid[0], sid[1] is not None, sid[1] or "")
+    )
+    for sid in all_stable:
+        _pair_findings(
+            old_stable_groups[sid],
+            new_stable_groups[sid],
+            unchanged, improved, regressed,
+            unmatched_old_stable, unmatched_new_stable
+        )
 
-        unmatched_old = []
-        used_new_indices = set()
+    # 2. LEGACY <-> LEGACY
+    _resolve_moduleless(old_legacy_groups, new_legacy_groups)
+    _resolve_moduleless(new_legacy_groups, old_legacy_groups)
 
-        # 1. Exact severity pairing
-        for old_f in old_list:
-            old_sev = _get_severity_weight(old_f.get("severity"))
-            matched = False
-            for i, new_f in enumerate(new_list):
-                if i not in used_new_indices:
-                    new_sev = _get_severity_weight(new_f.get("severity"))
-                    if old_sev == new_sev:
-                        unchanged.append(new_f)
-                        used_new_indices.add(i)
-                        matched = True
-                        break
-            if not matched:
-                unmatched_old.append(old_f)
+    unmatched_old_legacy = []
+    unmatched_new_legacy = []
 
-        unmatched_new = [new_f for i, new_f in enumerate(new_list) if i not in used_new_indices]
+    all_legacy = sorted(list(set(old_legacy_groups.keys()) | set(new_legacy_groups.keys())))
+    for lid in all_legacy:
+        _pair_findings(
+            old_legacy_groups[lid],
+            new_legacy_groups[lid],
+            unchanged, improved, regressed,
+            unmatched_old_legacy, unmatched_new_legacy
+        )
 
-        # 2. Sequential pairing for remainder (Improved/Regressed)
-        match_count = min(len(unmatched_old), len(unmatched_new))
-        for i in range(match_count):
-            old_f = unmatched_old[i]
-            new_f = unmatched_new[i]
-            old_sev = _get_severity_weight(old_f.get("severity"))
-            new_sev = _get_severity_weight(new_f.get("severity"))
+    # 3. MIXED LEFTOVERS
 
-            disp_name = new_f.get("name") or old_f.get("name", "")
-            if new_sev < old_sev:
-                improved.append({"name": disp_name, "old": old_f, "new": new_f})
-            elif new_sev > old_sev:
-                regressed.append({"name": disp_name, "old": old_f, "new": new_f})
+    unmatched_old_stable_by_leg = defaultdict(list)
+    for f in unmatched_old_stable:
+        unmatched_old_stable_by_leg[_get_legacy_identity(f)].append(f)
+
+    unmatched_new_stable_by_leg = defaultdict(list)
+    for f in unmatched_new_stable:
+        unmatched_new_stable_by_leg[_get_legacy_identity(f)].append(f)
+
+    old_leg_leftovers = defaultdict(list)
+    for f in unmatched_old_legacy:
+        old_leg_leftovers[_get_legacy_identity(f)].append(f)
+
+    new_leg_leftovers = defaultdict(list)
+    for f in unmatched_new_legacy:
+        new_leg_leftovers[_get_legacy_identity(f)].append(f)
+
+    def _do_mixed_match(leg_leftovers, stable_leftovers_by_leg, is_old_legacy):
+        _resolve_moduleless(leg_leftovers, stable_leftovers_by_leg)
+        _resolve_moduleless(stable_leftovers_by_leg, leg_leftovers)
+
+        leg_unmatched_out = []
+        stable_unmatched_out = []
+
+        for lid in list(leg_leftovers.keys()):
+            opposite_stable = stable_leftovers_by_leg.get(lid, [])
+            if not opposite_stable:
+                leg_unmatched_out.extend(leg_leftovers[lid])
+                continue
+
+            distinct_sids = set(_get_stable_identity(f) for f in opposite_stable)
+            if len(distinct_sids) == 1:
+                # Exactly one distinct stable identity, safe to bridge
+                if is_old_legacy:
+                    _pair_findings(
+                        leg_leftovers[lid],
+                        opposite_stable,
+                        unchanged, improved, regressed,
+                        leg_unmatched_out, stable_unmatched_out
+                    )
+                else:
+                    _pair_findings(
+                        opposite_stable,
+                        leg_leftovers[lid],
+                        unchanged, improved, regressed,
+                        stable_unmatched_out, leg_unmatched_out
+                    )
+                del stable_leftovers_by_leg[lid]
             else:
-                unchanged.append(new_f)
+                leg_unmatched_out.extend(leg_leftovers[lid])
 
-        # 3. Leftovers (Added/Removed)
-        for i in range(match_count, len(unmatched_old)):
-            removed.append(unmatched_old[i])
-        for i in range(match_count, len(unmatched_new)):
-            added.append(unmatched_new[i])
+        return leg_unmatched_out, stable_unmatched_out
+
+    final_unmatched_old_legacy, final_unmatched_new_stable_from_old = _do_mixed_match(
+        old_leg_leftovers,
+        unmatched_new_stable_by_leg,
+        is_old_legacy=True
+    )
+
+    final_unmatched_new_legacy, final_unmatched_old_stable_from_new = _do_mixed_match(
+        new_leg_leftovers,
+        unmatched_old_stable_by_leg,
+        is_old_legacy=False
+    )
+
+    removed.extend(final_unmatched_old_legacy)
+    added.extend(final_unmatched_new_legacy)
+
+    for v in unmatched_old_stable_by_leg.values():
+        removed.extend(v)
+    removed.extend(final_unmatched_old_stable_from_new)
+
+    for v in unmatched_new_stable_by_leg.values():
+        added.extend(v)
+    added.extend(final_unmatched_new_stable_from_old)
 
     score_change = new_score - old_score
 
