@@ -297,7 +297,7 @@ class JavaScriptSecurityModule(ScannerModule):
                         confidence="Medium",
                         category="information_exposure",
                         owasp="A05: Security Misconfiguration"
-                    ))
+                    , rule_id="js_exposed_frontend_env"))
 
             # AGGREGATE FINDINGS
             if secrets_found:
@@ -310,7 +310,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     confidence="High",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
-                ))
+                , rule_id="js_hardcoded_secret_key"))
 
             if info_secrets_found:
                 findings.append(self.make_finding(
@@ -322,7 +322,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     remediation="Ensure public API keys have HTTP Referrer restrictions configured.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                ))
+                , rule_id="js_client_side_api_key"))
 
             if loopback_hosts:
                 findings.append(self.make_finding(
@@ -334,7 +334,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     confidence="Medium",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
-                ))
+                , rule_id="js_localhost_references"))
 
             if internal_hosts:
                 findings.append(self.make_finding(
@@ -346,7 +346,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     confidence="Medium",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
-                ))
+                , rule_id="js_internal_infra_references"))
 
             if debug_artifacts:
                 findings.append(self.make_finding(
@@ -358,7 +358,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     confidence="Medium",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
-                ))
+                , rule_id="js_development_artifacts"))
 
             if frameworks:
                 findings.append(self.make_finding(
@@ -399,7 +399,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     confidence="High",
                     category="api_surface",
                     owasp="Not Mapped"
-                ))
+                , rule_id="js_api_endpoints_discovered"))
 
             if seq_id_routes:
                 findings.append(self.make_finding(
@@ -411,7 +411,7 @@ class JavaScriptSecurityModule(ScannerModule):
                       confidence="Low",
                       category="api_surface",
                       owasp="Not Mapped"
-                ))
+                , rule_id="js_sequential_identifier_observed"))
 
             if dangerous_config:
                 findings.append(self.make_finding(
@@ -423,7 +423,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     remediation="Never bundle production passwords or secrets into client-side code.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
-                ))
+                , rule_id="js_sensitive_config_reference"))
 
             if source_maps:
                 findings.append(self.make_finding(
@@ -435,7 +435,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     confidence="High",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
-                ))
+                , rule_id="js_source_maps_exposed"))
 
             if auth_logic_found:
                 findings.append(self.make_finding(
@@ -447,7 +447,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     owasp="Not Mapped",
                     category="authentication",
                     confidence="Medium"
-                ))
+                , rule_id="js_privileged_auth_logic"))
 
             if role_models_found:
                 findings.append(self.make_finding(
@@ -459,7 +459,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     owasp="Not Mapped",
                     category="authentication",
                     confidence="High"
-                ))
+                , rule_id="js_auth_roles_disclosed"))
 
             if privileged_apis:
                 findings.append(self.make_finding(
@@ -471,7 +471,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     owasp="Not Mapped",
                     category="api_surface",
                     confidence="High"
-                ))
+                , rule_id="js_privileged_api_surface"))
 
             if api_versions:
                 findings.append(self.make_finding(
@@ -483,7 +483,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     owasp="Not Mapped",
                     category="api_surface",
                     confidence="High"
-                ))
+                , rule_id="js_versioned_api_surface"))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             # Safely skip on network failures to avoid false positives and noise
