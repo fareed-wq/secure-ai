@@ -12,18 +12,18 @@ class MockResponse:
         self.text = text
         self.status_code = status_code
         self.headers = headers or {}
-    
+
     def json(self):
         import json
         return json.loads(self.text)
-        
+
     def iter_content(self, chunk_size):
         yield self.text.encode('utf-8')
 
 class TestPhase17Accuracy(unittest.TestCase):
     def setUp(self):
         self.session = MagicMock(spec=requests.Session)
-        
+
     # 1 & 2: SecurityHeadersModule
     @patch('api.scanner.modules.http_security.safe_request')
     def test_security_headers_present(self, mock_safe):
@@ -232,6 +232,74 @@ class TestPhase17Accuracy(unittest.TestCase):
         self.assertEqual(len(findings_clean), 1)
         self.assertEqual(findings_clean[0].get("rule_id"), "mixed_content_none")
         self.assertNotIn("instance_key", findings_clean[0])
+
+
+    def test_3d_b_permissions_policy_identities(self):
+        import ast
+        with open("api/scanner/modules/headers.py", "r", encoding="utf-8") as f:
+            tree = ast.parse(f.read())
+
+        found_rules = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef) and node.name == "PermissionsPolicyModule":
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Call) and getattr(child.func, "attr", "") == "make_finding":
+                        has_instance_key = False
+                        for kw in child.keywords:
+                            if kw.arg == "rule_id" and isinstance(kw.value, ast.Constant):
+                                found_rules.add(kw.value.value)
+                            if kw.arg == "instance_key":
+                                has_instance_key = True
+                        self.assertFalse(has_instance_key, "PermissionsPolicy finding has instance_key")
+
+        expected = {"headers_permissions_policy_missing", "headers_permissions_policy_permissive", "headers_permissions_policy_configured"}
+        self.assertEqual(found_rules, expected)
+
+    def test_3d_b_csp_quality_identities(self):
+        import ast
+        with open("api/scanner/modules/headers.py", "r", encoding="utf-8") as f:
+            tree = ast.parse(f.read())
+
+        found_rules = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef) and node.name == "CSPQualityModule":
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Call) and getattr(child.func, "attr", "") == "make_finding":
+                        has_instance_key = False
+                        for kw in child.keywords:
+                            if kw.arg == "rule_id" and isinstance(kw.value, ast.Constant):
+                                found_rules.add(kw.value.value)
+                            if kw.arg == "instance_key":
+                                has_instance_key = True
+                        self.assertFalse(has_instance_key, "CSPQuality finding has instance_key")
+
+        expected = {"csp_quality_weak", "csp_quality_inline_styles", "csp_quality_missing_default_src", "csp_quality_object_src_unrestricted"}
+        self.assertEqual(found_rules, expected)
+
+    def test_3d_b_advanced_security_headers_identities(self):
+        import ast
+        with open("api/scanner/modules/http_security.py", "r", encoding="utf-8") as f:
+            tree = ast.parse(f.read())
+
+        found_rules = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef) and node.name == "AdvancedSecurityHeadersModule":
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Call) and getattr(child.func, "attr", "") == "make_finding":
+                        has_instance_key = False
+                        for kw in child.keywords:
+                            if kw.arg == "rule_id" and isinstance(kw.value, ast.Constant):
+                                found_rules.add(kw.value.value)
+                            if kw.arg == "instance_key":
+                                has_instance_key = True
+                        self.assertFalse(has_instance_key, "AdvancedSecurityHeaders finding has instance_key")
+
+        expected = {
+            "headers_coop_missing", "headers_coep_missing", "headers_corp_missing",
+            "headers_corp_invalid", "headers_corp_configured",
+            "headers_cross_origin_isolation_configured", "headers_advanced_check_inconclusive"
+        }
+        self.assertEqual(found_rules, expected)
 
 if __name__ == '__main__':
     unittest.main()

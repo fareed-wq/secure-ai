@@ -907,7 +907,8 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         impact="COOP provides additional browsing-context isolation and is relevant where stronger cross-origin isolation is desired.",
                         remediation="Set Cross-Origin-Opener-Policy: same-origin if strict isolation from cross-origin popups is required.",
                         owasp="Not Mapped",
-                        category="http_headers"
+                        category="http_headers",
+                        rule_id="headers_coop_missing"
                     ))
 
                 coep_val = coep.strip().lower() if coep else ""
@@ -921,7 +922,8 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         impact="COEP is an advanced browser hardening feature for cross-origin isolation. It is not universally appropriate and may affect third-party embeds.",
                         remediation="Set Cross-Origin-Embedder-Policy: require-corp only if cross-origin isolation is explicitly needed.",
                         owasp="Not Mapped",
-                        category="http_headers"
+                        category="http_headers",
+                        rule_id="headers_coep_missing"
                     ))
 
                 if not corp:
@@ -933,7 +935,8 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         impact="Without CORP, other websites can embed your public resources. Sensitive APIs should configure it to restrict embedding.",
                         remediation="Add the Cross-Origin-Resource-Policy header (e.g., 'same-origin') for sensitive resources.",
                         owasp="A05: Security Misconfiguration",
-                        category="http_headers"
+                        category="http_headers",
+                        rule_id="headers_corp_missing"
                     ))
                 else:
                     corp_val = corp.lower().strip()
@@ -945,7 +948,8 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                             f"Cross-Origin-Resource-Policy: {corp}",
                             remediation="Use 'same-origin', 'same-site', or 'cross-origin' for the CORP header.",
                             owasp="A05: Security Misconfiguration",
-                            category="http_headers"
+                            category="http_headers",
+                            rule_id="headers_corp_invalid"
                         ))
                     else:
                         findings.append(self.make_finding(
@@ -954,7 +958,8 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                             "Your website explicitly configures Cross-Origin-Resource-Policy.",
                             f"Cross-Origin-Resource-Policy: {corp}",
                             owasp="A05: Security Misconfiguration",
-                            category="http_headers"
+                            category="http_headers",
+                            rule_id="headers_corp_configured"
                         ))
 
                 if coop_val in ("same-origin", "same-origin-allow-popups") and coep_val in ("require-corp", "credentialless") and corp and corp.strip().lower() == "same-origin":
@@ -965,7 +970,8 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         f"COOP: {coop}\nCOEP: {coep}\nCORP: {corp}",
                         remediation="",
                         owasp="Not Mapped",
-                        category="http_headers"
+                        category="http_headers",
+                        rule_id="headers_cross_origin_isolation_configured"
                     ))
 
 
@@ -981,7 +987,8 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                 confidence="High",
                 owasp="Not Mapped",
                 category="http_headers",
-                impact="Unable to assess due to connection failure."
+                impact="Unable to assess due to connection failure.",
+                rule_id="headers_advanced_check_inconclusive"
             ))
 
         return findings
