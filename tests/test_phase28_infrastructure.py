@@ -148,6 +148,31 @@ class TestPhase28Infrastructure(unittest.TestCase):
         # that the function doesn't crash and returns valid results.
         self.assertIsInstance(result["score"], int)
 
+
+    def test_3d_c_infrastructure_identities(self):
+        import ast
+        with open("api/scanner/modules/infrastructure.py", "r", encoding="utf-8") as f:
+            tree = ast.parse(f.read())
+
+        found_rules = set()
+        instance_keys = 0
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef) and node.name == "InfrastructureIntelligenceModule":
+                for child in ast.walk(node):
+                    if isinstance(child, ast.Call) and getattr(child.func, "attr", "") == "make_finding":
+                        for kw in child.keywords:
+                            if kw.arg == "rule_id" and isinstance(kw.value, ast.Constant):
+                                found_rules.add(kw.value.value)
+                            if kw.arg == "instance_key":
+                                instance_keys += 1
+
+        expected = {
+            "infra_certificate_sans", "infra_dns_provider", "infra_mail_provider",
+            "infra_cloud_hosting", "infra_dangling_cloud_resource"
+        }
+        self.assertEqual(found_rules, expected)
+        self.assertEqual(instance_keys, 3)
+
 if __name__ == '__main__':
     unittest.main()
 
