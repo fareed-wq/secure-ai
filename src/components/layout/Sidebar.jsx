@@ -105,10 +105,10 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                 <Shield className="w-7 h-7" stroke="url(#logo-gradient)" strokeWidth={1.5} />
                 <Search className="absolute w-[14px] h-[14px] text-slate-50" strokeWidth={2.5} />
               </div>
-              <span className="font-bold text-[14px] tracking-tight flex items-center mt-0.5 truncate">
-                <span className="text-white">URL</span>
+              <span className="font-bold text-[14px] tracking-tight flex items-center mt-0.5 whitespace-nowrap shrink-0">
+                <span className="text-slate-50">URL</span>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-400">SCAN</span>
-                <span className="text-white">ONLINE</span>
+                <span className="text-slate-50">ONLINE</span>
               </span>
             </Link>
           )}
