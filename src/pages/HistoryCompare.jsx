@@ -136,6 +136,38 @@ export default function HistoryCompare() {
   const authLoading = authIsLoading || isAdminLoading;
 
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const scan1 = searchParams.get('scan1');
+  const scan2 = searchParams.get('scan2');
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (authLoading || !canUseScanCompare) {
+      return;
+    }
+
+    if (!scan1 || !scan2) {
+      setError('Missing scan IDs. Please select two scans from History.');
+      setLoading(false);
+      return;
+    }
+
+    const fetchComparison = async () => {
+      try {
+        const res = await scanApi.compareScans(scan1, scan2);
+        setData(res);
+      } catch (err) {
+        setError(err.message || 'Failed to load comparison.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchComparison();
+  }, [scan1, scan2, authLoading, canUseScanCompare]);
 
   if (authLoading) {
     return (
@@ -148,62 +180,6 @@ export default function HistoryCompare() {
   if (!canUseScanCompare) {
     return <Navigate to="/history" replace />;
   }
-
-  const navigate = useNavigate();
-
-  const scan1 = searchParams.get('scan1');
-
-  const scan2 = searchParams.get('scan2');
-
-
-
-  const [data, setData] = useState(null);
-
-  const [loading, setLoading] = useState(true);
-
-  const [error, setError] = useState(null);
-
-
-
-  useEffect(() => {
-
-    if (!scan1 || !scan2) {
-
-      setError('Missing scan IDs. Please select two scans from History.');
-
-      setLoading(false);
-
-      return;
-
-    }
-
-
-
-    const fetchComparison = async () => {
-
-      try {
-
-        const res = await scanApi.compareScans(scan1, scan2);
-
-        setData(res);
-
-      } catch (err) {
-
-        setError(err.message || 'Failed to load comparison.');
-
-      } finally {
-
-        setLoading(false);
-
-      }
-
-    };
-
-
-
-    fetchComparison();
-
-  }, [scan1, scan2]);
 
 
 
