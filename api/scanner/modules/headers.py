@@ -128,7 +128,7 @@ class TechFingerprintModule(ScannerModule):
                     confidence=info['confidence'],
                     owasp="Not Mapped",
                     category="technology_detection"
-                ))
+                , rule_id='technology_detected', instance_key=tech))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass

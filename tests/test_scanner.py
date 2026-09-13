@@ -119,7 +119,7 @@ class TestScannerModules(unittest.TestCase):
     def test_enhanced_tls_module(self, mock_ssl, mock_sock):
         mock_context = MagicMock()
         mock_ssock = MagicMock()
-        
+
         # Valid future date
         future_date = (datetime.datetime.utcnow() + datetime.timedelta(days=40)).strftime("%b %d %H:%M:%S %Y GMT")
         mock_ssock.getpeercert.return_value = {
@@ -127,13 +127,13 @@ class TestScannerModules(unittest.TestCase):
             "notAfter": future_date
         }
         mock_ssock.version.return_value = "TLSv1.3"
-        
+
         mock_context.wrap_socket.return_value.__enter__.return_value = mock_ssock
         mock_ssl.return_value = mock_context
-        
+
         module = EnhancedTLSModule()
         findings = module.run(self.url, self.hostname, self.session)
-        
+
         self.assertTrue(any(f['severity'] == 'Passed' for f in findings))
         self.assertTrue(any(f['name'] == 'Wildcard Certificate in Use' for f in findings))
 
@@ -175,7 +175,7 @@ class TestScannerModules(unittest.TestCase):
         self.assertFalse(is_public_hostname("127.0.0.1"))
         self.assertFalse(is_public_hostname("192.168.1.1"))
         self.assertFalse(is_public_hostname("10.0.0.1"))
-        
+
         # Test a public IP directly since DNS can be flaky in tests
         with patch('socket.getaddrinfo') as mock_dns:
             mock_dns.return_value = [(2, 1, 6, '', ('8.8.8.8', 0))]
@@ -186,7 +186,7 @@ class TestScannerModules(unittest.TestCase):
     def test_scan_url_orchestration(self, mock_public, mock_validate):
         mock_public.return_value = True
         mock_validate.return_value = None
-    
+
         # Create a dummy module that always returns a known finding
         class DummyModule(ScannerModule):
             module_name = "Dummy"
@@ -194,7 +194,7 @@ class TestScannerModules(unittest.TestCase):
             timeout = 1.0
             def run(self, url, hostname, session):
                 return [{"name": "Test Finding", "severity": "High", "description": "Test", "evidence": "None", "owasp": "A01"}]
-    
+
         # Override the global REGISTERED_MODULES for this test
         with patch('api.index.REGISTERED_MODULES', [DummyModule()]), \
              patch('api.scanner.data.registry.REGISTERED_MODULES', [DummyModule()]), \
@@ -204,7 +204,7 @@ class TestScannerModules(unittest.TestCase):
              patch('api.scanner.orchestrator.PASSIVE_MODULES', [DummyModule()]), \
              patch('api.scanner.orchestrator.ACTIVE_MODULES', [DummyModule()]):
             result = scan_url("https://google.com")
-    
+
             self.assertEqual(result['score'], 90) # 100 - 10 (High)
             self.assertEqual(result['severity_counts']['High'], 1)
             self.assertTrue("A01" in result['owasp_coverage'])
@@ -275,3 +275,145 @@ class TestScannerBaseFactory(unittest.TestCase):
         self.assertEqual(f["description"], "Desc")
         self.assertEqual(f["evidence"]["raw"], "Ev")
         self.assertEqual(f["module"], "DummyFactoryModule")
+
+
+def test_technology_fingerprint_identity_metadata():
+    from api.scanner.modules.headers import TechFingerprintModule
+    import requests
+    from unittest.mock import Mock
+
+    mod = TechFingerprintModule()
+    session = Mock(spec=requests.Session)
+
+    def mock_get(method, url, **kwargs):
+        resp = Mock()
+        resp.status_code = 200
+        resp.headers = {'Server': 'nginx/1.23.4', 'X-Powered-By': 'PHP/8.1'}
+        resp.text = ""
+        resp.iter_content = Mock(return_value=[b''])
+        return resp
+
+    session.request.side_effect = mock_get
+
+    findings = mod.run("https://example.com", "example.com", session)
+
+    tech_findings = [f for f in findings if f["name"] == "Technology Fingerprint Identified"]
+    assert len(tech_findings) == 2
+
+    techs = [f.get("instance_key") for f in tech_findings]
+    assert "nginx" in techs
+    assert "PHP" in techs
+
+    for f in tech_findings:
+        assert f.get("rule_id") == "technology_detected"
+        assert "version" not in f["instance_key"].lower()
+
+def test_robots_txt_identity_metadata():
+    from api.scanner.modules.discovery import RobotsTxtModule
+    import requests
+    from unittest.mock import Mock
+
+    mod = RobotsTxtModule()
+    mod.is_spa_fallback = Mock(return_value=False)
+    session = Mock(spec=requests.Session)
+
+    def mock_get(method, url, **kwargs):
+        resp = Mock()
+        resp.status_code = 200
+        if "robots.txt" in url:
+            resp.text = "User-agent: *" + chr(10) + "Disallow: /admin" + chr(10) + "Disallow: /backup"
+        else:
+            resp.text = "HOMEPAGE"
+        resp.url = url
+        resp.history = []
+        resp.headers = {'Content-Type': 'text/plain'}
+        resp.iter_content = Mock(return_value=[resp.text.encode()])
+        return resp
+
+
+
+    session.request.side_effect = mock_get
+    findings = mod.run("https://example.com", "example.com", session)
+
+    disc = [f for f in findings if f["name"] == "Internal Paths Disclosed in Robots.txt"]
+    assert len(disc) > 0
+    assert disc[0].get("rule_id") == "robots_txt_disclosure"
+    assert "instance_key" not in disc[0]
+
+    admin = [f for f in findings if f["name"] == "Privileged / Administrative Surface Discovered"]
+    assert len(admin) > 0
+    assert admin[0].get("rule_id") == "robots_txt_admin_surface"
+    assert "instance_key" not in admin[0]
+
+def test_security_txt_branches():
+    from api.scanner.modules.discovery import SecurityTxtModule
+    import requests
+    from unittest.mock import Mock
+
+    mod = SecurityTxtModule()
+    mod.is_spa_fallback = Mock(return_value=False)
+    session = Mock(spec=requests.Session)
+
+    # 1. Regex fail branch
+    def mock_get1(method, url, **kwargs):
+        resp = Mock()
+        resp.status_code = 200
+        if "security.txt" in url:
+            resp.text = "Contact: mailto:security@google.com" + chr(10) + "Expires: 2030-12-31"
+        else:
+            resp.text = "HOMEPAGE"
+        resp.headers = {'Content-Type': 'text/plain'}
+        resp.iter_content = Mock(return_value=[resp.text.encode()])
+        return resp
+
+
+
+    session.request.side_effect = mock_get1
+    findings1 = mod.run("https://example.com", "example.com", session)
+    inv1 = [f for f in findings1 if f["name"] == "security.txt Invalid Expires"]
+    assert len(inv1) > 0
+    assert inv1[0].get("rule_id") == "security_txt_invalid_expires"
+
+    # 2. Value fail branch
+    def mock_get2(method, url, **kwargs):
+        resp = Mock()
+        resp.status_code = 200
+        if "security.txt" in url:
+            resp.text = "Contact: mailto:security@google.com" + chr(10) + "Expires: 2030-99-99T99:99:99Z"
+        else:
+            resp.text = "HOMEPAGE"
+        resp.headers = {'Content-Type': 'text/plain'}
+        resp.iter_content = Mock(return_value=[resp.text.encode()])
+        return resp
+
+
+
+    session.request.side_effect = mock_get2
+    findings2 = mod.run("https://example.com", "example.com", session)
+    inv2 = [f for f in findings2 if f["name"] == "security.txt Invalid Expires"]
+    assert len(inv2) > 0
+    assert inv2[0].get("rule_id") == "security_txt_invalid_expires"
+
+
+def test_information_disclosure_identity_metadata():
+    from api.scanner.modules.discovery import InformationDisclosureModule
+    import requests
+    from unittest.mock import Mock
+
+    mod = InformationDisclosureModule()
+    session = Mock(spec=requests.Session)
+
+    def mock_get(method, url, **kwargs):
+        resp = Mock()
+        resp.status_code = 200
+        resp.headers = {"Server": "nginx/1.18.0"}
+        resp.iter_content = Mock(return_value=[b''])
+        return resp
+
+    session.request.side_effect = mock_get
+    findings = mod.run("https://example.com", "example.com", session)
+
+    assert len(findings) > 0
+    assert findings[0]['name'] == 'Verbose Server Banner'
+    assert findings[0].get('rule_id') == 'info_disclosure_server_banner'
+    assert 'instance_key' not in findings[0]
