@@ -39,7 +39,8 @@ class DNSCAAModule(ScannerModule):
                     "\\n".join(caa_issuers)[:300] + "\\n(Note: CAA records may define certificate-issuance authorization or reporting information depending on their tags.)",
                     confidence="High",
                     owasp="Not Mapped",
-                    category="domain_email"
+                    category="domain_email",
+                    rule_id="dns_caa_observed"
                 ))
             elif status == 0:
                 findings.append(self.make_finding(
@@ -51,7 +52,8 @@ class DNSCAAModule(ScannerModule):
                     confidence="High",
                     remediation="Consider adding CAA records in DNS specifying authorized CAs.",
                     owasp="Not Mapped",
-                    category="domain_email"
+                    category="domain_email",
+                    rule_id="dns_caa_missing"
                 ))
 
         # DNSSEC check
@@ -65,7 +67,8 @@ class DNSCAAModule(ScannerModule):
                     "Your domain has DS records configured, suggesting DNSSEC may be enabled.",
                     "DS record found",
                     owasp="Not Mapped",
-                    category="dns_security"
+                    category="dns_security",
+                    rule_id="dns_dnssec_observed"
                 ))
             elif ds_status == 0:
                 findings.append(self.make_finding(
@@ -75,7 +78,8 @@ class DNSCAAModule(ScannerModule):
                     "DNSSEC validation records not observed",
                     impact="Weak or missing DNS protections can reduce resilience against certain DNS-based attacks.",
                     owasp="Not Mapped",
-                    category="dns_security"
+                    category="dns_security",
+                    rule_id="dns_dnssec_missing"
                 ))
 
         # Wildcard DNS Detection
@@ -90,7 +94,8 @@ class DNSCAAModule(ScannerModule):
                     "Randomized hostname successfully resolved",
                     confidence="Medium",
                     owasp="Not Mapped",
-                    category="dns_security"
+                    category="dns_security",
+                    rule_id="dns_wildcard_detected"
                 ))
 
         return findings
@@ -160,7 +165,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         confidence="High",
                         remediation="Publish a valid SPF TXT record (e.g., 'v=spf1 include:_spf.google.com ~all').",
                         owasp="A05: Security Misconfiguration",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_spf_missing"
                     ))
                 else:
                     findings.append(self.make_finding(
@@ -170,7 +176,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         "TXT record absent for v=spf1 after successful query.",
                         confidence="High",
                         owasp="Not Mapped",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_spf_missing"
                     ))
             else:
                 if len(spf_records) > 1:
@@ -183,7 +190,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         confidence="High",
                         remediation="Consolidate multiple SPF records into a single valid TXT record.",
                         owasp="A05: Security Misconfiguration",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_spf_multiple"
                     ))
                 elif len(spf_records) == 1:
                     data_str = spf_records[0]
@@ -201,7 +209,8 @@ class DNSEmailSecurityModule(ScannerModule):
                             confidence="High",
                             remediation="Change '+all' to '~all' or '-all' in your SPF TXT record.",
                             owasp="A05: Security Misconfiguration",
-                            category="domain_email"
+                            category="domain_email",
+                    rule_id="dns_email_spf_permissive"
                         ))
 
                     all_mechanisms = [t for t in tokens if t.endswith("all") and t in ("+all", "-all", "~all", "?all", "all")]
@@ -214,7 +223,8 @@ class DNSEmailSecurityModule(ScannerModule):
                             data_str,
                             impact="Email receivers may ignore the policy, reducing its effectiveness against spoofing.",
                             owasp="A05: Security Misconfiguration",
-                            category="domain_email"
+                            category="domain_email",
+                    rule_id="dns_email_spf_malformed_multiple_all"
                         ))
 
                     if tokens and tokens[0] != "v=spf1":
@@ -225,7 +235,8 @@ class DNSEmailSecurityModule(ScannerModule):
                             "Your SPF record is valid but 'v=spf1' is not the very first term, which violates the standard.",
                             data_str,
                             owasp="A05: Security Misconfiguration",
-                            category="domain_email"
+                            category="domain_email",
+                    rule_id="dns_email_spf_malformed_version"
                         ))
 
                     # Passed ONLY if effectively -all or ~all and NOT malformed
@@ -239,7 +250,8 @@ class DNSEmailSecurityModule(ScannerModule):
                             data_str,
                             confidence="High",
                             owasp="A05: Security Misconfiguration",
-                            category="domain_email"
+                            category="domain_email",
+                    rule_id="dns_email_spf_configured"
                         ))
 
                     include_count = sum(1 for t in tokens if t.startswith("include:"))
@@ -267,7 +279,8 @@ class DNSEmailSecurityModule(ScannerModule):
                             desc,
                             data_str,
                             owasp="Not Mapped",
-                            category="domain_email"
+                            category="domain_email",
+                    rule_id="dns_email_spf_analysis"
                         ))
 
             # Passive Cloud/Infrastructure TXT Record Analysis
@@ -341,7 +354,8 @@ class DNSEmailSecurityModule(ScannerModule):
                     confidence=confidence,
                     remediation="Remove internal infrastructure details from public DNS records.",
                     owasp="A05: Security Misconfiguration",
-                    category="information_exposure"
+                    category="information_exposure",
+                    rule_id="info_disclosure_infrastructure"
                 ))
 
         # 6. Evaluate DMARC
@@ -357,7 +371,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         confidence="High",
                         remediation=f"Publish a DMARC TXT record at _dmarc.{domain} with a valid enforcement policy.",
                         owasp="A05: Security Misconfiguration",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_dmarc_missing"
                     ))
                 else:
                     findings.append(self.make_finding(
@@ -367,7 +382,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         "_dmarc TXT record absent after successful query.",
                         confidence="High",
                         owasp="Not Mapped",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_dmarc_missing"
                     ))
             elif len(dmarc_records) > 1:
                 findings.append(self.make_finding(
@@ -378,7 +394,8 @@ class DNSEmailSecurityModule(ScannerModule):
                     impact="Receivers might ignore your DMARC policy entirely, allowing spoofed emails to be delivered.",
                     remediation="Consolidate multiple DMARC records into a single valid TXT record.",
                     owasp="A05: Security Misconfiguration",
-                    category="domain_email"
+                    category="domain_email",
+                    rule_id="dns_email_dmarc_multiple"
                 ))
             elif len(dmarc_records) == 1:
                 d_str = dmarc_records[0]
@@ -428,7 +445,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         confidence="High",
                         remediation="Consider upgrading DMARC policy from 'p=none' to 'p=quarantine' or 'p=reject'.",
                         owasp="Not Mapped",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_dmarc_monitoring_only"
                     ))
                 elif not malformed and not duplicate_tags and p_val in ("quarantine", "reject"):
                     if pct_int == 100:
@@ -439,7 +457,8 @@ class DNSEmailSecurityModule(ScannerModule):
                             d_str,
                             confidence="High",
                             owasp="A05: Security Misconfiguration",
-                            category="domain_email"
+                            category="domain_email",
+                    rule_id="dns_email_dmarc_strong"
                         ))
 
                 info_msgs = []
@@ -469,7 +488,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         desc,
                         d_str,
                         owasp="Not Mapped",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_dmarc_analysis"
                     ))
 
                 if duplicate_tags:
@@ -479,7 +499,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         f"Your DMARC record contains duplicate tags ({', '.join(duplicate_tags)}), which may cause email receivers to ignore the policy.",
                         d_str,
                         owasp="A05: Security Misconfiguration",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_dmarc_malformed_duplicate_tags"
                     ))
                 elif malformed:
                     findings.append(self.make_finding(
@@ -488,7 +509,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         "Your DMARC record contains invalid syntax or the 'v=DMARC1' tag is not the first tag.",
                         d_str,
                         owasp="A05: Security Misconfiguration",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_dmarc_malformed"
                     ))
 
                 if p_val in ("quarantine", "reject") and not malformed and pct_int == 0:
@@ -500,7 +522,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         impact="Spoofed emails will still be delivered despite the quarantine/reject policy.",
                         remediation="Remove 'pct=0' or increase the percentage to gradually enforce the policy.",
                         owasp="A05: Security Misconfiguration",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_dmarc_pct_zero"
                     ))
                 elif not malformed and not duplicate_tags and p_val in ("quarantine", "reject") and 0 < pct_int < 100:
                     findings.append(self.make_finding(
@@ -511,7 +534,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         impact="Spoofed emails not falling within this percentage will still be delivered.",
                         remediation="Consider gradually increasing pct to 100.",
                         owasp="Not Mapped",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_dmarc_partial_enforcement"
                     ))
 
         # 7. Evaluate MTA-STS
@@ -532,7 +556,8 @@ class DNSEmailSecurityModule(ScannerModule):
                                 rec.get("data", "") + "\n(Note: The HTTPS MTA-STS policy file and enforcement behavior were not verified.)",
                                 confidence="High",
                                 owasp="Not Mapped",
-                                category="domain_email"
+                                category="domain_email",
+                    rule_id="dns_email_mta_sts_observed"
                             ))
                             break
                 if not mta_found:
@@ -543,7 +568,8 @@ class DNSEmailSecurityModule(ScannerModule):
                         "DNS record not found",
                         confidence="High",
                         owasp="Not Mapped",
-                        category="domain_email"
+                        category="domain_email",
+                    rule_id="dns_email_mta_sts_missing"
                     ))
 
         return findings

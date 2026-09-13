@@ -17,11 +17,11 @@ class TestPhase21SubdomainDiscovery(unittest.TestCase):
         del resp.raw
         resp.status_code = status_code
         resp.json = MagicMock(return_value=json_data)
-        
+
         import api.scanner.modules.network_checks
         original_safe = api.scanner.modules.network_checks.safe_request
         api.scanner.modules.network_checks.safe_request = lambda *a, **k: resp
-        
+
         try:
             findings = self.module.run(self.url, self.hostname, self.session)
             return findings
@@ -31,12 +31,12 @@ class TestPhase21SubdomainDiscovery(unittest.TestCase):
     def _run_with_exception(self, exc):
         import api.scanner.modules.network_checks
         original_safe = api.scanner.modules.network_checks.safe_request
-        
+
         def raiser(*a, **k):
             raise exc
-            
+
         api.scanner.modules.network_checks.safe_request = raiser
-        
+
         try:
             findings = self.module.run(self.url, self.hostname, self.session)
             return findings
@@ -54,7 +54,7 @@ class TestPhase21SubdomainDiscovery(unittest.TestCase):
         self.assertEqual(findings[0]["name"], "Subdomains Discovered")
         self.assertEqual(findings[0]["severity"], "Informational")
         self.assertEqual(findings[0]["category"], "information_exposure")
-        
+
         evidence = findings[0]["evidence"]["raw"]
         self.assertIn("api.example.com", evidence)
         self.assertIn("dev.example.com", evidence)
@@ -91,11 +91,11 @@ class TestPhase21SubdomainDiscovery(unittest.TestCase):
         # Empty list
         findings = self._run_with_mock_resp([])
         self.assertEqual(len(findings), 0)
-        
+
         # Not a list
         findings = self._run_with_mock_resp({"error": "foo"})
         self.assertEqual(len(findings), 0)
-        
+
         # Missing name_value
         findings = self._run_with_mock_resp([{"other": "value"}])
         self.assertEqual(len(findings), 0)
@@ -108,7 +108,7 @@ class TestPhase21SubdomainDiscovery(unittest.TestCase):
         findings = self._run_with_exception(requests.exceptions.Timeout("Timeout!"))
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]["name"], "Subdomain Discovery Inconclusive")
-        
+
         findings = self._run_with_exception(ValueError("Invalid JSON"))
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]["name"], "Subdomain Discovery Inconclusive")
@@ -117,6 +117,23 @@ class TestPhase21SubdomainDiscovery(unittest.TestCase):
         module_names = [type(m).__name__ for m in REGISTERED_MODULES]
         self.assertIn("PassiveSubdomainDiscoveryModule", module_names)
         self.assertNotIn("SubdomainProbingModule", module_names) # Verify existing is still dynamic only
+
+
+    def test_3b2_passive_discovery_identities(self):
+        # Discovered
+        data = [{"name_value": "api.example.com"}]
+        findings = self._run_with_mock_resp(data)
+        disc = next((f for f in findings if f["name"] == "Subdomains Discovered"), None)
+        self.assertIsNotNone(disc)
+        self.assertEqual(disc.get("rule_id"), "network_subdomains_discovered")
+        self.assertNotIn("instance_key", disc)
+
+        # Inconclusive
+        findings_inc = self._run_with_exception(requests.exceptions.Timeout("Timeout!"))
+        inc = next((f for f in findings_inc if f["name"] == "Subdomain Discovery Inconclusive"), None)
+        self.assertIsNotNone(inc)
+        self.assertEqual(inc.get("rule_id"), "network_subdomain_discovery_inconclusive")
+        self.assertNotIn("instance_key", inc)
 
 if __name__ == '__main__':
     unittest.main()

@@ -33,7 +33,9 @@ class SubdomainProbingModule(ScannerModule):
                         sub_url,
                         impact="Unused or forgotten subdomains may increase the attack surface if they lack standard security controls.",
                         owasp="A05: Security Misconfiguration",
-                                category="information_exposure"
+                                category="information_exposure",
+                        rule_id="network_subdomain_probed",
+                        instance_key=f"{sub}.{domain}"
                     ))
             except Exception:
                 pass
@@ -76,7 +78,8 @@ class SubdomainTakeoverModule(ScannerModule):
                     f"[-] DNS & CNAME Audit\n[!] Target: {hostname} -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records.",
                     impact="Your domains are properly managed, reducing the risk of subdomain takeover.",
                     owasp="Not Mapped",
-                    category="domain_email"
+                    category="domain_email",
+                    rule_id="network_subdomain_takeover_risk_none"
                 ))
                 return findings
 
@@ -105,7 +108,8 @@ class SubdomainTakeoverModule(ScannerModule):
                         confidence="Medium",
                         remediation="Remove the stale DNS CNAME record immediately or reclaim the resource on the third-party service.",
                         owasp="A05: Security Misconfiguration",
-                        category="domain_email"
+                        category="domain_email",
+                        rule_id="network_subdomain_takeover_vulnerability"
                     ))
                 else:
                     findings.append(self.make_finding(
@@ -115,7 +119,8 @@ class SubdomainTakeoverModule(ScannerModule):
                         f"Target: {cname_target}",
                         impact="Properly configured domain records ensure visitors are safely directed to the right place without risk of subdomain takeover.",
                         owasp="Not Mapped",
-                        category="domain_email"
+                        category="domain_email",
+                        rule_id="network_cname_alias_configured"
                     ))
             else:
                 findings.append(self.make_finding(
@@ -125,7 +130,8 @@ class SubdomainTakeoverModule(ScannerModule):
                     f"[-] DNS & CNAME Audit\n[!] Target: {hostname} -> [NO CNAME RECORD FOUND]\n\nValidated CNAME and DNS routing records.",
                     impact="Your domains are properly managed, reducing the risk of subdomain takeover.",
                     owasp="Not Mapped",
-                    category="domain_email"
+                    category="domain_email",
+                    rule_id="network_subdomain_takeover_risk_none"
                 ))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
@@ -226,7 +232,8 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
                 "We could not verify your domain's certificate transparency logs due to a network timeout with an external service.",
                 "crt.sh connection timed out or failed.",
                 owasp="Not Mapped",
-                category="information_exposure"
+                category="information_exposure",
+                rule_id="network_subdomain_discovery_inconclusive"
             ))
 
         if discovered_subdomains:
@@ -279,7 +286,8 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
                 evidence_str,
                 impact="Exposed internal IPs reveal network topology and may assist reconnaissance.",
                 owasp="Not Mapped",
-                category="information_exposure"
+                category="information_exposure",
+                rule_id="network_subdomains_discovered"
             )
             finding["metadata"] = {
                 "total_subdomains": summary_count,
