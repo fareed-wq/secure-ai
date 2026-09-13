@@ -100,7 +100,8 @@ class InfrastructureIntelligenceModule(ScannerModule):
                                 impact="This is not a security flaw, but it gives outsiders a view of your web properties, which could help them find less protected sites to target.",
                                 confidence="High",
                                 category="information_exposure",
-                                owasp="Not Mapped"
+                                owasp="Not Mapped",
+                                rule_id="infra_certificate_sans"
                             ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             pass
@@ -137,7 +138,9 @@ class InfrastructureIntelligenceModule(ScannerModule):
                         impact="This is not a security flaw. Knowing your DNS provider is public information, but it helps map your infrastructure.",
                         confidence="High",
                         category="technology_detection",
-                        owasp="Not Mapped"
+                        owasp="Not Mapped",
+                        rule_id="infra_dns_provider",
+                        instance_key=provider.lower().replace(" ", "_")
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             pass
@@ -170,7 +173,9 @@ class InfrastructureIntelligenceModule(ScannerModule):
                         impact="This is not a security flaw. Your mail provider is public information, but it helps understand your email setup.",
                         confidence="High",
                         category="technology_detection",
-                        owasp="Not Mapped"
+                        owasp="Not Mapped",
+                        rule_id="infra_mail_provider",
+                        instance_key=provider.lower().replace(" ", "_")
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             pass
@@ -205,7 +210,8 @@ class InfrastructureIntelligenceModule(ScannerModule):
                 impact="This is not a security flaw, but knowing your hosting provider helps map your infrastructure and could inform targeted attacks.",
                 confidence="High",
                 category="technology_detection",
-                owasp="Not Mapped"
+                owasp="Not Mapped",
+                rule_id="infra_cloud_hosting"
             ))
 
         # Dangling Cloud Resource Check
@@ -233,7 +239,9 @@ class InfrastructureIntelligenceModule(ScannerModule):
                                 confidence="Medium",
                                 remediation="Remove the dangling CNAME or DNS record pointing to the unprovisioned resource.",
                                 category="misconfiguration",
-                                owasp="A05: Security Misconfiguration"
+                                owasp="A05: Security Misconfiguration",
+                                rule_id="infra_dangling_cloud_resource",
+                                instance_key=cand
                             ))
                             break
             except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:

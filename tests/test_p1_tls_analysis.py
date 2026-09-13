@@ -156,3 +156,49 @@ def test_zero_network_requests(monkeypatch, module, session):
 
     # One for primary connection, one for legacy downgrade check
     assert mock_safe_create_connection.call_count == 2
+
+
+
+
+def test_3d_c_tls_identities():
+    import ast
+    with open("api/scanner/modules/tls.py", "r", encoding="utf-8") as f:
+        tree = ast.parse(f.read())
+
+    found_rules = set()
+    instance_keys = 0
+    has_dynamic_mapping = False
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ClassDef) and node.name == "EnhancedTLSModule":
+            for child in ast.walk(node):
+                if isinstance(child, ast.Call) and getattr(child.func, "attr", "") == "make_finding":
+                    for kw in child.keywords:
+                        if kw.arg == "rule_id" and isinstance(kw.value, ast.Constant):
+                            found_rules.add(kw.value.value)
+                        elif kw.arg == "rule_id":
+                            # Dynamic rule_id
+                            pass
+                        if kw.arg == "instance_key":
+                            instance_keys += 1
+
+                if isinstance(child, ast.Assign):
+                    for target in child.targets:
+                        if isinstance(target, ast.Name) and target.id == "validation_rule_ids":
+                            if isinstance(child.value, ast.Dict):
+                                has_dynamic_mapping = True
+                                for key, val in zip(child.value.keys, child.value.values):
+                                    if isinstance(val, ast.Constant):
+                                        found_rules.add(val.value)
+
+    expected = {
+        "tls_certificate_valid", "tls_1_3_supported", "tls_cipher_identified",
+        "tls_cipher_weak", "tls_wildcard_certificate", "tls_certificate_expiring_critical",
+        "tls_certificate_expiring_soon", "tls_certificate_validity_period",
+        "tls_certificate_issuer", "tls_certificate_sans", "tls_legacy_protocol_supported",
+        "tls_certificate_expired", "tls_certificate_hostname_mismatch",
+        "tls_certificate_untrusted", "tls_certificate_validation_failed"
+    }
+    assert found_rules == expected
+    assert instance_keys == 0
+    assert has_dynamic_mapping == True

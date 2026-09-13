@@ -31,7 +31,8 @@ class EnhancedTLSModule(ScannerModule):
                         f"Version: {version}",
                         owasp="A02: Cryptographic Failures",
                         category="encryption_tls",
-                        impact="This ensures visitors that they are on the genuine website and keeps their data safe from eavesdroppers."
+                        impact="This ensures visitors that they are on the genuine website and keeps their data safe from eavesdroppers.",
+                        rule_id="tls_certificate_valid"
                     ))
 
                     if version == "TLSv1.3":
@@ -42,7 +43,8 @@ class EnhancedTLSModule(ScannerModule):
                             "Version: TLSv1.3",
                             owasp="Not Mapped",
                             category="encryption_tls",
-                            impact="TLS 1.3 removes obsolete and insecure features from previous versions and speeds up secure connections."
+                            impact="TLS 1.3 removes obsolete and insecure features from previous versions and speeds up secure connections.",
+                            rule_id="tls_1_3_supported"
                         ))
 
                     cipher_info = ssock.cipher()
@@ -54,7 +56,8 @@ class EnhancedTLSModule(ScannerModule):
                             "Identifies the specific encryption method (cipher suite) negotiated between our scanner and your server.",
                             f"Protocol: {tls_ver}\\nNegotiated cipher: {cipher_name}\\nBits: {bit_len}",
                             owasp="Not Mapped",
-                            category="encryption_tls"
+                            category="encryption_tls",
+                            rule_id="tls_cipher_identified"
                         ))
 
                         weak_keywords = ["RC4", "3DES", "DES", "NULL", "EXPORT"]
@@ -67,7 +70,8 @@ class EnhancedTLSModule(ScannerModule):
                                 impact="Weak cryptography provides insufficient protection for sensitive data in transit.",
                                 remediation="Disable weak ciphers (such as RC4, 3DES, or EXPORT) in your server configuration.",
                                 owasp="A02: Cryptographic Failures",
-                                category="encryption_tls"
+                                category="encryption_tls",
+                                rule_id="tls_cipher_weak"
                             ))
 
                     subject = dict(x[0] for x in cert.get("subject", []))
@@ -86,7 +90,8 @@ class EnhancedTLSModule(ScannerModule):
                             remediation="Consider using specific SANs instead of wildcards.",
                             owasp="Not Mapped",
                             category="encryption_tls",
-                            impact="A compromised wildcard certificate affects all subdomains, expanding the potential impact of key material disclosure."
+                            impact="A compromised wildcard certificate affects all subdomains, expanding the potential impact of key material disclosure.",
+                            rule_id="tls_wildcard_certificate"
                         ))
 
                     not_after = cert.get("notAfter")
@@ -109,7 +114,8 @@ class EnhancedTLSModule(ScannerModule):
                                     remediation="Renew the TLS certificate immediately.",
                                     owasp="A02: Cryptographic Failures",
                                     category="encryption_tls",
-                                    impact="If your certificate expires, web browsers will display a scary security warning to your visitors."
+                                    impact="If your certificate expires, web browsers will display a scary security warning to your visitors.",
+                                    rule_id="tls_certificate_expiring_critical"
                                 ))
                             elif days_left <= 30:
                                 findings.append(self.make_finding(
@@ -120,7 +126,8 @@ class EnhancedTLSModule(ScannerModule):
                                     remediation="Renew the TLS certificate soon.",
                                     owasp="A02: Cryptographic Failures",
                                     category="encryption_tls",
-                                    impact="If your certificate expires, web browsers will display a scary security warning to your visitors."
+                                    impact="If your certificate expires, web browsers will display a scary security warning to your visitors.",
+                                    rule_id="tls_certificate_expiring_soon"
                                 ))
                         except Exception:
                             pass
@@ -140,7 +147,8 @@ class EnhancedTLSModule(ScannerModule):
                                 "The lifespan of the presented certificate.",
                                 f"Validity period: {lifespan_days} days (Issued: {issue_date.date()}, Expires: {expire_date.date()})",
                                 owasp="Not Mapped",
-                                category="encryption_tls"
+                                category="encryption_tls",
+                                rule_id="tls_certificate_validity_period"
                             ))
                         except Exception:
                             pass
@@ -161,7 +169,8 @@ class EnhancedTLSModule(ScannerModule):
                             "Identifies the Certificate Authority (CA) that issued your digital certificate.",
                             "\\n".join(issuer_parts),
                             owasp="Not Mapped",
-                            category="encryption_tls"
+                            category="encryption_tls",
+                            rule_id="tls_certificate_issuer"
                         ))
 
                     if dns_names:
@@ -171,7 +180,8 @@ class EnhancedTLSModule(ScannerModule):
                             "Lists all the hostnames and subdomains covered by this single digital certificate.",
                             "\\n".join(f"- {name}" for name in dns_names),
                             owasp="Not Mapped",
-                            category="encryption_tls"
+                            category="encryption_tls",
+                            rule_id="tls_certificate_sans"
                         ))
 
         except ssl.SSLCertVerificationError as e:
@@ -187,6 +197,15 @@ class EnhancedTLSModule(ScannerModule):
             elif "self signed" in err_lower or "unable to get local issuer" in err_lower:
                 finding_name = "Self-Signed or Untrusted Certificate"
 
+            validation_rule_ids = {
+                "Expired Certificate": "tls_certificate_expired",
+                "Hostname Mismatch": "tls_certificate_hostname_mismatch",
+                "Self-Signed or Untrusted Certificate": "tls_certificate_untrusted",
+                "Certificate Validation Failed": "tls_certificate_validation_failed",
+            }
+
+            rule_id = validation_rule_ids.get(finding_name, "tls_certificate_validation_failed")
+
             evidence_str = f"Hostname: {hostname}\\nReason: {err_reason}\\nCode: {err_code}"
 
             findings.append(self.make_finding(
@@ -196,7 +215,8 @@ class EnhancedTLSModule(ScannerModule):
                 evidence_str,
                 remediation="Ensure the server is presenting a valid, trusted certificate matching the requested hostname.",
                 owasp="A02: Cryptographic Failures",
-                category="encryption_tls"
+                category="encryption_tls",
+                rule_id=rule_id
             ))
         except Exception:
             pass
@@ -225,7 +245,8 @@ class EnhancedTLSModule(ScannerModule):
                 remediation="Disable TLS 1.0 and TLS 1.1 on the server.",
                 owasp="A05: Security Misconfiguration",
                 category="encryption_tls",
-                impact="Legacy TLS protocols have known cryptographic weaknesses and should be disabled to ensure secure transit."
+                impact="Legacy TLS protocols have known cryptographic weaknesses and should be disabled to ensure secure transit.",
+                rule_id="tls_legacy_protocol_supported"
             ))
 
         return findings
