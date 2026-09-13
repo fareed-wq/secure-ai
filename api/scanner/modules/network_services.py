@@ -67,7 +67,9 @@ class NetworkServiceExposureModule(ScannerModule):
                 remediation="Restrict access to authorized IPs or VPNs if public access is not required.",
                 evidence={"raw": f"TCP port {port}, commonly associated with {service}, is publicly reachable. The service itself was not fingerprinted."},
                 confidence="High",
-                owasp="Not Mapped"
+                owasp="Not Mapped",
+                rule_id="network_port_exposed",
+                instance_key=str(port)
             )
         except Exception:
             # Timeout, connection refused, unreachable, unexpected errors -> No finding

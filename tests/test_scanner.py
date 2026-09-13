@@ -417,3 +417,129 @@ def test_information_disclosure_identity_metadata():
     assert findings[0]['name'] == 'Verbose Server Banner'
     assert findings[0].get('rule_id') == 'info_disclosure_server_banner'
     assert 'instance_key' not in findings[0]
+
+
+
+def test_3b2_caa_dnssec_identities(monkeypatch):
+    import requests
+    session = requests.Session()
+    from unittest.mock import MagicMock
+    from api.scanner.modules.dns import DNSCAAModule
+    mod = DNSCAAModule()
+
+    # Mock query_doh to return CAA and DS records
+    def mock_query(domain, rtype, session):
+        if rtype == "CAA":
+            return {"Status": 0, "Answer": [{"data": 'issue "ca.example.com"'}]}
+        elif rtype == "DS":
+            return {"Status": 0, "Answer": [{"data": "ds_record_data"}]}
+        elif rtype == "A": # wildcard
+            return {"Status": 0, "Answer": [{"data": "1.2.3.4"}]}
+        return None
+
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query)
+    findings = mod.run("https://example.com", "example.com", session)
+
+    caa = next((f for f in findings if f["name"] == "CAA Records Observed"), None)
+    assert caa and caa.get("rule_id") == "dns_caa_observed"
+    assert "instance_key" not in caa
+
+    ds = next((f for f in findings if f["name"] == "DNSSEC Delegation Observed"), None)
+    assert ds and ds.get("rule_id") == "dns_dnssec_observed"
+    assert "instance_key" not in ds
+
+    wd = next((f for f in findings if f["name"] == "Wildcard DNS Record Detected"), None)
+    assert wd and wd.get("rule_id") == "dns_wildcard_detected"
+    assert "instance_key" not in wd
+
+    # Test missing
+    def mock_query_missing(domain, rtype, session):
+        if rtype in ("CAA", "DS", "A"):
+            return {"Status": 0}
+        return None
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_missing)
+    findings_missing = mod.run("https://example.com", "example.com", session)
+
+    caa_m = next((f for f in findings_missing if f["name"] == "CAA Record Not Observed"), None)
+    assert caa_m and caa_m.get("rule_id") == "dns_caa_missing"
+    assert "instance_key" not in caa_m
+
+    ds_m = next((f for f in findings_missing if f["name"] == "DNSSEC Delegation Not Observed"), None)
+    assert ds_m and ds_m.get("rule_id") == "dns_dnssec_missing"
+    assert "instance_key" not in ds_m
+
+
+
+def test_3b2_subdomain_checks_identities(monkeypatch):
+    import requests
+    session = requests.Session()
+    from api.scanner.modules.network_checks import SubdomainProbingModule, SubdomainTakeoverModule
+    mod_probe = SubdomainProbingModule()
+
+    def mock_safe_req(method, url, **kwargs):
+        from unittest.mock import MagicMock
+        if url == "https://admin.example.com" or url == "https://api.example.com":
+            return MagicMock()
+        return None
+    monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_safe_req)
+    monkeypatch.setattr("api.scanner.modules.network_checks.Config.COMMON_SUBDOMAINS", ["admin", "api", "dev"])
+
+    findings_probe = mod_probe.run("https://example.com", "example.com", session)
+    admin = next((f for f in findings_probe if f["name"] == "Active Subdomain Found: admin.example.com"), None)
+    assert admin is not None
+    assert admin.get("rule_id") == "network_subdomain_probed"
+    assert admin.get("instance_key") == "admin.example.com"
+
+    api = next((f for f in findings_probe if f["name"] == "Active Subdomain Found: api.example.com"), None)
+    assert api is not None
+    assert api.get("rule_id") == "network_subdomain_probed"
+    assert api.get("instance_key") == "api.example.com"
+
+    mod_take = SubdomainTakeoverModule()
+
+    def mock_takeover_vuln(method, url, **kwargs):
+        from unittest.mock import MagicMock
+        m = MagicMock()
+        m.status_code = 200
+        if "dns.google" in url:
+            m.json.return_value = {"Answer": [{"data": "test.s3.amazonaws.com"}]}
+            return m
+        m.text = "NoSuchBucket The specified bucket does not exist"
+        return m
+    monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_takeover_vuln)
+
+    findings_take = mod_take.run("https://example.com", "example.com", session)
+    vuln = next((f for f in findings_take if f["name"] == "Subdomain Takeover Vulnerability (Dangling CNAME)"), None)
+    assert vuln is not None
+    assert vuln.get("rule_id") == "network_subdomain_takeover_vulnerability"
+    assert "instance_key" not in vuln
+
+    def mock_takeover_alias(method, url, **kwargs):
+        from unittest.mock import MagicMock
+        m = MagicMock()
+        m.status_code = 200
+        if "dns.google" in url:
+            m.json.return_value = {"Answer": [{"data": "test.s3.amazonaws.com"}]}
+            return m
+        m.text = "Welcome to S3"
+        return m
+    monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_takeover_alias)
+
+    findings_take2 = mod_take.run("https://example.com", "example.com", session)
+    alias = next((f for f in findings_take2 if f["name"] == "CNAME Alias Configured"), None)
+    assert alias is not None
+    assert alias.get("rule_id") == "network_cname_alias_configured"
+    assert "instance_key" not in alias
+
+    def mock_takeover_none(method, url, **kwargs):
+        from unittest.mock import MagicMock
+        m = MagicMock()
+        m.status_code = 200
+        m.json.return_value = {"Answer": []}
+        return m
+    monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_takeover_none)
+    findings_take3 = mod_take.run("https://example.com", "example.com", session)
+    none_f = next((f for f in findings_take3 if f["name"] == "No Subdomain Takeover Risk Detected"), None)
+    assert none_f is not None
+    assert none_f.get("rule_id") == "network_subdomain_takeover_risk_none"
+    assert "instance_key" not in none_f

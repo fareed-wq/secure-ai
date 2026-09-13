@@ -82,7 +82,7 @@ def test_normal_spf_and_dmarc_unchanged(module, mock_session):
             return create_dns_response(200, ["v=DMARC1; p=none"])
         else:
             return create_dns_response(200, records)
-    
+
     with patch("api.scanner.modules.dns.safe_request", side_effect=mock_safe_request):
         findings = module.run("https://example.com", "example.com", mock_session)
         infra = [f for f in findings if f["name"] == "Potential Infrastructure Information Disclosure"]
@@ -149,3 +149,18 @@ def test_dmarc_plus_private_ip(module, mock_session):
         infra = [f for f in findings if f["name"] == "Potential Infrastructure Information Disclosure"]
         assert len(infra) == 1
         assert "Private IP address (10.0.0.5)" in str(infra[0]["evidence"])
+
+
+
+def test_3b2_infra_identities(module, mock_session, monkeypatch):
+    from unittest.mock import MagicMock
+    def mock_query(domain, rtype, session):
+        if rtype == "TXT":
+            return {"Status": 0, "Answer": [{"data": "10.0.0.1"}, {"data": "test.corp.local"}]}
+        return {"Status": 0}
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query)
+
+    findings = module.run("https://example.com", "example.com", mock_session)
+    infra = next((f for f in findings if f["name"] == "Potential Infrastructure Information Disclosure"), None)
+    assert infra and infra.get("rule_id") == "info_disclosure_infrastructure"
+    assert "instance_key" not in infra

@@ -105,3 +105,25 @@ class TestNetworkServiceExposureModule:
             module.run("http://example.com", "example.com", mock_session)
 
         mock_executor.assert_called_with(max_workers=3)
+
+
+    @patch('api.scanner.modules.network_services.safe_create_connection')
+    def test_3b2_network_services_identities(self, mock_safe_create_connection, module, mock_session):
+        def side_effect(address, timeout):
+            if address[1] in (21, 1433):
+                return MagicMock()
+            raise OSError("Connection refused")
+        mock_safe_create_connection.side_effect = side_effect
+        findings = module.run("http://example.com", "example.com", mock_session)
+
+        ftp = next((f for f in findings if f["name"] == "Port 21 Publicly Reachable (FTP-associated)"), None)
+        assert ftp is not None
+        assert ftp.get("rule_id") == "network_port_exposed"
+        assert ftp.get("instance_key") == "21"
+        assert type(ftp.get("instance_key")) is str
+
+        db = next((f for f in findings if "Database" in f["name"]), None)
+        assert db is not None
+        assert db.get("rule_id") == "network_port_exposed"
+        assert db.get("instance_key") == "1433"
+        assert type(db.get("instance_key")) is str

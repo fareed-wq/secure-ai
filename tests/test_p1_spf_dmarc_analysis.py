@@ -36,10 +36,10 @@ def test_spf_minus_all(module, session, monkeypatch):
     answers = [{"data": "v=spf1 ip4:1.2.3.4 -all"}]
     monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers))
     findings = module.run("https://example.com", "example.com", session)
-    
+
     spf_passed = next((f for f in findings if f["name"] == "SPF Record Configured"), None)
     spf_info = next((f for f in findings if f["name"] == "SPF Policy Analysis"), None)
-    
+
     assert spf_passed is not None
     assert spf_info is not None
     assert "Strict fail policy (-all)" in spf_info["description"]
@@ -49,10 +49,10 @@ def test_spf_tilde_all(module, session, monkeypatch):
     answers = [{"data": "v=spf1 include:_spf.google.com ~all"}]
     monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers))
     findings = module.run("https://example.com", "example.com", session)
-    
+
     spf_passed = next((f for f in findings if f["name"] == "SPF Record Configured"), None)
     spf_info = next((f for f in findings if f["name"] == "SPF Policy Analysis"), None)
-    
+
     assert spf_passed is not None
     assert spf_info is not None
     assert "Softfail policy (~all)" in spf_info["description"]
@@ -62,10 +62,10 @@ def test_spf_question_all(module, session, monkeypatch):
     answers = [{"data": "v=spf1 ?all"}]
     monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers))
     findings = module.run("https://example.com", "example.com", session)
-    
+
     spf_passed = next((f for f in findings if f["name"] == "SPF Record Configured"), None)
     spf_info = next((f for f in findings if f["name"] == "SPF Policy Analysis"), None)
-    
+
     assert spf_passed is None
     assert spf_info is not None
     assert "Neutral policy (?all)" in spf_info["description"]
@@ -74,7 +74,7 @@ def test_spf_plus_all_regression(module, session, monkeypatch):
     answers = [{"data": "v=spf1 +all"}]
     monkeypatch.setattr("api.scanner.modules.dns.safe_request", mock_safe_request(answers))
     findings = module.run("https://example.com", "example.com", session)
-    
+
     overly = next((f for f in findings if f["name"] == "Overly Permissive SPF Record"), None)
     assert overly is not None
     assert overly["severity"] == "High"
@@ -203,10 +203,10 @@ def test_zero_new_network_requests(module, session, monkeypatch):
         nonlocal call_count
         call_count += 1
         return mock_safe_request(None, None)(method, url, **kwargs)
-        
+
     monkeypatch.setattr("api.scanner.modules.dns.safe_request", _tracking_req)
     module.run("https://example.com", "example.com", session)
-    
+
     # 1 SPF, 1 DMARC, 1 MTA-STS, up to 3 DKIM (since mock returns nothing, loop continues 3 times)
     assert call_count == 3
 
@@ -269,3 +269,115 @@ def test_dmarc_pct_invalid(module, session, monkeypatch):
         passed = next((f for f in findings if f["name"] == "Strong DMARC Policy Configured"), None)
         assert malformed is not None
         assert passed is None
+
+
+
+def test_3b2_dmarc_additional(module, session, monkeypatch):
+    def mock_query_dmarc_mal(domain, rtype, session):
+        if domain.startswith("_dmarc."):
+            return {"Status": 0, "Answer": [{"data": "v=DMARC1; p=none; pct=0; p=none"}]}
+        if rtype == "MX": return {"Status": 0, "Answer": [{"data": "mx"}]}
+        return {"Status": 0}
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_dmarc_mal)
+    findings = module.run("https://example.com", "example.com", session)
+
+    dup = next((f for f in findings if f["name"] == "Malformed DMARC Record (Duplicate Tags)"), None)
+    assert dup and dup.get("rule_id") == "dns_email_dmarc_malformed_duplicate_tags"
+    assert "instance_key" not in dup
+
+    def mock_query_dmarc_mal2(domain, rtype, session):
+        if domain.startswith("_dmarc."):
+            return {"Status": 0, "Answer": [{"data": "p=none; v=DMARC1;"}]}
+        if rtype == "MX": return {"Status": 0, "Answer": [{"data": "mx"}]}
+        return {"Status": 0}
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_dmarc_mal2)
+    findings = module.run("https://example.com", "example.com", session)
+    mal = next((f for f in findings if f["name"] == "Malformed DMARC Record"), None)
+    assert mal and mal.get("rule_id") == "dns_email_dmarc_malformed"
+    assert "instance_key" not in mal
+
+    def mock_query_dmarc_pct0(domain, rtype, session):
+        if domain.startswith("_dmarc."):
+            return {"Status": 0, "Answer": [{"data": "v=DMARC1; p=reject; pct=0"}]}
+        if rtype == "MX": return {"Status": 0, "Answer": [{"data": "mx"}]}
+        return {"Status": 0}
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_dmarc_pct0)
+    findings = module.run("https://example.com", "example.com", session)
+    pct0 = next((f for f in findings if f["name"] == "DMARC Enforcement Disabled by pct=0"), None)
+    assert pct0 and pct0.get("rule_id") == "dns_email_dmarc_pct_zero"
+    assert "instance_key" not in pct0
+
+    def mock_query_dmarc_partial(domain, rtype, session):
+        if domain.startswith("_dmarc."):
+            return {"Status": 0, "Answer": [{"data": "v=DMARC1; p=quarantine; pct=50"}]}
+        if rtype == "MX": return {"Status": 0, "Answer": [{"data": "mx"}]}
+        return {"Status": 0}
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_dmarc_partial)
+    findings = module.run("https://example.com", "example.com", session)
+    partial = next((f for f in findings if f["name"] == "Partial DMARC Enforcement"), None)
+    assert partial and partial.get("rule_id") == "dns_email_dmarc_partial_enforcement"
+    assert "instance_key" not in partial
+
+
+
+def test_3b2_spf_dmarc_identities(module, session, monkeypatch):
+    monkeypatch.setattr("api.scanner.modules.dns.safe_request", lambda *a, **kw: MagicMock())
+
+    # Missing
+    def mock_query_miss(domain, rtype, session):
+        if rtype == "MX": return {"Status": 0, "Answer": [{"data": "mx"}]}
+        return {"Status": 0}
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_miss)
+    findings = module.run("https://example.com", "example.com", session)
+    spf = next((f for f in findings if f["name"] == "SPF Record Not Observed"), None)
+    assert spf and spf.get("rule_id") == "dns_email_spf_missing"
+    dm = next((f for f in findings if f["name"] == "DMARC Record Not Observed"), None)
+    assert dm and dm.get("rule_id") == "dns_email_dmarc_missing"
+
+    # Ok
+    def mock_query_ok(domain, rtype, session):
+        if rtype == "TXT" and not domain.startswith("_dmarc") and not domain.startswith("_mta-sts"):
+            return {"Status": 0, "Answer": [{"data": "v=spf1 ~all"}]}
+        elif rtype == "TXT" and domain.startswith("_dmarc"):
+            return {"Status": 0, "Answer": [{"data": "v=DMARC1; p=reject"}]}
+        elif rtype == "TXT" and domain.startswith("_mta-sts"):
+            return {"Status": 0, "Answer": [{"data": "v=STSv1; id=123"}]}
+        elif rtype == "MX": return {"Status": 0, "Answer": [{"data": "mx"}]}
+        return {"Status": 0}
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_ok)
+    findings = module.run("https://example.com", "example.com", session)
+    spf_c = next((f for f in findings if f["name"] == "SPF Record Configured"), None)
+    assert spf_c and spf_c.get("rule_id") == "dns_email_spf_configured"
+    dm_c = next((f for f in findings if f["name"] == "Strong DMARC Policy Configured"), None)
+    assert dm_c and dm_c.get("rule_id") == "dns_email_dmarc_strong"
+    mta = next((f for f in findings if f["name"] == "MTA-STS TXT Record Observed"), None)
+    assert mta and mta.get("rule_id") == "dns_email_mta_sts_observed"
+
+    # Multiples
+    def mock_query_mult(domain, rtype, session):
+        if rtype == "TXT" and not domain.startswith("_dmarc") and not domain.startswith("_mta-sts"):
+            return {"Status": 0, "Answer": [{"data": "v=spf1"}, {"data": "v=spf1"}]}
+        elif rtype == "TXT" and domain.startswith("_dmarc"):
+            return {"Status": 0, "Answer": [{"data": "v=DMARC1; p=none"}, {"data": "v=DMARC1; p=reject"}]}
+        return {"Status": 0}
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_mult)
+    findings = module.run("https://example.com", "example.com", session)
+    assert next((f for f in findings if f["name"] == "Multiple SPF Records Detected"), None).get("rule_id") == "dns_email_spf_multiple"
+    assert next((f for f in findings if f["name"] == "Multiple DMARC Records Detected"), None).get("rule_id") == "dns_email_dmarc_multiple"
+
+    # Permissive and Malformed SPF
+    def mock_query_perm(domain, rtype, session):
+        if rtype == "TXT" and not domain.startswith("_dmarc") and not domain.startswith("_mta-sts"):
+            return {"Status": 0, "Answer": [{"data": "v=spf1 +all"}]}
+        return {"Status": 0}
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_perm)
+    findings = module.run("https://example.com", "example.com", session)
+    assert next((f for f in findings if f["name"] == "Overly Permissive SPF Record"), None).get("rule_id") == "dns_email_spf_permissive"
+
+    def mock_query_mal_all(domain, rtype, session):
+        if rtype == "TXT" and not domain.startswith("_dmarc") and not domain.startswith("_mta-sts"):
+            return {"Status": 0, "Answer": [{"data": "v=spf1 -all ~all"}]}
+        return {"Status": 0}
+    monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_mal_all)
+    findings = module.run("https://example.com", "example.com", session)
+    assert next((f for f in findings if f["name"] == "Malformed SPF Record (Multiple 'all' mechanisms)"), None).get("rule_id") == "dns_email_spf_malformed_multiple_all"
