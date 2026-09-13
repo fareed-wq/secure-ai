@@ -370,7 +370,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     confidence="High",
                     category="technology_detection",
                     owasp="Not Mapped"
-                ))
+                , rule_id='technology_js_frameworks_detected'))
 
             if outdated_libs:
                 findings.append(self.make_finding(
@@ -382,7 +382,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     confidence="Medium",
                     category="technology_detection",
                     owasp="A06: Vulnerable and Outdated Components"
-                ))
+                , rule_id='technology_outdated_library'))
 
             if api_endpoints:
                 count = len(api_endpoints)

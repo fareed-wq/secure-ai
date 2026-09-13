@@ -309,3 +309,40 @@ def test_phpinfo_detected(module, monkeypatch):
     f = next((x for x in findings if x['name'] == 'Exposed phpinfo() File'), None)
     assert f is not None
     assert f['severity'] == 'Medium'
+
+
+
+
+def test_exposed_files_identity_metadata(module, monkeypatch):
+    responses = {
+        "http://example.com/": mock_response(200, "<html>home</html>" + "A"*500, {"Content-Type": "text/html"}, url="http://example.com/"),
+        "http://example.com/.env": mock_response(200, "DATABASE_URL=postgres://user:pass@host/db", {"Content-Type": "text/plain"}, url="http://example.com/.env"),
+        "http://example.com/api/.env": mock_response(200, "APP_KEY=secret_token", {"Content-Type": "text/plain"}, url="http://example.com/api/.env"),
+        "http://example.com/.git/HEAD": mock_response(200, "ref: refs/heads/main\n", {"Content-Type": "text/plain"}, url="http://example.com/.git/HEAD"),
+        "http://example.com/docker-compose.yml": mock_response(200, "services:\n  web:\n    image: nginx:latest\n", {"Content-Type": "application/x-yaml"}, url="http://example.com/docker-compose.yml"),
+        "http://example.com/admin": mock_response(200, "<html>password admin login</html>", {"Content-Type": "text/html"}, url="http://example.com/admin")
+    }
+    monkeypatch.setattr("api.scanner.modules.discovery.safe_request", lambda method, url, **kw: responses.get(url, mock_response(404, url=url)))
+
+    findings = module.run("http://example.com", "example.com", None)
+
+    env_findings = [f for f in findings if f["name"] == "Exposed .env Configuration File"]
+    assert len(env_findings) == 2
+    for f in env_findings:
+        assert f.get("rule_id") == "exposed_file_env"
+        assert f.get("instance_key") in ["/.env", "/api/.env"]
+
+    git_findings = [f for f in findings if f["name"] == "Exposed .git Repository"]
+    assert len(git_findings) == 1
+    assert git_findings[0].get("rule_id") == "exposed_file_git_repo"
+    assert "instance_key" not in git_findings[0]
+
+    docker_findings = [f for f in findings if f["name"] == "Exposed Docker Compose Configuration"]
+    assert len(docker_findings) == 1
+    assert docker_findings[0].get("rule_id") == "exposed_file_docker_compose"
+    assert docker_findings[0].get("instance_key") == "/docker-compose.yml"
+
+    admin_findings = [f for f in findings if f["name"] == "Administrative Interface Observed"]
+    assert len(admin_findings) == 1
+    assert admin_findings[0].get("rule_id") == "exposed_admin_interface"
+    assert admin_findings[0].get("instance_key") == "/admin"
