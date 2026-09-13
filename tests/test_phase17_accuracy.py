@@ -199,6 +199,40 @@ class TestPhase17Accuracy(unittest.TestCase):
         verbose = [f for f in findings if "Verbose" in f["name"] and f["severity"] != "Passed"]
         self.assertEqual(len(verbose), 1)
 
+
+    @patch('api.scanner.modules.content.safe_request')
+    def test_3d_a_mixed_content_identities(self, mock_safe):
+        mod = MixedContentModule()
+
+        # Test 1: Insecure resources + Insecure forms
+        html_with_mixed = '''
+        <html>
+            <body>
+                <img src='http://insecure.com/a.png'>
+                <script src='http://insecure.com/b.js'></script>
+                <form action='http://insecure.com/login'></form>
+                <form action='http://insecure.com/submit'></form>
+            </body>
+        </html>
+        '''
+        mock_safe.return_value = MockResponse(html_with_mixed, 200, {"Content-Type": "text/html"})
+        findings_mixed = mod.run("https://example.com", "example.com", self.session)
+
+        self.assertEqual(len(findings_mixed), 2)
+        rids = {f.get("rule_id") for f in findings_mixed}
+        self.assertEqual(rids, {"mixed_content_detected", "mixed_content_insecure_form"})
+        for f in findings_mixed:
+            self.assertNotIn("instance_key", f)
+
+        # Test 2: Clean page
+        html_clean = "<html><body><img src='https://secure.com/a.png'></body></html>"
+        mock_safe.return_value = MockResponse(html_clean, 200, {"Content-Type": "text/html"})
+        findings_clean = mod.run("https://example.com", "example.com", self.session)
+
+        self.assertEqual(len(findings_clean), 1)
+        self.assertEqual(findings_clean[0].get("rule_id"), "mixed_content_none")
+        self.assertNotIn("instance_key", findings_clean[0])
+
 if __name__ == '__main__':
     unittest.main()
 

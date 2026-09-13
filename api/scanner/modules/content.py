@@ -66,7 +66,8 @@ class MixedContentModule(ScannerModule):
                     impact="Insecure content delivery can expose data to interception or modification.",
                     remediation="Update all resource links (scripts, styles, images) to use relative paths or HTTPS URLs.",
                     owasp="A05: Security Misconfiguration",
-                    category="information_exposure"
+                    category="information_exposure",
+                    rule_id="mixed_content_detected"
                 ))
 
             if parser.insecure_forms:
@@ -78,7 +79,8 @@ class MixedContentModule(ScannerModule):
                     impact="Unencrypted form submissions can expose transmitted data to network interception.",
                     remediation="Ensure all form 'action' attributes use relative paths or explicit 'https://' URLs.",
                     owasp="A02: Cryptographic Failures",
-                    category="encryption_tls"
+                    category="encryption_tls",
+                    rule_id="mixed_content_insecure_form"
                 ))
 
             if not parser.insecure_resources and not parser.insecure_forms:
@@ -89,7 +91,8 @@ class MixedContentModule(ScannerModule):
                     "Clean HTML subresources",
                     impact="Your visitors are protected from eavesdropping and tampering when loading resources and submitting forms on your page.",
                     owasp="Not Mapped",
-                    category="encryption_tls"
+                    category="encryption_tls",
+                    rule_id="mixed_content_none"
                 ))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:

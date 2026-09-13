@@ -51,7 +51,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     evidence=www_auth,
                     owasp="Not Mapped",
                     category="authentication",
-                    impact="Exposed authentication logic assists external reconnaissance of the security model."
+                    impact="Exposed authentication logic assists external reconnaissance of the security model.",
+                    rule_id="auth_scheme_disclosed"
                 ))
                 if "basic" in www_auth.lower() and url.startswith("http://"):
                     findings.append(self.make_finding(
@@ -63,7 +64,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         owasp="A02: Cryptographic Failures",
                         category="authentication",
                         confidence="High",
-                        impact="Anyone on the same network can easily steal user passwords as they are being sent to your website."
+                        impact="Anyone on the same network can easily steal user passwords as they are being sent to your website.",
+                        rule_id="auth_basic_over_http"
                     ))
 
             # Cache & Auth Response Posture
@@ -99,7 +101,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="authentication",
                         confidence="Medium",
-                        impact="Other people using the same computer or network might be able to view your users' personal accounts or login details."
+                        impact="Other people using the same computer or network might be able to view your users' personal accounts or login details.",
+                        rule_id="auth_response_cacheable"
                     ))
 
                 # Deep Cache Analysis
@@ -112,7 +115,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         remediation="Ensure Cache-Control headers consistently enforce a single caching policy (e.g., 'no-store' without 'max-age').",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
-                        impact="Different network proxies may interpret these conflicting rules differently, potentially caching sensitive data unexpectedly."
+                        impact="Different network proxies may interpret these conflicting rules differently, potentially caching sensitive data unexpectedly.",
+                        rule_id="auth_cache_contradictory"
                     ))
 
                 is_publicly_cacheable = is_vuln or (cache_lower and "max-age" in cache_lower and "max-age=0" not in cache_lower and "no-store" not in cache_lower and "private" not in cache_lower)
@@ -131,7 +135,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                 remediation="Configure CDN-specific cache headers to 'no-store' for sensitive endpoints.",
                                 owasp="A05: Security Misconfiguration",
                                 category="http_headers",
-                                impact="The CDN may serve this sensitive data to unauthorized users or store it on public edge servers."
+                                impact="The CDN may serve this sensitive data to unauthorized users or store it on public edge servers.",
+                                rule_id="auth_cdn_caching_permissive"
                             ))
 
                 if is_publicly_cacheable:
@@ -145,7 +150,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             remediation="If caching is required, ensure 'Vary: Cookie' or 'Vary: Authorization' is present.",
                             owasp="Not Mapped",
                             category="http_headers",
-                            impact="If caching is required for sensitive data, ensure 'Vary: Cookie' or 'Vary: Authorization' is present."
+                            impact="If caching is required for sensitive data, ensure 'Vary: Cookie' or 'Vary: Authorization' is present.",
+                            rule_id="auth_cache_vary_missing"
                         ))
 
                 if cache_control and "no-store" in cache_lower:
@@ -161,7 +167,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             remediation="Remove ETag and Last-Modified headers from highly sensitive, non-cacheable API or auth endpoints.",
                             owasp="Not Mapped",
                             category="http_headers",
-                            impact="Even without caching the content, browsers may send these values back, potentially allowing cross-session tracking."
+                            impact="Even without caching the content, browsers may send these values back, potentially allowing cross-session tracking.",
+                            rule_id="auth_response_tracking_indicator"
                         ))
 
             # Session Management Technology
@@ -179,7 +186,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     owasp="Not Mapped",
                     category="session_cookies",
                     confidence="High",
-                    impact="Exposing technology details provides reconnaissance information to external observers."
+                    impact="Exposing technology details provides reconnaissance information to external observers.",
+                    rule_id="auth_session_tech_fingerprinted"
                 ))
 
             # HTML Parsing
@@ -197,7 +205,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             owasp="Not Mapped",
                             category="authentication",
                             confidence="High",
-                            impact="Publicly accessible authentication interfaces are common targets for credential attacks and should be protected with appropriate authentication controls, rate limiting, and monitoring."
+                            impact="Publicly accessible authentication interfaces are common targets for credential attacks and should be protected with appropriate authentication controls, rate limiting, and monitoring.",
+                            rule_id="auth_password_recovery_detected"
                         ))
                         break # One finding is enough
 
@@ -223,7 +232,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         owasp="Not Mapped",
                         category="authentication",
                         confidence="Medium",
-                        impact="Integration with vulnerable third-party services may introduce authentication bypass vectors."
+                        impact="Integration with vulnerable third-party services may introduce authentication bypass vectors.",
+                        rule_id="auth_technology_detected"
                     ))
 
                 # Forms Analysis
@@ -252,7 +262,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             owasp="Not Mapped",
                             category="authentication",
                             confidence="High",
-                            impact="Publicly accessible authentication interfaces are common targets for credential attacks and should be protected with appropriate authentication controls, rate limiting, and monitoring."
+                            impact="Publicly accessible authentication interfaces are common targets for credential attacks and should be protected with appropriate authentication controls, rate limiting, and monitoring.",
+                            rule_id="auth_interface_detected"
                         ))
 
                         # Password Form Over HTTP
@@ -266,7 +277,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                 owasp="A02: Cryptographic Failures",
                                 category="authentication",
                                 confidence="High",
-                                impact="Unencrypted authentication endpoints expose credentials to network interception."
+                                impact="Unencrypted authentication endpoints expose credentials to network interception.",
+                                rule_id="auth_password_form_http"
                             ))
 
                         # External Authentication Action
@@ -281,7 +293,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                     owasp="Not Mapped",
                                     category="authentication",
                                     confidence="High",
-                                    impact="Sending credentials to third-party domains increases the risk of credential interception if those domains are compromised."
+                                    impact="Sending credentials to third-party domains increases the risk of credential interception if those domains are compromised.",
+                                    rule_id="auth_form_external_origin"
                                 ))
 
                         # Password Autocomplete Policy
@@ -295,7 +308,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                         evidence="autocomplete='off' present on password field.",
                                         owasp="Not Mapped",
                                         category="authentication",
-                                        impact="Disabling autocomplete can interfere with password managers, inadvertently encouraging weaker user-memorized passwords."
+                                        impact="Disabling autocomplete can interfere with password managers, inadvertently encouraging weaker user-memorized passwords.",
+                                        rule_id="auth_password_autocomplete"
                                     ))
 
                     # CSRF Posture (Passive Only)
@@ -318,7 +332,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                 owasp="A01: Broken Access Control",
                                 category="authentication",
                                 confidence="Low",
-                                impact="Without Anti-CSRF tokens, authenticated sessions may be susceptible to Cross-Site Request Forgery (CSRF)."
+                                impact="Without Anti-CSRF tokens, authenticated sessions may be susceptible to Cross-Site Request Forgery (CSRF).",
+                                rule_id="auth_csrf_missing"
                             ))
 
                 if privileged_surface_links:
@@ -330,7 +345,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         confidence="Medium",
                         owasp="Not Mapped",
                         category="api_surface",
-                        impact="Exposed administrative interfaces provide targets for unauthorized access attempts."
+                        impact="Exposed administrative interfaces provide targets for unauthorized access attempts.",
+                        rule_id="auth_admin_surface_discovered"
                     ))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
@@ -346,7 +362,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                 confidence="High",
                 owasp="Not Mapped",
                 category="authentication",
-                impact="Unable to assess due to connection failure."
+                impact="Unable to assess due to connection failure.",
+                rule_id="auth_session_check_inconclusive"
             ))
 
         return findings
