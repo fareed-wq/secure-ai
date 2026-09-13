@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Shield,
+  Search,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
@@ -92,8 +93,23 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
         {/* 1. HEADER */}
         <div className="flex items-center justify-between p-4 border-b border-slate-800">
           {!isCollapsed && (
-            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-              <img src="/logo-transparent.webp" alt="URLScan Online Logo" width="256" height="64" className="h-8 w-auto" />
+            <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity" aria-label="URLScanOnline">
+              <div className="relative flex items-center justify-center shrink-0 w-8 h-8">
+                <svg width="0" height="0" className="absolute">
+                  <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop stopColor="#a855f7" offset="0%" />
+                    <stop stopColor="#3b82f6" offset="50%" />
+                    <stop stopColor="#22d3ee" offset="100%" />
+                  </linearGradient>
+                </svg>
+                <Shield className="w-8 h-8" stroke="url(#logo-gradient)" strokeWidth={1.5} />
+                <Search className="absolute w-4 h-4 text-slate-50" strokeWidth={2.5} />
+              </div>
+              <span className="font-bold text-[15px] tracking-wide flex items-center mt-0.5">
+                <span className="text-white">URL</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-400">SCAN</span>
+                <span className="text-white">ONLINE</span>
+              </span>
             </Link>
           )}
           <div className={`flex items-center ${isCollapsed ? 'flex-col gap-4 w-full' : 'gap-2'}`}>
