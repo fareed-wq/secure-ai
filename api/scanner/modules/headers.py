@@ -306,7 +306,8 @@ class PermissionsPolicyModule(ScannerModule):
                         impact="A missing policy means browser features are governed by default browser behavior rather than explicit restriction.",
                         remediation="Apply recommended server configuration headers and verify compliance against baseline security standards.",
                         owasp="A05: Security Misconfiguration",
-                        category="http_headers"
+                        category="http_headers",
+                        rule_id="headers_permissions_policy_missing"
                     ))
             else:
                 policy_str = headers["Permissions-Policy"]
@@ -328,7 +329,8 @@ class PermissionsPolicyModule(ScannerModule):
                         policy_str[:100],
                         remediation="Restrict sensitive browser features to 'self' or specific trusted origins.",
                         owasp="A05: Security Misconfiguration",
-                        category="http_headers"
+                        category="http_headers",
+                        rule_id="headers_permissions_policy_permissive"
                     ))
                 else:
                     findings.append(self.make_finding(
@@ -337,7 +339,8 @@ class PermissionsPolicyModule(ScannerModule):
                         "Your website has clear rules that restrict the use of sensitive browser features.",
                         policy_str[:100],
                         owasp="A05: Security Misconfiguration",
-                        category="http_headers"
+                        category="http_headers",
+                        rule_id="headers_permissions_policy_configured"
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass
@@ -443,7 +446,8 @@ class CSPQualityModule(ScannerModule):
                         confidence="High",
                         remediation=" ".join(remediation),
                         owasp="A05: Security Misconfiguration",
-                        category="http_headers"
+                        category="http_headers",
+                        rule_id="csp_quality_weak"
                     ))
                 elif style_weakness:
                     findings.append(self.make_finding(
@@ -455,7 +459,8 @@ class CSPQualityModule(ScannerModule):
                         confidence="High",
                         remediation="Migrate inline style attributes to external stylesheets or CSS classes where practical, then remove 'unsafe-inline' from style-src.",
                         owasp="A05: Security Misconfiguration",
-                        category="http_headers"
+                        category="http_headers",
+                        rule_id="csp_quality_inline_styles"
                     ))
 
                 # 4. default-src
@@ -473,7 +478,8 @@ class CSPQualityModule(ScannerModule):
                         confidence="High",
                         remediation="Add a 'default-src' directive (e.g., default-src 'self' or default-src 'none') to act as a secure fallback.",
                         owasp="A05: Security Misconfiguration",
-                        category="http_headers"
+                        category="http_headers",
+                        rule_id="csp_quality_missing_default_src"
                     ))
 
                 # 5. object-src
@@ -489,7 +495,8 @@ class CSPQualityModule(ScannerModule):
                             confidence="High",
                             remediation="Add object-src 'none' to your CSP to explicitly disable object and embed loading.",
                             owasp="A05: Security Misconfiguration",
-                            category="http_headers"
+                            category="http_headers",
+                            rule_id="csp_quality_object_src_unrestricted"
                         ))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
