@@ -184,3 +184,111 @@ class TestJavaScriptSecurityModule(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+
+def test_3b3b_js_identities(monkeypatch):
+    from api.scanner.modules.javascript_security import JavaScriptSecurityModule
+    import requests
+    from unittest.mock import MagicMock
+    module = JavaScriptSecurityModule()
+
+    class DummyResp:
+        def __init__(self, status_code, text, url="http://example.com/app.js"):
+            self.status_code = status_code
+            self.text = text
+            self.url = url
+            self.headers = {"Content-Type": "application/javascript"}
+        def iter_content(self, chunk_size):
+            yield self.text.encode('utf-8')
+        def close(self):
+            pass
+
+    html_body = '''
+        <html><script src="/app.js"></script>
+        window.__INITIAL_STATE__ = { debug: true, api: 'http://localhost' };
+        </html>
+    '''
+    js_body = '''
+        const bearer_token = "Bearer AAAAAABBBBBBCCCCCCDDDDDDEEEEEEFFFFFF";
+        const gmap_key = "AIzaSyAbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhI";
+        const local = "http://localhost:3000/api";
+        const internal = "http://10.0.0.5/api";
+        // # sourceMappingURL=app.js.map
+        fetch("/api/v1/users");
+        fetch("/api/v1/posts");
+        fetch("/api/users/1234"); debugger;foo
+        const config = { "password": "supersecret" };
+        const auth = { isAdmin === true, roles: ["admin", "user"] };
+        fetch("/api/admin/users");
+    '''
+
+    responses = {
+        "http://example.com": DummyResp(200, html_body, "http://example.com"),
+        "http://example.com/app.js": DummyResp(200, js_body, "http://example.com/app.js"),
+        "http://example.com/app.js.map": DummyResp(200, '{"version": 3}', "http://example.com/app.js.map")
+    }
+
+    def side_effect(method, url, **kw):
+        return responses.get(url, DummyResp(404, ""))
+
+    monkeypatch.setattr("api.scanner.modules.javascript_security.safe_request", side_effect)
+
+    session = MagicMock()
+    findings = module.run("http://example.com", "example.com", session)
+
+    # 14 identities
+    # Exposed Frontend Environment & Debug Config...
+    assert next((f for f in findings if f["name"].startswith("Exposed Frontend Environment")), None).get("rule_id") == "js_exposed_frontend_env"
+
+    # Hardcoded Third-Party Secret Key Exposed...
+    secret_finding = next((f for f in findings if f["name"].startswith("Hardcoded Third-Party Secret")), None)
+    assert secret_finding.get("rule_id") == "js_hardcoded_secret_key"
+    assert "instance_key" not in secret_finding
+    assert "AAAAAABBBBBBCCCCCCDDDDDDEEEEEEFFFFFF" not in secret_finding.get("instance_key", "")
+    assert "AAAAAABBBBBBCCCCCCDDDDDDEEEEEEFFFFFF" not in secret_finding.get("rule_id", "")
+
+    # Client-Side API Key Detected
+    api_key_finding = next((f for f in findings if f["name"].startswith("Client-Side API Key Detected")), None)
+    assert api_key_finding.get("rule_id") == "js_client_side_api_key"
+    assert "instance_key" not in api_key_finding
+    assert "AIzaSy" not in api_key_finding.get("rule_id", "")
+
+    # Development / Localhost References
+    assert next((f for f in findings if f["name"].startswith("Development / Localhost")), None).get("rule_id") == "js_localhost_references"
+
+    # Internal Infrastructure References
+    assert next((f for f in findings if f["name"].startswith("Internal Infrastructure")), None).get("rule_id") == "js_internal_infra_references"
+
+    # Client-Side Development Artifacts
+    assert next((f for f in findings if f["name"].startswith("Client-Side Development Artifacts")), None).get("rule_id") == "js_development_artifacts"
+
+    # Client-Side API Endpoints Discovered
+    endpoint_finding = next((f for f in findings if f["name"] == "Client-Side API Endpoints Discovered"), None)
+    assert endpoint_finding.get("rule_id") == "js_api_endpoints_discovered"
+    assert "instance_key" not in endpoint_finding
+    assert "4 API endpoints discovered" in str(endpoint_finding["evidence"]) or "/api/v1/users" in str(endpoint_finding["evidence"])
+
+    # Sequential Identifier
+    assert next((f for f in findings if f["name"].startswith("Sequential Identifier")), None).get("rule_id") == "js_sequential_identifier_observed"
+
+    # Sensitive Client-Side Configuration
+    assert next((f for f in findings if f["name"].startswith("Sensitive Client-Side Configuration")), None).get("rule_id") == "js_sensitive_config_reference"
+
+    # Source Maps Exposed
+    assert next((f for f in findings if f["name"].startswith("JavaScript Source Maps")), None).get("rule_id") == "js_source_maps_exposed"
+
+    # Privileged Auth Logic
+    assert next((f for f in findings if f["name"].startswith("Privileged Client-Side Auth")), None).get("rule_id") == "js_privileged_auth_logic"
+
+    # Auth Roles / Permissions Disclosed
+    assert next((f for f in findings if f["name"].startswith("Authorization Roles / Permissions Disclosed")), None).get("rule_id") == "js_auth_roles_disclosed"
+
+    # Privileged API Surface
+    assert next((f for f in findings if f["name"].startswith("Privileged API Surface")), None).get("rule_id") == "js_privileged_api_surface"
+
+    # Versioned API Surface
+    assert next((f for f in findings if f["name"].startswith("Versioned API Surface")), None).get("rule_id") == "js_versioned_api_surface"
+
+    # Check 3B-1 identities remained untouched and function properly (add to js_body if needed)
+    # They should not be removed from the class
