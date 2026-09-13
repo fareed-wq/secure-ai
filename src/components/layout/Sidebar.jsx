@@ -106,9 +106,9 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                 <Search className="absolute w-[14px] h-[14px] text-slate-50" strokeWidth={2.5} />
               </div>
               <span className="font-bold text-[14px] tracking-tight flex items-center mt-0.5 whitespace-nowrap shrink-0">
-                <span className="text-slate-50">URL</span>
+                <span className="text-indigo-200">URL</span>
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-400">SCAN</span>
-                <span className="text-slate-50">ONLINE</span>
+                <span className="text-cyan-200">ONLINE</span>
               </span>
             </Link>
           )}
