@@ -190,6 +190,13 @@ class JavaScriptSecurityModule(ScannerModule):
                     for match in pattern.finditer(js_text):
                         host = match.group(0)
                         if "example.com" not in host.lower():
+                            # Suppress harmless Supabase/GoTrue default loopback strings
+                            if host.lower() == "http://localhost:9999":
+                                start_idx = max(0, match.start() - 150)
+                                end_idx = min(len(js_text), match.end() + 150)
+                                context_snippet = js_text[start_idx:end_idx].lower()
+                                if "gotrue-js" in context_snippet or "supabase.auth.token" in context_snippet:
+                                    continue
                             loopback_hosts.add(host)
 
                 # 2b. PRIVATE INFRASTRUCTURE HOSTS
