@@ -408,6 +408,16 @@ class CSPQualityModule(ScannerModule):
                 # 3. http: sources and strict-dynamic
                 script_strict_dynamic = "'strict-dynamic'" in script_sources_lower and has_nonce_or_hash_script
 
+                # 3b. wildcard, data:, blob: script sources
+                if not script_strict_dynamic:
+                    script_tokens = script_sources_lower.split()
+                    if "*" in script_tokens:
+                        script_weaknesses.append("wildcard '*' script source")
+                    if "data:" in script_tokens or any(t.startswith("data:") for t in script_tokens):
+                        script_weaknesses.append("data: script source")
+                    if "blob:" in script_tokens or any(t.startswith("blob:") for t in script_tokens):
+                        script_weaknesses.append("blob: script source")
+
                 fetch_and_source_directives = {
                     'default-src', 'script-src', 'style-src', 'img-src', 'connect-src',
                     'font-src', 'object-src', 'media-src', 'frame-src', 'child-src',

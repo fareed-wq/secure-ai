@@ -238,6 +238,78 @@ def test_complex_multi_source():
     fa = [f for f in findings if f["rule_id"] == "csp_quality_form_action_unrestricted"]
     assert len(fa) == 0
 
+def test_script_src_wildcard():
+    headers = {"Content-Security-Policy": "script-src *; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 1
+    assert "wildcard '*' script source" in weak[0]["evidence"]["raw"]
+
+def test_script_src_data():
+    headers = {"Content-Security-Policy": "script-src data:; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 1
+    assert "data: script source" in weak[0]["evidence"]["raw"]
+
+def test_script_src_blob():
+    headers = {"Content-Security-Policy": "script-src blob:; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 1
+    assert "blob: script source" in weak[0]["evidence"]["raw"]
+
+def test_default_src_wildcard_no_script_src():
+    headers = {"Content-Security-Policy": "default-src *; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 1
+    assert "wildcard '*' script source" in weak[0]["evidence"]["raw"]
+
+def test_default_src_data_no_script_src():
+    headers = {"Content-Security-Policy": "default-src data:; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 1
+    assert "data: script source" in weak[0]["evidence"]["raw"]
+
+def test_default_src_blob_no_script_src():
+    headers = {"Content-Security-Policy": "default-src blob:; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 1
+    assert "blob: script source" in weak[0]["evidence"]["raw"]
+
+def test_img_src_data_does_not_trigger_script_weakness():
+    headers = {"Content-Security-Policy": "img-src data:; script-src 'self'; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 0
+
+def test_img_src_blob_does_not_trigger_script_weakness():
+    headers = {"Content-Security-Policy": "img-src blob:; script-src 'self'; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 0
+
+def test_font_src_data_does_not_trigger_script_weakness():
+    headers = {"Content-Security-Policy": "font-src data:; script-src 'self'; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 0
+
+def test_script_src_self_no_weakness():
+    headers = {"Content-Security-Policy": "script-src 'self'; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 0
+
+def test_strict_dynamic_mitigates_wildcard_data_blob():
+    headers = {"Content-Security-Policy": "script-src 'strict-dynamic' 'nonce-12345678' * data: blob:; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 0
+
 def test_registry_has_csp_quality_module():
     from api.scanner.data.registry import PASSIVE_MODULES, DOMAIN_MAP
 
@@ -282,6 +354,9 @@ def test_orchestrator_executes_csp_quality_module():
     assert len(csp_findings) == 2, "Expected CSPQualityModule findings from the passive scan"
     assert csp_findings[0]["domain"] == "browser_defense", "Finding should have correct domain"
     assert csp_findings[1]["domain"] == "browser_defense", "Finding should have correct domain"
+
+    legacy_weak = [f for f in results if f.get("rule_id") == "headers_csp_weak"]
+    assert len(legacy_weak) == 0, "headers_csp_weak should no longer be emitted"
 
 
 def test_script_unsafe_inline_only():
