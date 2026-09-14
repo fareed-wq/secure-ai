@@ -153,6 +153,91 @@ def test_malformed_trust_anchor_strict_dynamic_does_not_suppress_http():
 import pytest
 from unittest.mock import MagicMock
 
+def test_base_uri_none():
+    headers = {"Content-Security-Policy": "base-uri 'none'; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    bu = [f for f in findings if f["rule_id"] == "csp_quality_base_uri_unrestricted"]
+    assert len(bu) == 0
+
+def test_base_uri_self():
+    headers = {"Content-Security-Policy": "base-uri 'self'; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    bu = [f for f in findings if f["rule_id"] == "csp_quality_base_uri_unrestricted"]
+    assert len(bu) == 0
+
+def test_base_uri_wildcard():
+    headers = {"Content-Security-Policy": "base-uri *; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    bu = [f for f in findings if f["rule_id"] == "csp_quality_base_uri_unrestricted"]
+    assert len(bu) == 1
+    assert "Broad sources found in base-uri" in bu[0]["evidence"]["raw"]
+
+def test_base_uri_https():
+    headers = {"Content-Security-Policy": "base-uri https:; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    bu = [f for f in findings if f["rule_id"] == "csp_quality_base_uri_unrestricted"]
+    assert len(bu) == 1
+
+def test_base_uri_trusted_host():
+    headers = {"Content-Security-Policy": "base-uri https://static.example.com; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    bu = [f for f in findings if f["rule_id"] == "csp_quality_base_uri_unrestricted"]
+    assert len(bu) == 0
+
+def test_base_uri_absent_default_none():
+    # default-src 'none' does NOT cover base-uri
+    headers = {"Content-Security-Policy": "default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    bu = [f for f in findings if f["rule_id"] == "csp_quality_base_uri_unrestricted"]
+    assert len(bu) == 1
+    assert "Missing explicitly: base-uri" in bu[0]["evidence"]["raw"]
+
+def test_form_action_none():
+    headers = {"Content-Security-Policy": "form-action 'none'; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    fa = [f for f in findings if f["rule_id"] == "csp_quality_form_action_unrestricted"]
+    assert len(fa) == 0
+
+def test_form_action_self():
+    headers = {"Content-Security-Policy": "form-action 'self'; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    fa = [f for f in findings if f["rule_id"] == "csp_quality_form_action_unrestricted"]
+    assert len(fa) == 0
+
+def test_form_action_wildcard():
+    headers = {"Content-Security-Policy": "form-action *; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    fa = [f for f in findings if f["rule_id"] == "csp_quality_form_action_unrestricted"]
+    assert len(fa) == 1
+
+def test_form_action_https():
+    headers = {"Content-Security-Policy": "form-action https:; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    fa = [f for f in findings if f["rule_id"] == "csp_quality_form_action_unrestricted"]
+    assert len(fa) == 1
+
+def test_form_action_trusted_host():
+    headers = {"Content-Security-Policy": "form-action https://payments.example.com; default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    fa = [f for f in findings if f["rule_id"] == "csp_quality_form_action_unrestricted"]
+    assert len(fa) == 0
+
+def test_form_action_absent_default_none():
+    # default-src 'none' does NOT cover form-action
+    headers = {"Content-Security-Policy": "default-src 'none'; object-src 'none'"}
+    findings = run_csp(headers)
+    fa = [f for f in findings if f["rule_id"] == "csp_quality_form_action_unrestricted"]
+    assert len(fa) == 1
+    assert "Missing explicitly: form-action" in fa[0]["evidence"]["raw"]
+
+def test_complex_multi_source():
+    headers = {"Content-Security-Policy": "base-uri 'self' https://static.example.com; form-action 'self' https://payments.example.com; script-src 'self'; style-src 'self'; default-src 'none'; object-src 'none'; frame-ancestors 'self'"}
+    findings = run_csp(headers)
+    bu = [f for f in findings if f["rule_id"] == "csp_quality_base_uri_unrestricted"]
+    assert len(bu) == 0
+    fa = [f for f in findings if f["rule_id"] == "csp_quality_form_action_unrestricted"]
+    assert len(fa) == 0
+
 def test_registry_has_csp_quality_module():
     from api.scanner.data.registry import PASSIVE_MODULES, DOMAIN_MAP
 
