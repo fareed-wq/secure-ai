@@ -409,6 +409,19 @@ export const REMEDIATION_SNIPPETS = {
       code: `// Move inline styles (<div style="...">) to external CSS classes\n// Then remove 'unsafe-inline' from your style-src directive`
     }
   ],
+  "csp_quality_inline_styles": [
+    {
+      platform: "General",
+      code: `// Move inline styles (<div style="...">) to external CSS classes\n// Then remove 'unsafe-inline' from your style-src directive`
+    }
+  ],
+  "csp_quality_form_action_unrestricted": [
+    {
+      platform: "General CSP",
+      code: `Content-Security-Policy:\nform-action 'self';`,
+      notes: "Use 'self' when forms should only submit back to the same origin. If the application should never submit forms, a stricter alternative is: form-action 'none';"
+    }
+  ],
   "Verbose Server Banner": [
     {
       platform: "Nginx",

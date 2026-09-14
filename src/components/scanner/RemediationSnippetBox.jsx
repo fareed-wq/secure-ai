@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { REMEDIATION_SNIPPETS } from '../../lib/remediationSnippets';
 
-export const RemediationSnippetBox = ({ findingName }) => {
-  const snippets = REMEDIATION_SNIPPETS[findingName];
+export const RemediationSnippetBox = ({ findingName, ruleId }) => {
+  const snippets = (ruleId && REMEDIATION_SNIPPETS[ruleId]) || REMEDIATION_SNIPPETS[findingName];
   const [activeTab, setActiveTab] = useState(0);
   const [copied, setCopied] = useState(false);
 
