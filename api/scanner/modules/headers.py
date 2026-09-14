@@ -408,6 +408,16 @@ class CSPQualityModule(ScannerModule):
                 # 3. http: sources and strict-dynamic
                 script_strict_dynamic = "'strict-dynamic'" in script_sources_lower and has_nonce_or_hash_script
 
+                # 3b. wildcard, data:, blob: script sources
+                if not script_strict_dynamic:
+                    script_tokens = script_sources_lower.split()
+                    if "*" in script_tokens:
+                        script_weaknesses.append("wildcard '*' script source")
+                    if "data:" in script_tokens or any(t.startswith("data:") for t in script_tokens):
+                        script_weaknesses.append("data: script source")
+                    if "blob:" in script_tokens or any(t.startswith("blob:") for t in script_tokens):
+                        script_weaknesses.append("blob: script source")
+
                 fetch_and_source_directives = {
                     'default-src', 'script-src', 'style-src', 'img-src', 'connect-src',
                     'font-src', 'object-src', 'media-src', 'frame-src', 'child-src',
@@ -498,6 +508,67 @@ class CSPQualityModule(ScannerModule):
                             category="http_headers",
                             rule_id="csp_quality_object_src_unrestricted"
                         ))
+
+                def is_broad_source(sources):
+                    sources = sources.lower().split()
+                    broad_tokens = {"*", "http:", "https:", "data:", "blob:"}
+                    return any(token in broad_tokens for token in sources)
+
+                # 6. base-uri
+                if "base-uri" not in csp_dict:
+                    findings.append(self.make_finding(
+                        "CSP Base URI Not Restricted",
+                        "Low",
+                        "The Content-Security-Policy does not restrict the document base URL.",
+                        f"Missing explicitly: base-uri\n\nFull CSP: {csp[:100]}...",
+                        impact="Without a restricted base-uri, an attacker could potentially inject a <base> tag to hijack relative URLs, bypassing other restrictions.",
+                        confidence="High",
+                        remediation="Add a 'base-uri' directive (e.g., base-uri 'self' or base-uri 'none') to restrict where the document base URL can point.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers",
+                        rule_id="csp_quality_base_uri_unrestricted"
+                    ))
+                elif is_broad_source(csp_dict["base-uri"]):
+                    findings.append(self.make_finding(
+                        "CSP Base URI Not Restricted",
+                        "Low",
+                        "The Content-Security-Policy uses overly broad sources for the document base URL.",
+                        f"Broad sources found in base-uri\n\nFull CSP: {csp[:100]}...",
+                        impact="Using overly broad sources like '*' or 'https:' in base-uri weakens the restriction, allowing an attacker to inject a <base> tag pointing to those broad locations.",
+                        confidence="High",
+                        remediation="Restrict 'base-uri' to specific trusted origins or 'self'/'none'.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers",
+                        rule_id="csp_quality_base_uri_unrestricted"
+                    ))
+
+                # 7. form-action
+                if "form-action" not in csp_dict:
+                    findings.append(self.make_finding(
+                        "CSP Form Actions Not Restricted",
+                        "Low",
+                        "The Content-Security-Policy does not restrict form submission destinations.",
+                        f"Missing explicitly: form-action\n\nFull CSP: {csp[:100]}...",
+                        impact="Without a restricted form-action, an attacker may be able to inject a form or alter an existing form's action to exfiltrate data to an attacker-controlled server.",
+                        confidence="High",
+                        remediation="Add a 'form-action' directive (e.g., form-action 'self' or form-action 'none') to restrict where forms can submit data.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers",
+                        rule_id="csp_quality_form_action_unrestricted"
+                    ))
+                elif is_broad_source(csp_dict["form-action"]):
+                    findings.append(self.make_finding(
+                        "CSP Form Actions Not Restricted",
+                        "Low",
+                        "The Content-Security-Policy uses overly broad sources for form submission destinations.",
+                        f"Broad sources found in form-action\n\nFull CSP: {csp[:100]}...",
+                        impact="Using overly broad sources like '*' or 'https:' in form-action weakens the restriction, allowing forms to submit data to any server matching the broad pattern.",
+                        confidence="High",
+                        remediation="Restrict 'form-action' to specific trusted origins or 'self'/'none'.",
+                        owasp="A05: Security Misconfiguration",
+                        category="http_headers",
+                        rule_id="csp_quality_form_action_unrestricted"
+                    ))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass

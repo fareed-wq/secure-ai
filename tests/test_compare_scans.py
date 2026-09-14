@@ -1256,3 +1256,38 @@ def test_compare_mixed_moduleless_reverse_ambiguity_no_guess():
     assert len(res["unchanged"]) == 0
     assert len(res["removed"]) == 1
     assert len(res["added"]) == 2
+
+def test_compare_reports_csp_consolidation():
+    old_scan = {
+        "target_url": "https://example.com",
+        "score": 70,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [
+                {"name": "Weak Content-Security-Policy (CSP)", "rule_id": "headers_csp_weak", "severity": "Medium"},
+                {"name": "Weak Content-Security-Policy", "rule_id": "csp_quality_weak", "severity": "Medium"}
+            ]
+        }
+    }
+    new_scan = {
+        "target_url": "https://example.com",
+        "score": 80,
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [
+                {"name": "Weak Content-Security-Policy", "rule_id": "csp_quality_weak", "severity": "Medium"}
+            ]
+        }
+    }
+    from api.scanner.compare import compare_reports
+    result = compare_reports(old_scan, new_scan)
+
+    assert len(result["unchanged"]) == 1
+    assert result["unchanged"][0]["rule_id"] == "csp_quality_weak"
+
+    assert len(result["removed"]) == 1
+    assert result["removed"][0]["rule_id"] == "headers_csp_weak"
+
+    assert len(result["added"]) == 0
+    assert len(result["improved"]) == 0
+    assert len(result["regressed"]) == 0
