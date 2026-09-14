@@ -110,7 +110,6 @@ export const CSPAnalysisPanel = ({ findings }) => {
         </td>
         <td className="px-6 py-4 font-bold text-slate-200 align-top">
           <div>Content Security Policy Analysis</div>
-          <div className={`text-xs mt-1 font-normal ${overallColor}`}>{overallStatus}</div>
         </td>
         <td className="px-6 py-4">
           <span className="technical-owasp-badge bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2.5 py-1 rounded-md text-xs">A05: Security Misconfiguration</span>
