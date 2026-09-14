@@ -238,6 +238,63 @@ def test_complex_multi_source():
     fa = [f for f in findings if f["rule_id"] == "csp_quality_form_action_unrestricted"]
     assert len(fa) == 0
 
+def test_script_src_https_scheme():
+    headers = {"Content-Security-Policy": "script-src https:; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 1
+    assert "scheme 'https:' script source" in weak[0]["evidence"]["raw"]
+
+def test_script_src_self_https_scheme():
+    headers = {"Content-Security-Policy": "script-src 'self' https:; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 1
+    assert "scheme 'https:' script source" in weak[0]["evidence"]["raw"]
+
+def test_default_src_https_fallback():
+    headers = {"Content-Security-Policy": "default-src https:; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 1
+    assert "scheme 'https:' script source" in weak[0]["evidence"]["raw"]
+
+def test_explicit_script_src_overrides_default_src_https():
+    headers = {"Content-Security-Policy": "default-src https:; script-src 'self'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 0
+
+def test_script_src_explicit_https_origin():
+    headers = {"Content-Security-Policy": "script-src https://example.com; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 0
+
+def test_script_src_explicit_https_cdn():
+    headers = {"Content-Security-Policy": "script-src https://cdn.example.com; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 0
+
+def test_script_src_wildcard_host():
+    headers = {"Content-Security-Policy": "script-src https://*.example.com; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 0
+
+def test_style_src_https():
+    headers = {"Content-Security-Policy": "style-src https:; script-src 'self'; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 0
+
+def test_img_src_https():
+    headers = {"Content-Security-Policy": "img-src https:; script-src 'self'; default-src 'none'; object-src 'none'; base-uri 'none'"}
+    findings = run_csp(headers)
+    weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
+    assert len(weak) == 0
+
 def test_script_src_wildcard():
     headers = {"Content-Security-Policy": "script-src *; default-src 'none'; object-src 'none'; base-uri 'none'"}
     findings = run_csp(headers)
@@ -304,8 +361,8 @@ def test_script_src_self_no_weakness():
     weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
     assert len(weak) == 0
 
-def test_strict_dynamic_mitigates_wildcard_data_blob():
-    headers = {"Content-Security-Policy": "script-src 'strict-dynamic' 'nonce-12345678' * data: blob:; default-src 'none'; object-src 'none'; base-uri 'none'"}
+def test_strict_dynamic_mitigates_wildcard_data_blob_https():
+    headers = {"Content-Security-Policy": "script-src 'strict-dynamic' 'nonce-12345678' * data: blob: https:; default-src 'none'; object-src 'none'; base-uri 'none'"}
     findings = run_csp(headers)
     weak = [f for f in findings if f["rule_id"] == "csp_quality_weak"]
     assert len(weak) == 0
