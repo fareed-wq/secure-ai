@@ -77,8 +77,7 @@ export const CSPAnalysisPanel = ({ findings }) => {
     if (parsedCSP['frame-ancestors'] !== undefined) {
       return { label: 'Protected', color: 'text-emerald-400' };
     }
-    // Protected by X-Frame-Options or not evaluated but no finding
-    return { label: 'Protected via X-Frame-Options', color: 'text-emerald-400' };
+    return { label: 'Protection Verified', color: 'text-emerald-400' };
   };
 
   // Advanced Controls
@@ -92,31 +91,6 @@ export const CSPAnalysisPanel = ({ findings }) => {
   const nonceOrHash = hardenedRaw.includes('nonce') || hardenedRaw.includes('hashes');
   const broadSources = weakRaw.includes('wildcard') || weakRaw.includes('https:') || weakRaw.includes('data:') || weakRaw.includes('blob:') || weakRaw.includes('http:');
 
-  if (cspMissing) {
-    return (
-      <div className="bg-slate-900/50 border-b border-slate-800">
-        <button
-          onClick={() => setCspPanelOpen(!cspPanelOpen)}
-          className="w-full px-6 py-3 flex items-center justify-between hover:bg-slate-800/30 transition-colors"
-          aria-expanded={cspPanelOpen}
-        >
-          <div className="flex items-center gap-3">
-            <span className="font-bold text-slate-200 text-sm">Content Security Policy Analysis</span>
-            <span className={`text-xs font-bold ${overallColor}`}>{overallStatus}</span>
-          </div>
-          <div className="text-slate-500">
-            {cspPanelOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-          </div>
-        </button>
-        {cspPanelOpen && (
-          <div className="px-6 pb-4 pt-2 text-sm text-slate-400">
-            Content-Security-Policy was not detected for this response.
-          </div>
-        )}
-      </div>
-    );
-  }
-
   const renderRow = (label, value, statusObj) => (
     <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 last:border-0 text-sm">
       <div className="col-span-3 font-mono text-slate-400">{label}</div>
@@ -126,101 +100,118 @@ export const CSPAnalysisPanel = ({ findings }) => {
   );
 
   return (
-    <div className="bg-slate-900/50 border-b border-slate-800">
-      <button
+    <tbody className="finding-card divide-y divide-slate-800/50 border-b border-slate-700/40 last:border-b-0">
+      <tr
         onClick={() => setCspPanelOpen(!cspPanelOpen)}
-        className="w-full px-6 py-3 flex items-center justify-between hover:bg-slate-800/30 transition-colors"
-        aria-expanded={cspPanelOpen}
+        className={`technical-finding-row cursor-pointer hover:bg-slate-800/20 transition-colors ${cspPanelOpen ? 'bg-slate-800/30' : ''}`}
       >
-        <div className="flex items-center gap-3">
-          <span className="font-bold text-slate-200 text-sm">Content Security Policy Analysis</span>
-          <span className={`text-xs font-bold ${overallColor}`}>
-            {overallStatus}
-          </span>
-        </div>
-        <div className="text-slate-500 hover:text-slate-300 transition-colors">
-          {cspPanelOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-        </div>
-      </button>
+        <td className="px-6 py-4 whitespace-nowrap">
+          <span className="uppercase tracking-widest bg-blue-600 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm">INFORMATIONAL</span>
+        </td>
+        <td className="px-6 py-4 font-bold text-slate-200 align-top">
+          <div>Content Security Policy Analysis</div>
+          <div className={`text-xs mt-1 font-normal ${overallColor}`}>{overallStatus}</div>
+        </td>
+        <td className="px-6 py-4">
+          <span className="technical-owasp-badge bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2.5 py-1 rounded-md text-xs">A05: Security Misconfiguration</span>
+        </td>
+        <td className="px-6 py-4 text-right print:hidden align-top">
+          <button aria-label={cspPanelOpen ? "Collapse Details" : "Expand Details"} className="text-slate-500 hover:text-slate-50 transition-colors">
+            {cspPanelOpen ? <ChevronUp className="w-5 h-5 inline" /> : <ChevronDown className="w-5 h-5 inline" />}
+          </button>
+        </td>
+      </tr>
 
       {cspPanelOpen && (
-        <div className="px-6 pb-6 pt-2 transition-all duration-300">
-          {cspReportOnly && !cspConfigured && (
-            <div className="mb-4 bg-amber-950/30 border border-amber-900/50 text-amber-500 px-4 py-2 rounded-lg text-sm">
-              <span className="font-bold">Report-Only Mode: </span>
-              The Content Security Policy is being monitored but is not actively enforced.
-            </div>
-          )}
-          {cspReportOnlyExtra && cspConfigured && (
-            <div className="mb-4 bg-blue-950/30 border border-blue-900/50 text-blue-400 px-4 py-2 rounded-lg text-sm">
-              <span className="font-bold">Additional Report-Only Policy Detected: </span>
-              An enforced CSP is active, and an additional Report-Only policy is also being evaluated.
-            </div>
-          )}
+        <tr className="technical-finding-expanded print:hidden">
+          <td colSpan={5} className="p-0 border-b-2 border-indigo-500/50">
+            <div className="bg-slate-950 overflow-hidden transition-all duration-300">
+              <div className="p-8">
+                {cspMissing ? (
+                  <div className="text-sm text-slate-400">Content-Security-Policy was not detected for this response.</div>
+                ) : (
+                  <>
+                    {cspReportOnly && !cspConfigured && (
+                      <div className="mb-6 bg-amber-950/30 border border-amber-900/50 text-amber-500 px-4 py-3 rounded-lg text-sm">
+                        <span className="font-bold">Report-Only Mode: </span>
+                        The Content Security Policy is being monitored but is not actively enforced.
+                      </div>
+                    )}
+                    {cspReportOnlyExtra && cspConfigured && (
+                      <div className="mb-6 bg-blue-950/30 border border-blue-900/50 text-blue-400 px-4 py-3 rounded-lg text-sm">
+                        <span className="font-bold">Additional Report-Only Policy Detected: </span>
+                        An enforced CSP is active, and an additional Report-Only policy is also being evaluated.
+                      </div>
+                    )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Directive Analysis</h3>
-              <div className="bg-slate-950 rounded-lg p-4 border border-slate-800">
-                {renderRow('default-src', parsedCSP['default-src'], getDirectiveStatus('default-src', !!missingDefaultSrc))}
-                {renderRow('script-src', parsedCSP['script-src'], getDirectiveStatus('script-src', !!weak))}
-                {renderRow('style-src', parsedCSP['style-src'], getDirectiveStatus('style-src', !!inlineStyles))}
-                {renderRow('object-src', parsedCSP['object-src'], getDirectiveStatus('object-src', !!objectSrcUnrestricted))}
-                {renderRow('base-uri', parsedCSP['base-uri'], getDirectiveStatus('base-uri', !!baseUriUnrestricted))}
-                {renderRow('form-action', parsedCSP['form-action'], getDirectiveStatus('form-action', !!formActionUnrestricted, true))}
-                {renderRow('frame-ancestors', parsedCSP['frame-ancestors'], getFrameAncestorsStatus())}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Directive Analysis</h3>
+                        <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
+                          {renderRow('default-src', parsedCSP['default-src'], getDirectiveStatus('default-src', !!missingDefaultSrc))}
+                          {renderRow('script-src', parsedCSP['script-src'], getDirectiveStatus('script-src', !!weak))}
+                          {renderRow('style-src', parsedCSP['style-src'], getDirectiveStatus('style-src', !!inlineStyles))}
+                          {renderRow('object-src', parsedCSP['object-src'], getDirectiveStatus('object-src', !!objectSrcUnrestricted))}
+                          {renderRow('base-uri', parsedCSP['base-uri'], getDirectiveStatus('base-uri', !!baseUriUnrestricted))}
+                          {renderRow('form-action', parsedCSP['form-action'], getDirectiveStatus('form-action', !!formActionUnrestricted, true))}
+                          {renderRow('frame-ancestors', parsedCSP['frame-ancestors'], getFrameAncestorsStatus())}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Advanced Controls</h3>
+                        <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
+                          <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 text-sm">
+                            <div className="col-span-5 text-slate-400">unsafe-inline</div>
+                            <div className="col-span-7">
+                              <span className={unsafeInlineScript ? 'text-orange-400 font-semibold' : 'text-emerald-400 font-semibold'}>
+                                Scripts: {unsafeInlineScript ? 'Present' : 'Not detected'}
+                              </span>
+                              <span className="mx-2 text-slate-600">|</span>
+                              <span className={unsafeInlineStyle ? 'text-orange-400 font-semibold' : 'text-emerald-400 font-semibold'}>
+                                Styles: {unsafeInlineStyle ? 'Present' : 'Not detected'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 text-sm">
+                            <div className="col-span-5 text-slate-400">unsafe-eval</div>
+                            <div className="col-span-7 font-semibold">
+                              {unsafeEval ? <span className="text-orange-400">Needs Review</span> : <span className="text-slate-500">Not detected</span>}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 text-sm">
+                            <div className="col-span-5 text-slate-400">strict-dynamic</div>
+                            <div className="col-span-7 font-semibold">
+                              {strictDynamic ? <span className="text-emerald-400">Present</span> : <span className="text-slate-500">Not observed</span>}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 text-sm">
+                            <div className="col-span-5 text-slate-400">Nonce / Hash Protection</div>
+                            <div className="col-span-7 font-semibold">
+                              {nonceOrHash ? <span className="text-emerald-400">Detected</span> : <span className="text-slate-500">Not observed</span>}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 text-sm">
+                            <div className="col-span-5 text-slate-400">Broad Script Sources</div>
+                            <div className="col-span-7 font-semibold">
+                              {broadSources ? <span className="text-orange-400">Detected</span> : (weak ? <span className="text-emerald-400">None detected</span> : <span className="text-slate-500">Not evaluated</span>)}
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
-
-            <div>
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Advanced Controls</h3>
-              <div className="bg-slate-950 rounded-lg p-4 border border-slate-800">
-                <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 text-sm">
-                  <div className="col-span-5 text-slate-400">unsafe-inline</div>
-                  <div className="col-span-7">
-                    <span className={unsafeInlineScript ? 'text-orange-400' : 'text-emerald-400'}>
-                      Scripts: {unsafeInlineScript ? '✗' : '✓'}
-                    </span>
-                    {' / '}
-                    <span className={unsafeInlineStyle ? 'text-orange-400' : 'text-emerald-400'}>
-                      Styles: {unsafeInlineStyle ? '✗' : '✓'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 text-sm">
-                  <div className="col-span-5 text-slate-400">unsafe-eval</div>
-                  <div className="col-span-7 font-semibold">
-                    {unsafeEval ? <span className="text-orange-400">Needs Review</span> : <span className="text-slate-500">Not detected</span>}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 text-sm">
-                  <div className="col-span-5 text-slate-400">strict-dynamic</div>
-                  <div className="col-span-7 font-semibold">
-                    {strictDynamic ? <span className="text-emerald-400">Present</span> : <span className="text-slate-500">Not observed</span>}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 text-sm">
-                  <div className="col-span-5 text-slate-400">Nonce / Hash Protection</div>
-                  <div className="col-span-7 font-semibold">
-                    {nonceOrHash ? <span className="text-emerald-400">Detected</span> : <span className="text-slate-500">Not observed</span>}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 text-sm">
-                  <div className="col-span-5 text-slate-400">Broad Script Sources</div>
-                  <div className="col-span-7 font-semibold">
-                    {broadSources ? <span className="text-orange-400">Detected</span> : (weak ? <span className="text-emerald-400">None detected</span> : <span className="text-slate-500">Not evaluated</span>)}
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </div>
+          </td>
+        </tr>
       )}
-    </div>
+    </tbody>
   );
 };

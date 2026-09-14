@@ -228,10 +228,6 @@ const TechnicalReport = ({ reportData }) => {
                     <h2 className="font-bold text-slate-50 text-lg">{group.label}</h2>
                   </div>
 
-                  {group.key === 'browser_defense' && (
-                    <CSPAnalysisPanel findings={groupFindings} />
-                  )}
-
                   <div className="w-full overflow-x-auto">
                     <table className="technical-findings-table w-full text-left border-collapse">
                       <thead>
@@ -242,17 +238,26 @@ const TechnicalReport = ({ reportData }) => {
                           <th className="px-6 py-4 text-right print:hidden" style={{ width: '15%' }}>Action</th>
                         </tr>
                       </thead>
-                      {groupFindings.map((finding) => {
-                        const idx = sortedFindings.indexOf(finding);
+                      {(() => {
+                        const weights = { Critical: 6, High: 5, Medium: 4, Low: 3, Informational: 2, Passed: 1 };
+                        const insertIdx = groupFindings.findIndex(f => (weights[f.severity] || 0) <= 2);
+                        const finalInsertIdx = insertIdx === -1 ? groupFindings.length : insertIdx;
+                        const elements = [];
 
-                        return (
-                          <tbody key={idx} className="finding-card divide-y divide-slate-800/50 border-b border-slate-700/40 last:border-b-0">
-                            <tr
-                              onClick={() => setExpandedRow(expandedRow === idx ? null : idx)}
-                              className={`technical-finding-row ${finding.severity === 'Passed' ? 'technical-passed-row' : ''} cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
-                            >
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              {getSeverityBadge(finding.severity)}
+                        groupFindings.forEach((finding, i) => {
+                          if (group.key === 'browser_defense' && i === finalInsertIdx) {
+                            elements.push(<CSPAnalysisPanel key="csp-panel" findings={groupFindings} />);
+                          }
+
+                          const idx = sortedFindings.indexOf(finding);
+                          elements.push(
+                            <tbody key={idx} className="finding-card divide-y divide-slate-800/50 border-b border-slate-700/40 last:border-b-0">
+                              <tr
+                                onClick={() => setExpandedRow(expandedRow === idx ? null : idx)}
+                                className={`technical-finding-row ${finding.severity === 'Passed' ? 'technical-passed-row' : ''} cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
+                              >
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {getSeverityBadge(finding.severity)}
                             </td>
                             <td className="px-6 py-4 font-bold text-slate-200 align-top">
                               <div>{finding.name}</div>
@@ -360,7 +365,7 @@ const TechnicalReport = ({ reportData }) => {
                                           </div>
                                         )}
 
-                                        <RemediationSnippetBox findingName={finding.name} />
+                                        <RemediationSnippetBox findingName={finding.name} ruleId={finding.rule_id} />
                                       </div>
 
                                       <div className="space-y-6">
@@ -399,7 +404,7 @@ const TechnicalReport = ({ reportData }) => {
                                               <span className="text-slate-500">Scanner Module</span>
                                               <span className="font-mono text-slate-300">{finding.module}</span>
                                             </div>
-                                            
+
                                             {/* CVSS Metadata Block */}
                                             {finding.severity !== 'Passed' && finding.severity !== 'Informational' && (
                                               <div className="pt-3 mt-3 border-t border-slate-700/30 flex flex-col space-y-2">
@@ -453,7 +458,14 @@ const TechnicalReport = ({ reportData }) => {
                             )}
                         </tbody>
                       );
-                    })}
+                    });
+
+                    if (group.key === 'browser_defense' && finalInsertIdx === groupFindings.length) {
+                      elements.push(<CSPAnalysisPanel key="csp-panel" findings={groupFindings} />);
+                    }
+
+                    return elements;
+                  })()}
                     </table>
                   </div>
                 </div>
