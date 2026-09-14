@@ -182,6 +182,70 @@ class TestJavaScriptSecurityModule(unittest.TestCase):
         self.assertNotIn("welcome to localhost", lb_evidence)
         self.assertNotIn("https://api.example.com", lb_evidence)
 
+    @patch('api.scanner.modules.javascript_security.safe_request')
+    def test_loopback_supabase_exclusion(self, mock_request):
+        html_body = '<script src="/supabase.js"></script><script src="/app.js"></script>'
+        # Test 1 & 3: SUPABASE CONTEXT (should be ignored)
+        js_supabase = 'Ba=`http://localhost:9999`,Va=`supabase.auth.token`,Ha={"X-Client-Info":`gotrue-js/2.112.0`}'
+        # Test 4: SAME URL WITHOUT CONTEXT (should be detected) + 2: 127.0.0.1 + 5: MULTIPLE REFERENCES
+        js_app = 'const fallback = "http://localhost:9999"; const api = "http://127.0.0.1:8000/api"; const localApi = "http://localhost:3000/api";'
+
+        responses = {
+            "https://example.com/": DummyResponse(200, html_body, {"Content-Type": "text/html"}),
+            "https://example.com/supabase.js": DummyResponse(200, js_supabase),
+            "https://example.com/app.js": DummyResponse(200, js_app)
+        }
+
+        mock_request.side_effect = self.create_side_effect(responses)
+        findings = self.module.run("https://example.com/", "example.com", self.session)
+
+        loopback_findings = [f for f in findings if f["name"] == "Development / Localhost References in Client-Side Code"]
+        self.assertEqual(len(loopback_findings), 1)
+
+        lb_evidence = str(loopback_findings[0]["evidence"])
+
+        # Test 1: Real app reference detected
+        self.assertIn("http://localhost:3000", lb_evidence)
+        # Test 2: Real 127.0.0.1 reference detected
+        self.assertIn("http://127.0.0.1:8000", lb_evidence)
+        # Test 4: Same URL without library context detected
+        self.assertIn("http://localhost:9999", lb_evidence)
+
+        # The library context one doesn't appear as a separate or suppressing factor for the entire thing,
+        # but if we run js_supabase ALONE, it should yield NO findings.
+
+    @patch('api.scanner.modules.javascript_security.safe_request')
+    def test_loopback_supabase_exclusion_alone(self, mock_request):
+        html_body = '<script src="/supabase.js"></script>'
+        js_supabase = 'Ba=`http://localhost:9999`,Va=`supabase.auth.token`,Ha={"X-Client-Info":`gotrue-js/2.112.0`}'
+        responses = {
+            "https://example.com/": DummyResponse(200, html_body, {"Content-Type": "text/html"}),
+            "https://example.com/supabase.js": DummyResponse(200, js_supabase),
+        }
+        mock_request.side_effect = self.create_side_effect(responses)
+        findings = self.module.run("https://example.com/", "example.com", self.session)
+        loopback_findings = [f for f in findings if f["name"] == "Development / Localhost References in Client-Side Code"]
+        self.assertEqual(len(loopback_findings), 0)
+
+    @patch('api.scanner.modules.javascript_security.safe_request')
+    def test_loopback_supabase_exclusion_port_edge_cases(self, mock_request):
+        html_body = '<script src="/supabase.js"></script>'
+        # Test 3 & 4: http://localhost:19999, http://localhost:99990, and https://localhost:9999 with Supabase context (should be detected)
+        js_supabase = 'Ba=`http://localhost:19999`,Ca=`http://localhost:99990`,Da=`https://localhost:9999`,Va=`supabase.auth.token`,Ha={"X-Client-Info":`gotrue-js/2.112.0`}'
+        responses = {
+            "https://example.com/": DummyResponse(200, html_body, {"Content-Type": "text/html"}),
+            "https://example.com/supabase.js": DummyResponse(200, js_supabase),
+        }
+        mock_request.side_effect = self.create_side_effect(responses)
+        findings = self.module.run("https://example.com/", "example.com", self.session)
+        loopback_findings = [f for f in findings if f["name"] == "Development / Localhost References in Client-Side Code"]
+        self.assertEqual(len(loopback_findings), 1)
+        lb_evidence = str(loopback_findings[0]["evidence"])
+        self.assertIn("http://localhost:19999", lb_evidence)
+        # Note: http://localhost:99990 won't be matched fully by the regex if it only matches \d+, wait, \d+ matches 99990 entirely.
+        self.assertIn("http://localhost:99990", lb_evidence)
+        self.assertIn("https://localhost:9999", lb_evidence)
+
 if __name__ == '__main__':
     unittest.main()
 
