@@ -26,7 +26,8 @@ export const CSPAnalysisPanel = ({ findings }) => {
   const cspReportOnlyExtra = getFinding('headers_csp_report_only_extra');
   const rawCSP = cspConfigured?.evidence?.raw || '';
   const structuredDirectives = cspConfigured?.evidence?.directives;
-  const parsedCSP = structuredDirectives && typeof structuredDirectives === "object"
+  const hasStructuredDirectives = structuredDirectives && typeof structuredDirectives === "object" && !Array.isArray(structuredDirectives);
+  const parsedCSP = hasStructuredDirectives
     ? structuredDirectives
     : parseCSPDirectives(rawCSP);
 
@@ -94,13 +95,17 @@ export const CSPAnalysisPanel = ({ findings }) => {
   const nonceOrHash = hardenedRaw.includes('nonce') || hardenedRaw.includes('hashes');
   const broadSources = weakRaw.includes('wildcard') || weakRaw.includes('https:') || weakRaw.includes('data:') || weakRaw.includes('blob:') || weakRaw.includes('http:');
 
-  const renderRow = (label, value, statusObj) => (
-    <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 last:border-0 text-sm">
-      <div className="col-span-3 font-mono text-slate-400">{label}</div>
-      <div className="col-span-6 font-mono text-slate-300 break-all">{value || <span className="text-slate-600">Not visible in policy evidence</span>}</div>
-      <div className={`col-span-3 font-semibold ${statusObj.color}`}>{statusObj.label}</div>
-    </div>
-  );
+  const renderRow = (label, value, statusObj) => {
+    const isMissing = hasStructuredDirectives && value === undefined;
+    const displayValue = value || (isMissing && label === 'form-action' ? <span className="text-slate-500">Missing</span> : <span className="text-slate-600">Not visible in policy evidence</span>);
+    return (
+      <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 last:border-0 text-sm">
+        <div className="col-span-3 font-mono text-slate-400">{label}</div>
+        <div className="col-span-6 font-mono text-slate-300 break-all">{displayValue}</div>
+        <div className={`col-span-3 font-semibold ${statusObj.color}`}>{statusObj.label}</div>
+      </div>
+    );
+  };
 
   return (
     <tbody className="finding-card divide-y divide-slate-800/50 border-b border-slate-700/40 last:border-b-0">
@@ -200,7 +205,7 @@ export const CSPAnalysisPanel = ({ findings }) => {
                           <div className="grid grid-cols-12 gap-4 py-2 border-b border-slate-800/50 text-sm">
                             <div className="col-span-5 text-slate-400">Broad Script Sources</div>
                             <div className="col-span-7 font-semibold">
-                              {broadSources ? <span className="text-orange-400">Detected</span> : (weak ? <span className="text-emerald-400">None detected</span> : <span className="text-slate-500">Not evaluated</span>)}
+                              {broadSources ? <span className="text-orange-400">Detected</span> : (hasStructuredDirectives ? <span className="text-emerald-400">Not detected</span> : <span className="text-slate-500">Not evaluated</span>)}
                             </div>
                           </div>
 
