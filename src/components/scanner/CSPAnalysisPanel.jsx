@@ -25,7 +25,10 @@ export const CSPAnalysisPanel = ({ findings }) => {
   const cspReportOnly = getFinding('headers_csp_report_only');
   const cspReportOnlyExtra = getFinding('headers_csp_report_only_extra');
   const rawCSP = cspConfigured?.evidence?.raw || '';
-  const parsedCSP = parseCSPDirectives(rawCSP);
+  const structuredDirectives = cspConfigured?.evidence?.directives;
+  const parsedCSP = structuredDirectives && typeof structuredDirectives === "object"
+    ? structuredDirectives
+    : parseCSPDirectives(rawCSP);
 
   // Weaknesses
   const weak = getFinding('csp_quality_weak');

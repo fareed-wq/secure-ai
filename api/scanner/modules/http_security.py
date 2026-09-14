@@ -511,11 +511,23 @@ class SecurityHeadersModule(ScannerModule):
                         category="http_headers"
                     , rule_id="headers_csp_report_only_extra"))
 
+                whitelist = {"default-src", "script-src", "style-src", "object-src", "base-uri", "form-action", "frame-ancestors"}
+                evidence_payload = {"raw": csp[:180]}
+                if "," not in csp:
+                    directives = {}
+                    for part in csp.split(';'):
+                        tokens = part.strip().split(None, 1)
+                        if tokens:
+                            directive = tokens[0].lower()
+                            if directive in whitelist and directive not in directives:
+                                directives[directive] = tokens[1] if len(tokens) > 1 else ""
+                    evidence_payload["directives"] = directives
+
                 findings.append(self.make_finding(
                     "Content-Security-Policy Configured",
                     "Passed",
                     "Your website has a Content Security Policy (CSP) in place.",
-                    csp,
+                    evidence_payload,
                     impact="Your website is well-protected against malicious script injection attacks.",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"

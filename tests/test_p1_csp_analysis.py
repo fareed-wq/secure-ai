@@ -117,3 +117,56 @@ def test_malformed_csp():
     findings = run_csp(headers)
     # Shouldn't crash
     assert len(findings) > 0
+def test_csp_structured_metadata():
+    from api.scanner.modules.http_security import SecurityHeadersModule
+    from unittest.mock import MagicMock
+    import requests
+    import api.scanner.modules.http_security as http_sec
+
+    module = SecurityHeadersModule()
+    response = MagicMock(spec=requests.Response)
+    response.text = ""
+    response.headers = {
+        'Content-Security-Policy': 'default-src \'self\'; script-src \'self\' https://example.com; object-src \'none\'; base-uri \'none\'; frame-ancestors \'none\'; form-action \'self\'; style-src \'unsafe-inline\'; other-src \'ignore\''
+    }
+    http_sec.safe_request = MagicMock(return_value=response)
+    findings = module.run('https://example.com', 'example.com', MagicMock())
+
+    csp_finding = next(f for f in findings if f['name'] == 'Content-Security-Policy Configured')
+
+    evidence = csp_finding['evidence']
+    assert 'directives' in evidence
+    directives = evidence['directives']
+
+    assert directives['default-src'] == '\'self\''
+    assert directives['script-src'] == '\'self\' https://example.com'
+    assert directives['object-src'] == '\'none\''
+    assert directives['base-uri'] == '\'none\''
+    assert directives['frame-ancestors'] == '\'none\''
+    assert directives['form-action'] == '\'self\''
+    assert directives['style-src'] == '\'unsafe-inline\''
+
+    assert 'other-src' not in directives
+    assert 'connect-src' not in directives
+    assert evidence['raw'] == response.headers['Content-Security-Policy'][:180]
+
+def test_csp_structured_metadata_multiple_headers():
+    from api.scanner.modules.http_security import SecurityHeadersModule
+    from unittest.mock import MagicMock
+    import requests
+    import api.scanner.modules.http_security as http_sec
+
+    module = SecurityHeadersModule()
+    response = MagicMock(spec=requests.Response)
+    response.text = ""
+    response.headers = {
+        'Content-Security-Policy': 'default-src \'self\', script-src \'none\''
+    }
+    http_sec.safe_request = MagicMock(return_value=response)
+    findings = module.run('https://example.com', 'example.com', MagicMock())
+
+    csp_finding = next(f for f in findings if f['name'] == 'Content-Security-Policy Configured')
+
+    evidence = csp_finding['evidence']
+    assert 'directives' not in evidence
+    assert 'raw' in evidence
