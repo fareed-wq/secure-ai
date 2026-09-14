@@ -15,7 +15,7 @@ function parseCSPDirectives(rawCSP) {
 }
 
 export const CSPAnalysisPanel = ({ findings }) => {
-  const [cspPanelOpen, setCspPanelOpen] = useState(true);
+  const [cspPanelOpen, setCspPanelOpen] = useState(false);
 
   const getFinding = (ruleId) => findings.find(f => f.rule_id === ruleId);
   const hasFinding = (ruleId) => !!getFinding(ruleId);
