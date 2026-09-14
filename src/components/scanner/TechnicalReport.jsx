@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Terminal, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
+import { CSPAnalysisPanel } from './CSPAnalysisPanel';
 
 
 const TechnicalReport = ({ reportData }) => {
@@ -226,6 +227,10 @@ const TechnicalReport = ({ reportData }) => {
                     {group.icon}
                     <h2 className="font-bold text-slate-50 text-lg">{group.label}</h2>
                   </div>
+
+                  {group.key === 'browser_defense' && (
+                    <CSPAnalysisPanel findings={groupFindings} />
+                  )}
 
                   <div className="w-full overflow-x-auto">
                     <table className="technical-findings-table w-full text-left border-collapse">
