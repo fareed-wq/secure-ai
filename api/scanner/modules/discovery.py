@@ -237,7 +237,8 @@ class InformationDisclosureModule(ScannerModule):
             if not resp:
                 return findings
             server = self.get_header_safe(resp, "Server")
-            if any(char.isdigit() for char in server) and ("/" in server or "-" in server):
+            import re
+            if server and bool(re.search(r'[A-Za-z0-9\-]+/\d+\.\d+', server)):
                 findings.append(self.make_finding(
                     "Verbose Server Banner",
                     "Low",
