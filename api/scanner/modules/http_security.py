@@ -73,6 +73,7 @@ class AdvancedCookieModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        resp = None
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             if not resp:
@@ -319,6 +320,49 @@ class AdvancedCookieModule(ScannerModule):
 
         except Exception as e:
             print(f"DEBUG EXCEPTION: {e}")
+            pass
+
+        # Phase54B1: Detect sensitive cookies issued over cleartext HTTP
+        try:
+            if resp:
+                final_host = urlparse(resp.url).hostname
+                # Build response chain: history + final
+                chain = list(getattr(resp, 'history', []) or []) + [resp]
+                for chain_resp in chain:
+                    resp_url = getattr(chain_resp, 'url', '') or ''
+                    parsed = urlparse(resp_url)
+                    if parsed.scheme != 'http':
+                        continue
+                    resp_host = parsed.hostname
+                    if resp_host != final_host:
+                        continue
+                    # Extract Set-Cookie from this HTTP response
+                    http_cookies = []
+                    if hasattr(chain_resp, 'raw') and hasattr(chain_resp.raw, 'headers'):
+                        http_cookies = chain_resp.raw.headers.getlist('Set-Cookie')
+                    for cookie_str in http_cookies:
+                        cparts = [p.strip() for p in cookie_str.split(';') if p.strip()]
+                        if not cparts or '=' not in cparts[0]:
+                            continue
+                        cname = cparts[0].split('=')[0].strip()
+                        if self.is_session_cookie(cname):
+                            findings.append(self.make_finding(
+                                "Session Cookie Issued over HTTP",
+                                "Medium",
+                                "A likely session or authentication cookie was delivered in an unencrypted HTTP response. "
+                                "Even if the cookie includes the Secure attribute, the token value was already transmitted "
+                                "in cleartext and could be observed by an on-path attacker.",
+                                f"Cookie '{cname}' issued over HTTP on {resp_host}",
+                                impact="An attacker monitoring network traffic can capture the session token directly from the HTTP response.",
+                                remediation="Redirect users to HTTPS before issuing session cookies. "
+                                "Issue sensitive cookies only from HTTPS responses. "
+                                "Use HSTS to prevent future HTTP connections, though HSTS cannot protect a response already made over HTTP.",
+                                owasp="A02: Cryptographic Failures",
+                                category="session_cookies",
+                                confidence="High"
+                            , rule_id="cookies_session_set_over_http", instance_key=cname))
+        except Exception as e:
+            print(f"DEBUG EXCEPTION (HTTP cookie check): {e}")
             pass
 
         unique_findings = {}
