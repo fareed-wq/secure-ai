@@ -14,11 +14,11 @@ export const getTranslation = (finding) => {
     baseTranslation.category = "Session Security";
   }
 
-  // Always use the backend's description and impact for problem and why.
+  // Use the translation's simplified wording, falling back to backend technical wording
   return {
     ...baseTranslation,
-    problem: finding.description || "A recommended security configuration is missing or partially configured on your web server.",
-    why: finding.impact && finding.impact !== "N/A" ? finding.impact : "Resolving this configuration aligns your site with industry baseline security standards."
+    problem: baseTranslation.problem || finding.description || "A recommended security configuration is missing or partially configured on your web server.",
+    why: baseTranslation.why || (finding.impact && finding.impact !== "N/A" ? finding.impact : "Resolving this configuration aligns your site with industry baseline security standards.")
   };
 };
 
