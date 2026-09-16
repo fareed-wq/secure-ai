@@ -292,11 +292,11 @@ class PermissionsPolicyModule(ScannerModule):
         findings = []
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
-            headers = get_all_headers(resp)
+            policy_str = self.get_header_safe(resp, "Permissions-Policy", "")
             content_type = self.get_header_safe(resp, "Content-Type", "").lower()
             is_api_response = "application/json" in content_type
 
-            if "Permissions-Policy" not in headers:
+            if not policy_str:
                 if not is_api_response:
                     findings.append(self.make_finding(
                         "Permissions-Policy Not Configured",
@@ -310,7 +310,6 @@ class PermissionsPolicyModule(ScannerModule):
                         rule_id="headers_permissions_policy_missing"
                     ))
             else:
-                policy_str = headers["Permissions-Policy"]
                 sensitive_features = ["geolocation", "camera", "microphone"]
                 weak_configs = []
 
