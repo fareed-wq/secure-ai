@@ -37,6 +37,11 @@ class AdvancedCookieModule(ScannerModule):
         s = re.sub(r'[\-\.]', '_', s)
         tokens = set(p for p in s.split('_') if p)
 
+        strong_auth = {"auth", "jwt", "access", "refresh", "login"}
+        non_auth_context = {"theme", "marketing", "analytics", "preference", "consent", "language", "locale"}
+        if tokens.intersection(non_auth_context) and not tokens.intersection(strong_auth):
+            return False
+
         strong_tokens = {"session", "sess", "sid", "auth", "jwt"}
         if tokens.intersection(strong_tokens):
             return True
@@ -82,7 +87,6 @@ class AdvancedCookieModule(ScannerModule):
             if not raw_cookies and set_cookie_header:
                 raw_cookies = [set_cookie_header]
 
-            seen_cookies = set()
             missing_httponly = []
             missing_secure = []
             missing_samesite = []
@@ -97,9 +101,7 @@ class AdvancedCookieModule(ScannerModule):
                     continue
                 cookie_name = cookie_name_part.split("=")[0].strip()
 
-                if cookie_name in seen_cookies:
-                    continue
-                seen_cookies.add(cookie_name)
+                # Phase54: Process all cookies; same-name aggregation happens at the end
 
                 directives = [p.lower() for p in parts[1:]]
 
@@ -245,9 +247,9 @@ class AdvancedCookieModule(ScannerModule):
                 else:
                     # Collect non-session cookie issues for bulk reporting
                     if not is_secure and url.startswith("https"):
-                        missing_secure.append(cookie_name)
+                        if cookie_name not in missing_secure: missing_secure.append(cookie_name)
                     if not samesite_val:
-                        missing_samesite.append(cookie_name)
+                        if cookie_name not in missing_samesite: missing_samesite.append(cookie_name)
 
                 if samesite_none_without_secure and not (is_session and not is_secure and url.startswith("https")):
                     findings.append(self.make_finding(
@@ -318,7 +320,14 @@ class AdvancedCookieModule(ScannerModule):
         except Exception as e:
             print(f"DEBUG EXCEPTION: {e}")
             pass
-        return findings
+
+        unique_findings = {}
+        for f in findings:
+            key = (f.get("rule_id"), f.get("instance_key"))
+            if key not in unique_findings:
+                unique_findings[key] = f
+
+        return list(unique_findings.values())
 
 
 class HTTPSRedirectModule(ScannerModule):
