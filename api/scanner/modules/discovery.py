@@ -282,7 +282,9 @@ class InformationDisclosureModule(ScannerModule):
                             break
 
                 # Passive IP disclosure check
-                private_ip_regex = re.compile(r'\b(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3})\b')
+                O = r'(?:25[0-5]|2[0-4]\d|[01]?\d{1,2})'
+                IP = r'(?:10\.' + O + r'\.' + O + r'\.' + O + r'|172\.(?:1[6-9]|2\d|3[0-1])\.' + O + r'\.' + O + r'|192\.168\.' + O + r'\.' + O + r')'
+                private_ip_regex = re.compile(r'(?<![\.\d])\b(' + IP + r')\b(?![\.\d])')
                 matches = private_ip_regex.findall(text_slice)
                 if matches:
                     unique_ips = list(set([m[0] if isinstance(m, tuple) else m for m in matches]))
