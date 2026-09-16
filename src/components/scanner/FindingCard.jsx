@@ -60,7 +60,12 @@ const FindingCard = ({ issue, idx }) => {
           <span className="text-lg font-bold text-slate-100 block mb-1">Why does it matter?</span>
           <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.why}</span>
           
-
+          {trans.action && issue.severity !== 'Passed' && (
+            <>
+              <span className="text-lg font-bold text-slate-100 block mb-1">What to do</span>
+              <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.action}</span>
+            </>
+          )}
         </div>
       </div>
 

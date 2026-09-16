@@ -42,6 +42,64 @@ export const CATEGORY_METADATA = {
 };
 
 export const TRANSLATIONS = {
+
+  "Potential Missing CSRF Protection": {
+    name: "Form Submission Protection Not Clearly Detected",
+    category: "Session Security",
+    impact: "Medium",
+    problem: "We could not clearly identify protection that helps prevent another website from causing unwanted form submissions.",
+    why: "Without appropriate protection, some state-changing actions may be easier to trigger without the user's intent.",
+    action: "Ask your developer to confirm that state-changing forms use the application's built-in anti-CSRF protection or an equivalent mechanism."
+  },
+  "Authentication Response May Be Publicly Cacheable": {
+    name: "Sensitive Authentication Response May Be Cached",
+    category: "Session Security",
+    impact: "Medium",
+    problem: "A sensitive authentication-related response may be allowed to remain in a browser or intermediary cache.",
+    why: "Cached authentication information could remain available longer than intended on shared or reused systems.",
+    action: "Ask your developer to prevent sensitive authentication or token responses from being cached where inappropriate, using suitable cache-control settings."
+  },
+  "Session Cookie Issued over HTTP": {
+    name: "Sensitive Session Cookie Issued Over HTTP",
+    category: "Session Security",
+    impact: "High",
+    problem: "A likely session/authentication cookie was delivered in an unencrypted HTTP response.",
+    why: "Information sent over HTTP can be observed or altered by someone able to intercept the connection.",
+    action: "Ensure sensitive session cookies are created and issued only after the connection is using HTTPS."
+  },
+  "Broad Session Cookie Domain Scope": {
+    name: "Broad Session Cookie Domain Scope",
+    category: "Session Security",
+    impact: "Low",
+    problem: "The session cookie is available to a wider set of subdomains than may be necessary.",
+    why: "A broader cookie scope means more subdomains can potentially receive or affect the session cookie.",
+    action: "Ask your developer to restrict the cookie Domain to the narrowest scope needed by the application."
+  },
+  "Internal IP Address Disclosed": {
+    name: "Internal Network Address Exposed",
+    category: "Privacy Protection",
+    impact: "Low",
+    problem: "A private/internal IP address was visible in publicly returned website data.",
+    why: "This reveals some internal infrastructure information but does NOT mean the internal network was accessed.",
+    action: "Ask your developer or infrastructure team to remove unnecessary internal address references from public responses or content."
+  },
+  "CSP Form Actions Not Restricted": {
+    name: "Form Submission Destinations Not Restricted",
+    category: "Browser Protection",
+    impact: "Low",
+    problem: "The website's browser security policy does not clearly limit where forms may send data.",
+    why: "Restricting form destinations can reduce the impact of certain malicious or unexpected form submissions.",
+    action: "Ask your developer to review the CSP form-action directive and restrict form submission destinations to those the website actually needs."
+  },
+  "CSP Base URI Not Restricted": {
+    name: "Page Base Address Not Restricted",
+    category: "Browser Protection",
+    impact: "Low",
+    problem: "The browser security policy does not clearly restrict which base URL the page may use.",
+    why: "Restricting this value can reduce the impact of injected base-tag manipulation in certain attacks.",
+    action: "Ask your developer to review the CSP base-uri directive and restrict it to the site's actual needs."
+  },
+
   "CSP Missing Default Source Fallback": {
     name: "CSP Missing Default Source Fallback",
     category: "Browser Protection",
@@ -99,21 +157,24 @@ export const TRANSLATIONS = {
     category: "Encryption",
     impact: "High",
     problem: "The scanner checked if your website strictly forces secure connections and found this rule is missing.",
-    why: "Without this, visitors might accidentally connect insecurely, allowing eavesdroppers to read their private data."
+    why: "Without this, visitors might accidentally connect insecurely, allowing eavesdroppers to read their private data.",
+    action: "Ask your hosting provider or developer to enable HSTS after confirming the site and required subdomains operate correctly over HTTPS."
   },
   "Missing Content-Security-Policy (CSP)": {
     name: "Weak Data Injection Guard (CSP)",
     category: "Browser Protection",
     impact: "High",
     problem: "The scanner found your website lacks strict policies to block unauthorized scripts from running.",
-    why: "Hackers could sneak malicious code onto your web pages to view or steal visitor information."
+    why: "Hackers could sneak malicious code onto your web pages to view or steal visitor information.",
+    action: "Ask your developer to create and test a Content Security Policy tailored to the scripts, services, and resources the website actually uses."
   },
-  "Weak Content-Security-Policy (CSP)": {
+  "Weak Content-Security-Policy": {
     name: "Weak Data Injection Guard (CSP)",
     category: "Browser Protection",
     impact: "Medium",
     problem: "The scanner checked your website's rules for loading scripts and found them to be too permissive.",
-    why: "Loose rules increase the risk of malicious code running and stealing private visitor information."
+    why: "Loose rules increase the risk of malicious code running and stealing private visitor information.",
+    action: "Ask your developer to review and gradually tighten the policy while testing the site's required scripts and integrations."
   },
   "CSP Allows Inline Styles": {
     name: "Inline Styles Permitted (CSP)",
@@ -127,14 +188,16 @@ export const TRANSLATIONS = {
     category: "Browser Protection",
     impact: "Medium",
     problem: "The scanner found your website lacks clickjacking protections such as X-Frame-Options or CSP frame-ancestors.",
-    why: "Another site could place your pages behind invisible buttons to trick visitors into unwanted actions."
+    why: "Another site could place your pages behind invisible buttons to trick visitors into unwanted actions.",
+    action: "Ask your developer to configure clickjacking protection using CSP frame-ancestors or X-Frame-Options, depending on whether legitimate page framing is required."
   },
   "Missing or Invalid X-Content-Type-Options": {
     name: "Missing MIME Sniffing Protection",
     category: "Browser Protection",
     impact: "Low",
     problem: "The scanner detected your server doesn't securely configure X-Content-Type-Options: nosniff.",
-    why: "Browsers might misidentify files, accidentally running scripts hidden in normal images or documents."
+    why: "Browsers might misidentify files, accidentally running scripts hidden in normal images or documents.",
+    action: "Ask your developer or hosting provider to send X-Content-Type-Options: nosniff on appropriate web responses."
   },
   "Referrer-Policy Not Configured": {
     name: "Referrer-Policy Not Configured",
@@ -206,33 +269,37 @@ export const TRANSLATIONS = {
     problem: "The scanner looked for a standard security contact file on your website but found nothing.",
     why: "Friendly researchers discovering a flaw may not have a clear way to privately report it."
   },
-  "Missing HttpOnly Flag on Cookie": {
+  "Session Cookie Missing HttpOnly Flag": {
     name: "Unsecured Session Cookie (HttpOnly)",
     category: "Session Security",
     impact: "Medium",
     problem: "The scanner found your website's digital ID cookies are not locked away from browser scripts.",
-    why: "If malicious code sneaks onto your site, it could read these cookies and access accounts."
+    why: "If malicious code sneaks onto your site, it could read these cookies and access accounts.",
+    action: "Ask your developer to mark the session cookie as HttpOnly unless client-side JavaScript genuinely needs access to it."
   },
-  "Missing Secure Flag on Cookie": {
+  "Session Cookie Missing Secure Flag": {
     name: "Unencrypted Cookie Transmission (Secure Flag)",
     category: "Session Security",
     impact: "Medium",
     problem: "The scanner detected digital ID cookies could be sent over unencrypted internet connections.",
-    why: "On a public network, a user's digital ID badge could be intercepted and misused by attackers."
+    why: "On a public network, a user's digital ID badge could be intercepted and misused by attackers.",
+    action: "Ensure the session cookie is marked with the 'Secure' attribute so it is only transmitted over encrypted connections."
   },
-  "Missing SameSite Attribute on Cookie": {
+  "Session Cookie Missing SameSite Attribute": {
     name: "Unprotected Cross-Site Cookie (SameSite)",
     category: "Session Security",
     impact: "Low",
     problem: "The scanner found your website doesn't restrict its digital ID cookies from being used externally.",
-    why: "A malicious website could potentially send commands to your website on a customer's behalf."
+    why: "A malicious website could potentially send commands to your website on a customer's behalf.",
+    action: "Ask your developer to choose and test an appropriate SameSite setting for the application's login and cross-site workflows."
   },
-  "Exposed Server Header": {
+  "Verbose Server Banner": {
     name: "Exposed Web Server Technology",
     category: "Privacy Protection",
     impact: "Informational",
     problem: "The scanner received technical responses openly advertising the exact software running your website.",
-    why: "Revealing specific software versions makes it easier for outsiders to look up known weaknesses."
+    why: "Revealing specific software versions makes it easier for outsiders to look up known weaknesses.",
+    action: "Where practical, configure the server or edge service to avoid exposing unnecessary software version details."
   },
   "Exposed X-Powered-By Header": {
     name: "Exposed Web Server Technology",
