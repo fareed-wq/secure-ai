@@ -194,34 +194,33 @@ class TestPhase30AuthSessionSecurity(unittest.TestCase):
     @patch('api.scanner.modules.auth_session_security.safe_request')
     def test_cache_control_public(self, mock_safe_req):
         mock_safe_req.return_value = self._mock_response(
-            url="https://example.com/login",
+            url="https://example.com/reset-password?token=123",
             headers={"Cache-Control": "public, max-age=3600"},
             text="Please login"
         )
-        findings = self.auth_mod.run("https://example.com/login", "example.com", self.session)
+        findings = self.auth_mod.run("https://example.com/reset-password?token=123", "example.com", self.session)
         names = [f['name'] for f in findings]
         self.assertIn("Authentication Response May Be Publicly Cacheable", names)
 
     @patch('api.scanner.modules.auth_session_security.safe_request')
     def test_cache_control_revalidate_low(self, mock_safe_req):
         mock_safe_req.return_value = self._mock_response(
-            url="https://example.com/login",
+            url="https://example.com/reset-password?token=123",
             headers={"Cache-Control": "public, max-age=0, must-revalidate"},
             text="Please login"
         )
-        findings = self.auth_mod.run("https://example.com/login", "example.com", self.session)
+        findings = self.auth_mod.run("https://example.com/reset-password?token=123", "example.com", self.session)
         finding = next((f for f in findings if f['name'] == "Authentication Response May Be Publicly Cacheable"), None)
-        self.assertIsNotNone(finding)
-        self.assertEqual(finding['severity'], "Low")
+        self.assertIsNone(finding)
 
     @patch('api.scanner.modules.auth_session_security.safe_request')
     def test_cache_control_safe(self, mock_safe_req):
         mock_safe_req.return_value = self._mock_response(
-            url="https://example.com/login",
+            url="https://example.com/reset-password?token=123",
             headers={"Cache-Control": "no-store, private"},
             text="Please login"
         )
-        findings = self.auth_mod.run("https://example.com/login", "example.com", self.session)
+        findings = self.auth_mod.run("https://example.com/reset-password?token=123", "example.com", self.session)
         names = [f['name'] for f in findings]
         self.assertNotIn("Authentication Response May Be Publicly Cacheable", names)
 
@@ -316,6 +315,10 @@ class TestPhase30AuthSessionSecurity(unittest.TestCase):
             <input type="text" name="user">
             <input type="password" name="pass" autocomplete="off">
         </form>
+        <form action="http://example.com/login" method="POST">
+            <input type="text" name="user2">
+            <input type="password" name="pass2">
+        </form>
         '''
 
         mock_safe_req.return_value = self._mock_response(
@@ -338,7 +341,15 @@ class TestPhase30AuthSessionSecurity(unittest.TestCase):
         )
         findings2 = self.auth_mod.run("http://example.com/admin", "example.com", self.session)
 
-        findings = findings1 + findings2
+        # Third run for token cacheability
+        mock_safe_req.return_value = self._mock_response(
+            url="http://example.com/reset-password?token=123",
+            headers={"Cache-Control": "public, max-age=3600"},
+            text="Please reset"
+        )
+        findings3 = self.auth_mod.run("http://example.com/reset-password?token=123", "example.com", self.session)
+
+        findings = findings1 + findings2 + findings3
 
         # Verify identities
         expected_ids = {

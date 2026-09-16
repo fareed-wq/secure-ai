@@ -73,30 +73,40 @@ class AuthenticationSessionSecurityModule(ScannerModule):
             cache_lower = cache_control.lower()
             is_highly_sensitive = self.is_auth_related(url) or self.is_auth_related(resp.text)
 
-            if is_highly_sensitive:
-                is_vuln = False
+            from urllib.parse import parse_qsl, urlparse
+            import re
+            parsed_url = urlparse(url)
+            query_keys = {k.lower() for k, v in parse_qsl(parsed_url.query)}
+            token_params = {'token', 'reset_token', 'resettoken', 'verification_token', 'verificationtoken', 'code'}
+            path_keywords = {'reset', 'recover', 'verify', 'confirm', 'callback', 'oauth'}
+
+            is_token_workflow = False
+            sensitive_evidence = ""
+            path_parts = set(re.split(r'[\W_]+', parsed_url.path.lower()))
+            if any(k in path_parts for k in path_keywords):
+                for p in token_params:
+                    if p in query_keys:
+                        is_token_workflow = True
+                        sensitive_evidence = f"Sensitive authentication workflow with token parameter '{p}' detected"
+                        break
+
+            is_vuln = False
+            if is_token_workflow:
                 severity = "Medium"
 
                 if not cache_control:
                     is_vuln = True
-                elif "no-store" in cache_lower or "private" in cache_lower:
+                elif "no-store" in cache_lower or "private" in cache_lower or "no-cache" in cache_lower or "max-age=0" in cache_lower:
                     is_vuln = False
-                elif "public" in cache_lower:
-                    if "max-age=0" in cache_lower and "must-revalidate" in cache_lower:
-                        # Effectively forces revalidation, lower risk but still not strict no-store
-                        is_vuln = True
-                        severity = "Low"
-                    else:
-                        # Positive max-age or s-maxage with public is risky for auth
-                        is_vuln = True
-                        severity = "Medium"
+                elif "public" in cache_lower or "max-age=" in cache_lower or "s-maxage=" in cache_lower:
+                    is_vuln = True
 
                 if is_vuln:
                     findings.append(self.make_finding(
                         "Authentication Response May Be Publicly Cacheable",
                         severity,
                         description="Your website allows sensitive login pages to be saved and stored on public networks.",
-                        evidence=f"Cache-Control: {cache_control}" if cache_control else "No Cache-Control header",
+                        evidence=f"{sensitive_evidence}; response appears publicly cacheable. Cache-Control: {cache_control}" if cache_control else f"{sensitive_evidence}; response appears publicly cacheable. No Cache-Control header.",
                         remediation="Set Cache-Control: no-store, max-age=0 on sensitive pages.",
                         owasp="A05: Security Misconfiguration",
                         category="authentication",
@@ -104,6 +114,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         impact="Other people using the same computer or network might be able to view your users' personal accounts or login details.",
                         rule_id="auth_response_cacheable"
                     ))
+
+            if is_highly_sensitive:
 
                 # Deep Cache Analysis
                 if cache_control and ("no-store" in cache_lower or "no-cache" in cache_lower) and ("max-age=" in cache_lower or "s-maxage=" in cache_lower):
