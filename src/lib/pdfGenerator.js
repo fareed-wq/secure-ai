@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getTranslation } from "./utils/translations";
 
 const sanitizeText = (text) => {
   if (typeof text !== 'string') return text;
@@ -89,15 +90,19 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
       doc.text(sanitizeText("No security issues were identified."), margin, yPos);
       yPos += 10;
     } else {
-      const simpleData = topActionItems.map(f => [
-        sanitizeText(`[${f.severity.toUpperCase()}] ${f.name}`),
-        sanitizeText(f.description || 'No description provided.'),
-        sanitizeText(f.remediation || 'No remediation provided.')
-      ]);
+      const simpleData = topActionItems.map(f => {
+        const trans = getTranslation(f);
+        const desc = trans.why ? `${trans.problem}\n\nWhy it matters: ${trans.why}` : trans.problem;
+        return [
+          sanitizeText(`[${f.severity.toUpperCase()}] ${trans.name}`),
+          sanitizeText(desc),
+          sanitizeText(trans.action || '')
+        ];
+      });
 
       autoTable(doc, {
         startY: yPos,
-        head: [['Finding', 'Description', 'Recommendation']],
+        head: [['Finding', 'Description', 'What to do']],
         body: simpleData,
         theme: 'grid',
         headStyles: { fillColor: [99, 102, 241] }, // indigo-500
@@ -129,7 +134,7 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
       doc.text(sanitizeText("No passed checks to report."), margin, yPos);
       yPos += 10;
     } else {
-      const passedData = passedItems.map(f => [sanitizeText(f.name)]);
+      const passedData = passedItems.map(f => [sanitizeText(getTranslation(f).name)]);
       autoTable(doc, {
         startY: yPos,
         head: [['Passed Security Checks']],
