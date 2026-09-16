@@ -104,7 +104,7 @@ class JavaScriptSecurityModule(ScannerModule):
     AUTH_LOGIC_PATTERN = re.compile(r'\b(isAdmin|is_admin|userRole|user_role|hasPermission|has_permission|canDelete|can_delete|canEdit|can_edit|canManage|can_manage|isStaff|is_staff|isSuperuser|is_superuser)\b\s*(?:===|==|!==|!=|=|\()\s*[^;,\)]+', re.IGNORECASE)
     ROLE_MODEL_PATTERN = re.compile(r'(?:["\']?(role|roles|permission|permissions)["\']?\s*:\s*(["\'][a-zA-Z0-9_\-]+["\']|\[[^\]]{1,100}\]))', re.IGNORECASE)
     PRIVILEGED_API_PATTERN = re.compile(r'[\"\'](?:https?://[a-zA-Z0-9\.\-]+)?(/(?:[a-zA-Z0-9_\-\{\}]+/)*(?:admin|administrator|manage|management|staff|superuser|internal)(?:/[a-zA-Z0-9_\-\{\}]+)*)[\"\']', re.IGNORECASE)
-    API_VERSION_PATTERN = re.compile(r'/(?:api/)?(v\d+)/')
+    API_VERSION_PATTERN = re.compile(r'(?:/(?:api|rest|graphql|service|services)/|(?:https?://)?\bapi\.[a-zA-Z0-9\-\.]+(?:/[a-zA-Z0-9_\-\.]+)*?/)(v\d+)/')
 
     ARIA_ROLES = {
         'alert', 'alertdialog', 'application', 'article', 'banner', 'button', 'cell', 'checkbox', 'columnheader', 'combobox', 'complementary', 'contentinfo', 'definition', 'dialog', 'directory', 'document', 'feed', 'figure', 'form', 'grid', 'gridcell', 'group', 'heading', 'img', 'link', 'list', 'listbox', 'listitem', 'log', 'main', 'marquee', 'math', 'menu', 'menubar', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'navigation', 'none', 'note', 'option', 'presentation', 'progressbar', 'radio', 'radiogroup', 'region', 'row', 'rowgroup', 'rowheader', 'scrollbar', 'search', 'searchbox', 'separator', 'slider', 'spinbutton', 'status', 'switch', 'tab', 'table', 'tablist', 'tabpanel', 'term', 'textbox', 'timer', 'toolbar', 'tooltip', 'tree', 'treegrid', 'treeitem'
