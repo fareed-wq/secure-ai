@@ -589,25 +589,57 @@ class SecurityHeadersModule(ScannerModule):
             , rule_id="headers_x_dns_prefetch_control_missing"))
 
         xfo_header = self.get_header_safe(resp, "X-Frame-Options") or ""
-        has_xfo = xfo_header.strip().upper() in ("DENY", "SAMEORIGIN")
+        has_xfo = False
+        if xfo_header:
+            parts = [p.strip().upper() for p in xfo_header.split(',')]
+            distinct_parts = set(parts)
+            if len(distinct_parts) == 1:
+                if distinct_parts.pop() in ("DENY", "SAMEORIGIN"):
+                    has_xfo = True
+            elif len(distinct_parts) > 1:
+                if any(p in ("DENY", "SAMEORIGIN", "ALLOWALL") for p in distinct_parts):
+                    has_xfo = True
+
         has_effective_fa = False
+        has_fa_directive = False
         if csp:
             for directive in csp.split(';'):
                 directive = directive.strip()
-                if directive.startswith("frame-ancestors"):
-                    val = directive[len("frame-ancestors"):].strip()
-                    if val and val != "*":
+                if not directive:
+                    continue
+                d_parts = directive.split(None, 1)
+                directive_name = d_parts[0].lower()
+                if directive_name == "frame-ancestors":
+                    has_fa_directive = True
+                    val = d_parts[1].strip() if len(d_parts) > 1 else ""
+                    if not val:
                         has_effective_fa = True
-                        break
+                    else:
+                        sources = [s.strip().lower() for s in val.split()]
+                        broad_sources = {"*", "https:", "http:", "data:"}
+                        has_broad = any(s in broad_sources for s in sources)
+                        if not has_broad:
+                            has_effective_fa = True
+                    break
 
-        if not is_api_response and not has_xfo and not has_effective_fa:
+        is_protected = has_effective_fa if has_fa_directive else has_xfo
+
+        if not is_api_response and not is_protected:
+            evidence = "Header not found in response"
+            if xfo_header and has_fa_directive:
+                evidence = f"X-Frame-Options: {xfo_header} | CSP frame-ancestors is broad/ineffective"
+            elif has_fa_directive:
+                evidence = "CSP frame-ancestors is broad/ineffective"
+            elif xfo_header:
+                evidence = f"X-Frame-Options: {xfo_header} (Invalid/Unsupported)"
+
             findings.append(self.make_finding(
                 "Missing Clickjacking Protection",
                 "Medium",
-                "Your website is missing a rule that prevents it from being embedded inside a hidden frame on another website.",
-                "Header not found in response",
+                "No effective anti-framing protection was observed.",
+                evidence,
                 impact="Missing clickjacking protection may leave pages more exposed to framing-based UI deception.",
-                remediation="Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+                remediation="Apply the specific header to your web server (e.g., CSP frame-ancestors 'none' or X-Frame-Options: DENY) to defend against client-side attacks.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
             , rule_id="headers_clickjacking_protection_missing"))
