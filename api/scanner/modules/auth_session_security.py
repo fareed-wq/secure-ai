@@ -1,7 +1,7 @@
 import re
 from typing import List
 import requests
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from api.scanner.base import ScannerModule
 from api.scanner.transport import safe_request
 
@@ -315,26 +315,51 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     # CSRF Posture (Passive Only)
                     is_state_changing = method in ['POST', 'PUT', 'PATCH', 'DELETE']
                     if is_state_changing:
-                        has_csrf = False
-                        for inp in inputs:
-                            inp_lower = inp.lower()
-                            if 'type="hidden"' in inp_lower or "type='hidden'" in inp_lower:
-                                if any(csrf_kw in inp_lower for csrf_kw in self.CSRF_KEYWORDS):
-                                    has_csrf = True
-                                    break
-                        if not has_csrf:
-                            findings.append(self.make_finding(
-                                "Potential Missing CSRF Protection",
-                                "Medium",
-                                description="Your website has forms that change account settings but appear to lack hidden security tokens.",
-                                evidence="No apparent CSRF token was observed in the analyzed form.",
-                                remediation="Ensure all state-changing endpoints are protected by anti-CSRF tokens.",
-                                owasp="A01: Broken Access Control",
-                                category="authentication",
-                                confidence="Low",
-                                impact="Without Anti-CSRF tokens, authenticated sessions may be susceptible to Cross-Site Request Forgery (CSRF).",
-                                rule_id="auth_csrf_missing"
-                            ))
+                        is_same_origin = True
+                        if action:
+                            alower = action.lower()
+                            if alower.startswith(('javascript:', 'mailto:', 'tel:', 'data:')):
+                                is_same_origin = False
+                            else:
+                                scanned_parsed = urlparse(url)
+                                resolved = urljoin(url, action)
+                                parsed_resolved = urlparse(resolved)
+
+                                def get_origin_tuple(p):
+                                    scheme = p.scheme.lower()
+                                    hostname = p.hostname.lower() if p.hostname else ""
+                                    port = p.port
+                                    if port is None:
+                                        if scheme == 'https':
+                                            port = 443
+                                        elif scheme == 'http':
+                                            port = 80
+                                    return (scheme, hostname, port)
+
+                                if get_origin_tuple(scanned_parsed) != get_origin_tuple(parsed_resolved):
+                                    is_same_origin = False
+
+                        if is_same_origin:
+                            has_csrf = False
+                            for inp in inputs:
+                                inp_lower = inp.lower()
+                                if 'type="hidden"' in inp_lower or "type='hidden'" in inp_lower:
+                                    if any(csrf_kw in inp_lower for csrf_kw in self.CSRF_KEYWORDS):
+                                        has_csrf = True
+                                        break
+                            if not has_csrf:
+                                findings.append(self.make_finding(
+                                    "Potential Missing CSRF Protection",
+                                    "Medium",
+                                    description="Your website has forms that change account settings but appear to lack hidden security tokens.",
+                                    evidence="No apparent CSRF token was observed in the analyzed form.",
+                                    remediation="Ensure all state-changing endpoints are protected by anti-CSRF tokens.",
+                                    owasp="A01: Broken Access Control",
+                                    category="authentication",
+                                    confidence="Low",
+                                    impact="Without Anti-CSRF tokens, authenticated sessions may be susceptible to Cross-Site Request Forgery (CSRF).",
+                                    rule_id="auth_csrf_missing"
+                                ))
 
                 if privileged_surface_links:
                     findings.append(self.make_finding(
