@@ -55,12 +55,12 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
           }`}>
             {isWafBlocked ? 'WAF Blocked' : score === null ? 'Scan Aborted' : score >= 90 ? 'Excellent' : score >= 80 ? 'Good' : score >= 70 ? 'Needs Improvement' : score >= 60 ? 'Weak' : 'Critical'}
           </div>
-          <div className="text-xs text-slate-500 mt-3 max-w-[200px] mx-auto leading-relaxed">
+          <div className="text-xs text-slate-500 mt-3 max-w-sm mx-auto leading-relaxed">
             {isWafBlocked 
               ? "Scan blocked by WAF. No overall score is assigned." 
               : score === null
               ? "Scan aborted or timed out completely. No score available."
-              : "Score is based only on verified security findings."}
+              : "Your score is based on detected Critical, High, Medium, and Low findings. Informational observations and Passed checks do not change the score."}
           </div>
         </div>
       </div>

@@ -32,7 +32,7 @@ const SimpleReport = ({ reportData }) => {
   if (reportData?.executive_summary && isWafBlocked) {
     healthSummary = reportData.executive_summary;
   } else if (score === 100) {
-    healthSummary = "Your website meets all baseline security best practices with zero open issues or vulnerabilities detected. Outstanding security posture!";
+    healthSummary = "No scored issues were detected in this passive assessment. The publicly observable controls checked here show a strong posture.";
   } else if (score >= 90) {
     healthSummary = "Your website demonstrates a strong security posture. Addressing the few remaining recommendations below will achieve a perfect score.";
   } else if (score >= 80) {
@@ -76,6 +76,9 @@ const SimpleReport = ({ reportData }) => {
             <h2 className="text-2xl font-black mb-4">Executive Summary</h2>
             <p className="text-xl text-slate-300 leading-relaxed">
               {healthSummary}
+            </p>
+            <p className="text-sm text-slate-500 mt-4 leading-relaxed">
+              This assessment is a passive, external scan of publicly observable behavior. It does not replace comprehensive penetration testing or guarantee that no other vulnerabilities exist.
             </p>
             {highRiskCount > 0 && (
               <div className="rounded-xl border border-rose-500/30 border-l-4 border-l-rose-500 bg-rose-500/10 p-3.5 flex items-center gap-3 my-4">
@@ -398,17 +401,37 @@ const SimpleReport = ({ reportData }) => {
         </div>
       )}
 
-      {/* 3.5 All Detected Findings */}
-      {issues.length > 0 && (
-        <div className="simple-findings-section space-y-6 mt-12">
-          <div className="flex flex-col">
-            <h3 className="font-black text-2xl text-slate-50 uppercase tracking-wider text-slate-200">All Detected Findings</h3>
-            <p className="text-slate-400 mt-1">A complete list of all identified security issues.</p>
-          </div>
+      {/* 3.5 Issues That Need Attention */}
+      <div className="simple-findings-section space-y-6 mt-12">
+        <div className="flex flex-col">
+          <h3 className="font-black text-2xl text-slate-50 uppercase tracking-wider text-slate-200">Issues That Need Attention</h3>
+          <p className="text-slate-400 mt-1">A complete list of all identified security issues.</p>
+        </div>
 
+        {issues.length > 0 ? (
           <div className="grid gap-6">
             {issues.map((issue, idx) => (
               <FindingCard key={`finding-${idx}`} issue={issue} idx={idx} />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl text-slate-400 text-center">
+            No scored issues were detected in this passive assessment.
+          </div>
+        )}
+      </div>
+
+      {/* 3.75 Additional Observations */}
+      {informational.length > 0 && (
+        <div className="simple-informational-section space-y-6 mt-12">
+          <div className="flex flex-col">
+            <h3 className="font-black text-2xl text-slate-50 uppercase tracking-wider text-slate-200">Additional Observations</h3>
+            <p className="text-slate-400 mt-1">These observations provide additional security context and do not reduce your security score.</p>
+          </div>
+
+          <div className="grid gap-6">
+            {informational.map((issue, idx) => (
+              <FindingCard key={`info-${idx}`} issue={issue} idx={idx} />
             ))}
           </div>
         </div>
