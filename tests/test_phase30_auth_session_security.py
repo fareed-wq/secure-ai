@@ -5,12 +5,14 @@ import json
 
 from api.scanner.modules.auth_session_security import AuthenticationSessionSecurityModule
 from api.scanner.modules.http_security import AdvancedCookieModule, SecurityHeadersModule
+from api.scanner.modules.headers import CSPQualityModule
 
 class TestPhase30AuthSessionSecurity(unittest.TestCase):
     def setUp(self):
         self.auth_mod = AuthenticationSessionSecurityModule()
         self.cookie_mod = AdvancedCookieModule()
         self.headers_mod = SecurityHeadersModule()
+        self.csp_mod = CSPQualityModule()
         self.session = requests.Session()
 
     def _mock_response(self, headers=None, text="", url="https://example.com"):
@@ -153,25 +155,27 @@ class TestPhase30AuthSessionSecurity(unittest.TestCase):
         names = [f['name'] for f in findings]
         self.assertNotIn("Potential Missing CSRF Protection", names)
 
-    @patch('api.scanner.modules.http_security.safe_request')
+    @patch('api.scanner.modules.headers.safe_request')
     def test_csp_wildcard(self, mock_safe_req):
         mock_safe_req.return_value = self._mock_response(
             headers={"Content-Security-Policy": "default-src 'self'; script-src *; object-src 'none'; base-uri 'self'"}
         )
-        findings = self.headers_mod.run("https://example.com", "example.com", self.session)
-        csp_findings = [f for f in findings if f['name'] == "Weak Content-Security-Policy (CSP)"]
+        findings = self.csp_mod.run("https://example.com", "example.com", self.session)
+        csp_findings = [f for f in findings if f['rule_id'] == "csp_quality_weak"]
         self.assertEqual(len(csp_findings), 1)
-        self.assertIn("wildcard '*'", csp_findings[0]['description'])
+        self.assertEqual(csp_findings[0]['severity'], "Medium")
+        self.assertIn("wildcard '*'", str(csp_findings[0]['evidence']))
 
-    @patch('api.scanner.modules.http_security.safe_request')
+    @patch('api.scanner.modules.headers.safe_request')
     def test_csp_unsafe_inline(self, mock_safe_req):
         mock_safe_req.return_value = self._mock_response(
-            headers={"Content-Security-Policy": "default-src 'self'; script-src 'unsafe-inline';"}
+            headers={"Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline';"}
         )
-        findings = self.headers_mod.run("https://example.com", "example.com", self.session)
-        csp_findings = [f for f in findings if f['name'] == "Weak Content-Security-Policy (CSP)"]
+        findings = self.csp_mod.run("https://example.com", "example.com", self.session)
+        csp_findings = [f for f in findings if f['rule_id'] == "csp_quality_weak"]
         self.assertTrue(len(csp_findings) > 0)
-        self.assertIn("unsafe-inline", csp_findings[0]['description'])
+        self.assertEqual(csp_findings[0]['severity'], "Medium")
+        self.assertIn("unsafe-inline", str(csp_findings[0]['evidence']))
 
     @patch('api.scanner.modules.http_security.safe_request')
     def test_hsts_disabled(self, mock_safe_req):
