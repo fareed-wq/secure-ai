@@ -776,7 +776,7 @@ class SecurityHeadersModule(ScannerModule):
                     , rule_id="headers_sri_crossorigin_missing"))
 
         # WAF & Rate-Limiting Detection
-        waf_headers = ['server', 'x-cdn', 'cf-ray', 'x-succinct', 'x-istart-waf', 'awsalb']
+        waf_headers = ['x-cdn', 'cf-ray', 'x-succinct', 'x-istart-waf', 'awsalb']
         rl_headers = ['x-ratelimit-limit', 'x-ratelimit-remaining', 'retry-after']
 
         waf_found = False
@@ -805,9 +805,9 @@ class SecurityHeadersModule(ScannerModule):
             , rule_id="headers_waf_missing"))
         elif waf_found:
             findings.append(self.make_finding(
-                "Web Application Firewall (WAF) Active",
-                "Passed",
-                "A Web Application Firewall (WAF) or protective network layer was detected on your website.",
+                "Potential WAF / Security Edge Detected",
+                "Informational",
+                "Response headers indicate that traffic may pass through a WAF, CDN, reverse proxy, load balancer, or security edge. Passive detection cannot confirm that WAF blocking rules are enabled or correctly configured.",
                 "\n".join(evidence_headers),
                 impact="Your website has an active layer of defense against automated hacker tools and floods of bad traffic.",
                 owasp="A05: Security Misconfiguration",
