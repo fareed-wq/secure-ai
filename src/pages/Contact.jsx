@@ -2,6 +2,7 @@ import BackButton from '../components/ui/BackButton';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle2, ArrowLeft, ChevronDown, AlertTriangle } from 'lucide-react';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 import { useSEO } from '../hooks/useSEO';
 
@@ -15,6 +16,19 @@ const Contact = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState(null);
+  const turnstileRef = React.useRef();
+  const [isNarrowViewport, setIsNarrowViewport] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 360 : false
+  );
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsNarrowViewport(window.innerWidth < 360);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Topic state maps to backend expectations while allowing fresh UI labels
   const [topic, setTopic] = useState('General Question');
@@ -73,7 +87,8 @@ const Contact = () => {
       topic: topic,
       email: formData.get('email') || '',
       message: formData.get('message') || '',
-      url: normalizedUrl
+      url: normalizedUrl,
+      turnstileToken: turnstileToken
     };
 
     try {
@@ -91,6 +106,8 @@ const Contact = () => {
       setSubmitError(err.message || 'An error occurred during submission.');
     } finally {
       setIsSubmitting(false);
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
     }
   };
 
@@ -217,9 +234,20 @@ const Contact = () => {
                 ></textarea>
               </div>
 
+              <div className="flex justify-center my-4">
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                  options={{ size: isNarrowViewport ? "compact" : "flexible" }}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                />
+              </div>
+
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !turnstileToken}
                 className="w-full relative group overflow-hidden flex items-center justify-center px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/25"
                 style={{ color: '#ffffff' }}
               >

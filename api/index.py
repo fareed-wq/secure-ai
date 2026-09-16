@@ -149,12 +149,51 @@ class ContactRequest(BaseModel):
     email: str = ""
     message: str = ""
     url: str = ""
+    turnstileToken: str = ""
+
+def verify_turnstile(token: str, ip: str = None) -> bool:
+    if not token:
+        return False
+    secret = os.environ.get("TURNSTILE_SECRET_KEY")
+    if not secret:
+        raise ValueError("Turnstile server configuration missing")
+
+    try:
+        import urllib.parse
+        http = urllib3.PoolManager()
+        data = {"secret": secret, "response": token}
+        if ip:
+            data["remoteip"] = ip
+
+        encoded_data = urllib.parse.urlencode(data).encode("utf-8")
+        resp = http.request(
+            "POST",
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+            body=encoded_data,
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=3.0
+        )
+        if resp.status != 200:
+            return False
+        result = json.loads(resp.data.decode("utf-8"))
+        return result.get("success") is True
+    except Exception as e:
+        logger.error(f"Turnstile verification error: {e}")
+        return False
 
 @app.post("/api/contact")
 async def handle_contact(req: ContactRequest, request: Request):
     ip = get_client_ip(request)
     if not check_rate_limit(ip):
         return JSONResponse(status_code=429, content={"error": "Rate limit exceeded. Please try again later."})
+
+    try:
+        is_valid_captcha = verify_turnstile(req.turnstileToken, ip)
+        if not is_valid_captcha:
+            return JSONResponse(status_code=400, content={"error": "Verification failed. Please complete the security check and try again."})
+    except ValueError as e:
+        logger.error(str(e))
+        return JSONResponse(status_code=503, content={"error": "Contact service unavailable."})
 
     resend_key = os.environ.get("RESEND_API_KEY")
     if not resend_key:
