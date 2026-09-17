@@ -591,4 +591,7 @@ class CSPQualityModule(ScannerModule):
             pass
         except Exception:
             pass
-        return findings
+
+        if 'resp' not in locals() or not resp or getattr(resp, "status_code", 500) >= 400:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)

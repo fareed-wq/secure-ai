@@ -569,3 +569,5 @@ def test_3b2_subdomain_checks_identities(monkeypatch):
     assert none_f is not None
     assert none_f.get("rule_id") == "network_subdomain_takeover_risk_none"
     assert "instance_key" not in none_f
+
+

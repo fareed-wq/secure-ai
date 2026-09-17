@@ -1,3 +1,4 @@
+from api.scanner.core import ModuleResult, AssessmentOutcome
 import ssl
 import socket
 import datetime
@@ -16,11 +17,13 @@ class EnhancedTLSModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        tls_assessed = False
         context = ssl.create_default_context()
 
         try:
             with safe_create_connection((hostname, 443), timeout=2.5) as sock:
                 with context.wrap_socket(sock, server_hostname=hostname) as ssock:
+                    tls_assessed = True
                     cert = ssock.getpeercert()
                     version = ssock.version()
 
@@ -186,6 +189,7 @@ class EnhancedTLSModule(ScannerModule):
                         ))
 
         except ssl.SSLCertVerificationError as e:
+            tls_assessed = True
             err_reason = e.verify_message if hasattr(e, 'verify_message') else str(e)
             err_code = e.verify_code if hasattr(e, 'verify_code') else "Unknown"
 
@@ -233,6 +237,7 @@ class EnhancedTLSModule(ScannerModule):
 
             with safe_create_connection((hostname, 443), timeout=2.5) as sock:
                 with legacy_context.wrap_socket(sock, server_hostname=hostname):
+                    tls_assessed = True
                     legacy_supported = True
         except Exception:
             pass
@@ -250,4 +255,6 @@ class EnhancedTLSModule(ScannerModule):
                 rule_id="tls_legacy_protocol_supported"
             ))
 
-        return findings
+        if not tls_assessed:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
