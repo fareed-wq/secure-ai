@@ -126,42 +126,21 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
 
     let sectionNum = 3;
 
-    // Additional Observations
+    // Additional Technical Observations
     if (informationalFindings.length > 0) {
       if (yPos > 240) { doc.addPage(); yPos = 20; }
 
       doc.setFontSize(14);
       doc.setTextColor(15, 23, 42);
-      doc.text(sanitizeText(`${sectionNum}. Additional Observations`), margin, yPos);
+      doc.text(sanitizeText(`${sectionNum}. Additional Technical Observations`), margin, yPos);
       yPos += 6;
 
-      doc.setFontSize(9);
-      doc.setTextColor(100, 116, 139);
-      doc.text(sanitizeText("These observations provide additional security context and do not reduce your security score."), margin, yPos, { maxWidth: 210 - 2 * margin });
-      yPos += 8;
+      doc.setFontSize(10);
+      doc.setTextColor(51, 65, 85);
+      const obsText = `${informationalFindings.length} additional technical ${informationalFindings.length === 1 ? 'observation was' : 'observations were'} collected. These do not affect your score. View the Technical report for detailed diagnostic information.`;
+      doc.text(doc.splitTextToSize(sanitizeText(obsText), 210 - 2 * margin), margin, yPos);
+      yPos += 14;
 
-      const infoData = informationalFindings.map(f => {
-        const trans = getTranslation(f);
-        const desc = trans.why ? `${trans.problem}\n\nWhy it matters: ${trans.why}` : trans.problem;
-        return [
-          sanitizeText(trans.name),
-          sanitizeText(desc)
-        ];
-      });
-
-      autoTable(doc, {
-        startY: yPos,
-        head: [['Observation', 'Description']],
-        body: infoData,
-        theme: 'grid',
-        headStyles: { fillColor: [59, 130, 246] }, // blue-500
-        styles: { fontSize: 9, cellPadding: 4 },
-        columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 120 } },
-        margin: { left: margin, right: margin },
-        pageBreak: 'auto',
-        rowPageBreak: 'avoid'
-      });
-      yPos = doc.lastAutoTable.finalY + 10;
       sectionNum++;
     }
 
