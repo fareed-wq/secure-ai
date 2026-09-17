@@ -421,21 +421,17 @@ const SimpleReport = ({ reportData }) => {
         )}
       </div>
 
-      {/* 3.75 Additional Observations */}
-      {informational.length > 0 && (
-        <div className="simple-informational-section space-y-6 mt-12">
-          <div className="flex flex-col">
-            <h3 className="font-black text-2xl text-slate-50 uppercase tracking-wider text-slate-200">Additional Observations</h3>
-            <p className="text-slate-400 mt-1">These observations provide additional security context and do not reduce your security score.</p>
+        {/* 3.75 Additional Observations */}
+        {informational.length > 0 && (
+          <div className="simple-informational-section bg-slate-800/30 border border-slate-700/50 p-6 rounded-2xl mt-12">
+            <div className="flex flex-col">
+              <h3 className="font-black text-lg text-slate-200 uppercase tracking-wider">Additional Technical Observations</h3>
+              <p className="text-slate-400 mt-2">
+                {informational.length} additional technical {informational.length === 1 ? 'observation was' : 'observations were'} collected. These do not affect your score. View the Technical report for detailed diagnostic information.
+              </p>
+            </div>
           </div>
-
-          <div className="grid gap-6">
-            {informational.map((issue, idx) => (
-              <FindingCard key={`info-${idx}`} issue={issue} idx={idx} />
-            ))}
-          </div>
-        </div>
-      )}
+        )}
 
       {/* 4. Security Strengths (Passed Checks) */}
       {passed.length > 0 && (
