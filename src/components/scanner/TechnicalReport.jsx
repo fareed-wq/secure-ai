@@ -222,7 +222,11 @@ const TechnicalReport = ({ reportData }) => {
         {activeView === 'vulnerabilities' && (
           <div className="w-full max-w-full overflow-hidden space-y-6">
             {domainGroups.map((group) => {
-              const groupFindings = sortedFindings.filter(f => f.domain === group.key);
+              const knownDomainKeys = new Set(domainGroups.map(g => g.key));
+              const groupFindings = sortedFindings.filter(f => {
+                const effectiveDomain = (f.domain && knownDomainKeys.has(f.domain)) ? f.domain : 'browser_defense';
+                return effectiveDomain === group.key;
+              });
               if (groupFindings.length === 0) return null;
 
               return (
@@ -249,10 +253,6 @@ const TechnicalReport = ({ reportData }) => {
                         const elements = [];
 
                         groupFindings.forEach((finding, i) => {
-                          if (group.key === 'browser_defense' && i === finalInsertIdx) {
-                            elements.push(<CSPAnalysisPanel key="csp-panel" findings={groupFindings} />);
-                          }
-
                           const idx = sortedFindings.indexOf(finding);
                           elements.push(
                             <tbody key={idx} className="finding-card divide-y divide-slate-800/50 border-b border-slate-700/40 last:border-b-0">
@@ -464,14 +464,11 @@ const TechnicalReport = ({ reportData }) => {
                       );
                     });
 
-                    if (group.key === 'browser_defense' && finalInsertIdx === groupFindings.length) {
-                      elements.push(<CSPAnalysisPanel key="csp-panel" findings={groupFindings} />);
-                    }
-
                     return elements;
                   })()}
                     </table>
                   </div>
+                  {group.key === 'browser_defense' && <CSPAnalysisPanel findings={groupFindings} />}
                 </div>
               );
             })}

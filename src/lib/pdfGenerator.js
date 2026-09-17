@@ -273,7 +273,10 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
       doc.text(sanitizeText("No passed checks to report."), margin, yPos);
       yPos += 10;
     } else {
-      const passedData = passedItems.map(f => [sanitizeText(f.name), sanitizeText(f.module || 'N/A')]);
+      const sortedPassedItems = [...passedItems].sort(
+        (a, b) => (a.name || '').localeCompare(b.name || '')
+      );
+      const passedData = sortedPassedItems.map(f => [sanitizeText(f.name), sanitizeText(f.module || 'N/A')]);
       autoTable(doc, {
         startY: yPos,
         head: [['Passed Check', 'Module']],
