@@ -242,6 +242,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
 
                             if clean_name == domain or clean_name.endswith(f".{domain}"):
                                 discovered_subdomains.add(clean_name)
+                success = True
         except Exception as e:
             logger.debug(f"PassiveSubdomainDiscoveryModule error: {e}")
             findings.append(self.make_finding(
@@ -314,5 +315,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
             }
             findings.append(finding)
 
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
         return findings
 

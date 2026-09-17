@@ -25,6 +25,9 @@ class DNSCAAModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        attempted = 0
+        completed = 0
+        failed = 0
         domain = hostname[4:] if hostname.startswith("www.") else hostname
 
         data = query_doh(domain, "CAA", session)
@@ -112,12 +115,18 @@ class DNSEmailSecurityModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        attempted = 0
+        completed = 0
+        failed = 0
         domain = hostname[4:] if hostname.startswith("www.") else hostname
 
         # 1. Query MX
         mx_observed = False
         null_mx = False
+        attempted += 1
         mx_data = query_doh(domain, "MX", session)
+        if mx_data is not None: completed += 1
+        else: failed += 1
         if mx_data is not None and mx_data.get("Status") == 0 and mx_data.get("Answer"):
             mx_observed = True
             for rec in mx_data["Answer"]:
@@ -127,7 +136,10 @@ class DNSEmailSecurityModule(ScannerModule):
                     break
 
         # 2. Query root TXT / SPF
+        attempted += 1
         spf_data = query_doh(domain, "TXT", session)
+        if spf_data is not None: completed += 1
+        else: failed += 1
         spf_records = []
         all_txt_records = []
         if spf_data is not None and spf_data.get("Status") == 0:
@@ -141,7 +153,10 @@ class DNSEmailSecurityModule(ScannerModule):
                         spf_records.append(data_str)
 
         # 3. Query DMARC TXT
+        attempted += 1
         dmarc_data = query_doh(f"_dmarc.{domain}", "TXT", session)
+        if dmarc_data is not None: completed += 1
+        else: failed += 1
         dmarc_records = []
         if dmarc_data is not None and dmarc_data.get("Status") == 0:
             if dmarc_data.get("Answer"):
@@ -543,7 +558,10 @@ class DNSEmailSecurityModule(ScannerModule):
 
         # 7. Evaluate MTA-STS
         if mx_observed and not null_mx:
+            attempted += 1
             mta_data = query_doh(f"_mta-sts.{domain}", "TXT", session)
+            if mta_data is not None: completed += 1
+            else: failed += 1
             mta_status = mta_data.get("Status") if mta_data else None
 
             if mta_status == 0:
@@ -575,4 +593,8 @@ class DNSEmailSecurityModule(ScannerModule):
                     rule_id="dns_email_mta_sts_missing"
                     ))
 
-        return findings
+        if completed == 0:
+            return findings
+        if failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)

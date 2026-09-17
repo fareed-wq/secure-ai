@@ -8,6 +8,7 @@ from urllib.parse import urljoin, urlparse
 from html.parser import HTMLParser
 
 from api.scanner.base import ScannerModule
+from api.scanner.core import ModuleResult, AssessmentOutcome
 from api.scanner.transport import safe_request
 from api.scanner.core import Config
 
@@ -121,9 +122,18 @@ class JavaScriptSecurityModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session) -> List[dict]:
         findings = []
+        attempted = 0
+        completed = 0
+        failed = 0
         try:
+            attempted += 1
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
-            if not resp or not resp.text:
+            if not resp:
+                failed += 1
+                return findings
+            else:
+                completed += 1
+            if not resp.text:
                 return findings
 
             content_type = resp.headers.get("Content-Type", "").lower()
@@ -166,8 +176,41 @@ class JavaScriptSecurityModule(ScannerModule):
             map_count = 0
 
             for js_url in script_urls:
-                js_resp = safe_request("GET", js_url, session=session, timeout=(1.5, 2.5))
-                if not js_resp or js_resp.status_code != 200:
+
+
+                attempted += 1
+
+
+                try:
+
+
+                    js_resp = safe_request("GET", js_url, session=session, timeout=(1.5, 2.5))
+
+
+                    if not js_resp:
+
+
+                        failed += 1
+
+
+                        continue
+
+
+                    completed += 1
+
+
+                    if js_resp.status_code != 200:
+
+
+                        continue
+
+
+                except Exception:
+
+
+                    failed += 1
+
+
                     continue
 
                 js_text = js_resp.text[:self.MAX_READ_BYTES] if js_resp.text else ""
@@ -503,9 +546,13 @@ class JavaScriptSecurityModule(ScannerModule):
                 , rule_id="js_versioned_api_surface"))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
-            # Safely skip on network failures to avoid false positives and noise
-            pass
+            failed += 1
         except Exception as e:
             logger.debug("JavaScriptSecurityModule failed: %s", e)
+            failed += 1
 
-        return findings
+        if completed == 0:
+            return findings
+        if failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)

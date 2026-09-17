@@ -1,8 +1,11 @@
 import re
+import logging
+logger = logging.getLogger(__name__)
 from typing import List
 import requests
 from urllib.parse import urlparse, urljoin
 from api.scanner.base import ScannerModule
+from api.scanner.core import ModuleResult, AssessmentOutcome
 from api.scanner.transport import safe_request
 
 class AuthenticationSessionSecurityModule(ScannerModule):
@@ -34,6 +37,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 3.5))
             if not resp:
@@ -386,6 +390,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         rule_id="auth_admin_surface_discovered"
                     ))
 
+            success = True
+
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             # Safely skip on network failures to avoid false positives and noise
             pass
@@ -403,4 +409,6 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                 rule_id="auth_session_check_inconclusive"
             ))
 
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
         return findings
