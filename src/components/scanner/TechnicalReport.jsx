@@ -13,12 +13,16 @@ const TechnicalReport = ({ reportData }) => {
 
   const sortedFindings = [...findings].sort((a, b) => {
     const weights = { Critical: 6, High: 5, Medium: 4, Low: 3, Informational: 2, Passed: 1 };
-    return (weights[b.severity] || 0) - (weights[a.severity] || 0);
+    const weightDiff = (weights[b.severity] || 0) - (weights[a.severity] || 0);
+    if (weightDiff !== 0) return weightDiff;
+    const nameA = a.name || '';
+    const nameB = b.name || '';
+    return nameA.localeCompare(nameB);
   });
 
   const domainGroups = [
     { key: 'transport_tls', label: 'Transport & TLS Security', icon: <Lock className="w-4 h-4 text-cyan-400" /> },
-    { key: 'browser_defense', label: 'Browser Defense Headers', icon: <Shield className="w-4 h-4 text-indigo-400" /> },
+    { key: 'browser_defense', label: 'Technical Security Findings', icon: <Shield className="w-4 h-4 text-indigo-400" /> },
     { key: 'api_surface', label: 'API & Application Surface', icon: <Terminal className="w-4 h-4 text-amber-400" /> },
     { key: 'email_domain', label: 'Email & Domain Trust', icon: <Globe className="w-4 h-4 text-emerald-400" /> },
     { key: 'network_services', label: 'Network & Service Exposure', icon: <Activity className="w-4 h-4 text-purple-400" /> },
@@ -233,7 +237,7 @@ const TechnicalReport = ({ reportData }) => {
                       <thead>
                         <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
                           <th className="px-6 py-4" style={{ width: '15%' }}>Severity</th>
-                          <th className="px-6 py-4" style={{ width: '45%' }}>Vulnerability / Check Name</th>
+                          <th className="px-6 py-4" style={{ width: '45%' }}>Security Check / Finding</th>
                           <th className="px-6 py-4" style={{ width: '25%' }}>OWASP Map</th>
                           <th className="px-6 py-4 text-right print:hidden" style={{ width: '15%' }}>Action</th>
                         </tr>
@@ -256,13 +260,13 @@ const TechnicalReport = ({ reportData }) => {
                                 onClick={() => setExpandedRow(expandedRow === idx ? null : idx)}
                                 className={`technical-finding-row ${finding.severity === 'Passed' ? 'technical-passed-row' : ''} cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
                               >
-                              <td className="px-6 py-4 whitespace-nowrap">
+                              <td className="px-6 py-4 whitespace-nowrap align-top">
                                 {getSeverityBadge(finding.severity)}
                             </td>
                             <td className="px-6 py-4 font-bold text-slate-200 align-top">
                               <div>{finding.name}</div>
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 align-top">
                               {finding.owasp && finding.owasp !== "N/A" ? (
                                 <span className="technical-owasp-badge bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2.5 py-1 rounded-md text-xs hover:bg-indigo-500/20 cursor-pointer">{finding.owasp}</span>
                               ) : (
