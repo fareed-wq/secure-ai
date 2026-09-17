@@ -108,32 +108,26 @@ export const CSPAnalysisPanel = ({ findings }) => {
   };
 
   return (
-    <tbody className="finding-card divide-y divide-slate-800/50 border-b border-slate-700/40 last:border-b-0">
-      <tr
+    <div className="bg-slate-900 border-t border-slate-800 overflow-hidden">
+      <div
         onClick={() => setCspPanelOpen(!cspPanelOpen)}
-        className={`technical-finding-row cursor-pointer hover:bg-slate-800/20 transition-colors ${cspPanelOpen ? 'bg-slate-800/30' : ''}`}
+        className={`flex items-start justify-between px-6 py-4 cursor-pointer hover:bg-slate-800/20 transition-colors ${cspPanelOpen ? 'bg-slate-800/30' : ''}`}
       >
-        <td className="px-6 py-4 whitespace-nowrap">
-          <span className="uppercase tracking-widest bg-blue-600 text-white font-bold px-2.5 py-1 rounded text-xs shadow-sm">INFORMATIONAL</span>
-        </td>
-        <td className="px-6 py-4 font-bold text-slate-200 align-top">
-          <div>Content Security Policy Analysis</div>
-        </td>
-        <td className="px-6 py-4">
+        <div>
+          <div className="font-bold text-slate-200 text-base mb-1">Content Security Policy Analysis</div>
+          <div className="text-sm text-slate-500">Analysis summary of observed Content-Security-Policy directives</div>
+        </div>
+        <div className="flex items-center gap-4 mt-1 print:hidden">
           <span className="technical-owasp-badge bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2.5 py-1 rounded-md text-xs">A05: Security Misconfiguration</span>
-        </td>
-        <td className="px-6 py-4 text-right print:hidden align-top">
           <button aria-label={cspPanelOpen ? "Collapse Details" : "Expand Details"} className="text-slate-500 hover:text-slate-50 transition-colors">
-            {cspPanelOpen ? <ChevronUp className="w-5 h-5 inline" /> : <ChevronDown className="w-5 h-5 inline" />}
+            {cspPanelOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
-        </td>
-      </tr>
+        </div>
+      </div>
 
       {cspPanelOpen && (
-        <tr className="technical-finding-expanded print:hidden">
-          <td colSpan={5} className="p-0 border-b-2 border-indigo-500/50">
-            <div className="bg-slate-950 overflow-hidden transition-all duration-300">
-              <div className="p-8">
+        <div className="bg-slate-950 border-t-2 border-indigo-500/50 p-8 print:hidden">
+          <div className="overflow-hidden transition-all duration-300">
                 {cspMissing ? (
                   <div className="text-sm text-slate-400">Content-Security-Policy was not detected for this response.</div>
                 ) : (
@@ -214,11 +208,9 @@ export const CSPAnalysisPanel = ({ findings }) => {
                     </div>
                   </>
                 )}
-              </div>
-            </div>
-          </td>
-        </tr>
+          </div>
+        </div>
       )}
-    </tbody>
+    </div>
   );
 };
