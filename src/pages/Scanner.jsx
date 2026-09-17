@@ -220,7 +220,7 @@ function Scanner() {
                   IS YOUR WEBSITE SAFE?
                 </h1>
                 <p className="text-2xl font-semibold text-slate-300 max-w-2xl mx-auto tracking-wide">
-                  FIND OUT IN ONE CLICK.
+                  Find out in one click.
                 </p>
               </div>
 
