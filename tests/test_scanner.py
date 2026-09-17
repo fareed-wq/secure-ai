@@ -534,7 +534,7 @@ def test_3b2_subdomain_checks_identities(monkeypatch):
         return m
     monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_takeover_vuln)
 
-    findings_take = mod_take.run("https://example.com", "example.com", session)
+    findings_take = _findings(mod_take.run("https://example.com", "example.com", session))
     vuln = next((f for f in findings_take if f["name"] == "Subdomain Takeover Vulnerability (Dangling CNAME)"), None)
     assert vuln is not None
     assert vuln.get("rule_id") == "network_subdomain_takeover_vulnerability"
@@ -551,7 +551,7 @@ def test_3b2_subdomain_checks_identities(monkeypatch):
         return m
     monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_takeover_alias)
 
-    findings_take2 = mod_take.run("https://example.com", "example.com", session)
+    findings_take2 = _findings(mod_take.run("https://example.com", "example.com", session))
     alias = next((f for f in findings_take2 if f["name"] == "CNAME Alias Configured"), None)
     assert alias is not None
     assert alias.get("rule_id") == "network_cname_alias_configured"
@@ -564,7 +564,7 @@ def test_3b2_subdomain_checks_identities(monkeypatch):
         m.json.return_value = {"Answer": []}
         return m
     monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_takeover_none)
-    findings_take3 = mod_take.run("https://example.com", "example.com", session)
+    findings_take3 = _findings(mod_take.run("https://example.com", "example.com", session))
     none_f = next((f for f in findings_take3 if f["name"] == "No Subdomain Takeover Risk Detected"), None)
     assert none_f is not None
     assert none_f.get("rule_id") == "network_subdomain_takeover_risk_none"

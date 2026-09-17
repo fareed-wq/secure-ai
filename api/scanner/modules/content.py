@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 from html.parser import HTMLParser
 
 from api.scanner.base import ScannerModule
+from api.scanner.core import ModuleResult, AssessmentOutcome
 from api.scanner.transport import safe_request
 from api.scanner.core import Config
 
@@ -43,6 +44,7 @@ class MixedContentModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
+        success = False
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             if not resp or not resp.text or not url.startswith("https"):
@@ -94,6 +96,7 @@ class MixedContentModule(ScannerModule):
                     category="encryption_tls",
                     rule_id="mixed_content_none"
                 ))
+            success = True
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             # Safely skip on network failures to avoid false positives and noise
@@ -101,6 +104,8 @@ class MixedContentModule(ScannerModule):
         except Exception as e:
             logger.error(f"MixedContentModule error: {e}")
 
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
         return findings
 
 

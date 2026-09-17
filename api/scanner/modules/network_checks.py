@@ -20,6 +20,7 @@ class SubdomainProbingModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
         domain = hostname[4:] if hostname.startswith("www.") else hostname
 
         for sub in Config.COMMON_SUBDOMAINS:
@@ -60,6 +61,7 @@ class SubdomainTakeoverModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
+        success = False
         domain = hostname[4:] if hostname.startswith("www.") else hostname
 
         try:
@@ -82,7 +84,8 @@ class SubdomainTakeoverModule(ScannerModule):
                     category="domain_email",
                     rule_id="network_subdomain_takeover_risk_none"
                 ))
-                return findings
+                success = True
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
             cname_target = answers[0].get("data", "").rstrip(".").lower()
 
@@ -135,12 +138,15 @@ class SubdomainTakeoverModule(ScannerModule):
                     rule_id="network_subdomain_takeover_risk_none"
                 ))
 
+            success = True
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             # Safely skip on network failures to avoid false positives and noise
             pass
         except Exception as e:
             logger.error(f"SubdomainTakeoverModule error: {e}")
 
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
         return findings
 
 
@@ -150,9 +156,12 @@ class GraphQLIntrospectionModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
-            if resp and resp.status_code == 200:
+            if not resp:
+                return findings
+            if resp.status_code == 200:
                 content_type = resp.headers.get("Content-Type", "").lower()
                 if "application/json" in content_type:
                     text = resp.text
@@ -166,8 +175,11 @@ class GraphQLIntrospectionModule(ScannerModule):
                             owasp="Not Mapped",
                             category="information_exposure"
                         , rule_id="api_graphql_introspection_enabled"))
+            success = True
         except Exception:
             pass
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
         return findings
 
 class VerboseStackTraceModule(ScannerModule):
@@ -176,6 +188,7 @@ class VerboseStackTraceModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5), max_attempts=1)
             if resp and resp.text:
@@ -206,6 +219,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
         domain = hostname[4:] if hostname.startswith("www.") else hostname
         discovered_subdomains = set()
 

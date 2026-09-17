@@ -6,6 +6,7 @@ import json
 import requests
 
 from api.scanner.base import ScannerModule
+from api.scanner.core import ModuleResult, AssessmentOutcome
 from api.scanner.transport import safe_request, get_all_headers
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,7 @@ class ApiWebSecurityModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
         try:
             # 1. Base URL fetch
             resp = safe_request("GET", url, session=session, timeout=(1.8, 2.5), allow_redirects=True)
@@ -345,9 +347,10 @@ class ApiWebSecurityModule(ScannerModule):
                     , rule_id="api_documentation_reference_discovered"))
 
         except requests.exceptions.RequestException:
-            pass
+            return findings
         except Exception as e:
             logger.debug(f"ApiWebSecurityModule base fetch failed: {e}")
+            return findings
 
         # 8. OIDC Configuration
         try:
@@ -372,7 +375,10 @@ class ApiWebSecurityModule(ScannerModule):
                                 , rule_id="api_oidc_configuration_discovered"))
                         except Exception:
                             pass
+            success = True
         except Exception as e:
             logger.debug(f"ApiWebSecurityModule OIDC parse failed: {e}")
 
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
         return findings

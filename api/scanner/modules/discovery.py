@@ -783,11 +783,16 @@ class OpenApiModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
 
         def check_path(target):
+            nonlocal success
             local_findings = []
             try:
                 resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
+                if resp is None:
+                    return local_findings
+                success = True
                 if resp and resp.status_code == 200 and "application/json" in resp.headers.get("Content-Type", "").lower():
                     try:
                         data = resp.json()
@@ -904,6 +909,8 @@ class OpenApiModule(ScannerModule):
         result_list = check_path(url)
         if result_list:
             findings.extend(result_list)
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
         return findings
 
 
@@ -913,10 +920,15 @@ class GraphqlIdeModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
 
         def check_path(target):
+            nonlocal success
             try:
                 resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
+                if resp is None:
+                    return None
+                success = True
                 if resp and resp.status_code == 200 and "text/html" in resp.headers.get("Content-Type", "").lower():
                     lower_text = resp.text.lower()
                     if "graphiql" in lower_text or "graphql playground" in lower_text:
@@ -937,6 +949,8 @@ class GraphqlIdeModule(ScannerModule):
         result = check_path(url)
         if result:
             findings.append(result)
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
         return findings
 
 
@@ -946,10 +960,15 @@ class ActuatorModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
 
         def check_path(target):
+            nonlocal success
             try:
                 resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
+                if resp is None:
+                    return None
+                success = True
                 if resp and resp.status_code == 200 and "json" in resp.headers.get("Content-Type", "").lower():
                     try:
                         data = resp.json()
@@ -1003,7 +1022,10 @@ class ActuatorModule(ScannerModule):
             if highest_severity_finding is None or severity_order.get(finding["severity"], 0) > severity_order.get(highest_severity_finding["severity"], 0):
                 highest_severity_finding = finding
 
-        return [highest_severity_finding] if highest_severity_finding else []
+        final_findings = [highest_severity_finding] if highest_severity_finding else []
+        if success:
+            return ModuleResult(findings=final_findings, assessment_outcome=AssessmentOutcome.COMPLETED)
+        return final_findings
 
 
 class XmlRpcModule(ScannerModule):
