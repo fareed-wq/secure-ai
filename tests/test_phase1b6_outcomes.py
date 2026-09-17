@@ -51,7 +51,7 @@ class TestPhase1B6Outcomes(unittest.TestCase):
         mock_doh.return_value = None
         module = DNSEmailSecurityModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.FAILED)
 
     # --- AuthenticationSessionSecurityModule ---
     @patch('api.scanner.modules.auth_session_security.safe_request')
@@ -67,7 +67,7 @@ class TestPhase1B6Outcomes(unittest.TestCase):
         mock_req.return_value = None
         module = AuthenticationSessionSecurityModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.FAILED)
 
     @patch.object(AuthenticationSessionSecurityModule, 'extract_forms')
     @patch('api.scanner.modules.auth_session_security.safe_request')
@@ -76,7 +76,7 @@ class TestPhase1B6Outcomes(unittest.TestCase):
         mock_extract.side_effect = Exception("Internal parse error")
         module = AuthenticationSessionSecurityModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.FAILED)
 
     # --- JavaScriptSecurityModule ---
     @patch('api.scanner.modules.javascript_security.safe_request')
@@ -105,7 +105,7 @@ class TestPhase1B6Outcomes(unittest.TestCase):
         mock_req.return_value = None
         module = JavaScriptSecurityModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.FAILED)
 
 
 if __name__ == '__main__':
@@ -136,7 +136,7 @@ if __name__ == '__main__':
         from api.scanner.modules.network_checks import PassiveSubdomainDiscoveryModule
         module = PassiveSubdomainDiscoveryModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.FAILED)
 
     @patch('api.scanner.modules.network_checks.safe_request')
     def test_passive_subdomain_failed_http_error(self, mock_req):
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         from api.scanner.modules.network_checks import PassiveSubdomainDiscoveryModule
         module = PassiveSubdomainDiscoveryModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.FAILED)
 
     @patch('api.scanner.modules.network_checks.safe_request')
     def test_passive_subdomain_parse_failure(self, mock_req):
@@ -154,4 +154,4 @@ if __name__ == '__main__':
         from api.scanner.modules.network_checks import PassiveSubdomainDiscoveryModule
         module = PassiveSubdomainDiscoveryModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.FAILED)

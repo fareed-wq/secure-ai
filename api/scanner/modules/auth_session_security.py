@@ -41,7 +41,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 3.5))
             if not resp:
-                return findings
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 
             headers = resp.headers if resp else {}
 
@@ -411,4 +411,4 @@ class AuthenticationSessionSecurityModule(ScannerModule):
 
         if success:
             return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
-        return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)

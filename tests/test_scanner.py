@@ -510,7 +510,8 @@ def test_3b2_subdomain_checks_identities(monkeypatch):
     monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_safe_req)
     monkeypatch.setattr("api.scanner.modules.network_checks.Config.COMMON_SUBDOMAINS", ["admin", "api", "dev"])
 
-    findings_probe = mod_probe.run("https://example.com", "example.com", session)
+    result_probe = mod_probe.run("https://example.com", "example.com", session)
+    findings_probe = getattr(result_probe, "findings", result_probe)
     admin = next((f for f in findings_probe if f["name"] == "Active Subdomain Found: admin.example.com"), None)
     assert admin is not None
     assert admin.get("rule_id") == "network_subdomain_probed"

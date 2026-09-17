@@ -127,6 +127,8 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
                             exec_info["assessment_outcome"] = result.assessment_outcome
                         if hasattr(result, "assessment_reason") and result.assessment_reason is not None:
                             exec_info["reason"] = result.assessment_reason
+                        if hasattr(result, "assessment_progress") and result.assessment_progress is not None:
+                            exec_info["assessment_progress"] = result.assessment_progress
                         module_execution[mod.module_name] = exec_info
                     else:
                         all_findings.extend(result)

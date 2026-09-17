@@ -55,21 +55,21 @@ class TestPhase1B5Outcomes(unittest.TestCase):
         mock_request.return_value = None
         module = MixedContentModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.FAILED)
 
     @patch('api.scanner.modules.content.safe_request')
     def test_mixed_content_http_not_completed(self, mock_request):
         mock_request.return_value = self.mock_response(status_code=200, text="<html></html>")
         module = MixedContentModule()
         result = module.run("http://example.com", "example.com", self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.NOT_APPLICABLE)
 
     @patch('api.scanner.modules.content.safe_request')
     def test_mixed_content_api_not_completed(self, mock_request):
         mock_request.return_value = self.mock_response(status_code=200, text="{}", headers={"Content-Type": "application/json"})
         module = MixedContentModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.NOT_APPLICABLE)
 
     # --- GraphQLIntrospectionModule ---
     @patch('api.scanner.modules.network_checks.safe_request')
@@ -101,14 +101,14 @@ class TestPhase1B5Outcomes(unittest.TestCase):
         mock_request.return_value = None
         module = SubdomainTakeoverModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.FAILED)
 
     @patch('api.scanner.modules.network_checks.safe_request')
     def test_subdomain_takeover_500_not_completed(self, mock_request):
         mock_request.return_value = self.mock_response(status_code=500)
         module = SubdomainTakeoverModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, AssessmentOutcome.FAILED)
 
     # --- ActuatorModule ---
     @patch('api.scanner.modules.discovery.safe_request')

@@ -20,16 +20,22 @@ class SubdomainProbingModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
-        success = False
         domain = hostname[4:] if hostname.startswith("www.") else hostname
+
+        attempted = 0
+        completed = 0
+        failed = 0
 
         for sub in Config.COMMON_SUBDOMAINS:
             sub_url = f"https://{sub}.{domain}"
+            attempted += 1
             try:
                 resp = safe_request("HEAD", sub_url, session=session, timeout=(1.5, 2.5))
-                if resp:
-                    findings.append(self.make_finding(
-                        f"Active Subdomain Found: {sub}.{domain}",
+                if resp is not None:
+                    completed += 1
+                    if resp:
+                        findings.append(self.make_finding(
+                            f"Active Subdomain Found: {sub}.{domain}",
                         "Informational",
                         "We discovered an active subdomain related to your website.",
                         sub_url,
@@ -39,9 +45,17 @@ class SubdomainProbingModule(ScannerModule):
                         rule_id="network_subdomain_probed",
                         instance_key=f"{sub}.{domain}"
                     ))
+                else:
+                    failed += 1
             except Exception:
-                pass
-        return findings
+                failed += 1
+
+        progress = {"attempted": attempted, "completed": completed, "failed": failed}
+        if completed == attempted and attempted > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED, assessment_progress=progress)
+        if completed > 0 and failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL, assessment_progress=progress)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
 
 
 class SubdomainTakeoverModule(ScannerModule):
@@ -69,7 +83,7 @@ class SubdomainTakeoverModule(ScannerModule):
             resp = safe_request("GET", cname_url, session=session, timeout=(1.5, 2.5))
 
             if not resp or resp.status_code != 200:
-                return findings
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 
             data = resp.json()
             answers = data.get("Answer", [])
@@ -147,7 +161,7 @@ class SubdomainTakeoverModule(ScannerModule):
 
         if success:
             return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
-        return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 
 
 class GraphQLIntrospectionModule(ScannerModule):
@@ -317,5 +331,5 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
 
         if success:
             return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
-        return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 

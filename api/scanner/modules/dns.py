@@ -593,8 +593,11 @@ class DNSEmailSecurityModule(ScannerModule):
                     rule_id="dns_email_mta_sts_missing"
                     ))
 
+        progress = {"attempted": attempted, "completed": completed, "failed": failed}
+        if completed == 0 and failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
         if completed == 0:
             return findings
         if failed > 0:
-            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL)
-        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL, assessment_progress=progress)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED, assessment_progress=progress)

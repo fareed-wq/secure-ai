@@ -130,15 +130,18 @@ class JavaScriptSecurityModule(ScannerModule):
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             if not resp:
                 failed += 1
-                return findings
+                progress = {"attempted": attempted, "completed": completed, "failed": failed}
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
             else:
                 completed += 1
             if not resp.text:
-                return findings
+                progress = {"attempted": attempted, "completed": completed, "failed": failed}
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
 
             content_type = resp.headers.get("Content-Type", "").lower()
             if "application/json" in content_type:
-                return findings
+                progress = {"attempted": attempted, "completed": completed, "failed": failed}
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.NOT_APPLICABLE, assessment_progress=progress)
 
             parser = JSScriptParser()
             parser.feed(resp.text[:self.MAX_READ_BYTES])
@@ -551,8 +554,11 @@ class JavaScriptSecurityModule(ScannerModule):
             logger.debug("JavaScriptSecurityModule failed: %s", e)
             failed += 1
 
+        progress = {"attempted": attempted, "completed": completed, "failed": failed}
+        if completed == 0 and failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
         if completed == 0:
             return findings
         if failed > 0:
-            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL)
-        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL, assessment_progress=progress)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED, assessment_progress=progress)

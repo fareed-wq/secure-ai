@@ -52,12 +52,14 @@ class AssessmentOutcome:
     PARTIAL = "PARTIAL"
     NOT_APPLICABLE = "NOT_APPLICABLE"
     BLOCKED = "BLOCKED"
+    FAILED = "FAILED"
 
 class ModuleResult:
-    def __init__(self, findings: list, assessment_outcome: str = None, assessment_reason: str = None):
+    def __init__(self, findings: list, assessment_outcome: str = None, assessment_reason: str = None, assessment_progress: dict = None):
         self.findings = findings
         self.assessment_outcome = assessment_outcome
         self.assessment_reason = assessment_reason
+        self.assessment_progress = assessment_progress
 
 # --- RATE LIMITING STATE ---
 IN_MEMORY_LIMITS = defaultdict(list)

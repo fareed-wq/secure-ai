@@ -47,12 +47,14 @@ class MixedContentModule(ScannerModule):
         success = False
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
-            if not resp or not resp.text or not url.startswith("https"):
-                return findings
+            if not url.startswith("https"):
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.NOT_APPLICABLE)
+            if not resp or not resp.text:
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 
             ctype = resp.headers.get("Content-Type", "")
             if "application/json" in ctype or hostname.startswith("api."):
-                return findings
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.NOT_APPLICABLE)
 
             parser = SimpleHTMLResourceParser()
             parser.feed(resp.text[:2000000])  # limit to 2MB
@@ -106,7 +108,7 @@ class MixedContentModule(ScannerModule):
 
         if success:
             return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
-        return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 
 
 class ScriptTagParser(HTMLParser):
