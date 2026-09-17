@@ -3,7 +3,7 @@ import requests
 from api.scanner.core import Config
 from api.scanner.data.registry import DOMAIN_MAP
 
-def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: Optional[requests.Response], scan_incomplete: bool = False, completed_modules: int = -1) -> dict:
+def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: Optional[requests.Response], scan_incomplete: bool = False, completed_modules: int = -1, module_execution: dict = None) -> dict:
     # Auto-assign security domains to findings based on their source module
     for f in all_findings:
         if not f.get("domain"):
@@ -69,7 +69,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
 
     # Deduplication tracking for scoring
     scored_identities = set()
-    
+
     # Sort findings by severity weight descending so we always process highest severity duplicates first
     sorted_findings = sorted(all_findings, key=lambda f: abs(Config.SEVERITY_WEIGHTS.get(f.get("severity", "Informational"), 0)), reverse=True)
 
@@ -188,7 +188,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
         body = initial_resp.text.lower() if hasattr(initial_resp, 'text') and initial_resp.text else ""
         headers = initial_resp.headers
         cookies = str(initial_resp.cookies).lower() if hasattr(initial_resp, 'cookies') else ""
-        
+
         techs = []
         x_powered = headers.get("X-Powered-By", "").lower()
         if "next" in x_powered or "_next/static" in body:
@@ -201,7 +201,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
             techs.append("Laravel / PHP")
         elif "nuxt" in body or "_nuxt" in body:
             techs.append("Nuxt.js Vue App")
-        
+
         subtechs = []
         if "tailwindcss" in body or "tailwind" in body:
             subtechs.append("Tailwind CSS")
@@ -209,7 +209,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
             subtechs.append("Express.js Node")
         if "php" in x_powered:
             subtechs.append("PHP Backend")
-            
+
         if techs:
             frontend_stack = techs[0]
             if subtechs:
@@ -225,12 +225,12 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     api_surface = "Unknown" if scan_incomplete else "No Public Spec Exposed"
     api_subtext = "Not Assessed" if scan_incomplete else "GraphQL / OpenAPI Clean"
     api_pill = "NO DATA" if scan_incomplete else "CLEAN SURFACE"
-    
+
     for f in all_findings:
         fname = f.get("name", "")
         fsev = f.get("severity", "")
         fevidence = str(f.get("evidence", ""))
-        
+
         if fsev == "Passed":
             continue
 
@@ -240,7 +240,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
                 api_pill = "API DETECTED"
                 api_subtext = "GraphQL Playground (/graphql)" if "IDE" in fname else "GraphQL Introspection"
             # Do not break in case a confirmed spec is found later
-        
+
         if fname == "Public OpenAPI / Swagger Specification Exposed":
             api_surface = "Public API Spec Exposed"
             api_pill = "EXPOSED API"
@@ -287,7 +287,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     # Therefore, we do not have enough data to issue a 100/100 score.
     final_score = score if completed_modules != 0 else None
 
-    return {
+    result = {
         "url": url,
         "status": "INCOMPLETE" if scan_incomplete else "COMPLETED",
         "score": final_score,
@@ -319,3 +319,8 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
         "executive_summary": f"Scan did not complete fully. Showing partial findings with a provisional score of {final_score}/100." if scan_incomplete and final_score is not None else "Scan aborted or target unreachable. Insufficient data for a score." if scan_incomplete else f"Scan completed. Detected {severity_counts['High'] + severity_counts['Critical']} high-priority issues resulting in a score of {score}/100.",
         "disclaimer": "Passive scan only. Modular engine execution."
     }
+
+    if module_execution is not None:
+        result["module_execution"] = module_execution
+
+    return result
