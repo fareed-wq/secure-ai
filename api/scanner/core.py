@@ -41,6 +41,12 @@ class VerificationState:
     INFERRED = "Inferred"
     NOT_VERIFIED = "Not Verified"
 
+class ModuleExecutionState:
+    RETURNED = "RETURNED"
+    FAILED = "FAILED"
+    TIMED_OUT = "TIMED_OUT"
+    NOT_COMPLETED = "NOT_COMPLETED"
+
 # --- RATE LIMITING STATE ---
 IN_MEMORY_LIMITS = defaultdict(list)
 

@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 
-from api.scanner.core import Config
+from api.scanner.core import Config, ModuleExecutionState
 from api.scanner.transport import is_public_hostname, get_http_session, safe_request
 from api.scanner.validation import canonicalize_url
 from api.scanner.metadata import check_liveness, _get_whois_data, get_metadata
@@ -39,7 +39,7 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
     validation_error = validate_scan_target(url, scan_mode)
     if validation_error:
         return validation_error
-        
+
     url = canonicalize_url(url)
     hostname = urlparse(url).hostname
 
@@ -98,13 +98,21 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
         SCAN_BUDGET_SECONDS = 45  # Global time budget for all modules
 
         pool = ThreadPoolExecutor(max_workers=Config.THREAD_POOL_SIZE + 1)
-        
+
         # Run metadata gathering concurrently with scanner modules
         metadata_future = pool.submit(get_metadata, hostname, initial_resp, url)
-        
+
         futures = {pool.submit(mod.run, url, hostname, session): mod for mod in active_modules}
         scan_incomplete = False
         completed_modules = 0
+
+        module_execution = {
+            mod.module_name: {
+                "status": ModuleExecutionState.NOT_COMPLETED,
+                "reason": "global_budget_exhausted"
+            } for mod in active_modules
+        }
+
         try:
             for future in as_completed(futures, timeout=SCAN_BUDGET_SECONDS):
                 mod = futures[future]
@@ -114,16 +122,39 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
                     mod_findings = future.result(timeout=min(getattr(mod, 'timeout', 8), remaining))
                     all_findings.extend(mod_findings)
                     completed_modules += 1
+                    module_execution[mod.module_name] = {"status": ModuleExecutionState.RETURNED}
+                except (TimeoutError, requests.exceptions.Timeout) as e:
+                    logger.error(f"Module {mod.module_name} timed out ({elapsed:.1f}s elapsed)")
+                    module_execution[mod.module_name] = {
+                        "status": ModuleExecutionState.TIMED_OUT,
+                        "reason": "timeout_exception"
+                    }
+                    safe_error_msg = "Module execution timed out."
+                    all_findings.append({
+                        "name": f"Module Timeout / Error: {mod.module_name}",
+                        "severity": "Informational",
+                        "category": "information_exposure",
+                        "description": f"The {mod.module_name} module was skipped due to timeout or an unexpected error.",
+                        "evidence": {"raw": safe_error_msg},
+                        "confidence": "High",
+                        "remediation": "N/A",
+                        "remediation_snippets": {},
+                        "owasp": "N/A",
+                        "compliance": {"pci_dss": "N/A", "nist": "N/A", "iso27001": "N/A"}
+                    })
                 except Exception as e:
                     logger.error(f"Module {mod.module_name} failed ({elapsed:.1f}s elapsed): {e}")
-                    
+                    module_execution[mod.module_name] = {
+                        "status": ModuleExecutionState.FAILED,
+                        "reason": "module_exception"
+                    }
                     # Mask internal paths from being leaked in finding evidence
                     safe_error_msg = str(e)[:180]
                     # Mask Unix paths
                     safe_error_msg = re.sub(r'(?:/[A-Za-z0-9_.-]+){2,}/[A-Za-z0-9_.-]+\.py', '<path_masked>', safe_error_msg)
                     # Mask Windows paths
                     safe_error_msg = re.sub(r'[a-zA-Z]:\\[^\n]+\.py', '<path_masked>', safe_error_msg)
-                    
+
                     all_findings.append({
                         "name": f"Module Timeout / Error: {mod.module_name}",
                         "severity": "Informational",
@@ -173,11 +204,11 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
 
         if discovered_hostnames:
             classifications = {"API": 0, "Administrative": 0, "Development/Staging": 0, "Mail": 0, "VPN": 0, "Internal": 0, "Other": 0}
-            
+
             for h in discovered_hostnames:
                 parts = h.split('.')
                 prefix = parts[0]
-                
+
                 if prefix.startswith('api') or 'api' in parts:
                     classifications["API"] += 1
                 elif prefix in ['admin', 'portal', 'manage']:
@@ -192,12 +223,12 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
                     classifications["Internal"] += 1
                 else:
                     classifications["Other"] += 1
-                    
+
             evidence_lines = []
             for role, count in classifications.items():
                 if count > 0:
                     evidence_lines.append(f"{role}: {count}")
-                    
+
             if evidence_lines:
                 all_findings.append({
                     "name": "Infrastructure Hostnames Classified",
@@ -217,23 +248,23 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
         priv_roles = set()
         auth_schemes = set()
         priv_sources = set()
-        
+
         for f in all_findings:
             fname = f.get("name", "")
             ev_raw = str(f.get("evidence", ""))
-            
+
             if fname in ["Privileged API Surface Discovered in Client-Side Code", "Privileged API Routes Publicly Documented", "Privileged / Administrative Surface Discovered"]:
                 priv_sources.add(fname)
                 for line in ev_raw.split("\\n"):
                     if line.strip():
                         priv_routes.add(line.strip())
-                        
+
             elif fname == "Authorization Roles / Permissions Disclosed":
                 priv_sources.add("JavaScript")
                 for line in ev_raw.split("\\n"):
                     if line.strip():
                         priv_roles.add(line.strip())
-                        
+
             elif fname == "API Authorization Scheme Disclosed":
                 priv_sources.add("OpenAPI")
                 if ":" in ev_raw:
@@ -265,7 +296,7 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
                 }
                 sources_clean = set(s_map.get(s, s) for s in priv_sources)
                 evidence_lines.append(f"Sources: {', '.join(sources_clean)}")
-                
+
             all_findings.append({
                 "name": "Privileged Application Surface Correlated",
                 "severity": "Informational",
@@ -283,10 +314,10 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
     # (Local import of Config removed to fix UnboundLocalError)
     deduped_findings = []
     seen_keys = set()
-    
+
     # Sort findings by severity weight descending so highest severity is kept when deduplicating
     sorted_all = sorted(all_findings, key=lambda f: abs(Config.SEVERITY_WEIGHTS.get(f.get("severity", "Informational"), 0)), reverse=True)
-    
+
     for f in sorted_all:
         name = f.get("name", "")
         cat = f.get("category", "")
@@ -296,12 +327,12 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
             ev_raw = ev.get("raw", "")
         elif isinstance(ev, str):
             ev_raw = ev
-            
+
         # Create a unique key based on name, category, and first 100 chars of evidence (to catch same resource/issue)
         ev_hash = str(ev_raw)[:100].strip()
-        
+
         composite_key = f"{name}::{cat}::{ev_hash}"
-        
+
         if composite_key not in seen_keys:
             seen_keys.add(composite_key)
             deduped_findings.append(f)
@@ -312,4 +343,4 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
         logger.error(f"Failed to resolve metadata future: {e}")
         metadata = {}
 
-    return calculate_score(url, deduped_findings, metadata, initial_resp, scan_incomplete=scan_incomplete, completed_modules=completed_modules)
+    return calculate_score(url, deduped_findings, metadata, initial_resp, scan_incomplete=scan_incomplete, completed_modules=completed_modules, module_execution=module_execution)
