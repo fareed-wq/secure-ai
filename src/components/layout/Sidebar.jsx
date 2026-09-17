@@ -144,6 +144,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
             }}
             title={isCollapsed ? "New Scan" : undefined}
             aria-label="New Scan"
+            aria-current={isScannerActive ? 'page' : undefined}
             className={`flex items-center gap-2 p-2 mb-2 text-sm font-medium rounded-lg shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
               isScannerActive
                 ? 'text-white bg-indigo-600/90 border border-indigo-500/50 hover:bg-indigo-500'
@@ -167,6 +168,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                 } ${isCollapsed ? 'justify-center' : ''}`}
                 title={isCollapsed ? item.label : undefined}
                 aria-label={item.label}
+                aria-current={isActive ? 'page' : undefined}
               >
                 <div className={isActive ? "text-indigo-400" : "text-slate-500"}>
                   {item.icon}
