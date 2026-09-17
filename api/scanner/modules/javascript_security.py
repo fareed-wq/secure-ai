@@ -370,7 +370,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "A highly sensitive password or secret key for another service was found left inside your website's code.",
                     "\\n".join(list(secrets_found)[:5]),
                     impact="Exposed credentials could allow unauthorized access to the associated service.",
-                    confidence="High",
+                    confidence="Medium",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
                 , rule_id="js_hardcoded_secret_key"))
@@ -430,7 +430,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "We can easily see which tools and frameworks were used to build your website.",
                     ", ".join(frameworks),
                     impact="Exposing technology details provides reconnaissance information to external observers.",
-                    confidence="High",
+                    confidence="Medium",
                     category="technology_detection",
                     owasp="Not Mapped"
                 , rule_id='technology_js_frameworks_detected'))
@@ -459,7 +459,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Your website's code contains a list of direct paths (API endpoints) to your backend system.",
                     evidence,
                     impact="Exposed API endpoints provide additional context about the applications backend structure.",
-                    confidence="High",
+                    confidence="Medium",
                     category="api_surface",
                     owasp="Not Mapped"
                 , rule_id="js_api_endpoints_discovered"))
@@ -521,7 +521,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     impact="Exposed role configurations provide insight into the application authorization model.",
                     owasp="Not Mapped",
                     category="authentication",
-                    confidence="High"
+                    confidence="Medium"
                 , rule_id="js_auth_roles_disclosed"))
 
             if privileged_apis:
@@ -533,7 +533,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     impact="This may reveal application structure or administrative route names. The scanner did not verify whether the route is reachable, publicly accessible, or improperly authorized.",
                     owasp="Not Mapped",
                     category="api_surface",
-                    confidence="High"
+                    confidence="Medium"
                 , rule_id="js_privileged_api_surface"))
 
             if api_versions:
@@ -545,7 +545,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     impact="Version disclosure assists external reconnaissance by highlighting specific software versions.",
                     owasp="Not Mapped",
                     category="api_surface",
-                    confidence="High"
+                    confidence="Medium"
                 , rule_id="js_versioned_api_surface"))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:

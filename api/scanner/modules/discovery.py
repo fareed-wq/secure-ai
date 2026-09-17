@@ -297,7 +297,8 @@ class InformationDisclosureModule(ScannerModule):
                     impact="Exposing detailed server/version information gives external observers additional information that may assist reconnaissance.",
                     remediation="Configure server to only return generic names (e.g., 'nginx').",
                     owasp="Not Mapped",
-                    category="information_exposure"
+                    category="information_exposure",
+                    confidence="High"
                 , rule_id='info_disclosure_server_banner'))
 
 
@@ -347,7 +348,8 @@ class InformationDisclosureModule(ScannerModule):
                         impact="Exposed internal IPs reveal network topology and may assist reconnaissance.",
                         remediation="Remove internal IP addresses from the public response.",
                         owasp="Not Mapped",
-                        category="information_exposure"
+                        category="information_exposure",
+                        confidence="Medium"
                     , rule_id='info_disclosure_private_ip'))
 
                 # Passive Stack Trace check
@@ -363,7 +365,8 @@ class InformationDisclosureModule(ScannerModule):
                             impact="Verbose system reports provide reconnaissance information to external observers.",
                             remediation="Configure production environment to mask verbose error stack traces.",
                             owasp="A05: Security Misconfiguration",
-                            category="information_exposure"
+                            category="information_exposure",
+                            confidence="Medium"
                         , rule_id='info_disclosure_stack_trace'))
                         break
         except Exception as e:
@@ -432,7 +435,7 @@ class RobotsTxtModule(ScannerModule):
                         "Your website publicly lists the addresses of administrative login pages or control panels.",
                         "\\n".join(privileged_paths[:10]),
                         impact="Exposed administrative endpoints provide targets for unauthorized access attempts.",
-                        confidence="High",
+                        confidence="Medium",
                         owasp="Not Mapped",
                         category="api_surface"
                     , rule_id='robots_txt_admin_surface'))
@@ -873,7 +876,7 @@ class OpenApiModule(ScannerModule):
                                     "Your website publicly documents secret administrative connections and data channels.",
                                     "\\n".join(list(privileged_routes)[:5]),
                                     impact="Exposed administrative endpoints provide targets for unauthorized access attempts.",
-                                    confidence="High",
+                                    confidence="Medium",
                                     category="api_surface",
                                     owasp="A01: Broken Access Control"
                                 , rule_id="api_openapi_privileged_routes"))
@@ -885,7 +888,7 @@ class OpenApiModule(ScannerModule):
                                 "This observation is derived from the OpenAPI specification and does NOT confirm the endpoint is actually unauthenticated. Runtime authorization enforcement was not tested.",
                                 "\n".join(list(unprotected_privileged)[:5]),
                                 impact="If true, anyone could perform administrative actions on your website without needing to log in.",
-                                confidence="High",
+                                confidence="Medium",
                                 category="authentication",
                                 owasp="Not Mapped"
                                 , rule_id="api_openapi_unprotected_privileged_routes"))
