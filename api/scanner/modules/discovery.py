@@ -6,6 +6,7 @@ import re
 
 from api.scanner.base import ScannerModule
 from api.scanner.transport import safe_request
+from api.scanner.core import VerificationState, AssessmentOutcome, ModuleResult
 import logging
 
 logger = logging.getLogger(__name__)
@@ -408,7 +409,10 @@ class RobotsTxtModule(ScannerModule):
                 , rule_id='robots_txt_missing'))
         except Exception as e:
             logger.debug("RobotsTxtModule check failed: %s", e)
-        return findings
+            return findings
+        if not resp or (resp.status_code >= 400 and resp.status_code != 404):
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class SitemapModule(ScannerModule):
@@ -450,7 +454,10 @@ class SitemapModule(ScannerModule):
                 , rule_id='sitemap_xml_missing'))
         except Exception as e:
             logger.debug("SitemapModule check failed: %s", e)
-        return findings
+            return findings
+        if not resp or (resp.status_code >= 400 and resp.status_code != 404):
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class SecurityTxtModule(ScannerModule):

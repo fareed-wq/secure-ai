@@ -8,6 +8,7 @@ import requests
 
 from api.scanner.base import ScannerModule
 from api.scanner.transport import safe_request
+from api.scanner.core import AssessmentOutcome, ModuleResult
 
 logger = logging.getLogger(__name__)
 
@@ -371,7 +372,9 @@ class AdvancedCookieModule(ScannerModule):
             if key not in unique_findings:
                 unique_findings[key] = f
 
-        return list(unique_findings.values())
+        if not resp:
+            return list(unique_findings.values())
+        return ModuleResult(findings=list(unique_findings.values()), assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class HTTPSRedirectModule(ScannerModule):
@@ -903,7 +906,7 @@ class SecurityHeadersModule(ScannerModule):
                                 category="http_headers"
             , rule_id="headers_waf_active"))
 
-        return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class AdvancedSecurityHeadersModule(ScannerModule):

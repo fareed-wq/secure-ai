@@ -1,4 +1,8 @@
 import unittest
+
+from api.scanner.core import ModuleResult
+def _findings(result):
+    return result.findings if isinstance(result, ModuleResult) else result
 from unittest.mock import patch, MagicMock
 import requests
 import datetime
@@ -71,14 +75,16 @@ class TestScannerModules(unittest.TestCase):
     def test_robots_txt_module(self, mock_get):
         mock_get.return_value = self.mock_response(status_code=200, text="User-agent: *\nDisallow: /admin")
         module = RobotsTxtModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 1)
 
     @patch('requests.Session.request')
     def test_sitemap_module(self, mock_get):
         mock_get.return_value = self.mock_response(status_code=200, text="<urlset></urlset>")
         module = SitemapModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 1)
 
     @patch('requests.Session.request')
@@ -102,7 +108,8 @@ class TestScannerModules(unittest.TestCase):
     def test_advanced_cookie_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Set-Cookie": "session=123; path=/"})
         module = AdvancedCookieModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 3) # Missing HttpOnly, Secure, SameSite
 
     @patch('requests.Session.request')
@@ -141,7 +148,8 @@ class TestScannerModules(unittest.TestCase):
     def test_security_headers_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={})
         module = SecurityHeadersModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 8) # All missing headers
         hsts_finding = next((f for f in findings if "Missing Strict-Transport-Security" in f["name"]), None)
         self.assertIsNotNone(hsts_finding)
@@ -160,7 +168,8 @@ class TestScannerModules(unittest.TestCase):
     def test_timeout_handling(self, mock_get):
         mock_get.side_effect = requests.exceptions.Timeout("Connection timed out")
         module = SecurityHeadersModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 0)
 
     @patch('requests.Session.request')
@@ -333,7 +342,8 @@ def test_robots_txt_identity_metadata():
 
 
     session.request.side_effect = mock_get
-    findings = mod.run("https://example.com", "example.com", session)
+    result = mod.run("https://example.com", "example.com", session)
+    findings = _findings(result)
 
     disc = [f for f in findings if f["name"] == "Internal Paths Disclosed in Robots.txt"]
     assert len(disc) > 0

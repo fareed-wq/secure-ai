@@ -47,6 +47,18 @@ class ModuleExecutionState:
     TIMED_OUT = "TIMED_OUT"
     NOT_COMPLETED = "NOT_COMPLETED"
 
+class AssessmentOutcome:
+    COMPLETED = "COMPLETED"
+    PARTIAL = "PARTIAL"
+    NOT_APPLICABLE = "NOT_APPLICABLE"
+    BLOCKED = "BLOCKED"
+
+class ModuleResult:
+    def __init__(self, findings: list, assessment_outcome: str = None, assessment_reason: str = None):
+        self.findings = findings
+        self.assessment_outcome = assessment_outcome
+        self.assessment_reason = assessment_reason
+
 # --- RATE LIMITING STATE ---
 IN_MEMORY_LIMITS = defaultdict(list)
 
