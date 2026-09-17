@@ -83,7 +83,7 @@ class ExposedFilesModule(ScannerModule):
                                 rule_id='exposed_file_env',
                                 instance_key=env_path,
                                 verification_state="Observed"
-                            ))
+                            , confidence="High"))
             except Exception as e:
                 failed += 1
                 logger.debug("ExposedFilesModule env fetch failed: %s", e)
@@ -153,7 +153,7 @@ class ExposedFilesModule(ScannerModule):
                             impact="May disclose repository configuration, remote URLs, and internal repository details.",
                             owasp="A05: Security Misconfiguration",
                             category="information_exposure"
-                        , rule_id='exposed_file_git_config'))
+                        , rule_id='exposed_file_git_config', confidence="High"))
         except Exception as e: failed += 1
 
         docker_finding_added = False
@@ -187,7 +187,7 @@ class ExposedFilesModule(ScannerModule):
                                 impact="May reveal service names, container images, build configuration, ports, or deployment structure.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
-                            , rule_id='exposed_file_docker_compose', instance_key=docker_path))
+                            , rule_id='exposed_file_docker_compose', instance_key=docker_path, confidence="High"))
                             docker_finding_added = True
             except Exception as e: failed += 1
 
@@ -426,7 +426,7 @@ class RobotsTxtModule(ScannerModule):
                         impact="Robots.txt can inadvertently disclose the location of administrative or sensitive paths.",
                         owasp="A05: Security Misconfiguration",
                         category="information_exposure"
-                    , rule_id='robots_txt_disclosure'))
+                    , rule_id='robots_txt_disclosure', confidence="High"))
 
                 if privileged_paths:
                     findings.append(self.make_finding(
@@ -448,7 +448,7 @@ class RobotsTxtModule(ScannerModule):
                     impact="This is normal and helps search engines know what parts of your site to index.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id='robots_txt_found'))
+                , rule_id='robots_txt_found', confidence="High"))
             else:
                 findings.append(self.make_finding(
                     "robots.txt Missing",
@@ -458,7 +458,7 @@ class RobotsTxtModule(ScannerModule):
                     impact="Search engines might index parts of your website you didn't intend to be public, or they might not index your site efficiently.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id='robots_txt_missing'))
+                , rule_id='robots_txt_missing', confidence="High"))
         except Exception as e:
             logger.debug("RobotsTxtModule check failed: %s", e)
             return findings
@@ -493,7 +493,7 @@ class SitemapModule(ScannerModule):
                     impact="This is a standard file that helps search engines discover all the public pages on your website.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id='sitemap_xml_found'))
+                , rule_id='sitemap_xml_found', confidence="High"))
             else:
                 findings.append(self.make_finding(
                     "sitemap.xml Missing",
@@ -503,7 +503,7 @@ class SitemapModule(ScannerModule):
                     impact="Search engines might have a harder time discovering and ranking all the public pages on your website.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id='sitemap_xml_missing'))
+                , rule_id='sitemap_xml_missing', confidence="High"))
         except Exception as e:
             logger.debug("SitemapModule check failed: %s", e)
             return findings
@@ -565,7 +565,7 @@ class SecurityTxtModule(ScannerModule):
                         used_target,
                         owasp="Not Mapped",
                         category="information_exposure"
-                    , rule_id='security_txt_legacy_location'))
+                    , rule_id='security_txt_legacy_location', confidence="High"))
 
                 is_correct_content_type = False
                 media_type = content_type.split(";", 1)[0].strip()
@@ -585,7 +585,7 @@ class SecurityTxtModule(ScannerModule):
                         f"Content-Type: {content_type}",
                         owasp="Not Mapped",
                         category="information_exposure"
-                    , rule_id='security_txt_invalid_content_type'))
+                    , rule_id='security_txt_invalid_content_type', confidence="High"))
 
                 # Parse lines
                 contacts = []
@@ -658,7 +658,7 @@ class SecurityTxtModule(ScannerModule):
                         remediation="Add at least one valid Contact directive (e.g., Contact: mailto:security@example.com).",
                         owasp="Not Mapped",
                         category="information_exposure"
-                    , rule_id='security_txt_missing_contact'))
+                    , rule_id='security_txt_missing_contact', confidence="High"))
 
                 # Expires
                 if not expires_lines:
@@ -670,7 +670,7 @@ class SecurityTxtModule(ScannerModule):
                         remediation="Add an Expires directive with an RFC3339 formatted date.",
                         owasp="Not Mapped",
                         category="information_exposure"
-                    , rule_id='security_txt_missing_expires'))
+                    , rule_id='security_txt_missing_expires', confidence="High"))
                 elif len(expires_lines) > 1:
                     findings.append(self.make_finding(
                         "security.txt Multiple Expires",
@@ -680,7 +680,7 @@ class SecurityTxtModule(ScannerModule):
                         remediation="Ensure exactly one Expires directive exists.",
                         owasp="Not Mapped",
                         category="information_exposure"
-                    , rule_id='security_txt_multiple_expires'))
+                    , rule_id='security_txt_multiple_expires', confidence="High"))
                 else:
                     # Parse RFC3339 date
                     expires_str = expires_lines[0]
@@ -698,7 +698,7 @@ class SecurityTxtModule(ScannerModule):
                             remediation="Format the date using RFC3339 with timezone (e.g., 2024-12-31T23:59:59Z).",
                             owasp="Not Mapped",
                             category="information_exposure"
-                        , rule_id='security_txt_invalid_expires'))
+                        , rule_id='security_txt_invalid_expires', confidence="High"))
                     else:
                         clean_date = expires_str.upper().replace('Z', '+00:00')
                         try:
@@ -717,7 +717,7 @@ class SecurityTxtModule(ScannerModule):
                                     remediation="Review your security.txt policies and update the Expires date.",
                                     owasp="Not Mapped",
                                     category="information_exposure"
-                                , rule_id='security_txt_expired'))
+                                , rule_id='security_txt_expired', confidence="High"))
                             elif valid_contacts:
                                 if not is_legacy and is_correct_content_type:
                                     findings.append(self.make_finding(
@@ -728,7 +728,7 @@ class SecurityTxtModule(ScannerModule):
                                         impact="This is an excellent practice that allows security researchers to safely report vulnerabilities.",
                                         owasp="Not Mapped",
                                         category="information_exposure"
-                                    , rule_id='security_txt_valid'))
+                                    , rule_id='security_txt_valid', confidence="High"))
 
                         except ValueError:
                             findings.append(self.make_finding(
@@ -739,7 +739,7 @@ class SecurityTxtModule(ScannerModule):
                                 remediation="Format the date using RFC3339 with timezone (e.g., 2024-12-31T23:59:59Z).",
                                 owasp="Not Mapped",
                                 category="information_exposure"
-                            , rule_id='security_txt_invalid_expires'))
+                            , rule_id='security_txt_invalid_expires', confidence="High"))
 
                 # Optional info
                 if policies:
@@ -750,7 +750,7 @@ class SecurityTxtModule(ScannerModule):
                         policies[0],
                         category="information_exposure",
                         owasp="Not Mapped"
-                    , rule_id='security_txt_policy_configured'))
+                    , rule_id='security_txt_policy_configured', confidence="High"))
                 if languages:
                     findings.append(self.make_finding(
                         "security.txt Preferred-Languages Configured",
@@ -759,7 +759,7 @@ class SecurityTxtModule(ScannerModule):
                         languages[0],
                         category="information_exposure",
                         owasp="Not Mapped"
-                    , rule_id='security_txt_preferred_languages'))
+                    , rule_id='security_txt_preferred_languages', confidence="High"))
             else:
                 findings.append(self.make_finding(
                     "security.txt Not Found",
@@ -770,7 +770,7 @@ class SecurityTxtModule(ScannerModule):
                     remediation="Publish a security.txt file at /.well-known/security.txt.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id='security_txt_not_found'))
+                , rule_id='security_txt_not_found', confidence="High"))
         except Exception as e:
             logger.debug("SecurityTxtModule check failed: %s", e)
             return findings

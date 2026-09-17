@@ -242,7 +242,7 @@ class TestScannerBaseFactory(unittest.TestCase):
 
     def test_make_finding_legacy_unchanged(self):
         # Call without new fields
-        f = self.module.make_finding("Test", "High", "Desc", "Ev")
+        f = self.module.make_finding("Test", "High", "Desc", "Ev", confidence="High")
         self.assertNotIn("rule_id", f)
         self.assertNotIn("instance_key", f)
         self.assertEqual(f["name"], "Test")
@@ -252,7 +252,7 @@ class TestScannerBaseFactory(unittest.TestCase):
         f = self.module.make_finding(
             "Test", "High", "Desc", "Ev",
             rule_id="test_rule_1"
-        )
+        , confidence="High")
         self.assertEqual(f["rule_id"], "test_rule_1")
         self.assertNotIn("instance_key", f)
 
@@ -261,7 +261,7 @@ class TestScannerBaseFactory(unittest.TestCase):
             "Test", "High", "Desc", "Ev",
             rule_id="test_rule_2",
             instance_key="/api/test"
-        )
+        , confidence="High")
         self.assertEqual(f["rule_id"], "test_rule_2")
         self.assertEqual(f["instance_key"], "/api/test")
 
@@ -269,7 +269,7 @@ class TestScannerBaseFactory(unittest.TestCase):
         f = self.module.make_finding(
             "Test", "High", "Desc", "Ev",
             instance_key="/api/only"
-        )
+        , confidence="High")
         self.assertNotIn("rule_id", f)
         self.assertEqual(f["instance_key"], "/api/only")
 
@@ -278,7 +278,7 @@ class TestScannerBaseFactory(unittest.TestCase):
             "Test", "High", "Desc", "Ev",
             rule_id="",
             instance_key="   "
-        )
+        , confidence="High")
         self.assertNotIn("rule_id", f)
         self.assertNotIn("instance_key", f)
 
@@ -287,7 +287,7 @@ class TestScannerBaseFactory(unittest.TestCase):
             "Test", "High", "Desc", "Ev",
             category="custom_cat",
             rule_id="r1"
-        )
+        , confidence="High")
         self.assertEqual(f["name"], "Test")
         self.assertEqual(f["severity"], "High")
         self.assertEqual(f["category"], "custom_cat")

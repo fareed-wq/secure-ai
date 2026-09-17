@@ -72,7 +72,7 @@ class MixedContentModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure",
                     rule_id="mixed_content_detected"
-                ))
+                , confidence="High"))
 
             if parser.insecure_forms:
                 findings.append(self.make_finding(
@@ -85,7 +85,7 @@ class MixedContentModule(ScannerModule):
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls",
                     rule_id="mixed_content_insecure_form"
-                ))
+                , confidence="High"))
 
             if not parser.insecure_resources and not parser.insecure_forms:
                 findings.append(self.make_finding(
@@ -97,7 +97,7 @@ class MixedContentModule(ScannerModule):
                     owasp="Not Mapped",
                     category="encryption_tls",
                     rule_id="mixed_content_none"
-                ))
+                , confidence="High"))
             success = True
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:

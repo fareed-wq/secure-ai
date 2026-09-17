@@ -742,6 +742,28 @@ class TestSchedules(unittest.TestCase):
         # QStash schedule.pause NOT called
         mock_qstash.return_value.schedule.pause.assert_not_called()
 
+
+    @patch('api.scheduling.router.requests.get')
+    def test_max_3_schedules_shared(self, mock_get):
+        import api.index
+        api.index.app.dependency_overrides[api.auth.entitlements.require_scheduled_scans_access] = lambda: {"sub": "123"}
+        mock_get.return_value.status_code = 200
+        mock_get.return_value.json.return_value = [{"id": "1"}, {"id": "2"}, {"id": "3"}]
+
+        req = {
+            "target_url": "https://example.com",
+            "frequency": "daily",
+            "time_of_day": "09:00",
+            "timezone": "UTC",
+            "authorization_acknowledged": True,
+            "scan_mode": "active",
+            "advanced_authorization_acknowledged": True
+        }
+        response = client.post("/api/schedules", json=req)
+        api.index.app.dependency_overrides.clear()
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("Maximum of 3 scheduled scans reached.", response.json()["error"])
+
     def test_time_utils_monthly(self):
         from api.scheduling.time_utils import get_next_run_at
         from datetime import time, datetime, timezone

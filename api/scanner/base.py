@@ -38,7 +38,7 @@ class ScannerModule(ABC):
         severity: str,
         description: str,
         evidence,
-        confidence: str = "High",
+        confidence: Optional[str] = None,
         remediation: str = "N/A",
         owasp: str = "N/A",
         compliance: Optional[dict] = None,
@@ -50,6 +50,10 @@ class ScannerModule(ABC):
         instance_key: Optional[str] = None,
         verification_state: Optional[str] = None
     ) -> dict:
+        if confidence is None:
+            raise ValueError("make_finding requires an explicit 'confidence' keyword argument")
+        if confidence not in ("High", "Medium", "Low"):
+            raise ValueError(f"make_finding requires confidence to be 'High', 'Medium', or 'Low'. Got: {confidence}")
         try:
             limit = 1000 if name in ["Exposed Secret in JS Bundle", "Source Map Leak Detected", "Verbose Error / Stack Trace Detected", "Subdomains Discovered"] else 180
 

@@ -73,7 +73,7 @@ def test_registry_behavior():
         severity="High",
         category="information_exposure",
         description="desc", evidence="ev"
-    )
+    , confidence="High")
     assert finding["cvss"] == CVSS_REGISTRY["Exposed .env Configuration File"]
     assert finding["cvss_score"] == 8.7
     assert finding["cvss_severity"] == "High"
@@ -84,7 +84,7 @@ def test_registry_behavior():
         severity="Medium",
         category="information_exposure",
         description="desc", evidence="ev"
-    )
+    , confidence="High")
     assert finding["cvss"] is None
     assert finding["cvss_score"] is None
     assert finding["cvss_severity"] is None
@@ -95,7 +95,7 @@ def test_registry_behavior():
         severity="Medium",
         category="information_exposure",
         description="desc", evidence="ev"
-    )
+    , confidence="High")
     assert finding["cvss"] is None
 
     # 4. Unknown new Low finding
@@ -104,7 +104,7 @@ def test_registry_behavior():
         severity="Low",
         category="configuration",
         description="desc", evidence="ev"
-    )
+    , confidence="High")
     assert finding["cvss"] is None
 
     # 5. Unknown new Critical finding
@@ -113,7 +113,7 @@ def test_registry_behavior():
         severity="Critical",
         category="configuration",
         description="desc", evidence="ev"
-    )
+    , confidence="High")
     assert finding["cvss"] is None
 
     # 6. Explicit override with valid 4.0
@@ -123,7 +123,7 @@ def test_registry_behavior():
         cvss="CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N",
         category="configuration",
         description="desc", evidence="ev"
-    )
+    , confidence="High")
     assert finding["cvss"] == "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N"
     assert finding["cvss_score"] == 0.0
     assert finding["cvss_severity"] == "None"
@@ -135,7 +135,7 @@ def test_registry_behavior():
         cvss="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N",
         category="configuration",
         description="desc", evidence="ev"
-    )
+    , confidence="High")
     assert finding["cvss"] == "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N"
     assert finding["cvss_score"] is None
     assert finding["cvss_severity"] is None

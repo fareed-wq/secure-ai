@@ -36,7 +36,7 @@ class EnhancedTLSModule(ScannerModule):
                         category="encryption_tls",
                         impact="This ensures visitors that they are on the genuine website and keeps their data safe from eavesdroppers.",
                         rule_id="tls_certificate_valid"
-                    ))
+                    , confidence="High"))
 
                     if version == "TLSv1.3":
                         findings.append(self.make_finding(
@@ -48,7 +48,7 @@ class EnhancedTLSModule(ScannerModule):
                             category="encryption_tls",
                             impact="TLS 1.3 removes obsolete and insecure features from previous versions and speeds up secure connections.",
                             rule_id="tls_1_3_supported"
-                        ))
+                        , confidence="High"))
 
                     cipher_info = ssock.cipher()
                     if cipher_info:
@@ -61,7 +61,7 @@ class EnhancedTLSModule(ScannerModule):
                             owasp="Not Mapped",
                             category="encryption_tls",
                             rule_id="tls_cipher_identified"
-                        ))
+                        , confidence="High"))
 
                         weak_keywords = ["RC4", "3DES", "DES", "NULL", "EXPORT"]
                         if any(kw in cipher_name.upper() for kw in weak_keywords):
@@ -76,7 +76,7 @@ class EnhancedTLSModule(ScannerModule):
                                 category="encryption_tls",
                                 rule_id="tls_cipher_weak",
                                 verification_state="Observed"
-                            ))
+                            , confidence="High"))
 
                     subject = dict(x[0] for x in cert.get("subject", []))
                     cn = subject.get("commonName", "")
@@ -96,7 +96,7 @@ class EnhancedTLSModule(ScannerModule):
                             category="encryption_tls",
                             impact="A compromised wildcard certificate affects all subdomains, expanding the potential impact of key material disclosure.",
                             rule_id="tls_wildcard_certificate"
-                        ))
+                        , confidence="High"))
 
                     not_after = cert.get("notAfter")
                     expire_date = None
@@ -120,7 +120,7 @@ class EnhancedTLSModule(ScannerModule):
                                     category="encryption_tls",
                                     impact="If your certificate expires, web browsers will display a scary security warning to your visitors.",
                                     rule_id="tls_certificate_expiring_critical"
-                                ))
+                                , confidence="High"))
                             elif days_left <= 30:
                                 findings.append(self.make_finding(
                                     "Certificate Expiring Soon",
@@ -132,7 +132,7 @@ class EnhancedTLSModule(ScannerModule):
                                     category="encryption_tls",
                                     impact="If your certificate expires, web browsers will display a scary security warning to your visitors.",
                                     rule_id="tls_certificate_expiring_soon"
-                                ))
+                                , confidence="High"))
                         except Exception:
                             pass
 
@@ -153,7 +153,7 @@ class EnhancedTLSModule(ScannerModule):
                                 owasp="Not Mapped",
                                 category="encryption_tls",
                                 rule_id="tls_certificate_validity_period"
-                            ))
+                            , confidence="High"))
                         except Exception:
                             pass
 
@@ -175,7 +175,7 @@ class EnhancedTLSModule(ScannerModule):
                             owasp="Not Mapped",
                             category="encryption_tls",
                             rule_id="tls_certificate_issuer"
-                        ))
+                        , confidence="High"))
 
                     if dns_names:
                         findings.append(self.make_finding(
@@ -186,7 +186,7 @@ class EnhancedTLSModule(ScannerModule):
                             owasp="Not Mapped",
                             category="encryption_tls",
                             rule_id="tls_certificate_sans"
-                        ))
+                        , confidence="High"))
 
         except ssl.SSLCertVerificationError as e:
             tls_assessed = True
@@ -222,7 +222,7 @@ class EnhancedTLSModule(ScannerModule):
                 owasp="A02: Cryptographic Failures",
                 category="encryption_tls",
                 rule_id=rule_id
-            ))
+            , confidence="High"))
         except Exception:
             pass
 
@@ -253,7 +253,7 @@ class EnhancedTLSModule(ScannerModule):
                 category="encryption_tls",
                 impact="Legacy TLS protocols have known cryptographic weaknesses and should be disabled to ensure secure transit.",
                 rule_id="tls_legacy_protocol_supported"
-            ))
+            , confidence="High"))
 
         if not tls_assessed:
             return findings

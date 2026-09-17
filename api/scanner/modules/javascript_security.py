@@ -385,7 +385,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     remediation="Ensure public API keys have HTTP Referrer restrictions configured.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id="js_client_side_api_key"))
+                , rule_id="js_client_side_api_key", confidence="Medium"))
 
             if loopback_hosts:
                 findings.append(self.make_finding(
@@ -486,7 +486,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     remediation="Never bundle production passwords or secrets into client-side code.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
-                , rule_id="js_sensitive_config_reference"))
+                , rule_id="js_sensitive_config_reference", confidence="Medium"))
 
             if source_maps:
                 findings.append(self.make_finding(

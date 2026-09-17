@@ -176,7 +176,7 @@ class ApiWebSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
                         impact="Different network proxies may interpret these conflicting rules differently, potentially caching sensitive data unexpectedly."
-                    , rule_id="api_cache_contradictory_directives"))
+                    , rule_id="api_cache_contradictory_directives", confidence="High"))
 
                 is_publicly_cacheable = ("public" in cache_lower or (cache_lower and ("max-age" in cache_lower or "s-maxage" in cache_lower) and "max-age=0" not in cache_lower and "no-store" not in cache_lower and "private" not in cache_lower))
 
@@ -198,7 +198,7 @@ class ApiWebSecurityModule(ScannerModule):
                                     owasp="A05: Security Misconfiguration",
                                     category="http_headers",
                                     impact="The CDN may serve this sensitive data to unauthorized users or store it on public edge servers."
-                                , rule_id="api_cache_public_json"))
+                                , rule_id="api_cache_public_json", confidence="High"))
 
                 if is_json_response and is_publicly_cacheable and not cdn_cacheable:
                     findings.append(self.make_finding(
@@ -225,7 +225,7 @@ class ApiWebSecurityModule(ScannerModule):
                             owasp="A05: Security Misconfiguration",
                             category="http_headers",
                             impact="A shared cache might mistakenly serve one user's private data to a completely different user."
-                        , rule_id="api_cache_missing_vary_header"))
+                        , rule_id="api_cache_missing_vary_header", confidence="High"))
 
 
                 if "no-store" in cache_lower and is_highly_sensitive:
@@ -242,7 +242,7 @@ class ApiWebSecurityModule(ScannerModule):
                             owasp="Not Mapped",
                             category="http_headers",
                             impact="Even without caching the content, browsers may send these values back, potentially allowing cross-session tracking."
-                        , rule_id="api_cache_tracking_indicator"))
+                        , rule_id="api_cache_tracking_indicator", confidence="Medium"))
 
             # 6. API Error Information Disclosure
             if body:

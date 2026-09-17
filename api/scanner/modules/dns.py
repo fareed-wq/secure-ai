@@ -73,7 +73,7 @@ class DNSCAAModule(ScannerModule):
                     owasp="Not Mapped",
                     category="dns_security",
                     rule_id="dns_dnssec_observed"
-                ))
+                , confidence="High"))
             elif ds_status == 0:
                 findings.append(self.make_finding(
                     "DNSSEC Delegation Not Observed",
@@ -84,7 +84,7 @@ class DNSCAAModule(ScannerModule):
                     owasp="Not Mapped",
                     category="dns_security",
                     rule_id="dns_dnssec_missing"
-                ))
+                , confidence="High"))
 
         # Wildcard DNS Detection
         rand_subdomain = f"{uuid.uuid4().hex[:12]}.{domain}"
@@ -243,7 +243,7 @@ class DNSEmailSecurityModule(ScannerModule):
                             owasp="A05: Security Misconfiguration",
                             category="domain_email",
                     rule_id="dns_email_spf_malformed_multiple_all"
-                        ))
+                        , confidence="High"))
 
                     if tokens and tokens[0] != "v=spf1":
                         spf_malformed = True
@@ -255,7 +255,7 @@ class DNSEmailSecurityModule(ScannerModule):
                             owasp="A05: Security Misconfiguration",
                             category="domain_email",
                     rule_id="dns_email_spf_malformed_version"
-                        ))
+                        , confidence="High"))
 
                     # Passed ONLY if effectively -all or ~all and NOT malformed
                     # NO passed for ?all
@@ -299,7 +299,7 @@ class DNSEmailSecurityModule(ScannerModule):
                             owasp="Not Mapped",
                             category="domain_email",
                     rule_id="dns_email_spf_analysis"
-                        ))
+                        , confidence="High"))
 
             # Passive Cloud/Infrastructure TXT Record Analysis
             infrastructure_findings = []
@@ -414,7 +414,7 @@ class DNSEmailSecurityModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="domain_email",
                     rule_id="dns_email_dmarc_multiple"
-                ))
+                , confidence="High"))
             elif len(dmarc_records) == 1:
                 d_str = dmarc_records[0]
                 tags = [t.strip() for t in d_str.split(";")]
@@ -508,7 +508,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="Not Mapped",
                         category="domain_email",
                     rule_id="dns_email_dmarc_analysis"
-                    ))
+                    , confidence="High"))
 
                 if duplicate_tags:
                     findings.append(self.make_finding(
@@ -519,7 +519,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="domain_email",
                     rule_id="dns_email_dmarc_malformed_duplicate_tags"
-                    ))
+                    , confidence="High"))
                 elif malformed:
                     findings.append(self.make_finding(
                         "Malformed DMARC Record",
@@ -529,7 +529,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="domain_email",
                     rule_id="dns_email_dmarc_malformed"
-                    ))
+                    , confidence="High"))
 
                 if p_val in ("quarantine", "reject") and not malformed and pct_int == 0:
                     findings.append(self.make_finding(
@@ -542,7 +542,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="domain_email",
                     rule_id="dns_email_dmarc_pct_zero"
-                    ))
+                    , confidence="High"))
                 elif not malformed and not duplicate_tags and p_val in ("quarantine", "reject") and 0 < pct_int < 100:
                     findings.append(self.make_finding(
                         "Partial DMARC Enforcement",
@@ -554,7 +554,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="Not Mapped",
                         category="domain_email",
                     rule_id="dns_email_dmarc_partial_enforcement"
-                    ))
+                    , confidence="High"))
 
         # 7. Evaluate MTA-STS
         if mx_observed and not null_mx:

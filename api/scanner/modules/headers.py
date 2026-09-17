@@ -263,7 +263,7 @@ class CORSModule(ScannerModule):
                     evidence_str,
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
-                , rule_id="cors_specific_origin_configured"))
+                , rule_id="cors_specific_origin_configured", confidence="High"))
 
             # Reached end of evaluation successfully
             request_successful = True
@@ -290,7 +290,7 @@ class CORSModule(ScannerModule):
                 "Origin sent: " + synthetic_origin + chr(10) + "Access-Control-Allow-Origin: not present",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
-            , rule_id="cors_strict_enforced"))
+            , rule_id="cors_strict_enforced", confidence="High"))
 
         if not request_successful or status is None or status >= 400:
             return findings
@@ -321,7 +321,7 @@ class PermissionsPolicyModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
                         rule_id="headers_permissions_policy_missing"
-                    ))
+                    , confidence="High"))
             else:
                 sensitive_features = ["geolocation", "camera", "microphone"]
                 weak_configs = []
@@ -343,7 +343,7 @@ class PermissionsPolicyModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
                         rule_id="headers_permissions_policy_permissive"
-                    ))
+                    , confidence="High"))
                 else:
                     findings.append(self.make_finding(
                         "Permissions-Policy Configured",
@@ -353,7 +353,7 @@ class PermissionsPolicyModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
                         rule_id="headers_permissions_policy_configured"
-                    ))
+                    , confidence="High"))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass
         except Exception:

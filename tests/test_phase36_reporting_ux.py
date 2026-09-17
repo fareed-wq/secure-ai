@@ -22,7 +22,7 @@ class TestPhase36ReportingUX(unittest.TestCase):
                 impact="Medium impact.",
                 evidence="Raw evidence here",
                 domain="browser_defense"
-            ),
+            , confidence="High"),
             self.dummy.make_finding(
                 name="Strict-Transport-Security Missing",
                 severity="High",
@@ -32,7 +32,7 @@ class TestPhase36ReportingUX(unittest.TestCase):
                 impact="High impact.",
                 evidence="No HSTS",
                 domain="transport_tls"
-            ),
+            , confidence="High"),
             self.dummy.make_finding(
                 name="Valid TLS",
                 severity="Passed",
@@ -42,7 +42,7 @@ class TestPhase36ReportingUX(unittest.TestCase):
                 impact="N/A",
                 evidence="TLS 1.3",
                 domain="transport_tls"
-            ),
+            , confidence="High"),
             self.dummy.make_finding(
                 name="Secret Key Exposed",
                 severity="Critical",
@@ -52,7 +52,7 @@ class TestPhase36ReportingUX(unittest.TestCase):
                 impact="Critical impact.",
                 evidence="Found token: sk_live_51J...",  # Should be masked by base.py if this was a real module, but here we test immutability
                 domain="api_surface"
-            )
+            , confidence="High")
         ]
         
     def test_score_and_grade_consistency(self):
@@ -81,7 +81,7 @@ class TestPhase36ReportingUX(unittest.TestCase):
             impact="Medium impact.",
             evidence="Different raw evidence here",
             domain="browser_defense"
-        )
+        , confidence="High")
         findings_with_dupe = copy.deepcopy(self.sample_findings) + [duplicate_finding]
         
         report3 = calculate_score("https://example.com", findings_with_dupe, {}, None)
@@ -115,7 +115,7 @@ class TestPhase36ReportingUX(unittest.TestCase):
             impact="N/A",
             evidence=raw_evidence,
             domain="api_surface"
-        )
+        , confidence="High")
         
         # Evidence should be masked
         evidence_str = finding['evidence']['raw'] if isinstance(finding['evidence'], dict) and 'raw' in finding['evidence'] else str(finding['evidence'])

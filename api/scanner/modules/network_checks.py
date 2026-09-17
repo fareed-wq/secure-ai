@@ -44,7 +44,7 @@ class SubdomainProbingModule(ScannerModule):
                                 category="information_exposure",
                         rule_id="network_subdomain_probed",
                         instance_key=f"{sub}.{domain}"
-                    ))
+                    , confidence="Medium"))
                 else:
                     failed += 1
             except Exception:
@@ -97,7 +97,7 @@ class SubdomainTakeoverModule(ScannerModule):
                     owasp="Not Mapped",
                     category="domain_email",
                     rule_id="network_subdomain_takeover_risk_none"
-                ))
+                , confidence="Medium"))
                 success = True
                 return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
@@ -139,7 +139,7 @@ class SubdomainTakeoverModule(ScannerModule):
                         owasp="Not Mapped",
                         category="domain_email",
                         rule_id="network_cname_alias_configured"
-                    ))
+                    , confidence="Medium"))
             else:
                 findings.append(self.make_finding(
                     "No Subdomain Takeover Risk Detected",
@@ -150,7 +150,7 @@ class SubdomainTakeoverModule(ScannerModule):
                     owasp="Not Mapped",
                     category="domain_email",
                     rule_id="network_subdomain_takeover_risk_none"
-                ))
+                , confidence="Medium"))
 
             success = True
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
@@ -188,7 +188,7 @@ class GraphQLIntrospectionModule(ScannerModule):
                             impact="Exposed GraphQL introspection provides a complete schema map, assisting reconnaissance.",
                             owasp="Not Mapped",
                             category="information_exposure"
-                        , rule_id="api_graphql_introspection_enabled"))
+                        , rule_id="api_graphql_introspection_enabled", confidence="High"))
             success = True
         except Exception:
             pass
@@ -267,7 +267,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
                 owasp="Not Mapped",
                 category="information_exposure",
                 rule_id="network_subdomain_discovery_inconclusive"
-            ))
+            , confidence="Medium"))
 
         if discovered_subdomains:
             sub_list = sorted(list(discovered_subdomains))
@@ -321,7 +321,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
                 owasp="Not Mapped",
                 category="information_exposure",
                 rule_id="network_subdomains_discovered"
-            )
+            , confidence="Medium")
             finding["metadata"] = {
                 "total_subdomains": summary_count,
                 "attack_surface_categories": categories,

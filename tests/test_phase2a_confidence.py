@@ -36,7 +36,7 @@ class TestPhase2AConfidence(unittest.TestCase):
 
     def test_canonical_values_and_defaults(self):
         # make_finding default is still High
-        f = self.mod.make_finding("Test", "High", "Desc", "Ev")
+        f = self.mod.make_finding("Test", "High", "Desc", "Ev", confidence="High")
         self.assertEqual(f.get("confidence"), "High")
 
         # We can pass Medium or Low
