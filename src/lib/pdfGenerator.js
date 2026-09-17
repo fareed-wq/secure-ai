@@ -191,7 +191,13 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
       doc.text(sanitizeText("No security issues were identified."), margin, yPos);
       yPos += 10;
     } else {
-      actionItems.forEach((f, index) => {
+      const sevWeights = { Critical: 6, High: 5, Medium: 4, Low: 3, Informational: 2, Passed: 1 };
+      const sortedItems = [...actionItems].sort((a, b) => {
+        const wd = (sevWeights[b.severity] || 0) - (sevWeights[a.severity] || 0);
+        if (wd !== 0) return wd;
+        return (a.name || '').localeCompare(b.name || '');
+      });
+      sortedItems.forEach((f, index) => {
         // Page break if we are too close to the bottom (reserve ~67 units for header + 1-2 rows)
         if (yPos > 230) {
           doc.addPage();
@@ -324,7 +330,7 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
   const disclaimerText = scanMode === 'active'
-    ? "This report was generated using Active Security Testing, which performs deeper interaction with the target. While findings indicate potential risks based on responses received, this automated scan does not replace a manual penetration test."
+    ? "This report was generated using the Advanced scan mode. It is a passive, external assessment of publicly observable behavior. Findings identify observable security configuration and exposure signals. This automated assessment does not replace comprehensive manual penetration testing."
     : "This report was generated using Passive Security Assessment, which observes publicly accessible signals without intrusive testing. It is designed to be safe for production environments but may not detect vulnerabilities requiring active exploitation.";
 
   doc.text(doc.splitTextToSize(sanitizeText(disclaimerText), 210 - 2 * margin), margin, yPos);
