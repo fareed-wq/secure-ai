@@ -37,6 +37,11 @@ class AdvancedCookieModule(ScannerModule):
         s = re.sub(r'[\-\.]', '_', s)
         tokens = set(p for p in s.split('_') if p)
 
+        strong_auth = {"auth", "jwt", "access", "refresh", "login"}
+        non_auth_context = {"theme", "marketing", "analytics", "preference", "consent", "language", "locale"}
+        if tokens.intersection(non_auth_context) and not tokens.intersection(strong_auth):
+            return False
+
         strong_tokens = {"session", "sess", "sid", "auth", "jwt"}
         if tokens.intersection(strong_tokens):
             return True
@@ -68,6 +73,7 @@ class AdvancedCookieModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        resp = None
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             if not resp:
@@ -82,7 +88,6 @@ class AdvancedCookieModule(ScannerModule):
             if not raw_cookies and set_cookie_header:
                 raw_cookies = [set_cookie_header]
 
-            seen_cookies = set()
             missing_httponly = []
             missing_secure = []
             missing_samesite = []
@@ -97,9 +102,7 @@ class AdvancedCookieModule(ScannerModule):
                     continue
                 cookie_name = cookie_name_part.split("=")[0].strip()
 
-                if cookie_name in seen_cookies:
-                    continue
-                seen_cookies.add(cookie_name)
+                # Phase54: Process all cookies; same-name aggregation happens at the end
 
                 directives = [p.lower() for p in parts[1:]]
 
@@ -245,9 +248,9 @@ class AdvancedCookieModule(ScannerModule):
                 else:
                     # Collect non-session cookie issues for bulk reporting
                     if not is_secure and url.startswith("https"):
-                        missing_secure.append(cookie_name)
+                        if cookie_name not in missing_secure: missing_secure.append(cookie_name)
                     if not samesite_val:
-                        missing_samesite.append(cookie_name)
+                        if cookie_name not in missing_samesite: missing_samesite.append(cookie_name)
 
                 if samesite_none_without_secure and not (is_session and not is_secure and url.startswith("https")):
                     findings.append(self.make_finding(
@@ -318,7 +321,57 @@ class AdvancedCookieModule(ScannerModule):
         except Exception as e:
             print(f"DEBUG EXCEPTION: {e}")
             pass
-        return findings
+
+        # Phase54B1: Detect sensitive cookies issued over cleartext HTTP
+        try:
+            if resp:
+                final_host = urlparse(resp.url).hostname
+                # Build response chain: history + final
+                chain = list(getattr(resp, 'history', []) or []) + [resp]
+                for chain_resp in chain:
+                    resp_url = getattr(chain_resp, 'url', '') or ''
+                    parsed = urlparse(resp_url)
+                    if parsed.scheme != 'http':
+                        continue
+                    resp_host = parsed.hostname
+                    if resp_host != final_host:
+                        continue
+                    # Extract Set-Cookie from this HTTP response
+                    http_cookies = []
+                    if hasattr(chain_resp, 'raw') and hasattr(chain_resp.raw, 'headers'):
+                        http_cookies = chain_resp.raw.headers.getlist('Set-Cookie')
+                    for cookie_str in http_cookies:
+                        cparts = [p.strip() for p in cookie_str.split(';') if p.strip()]
+                        if not cparts or '=' not in cparts[0]:
+                            continue
+                        cname = cparts[0].split('=')[0].strip()
+                        if self.is_session_cookie(cname):
+                            findings.append(self.make_finding(
+                                "Session Cookie Issued over HTTP",
+                                "Medium",
+                                "A likely session or authentication cookie was delivered in an unencrypted HTTP response. "
+                                "Even if the cookie includes the Secure attribute, the token value was already transmitted "
+                                "in cleartext and could be observed by an on-path attacker.",
+                                f"Cookie '{cname}' issued over HTTP on {resp_host}",
+                                impact="An attacker monitoring network traffic can capture the session token directly from the HTTP response.",
+                                remediation="Redirect users to HTTPS before issuing session cookies. "
+                                "Issue sensitive cookies only from HTTPS responses. "
+                                "Use HSTS to prevent future HTTP connections, though HSTS cannot protect a response already made over HTTP.",
+                                owasp="A02: Cryptographic Failures",
+                                category="session_cookies",
+                                confidence="High"
+                            , rule_id="cookies_session_set_over_http", instance_key=cname))
+        except Exception as e:
+            print(f"DEBUG EXCEPTION (HTTP cookie check): {e}")
+            pass
+
+        unique_findings = {}
+        for f in findings:
+            key = (f.get("rule_id"), f.get("instance_key"))
+            if key not in unique_findings:
+                unique_findings[key] = f
+
+        return list(unique_findings.values())
 
 
 class HTTPSRedirectModule(ScannerModule):
@@ -589,25 +642,57 @@ class SecurityHeadersModule(ScannerModule):
             , rule_id="headers_x_dns_prefetch_control_missing"))
 
         xfo_header = self.get_header_safe(resp, "X-Frame-Options") or ""
-        has_xfo = xfo_header.strip().upper() in ("DENY", "SAMEORIGIN")
+        has_xfo = False
+        if xfo_header:
+            parts = [p.strip().upper() for p in xfo_header.split(',')]
+            distinct_parts = set(parts)
+            if len(distinct_parts) == 1:
+                if distinct_parts.pop() in ("DENY", "SAMEORIGIN"):
+                    has_xfo = True
+            elif len(distinct_parts) > 1:
+                if any(p in ("DENY", "SAMEORIGIN", "ALLOWALL") for p in distinct_parts):
+                    has_xfo = True
+
         has_effective_fa = False
+        has_fa_directive = False
         if csp:
             for directive in csp.split(';'):
                 directive = directive.strip()
-                if directive.startswith("frame-ancestors"):
-                    val = directive[len("frame-ancestors"):].strip()
-                    if val and val != "*":
+                if not directive:
+                    continue
+                d_parts = directive.split(None, 1)
+                directive_name = d_parts[0].lower()
+                if directive_name == "frame-ancestors":
+                    has_fa_directive = True
+                    val = d_parts[1].strip() if len(d_parts) > 1 else ""
+                    if not val:
                         has_effective_fa = True
-                        break
+                    else:
+                        sources = [s.strip().lower() for s in val.split()]
+                        broad_sources = {"*", "https:", "http:", "data:"}
+                        has_broad = any(s in broad_sources for s in sources)
+                        if not has_broad:
+                            has_effective_fa = True
+                    break
 
-        if not is_api_response and not has_xfo and not has_effective_fa:
+        is_protected = has_effective_fa if has_fa_directive else has_xfo
+
+        if not is_api_response and not is_protected:
+            evidence = "Header not found in response"
+            if xfo_header and has_fa_directive:
+                evidence = f"X-Frame-Options: {xfo_header} | CSP frame-ancestors is broad/ineffective"
+            elif has_fa_directive:
+                evidence = "CSP frame-ancestors is broad/ineffective"
+            elif xfo_header:
+                evidence = f"X-Frame-Options: {xfo_header} (Invalid/Unsupported)"
+
             findings.append(self.make_finding(
                 "Missing Clickjacking Protection",
                 "Medium",
-                "Your website is missing a rule that prevents it from being embedded inside a hidden frame on another website.",
-                "Header not found in response",
+                "No effective anti-framing protection was observed.",
+                evidence,
                 impact="Missing clickjacking protection may leave pages more exposed to framing-based UI deception.",
-                remediation="Apply the specific header to your web server (e.g., X-Frame-Options: DENY) to defend against client-side attacks.",
+                remediation="Apply the specific header to your web server (e.g., CSP frame-ancestors 'none' or X-Frame-Options: DENY) to defend against client-side attacks.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
             , rule_id="headers_clickjacking_protection_missing"))
@@ -776,7 +861,7 @@ class SecurityHeadersModule(ScannerModule):
                     , rule_id="headers_sri_crossorigin_missing"))
 
         # WAF & Rate-Limiting Detection
-        waf_headers = ['server', 'x-cdn', 'cf-ray', 'x-succinct', 'x-istart-waf', 'awsalb']
+        waf_headers = ['x-cdn', 'cf-ray', 'x-succinct', 'x-istart-waf', 'awsalb']
         rl_headers = ['x-ratelimit-limit', 'x-ratelimit-remaining', 'retry-after']
 
         waf_found = False
@@ -805,9 +890,9 @@ class SecurityHeadersModule(ScannerModule):
             , rule_id="headers_waf_missing"))
         elif waf_found:
             findings.append(self.make_finding(
-                "Web Application Firewall (WAF) Active",
-                "Passed",
-                "A Web Application Firewall (WAF) or protective network layer was detected on your website.",
+                "Potential WAF / Security Edge Detected",
+                "Informational",
+                "Response headers indicate that traffic may pass through a WAF, CDN, reverse proxy, load balancer, or security edge. Passive detection cannot confirm that WAF blocking rules are enabled or correctly configured.",
                 "\n".join(evidence_headers),
                 impact="Your website has an active layer of defense against automated hacker tools and floods of bad traffic.",
                 owasp="A05: Security Misconfiguration",

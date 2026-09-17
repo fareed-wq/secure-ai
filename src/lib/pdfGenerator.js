@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { getTranslation } from "./utils/translations";
 
 const sanitizeText = (text) => {
   if (typeof text !== 'string') return text;
@@ -71,33 +72,46 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
   if (reportMode === 'simple') {
     // SIMPLE REPORT
 
-    // Sort findings for simple report (Critical/High/Medium/Low/Info)
-    const severityOrder = { 'Critical': 1, 'High': 2, 'Medium': 3, 'Low': 4, 'Info': 5 };
-    actionItems.sort((a, b) => (severityOrder[a.severity] || 6) - (severityOrder[b.severity] || 6));
+    // Add score explanation and passive scope note
+    yPos -= 8;
+    doc.setFontSize(9);
+    doc.setTextColor(100, 116, 139); // slate-500
+    doc.text(sanitizeText("Your score is based on detected Critical, High, Medium, and Low findings. Informational observations and Passed checks do not change the score."), margin, yPos, { maxWidth: 210 - 2 * margin });
+    yPos += 8;
+    doc.text(sanitizeText("This assessment is a passive, external scan of publicly observable behavior. It does not replace comprehensive penetration testing or guarantee that no other vulnerabilities exist."), margin, yPos, { maxWidth: 210 - 2 * margin });
+    yPos += 12;
 
-    // Cap to most important 8 findings
-    const topActionItems = actionItems.slice(0, 8);
+    const scoredFindings = actionItems.filter(f => f.severity !== 'Informational' && f.severity !== 'Inconclusive');
+    const informationalFindings = actionItems.filter(f => f.severity === 'Informational');
+
+    // Sort findings for simple report (Critical/High/Medium/Low)
+    const severityOrder = { 'Critical': 1, 'High': 2, 'Medium': 3, 'Low': 4 };
+    scoredFindings.sort((a, b) => (severityOrder[a.severity] || 5) - (severityOrder[b.severity] || 5));
 
     doc.setFontSize(14);
     doc.setTextColor(15, 23, 42);
-    doc.text(sanitizeText("2. Key Risks & Prioritized Recommendations"), margin, yPos);
+    doc.text(sanitizeText("2. Issues That Need Attention"), margin, yPos);
     yPos += 6;
 
-    if (topActionItems.length === 0) {
+    if (scoredFindings.length === 0) {
       doc.setFontSize(10);
       doc.setTextColor(51, 65, 85);
-      doc.text(sanitizeText("No security issues were identified."), margin, yPos);
+      doc.text(sanitizeText("No scored issues were detected in this passive assessment."), margin, yPos);
       yPos += 10;
     } else {
-      const simpleData = topActionItems.map(f => [
-        sanitizeText(`[${f.severity.toUpperCase()}] ${f.name}`),
-        sanitizeText(f.description || 'No description provided.'),
-        sanitizeText(f.remediation || 'No remediation provided.')
-      ]);
+      const simpleData = scoredFindings.map(f => {
+        const trans = getTranslation(f);
+        const desc = trans.why ? `${trans.problem}\n\nWhy it matters: ${trans.why}` : trans.problem;
+        return [
+          sanitizeText(`[${f.severity.toUpperCase()}] ${trans.name}`),
+          sanitizeText(desc),
+          sanitizeText(trans.action || '')
+        ];
+      });
 
       autoTable(doc, {
         startY: yPos,
-        head: [['Finding', 'Description', 'Recommendation']],
+        head: [['Severity & Issue', 'Description', 'What to do']],
         body: simpleData,
         theme: 'grid',
         headStyles: { fillColor: [99, 102, 241] }, // indigo-500
@@ -110,6 +124,47 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
       yPos = doc.lastAutoTable.finalY + 10;
     }
 
+    let sectionNum = 3;
+
+    // Additional Observations
+    if (informationalFindings.length > 0) {
+      if (yPos > 240) { doc.addPage(); yPos = 20; }
+
+      doc.setFontSize(14);
+      doc.setTextColor(15, 23, 42);
+      doc.text(sanitizeText(`${sectionNum}. Additional Observations`), margin, yPos);
+      yPos += 6;
+
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(sanitizeText("These observations provide additional security context and do not reduce your security score."), margin, yPos, { maxWidth: 210 - 2 * margin });
+      yPos += 8;
+
+      const infoData = informationalFindings.map(f => {
+        const trans = getTranslation(f);
+        const desc = trans.why ? `${trans.problem}\n\nWhy it matters: ${trans.why}` : trans.problem;
+        return [
+          sanitizeText(trans.name),
+          sanitizeText(desc)
+        ];
+      });
+
+      autoTable(doc, {
+        startY: yPos,
+        head: [['Observation', 'Description']],
+        body: infoData,
+        theme: 'grid',
+        headStyles: { fillColor: [59, 130, 246] }, // blue-500
+        styles: { fontSize: 9, cellPadding: 4 },
+        columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 120 } },
+        margin: { left: margin, right: margin },
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid'
+      });
+      yPos = doc.lastAutoTable.finalY + 10;
+      sectionNum++;
+    }
+
     // Passed Checks
     doc.setFontSize(14);
     doc.setTextColor(15, 23, 42);
@@ -120,7 +175,7 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
       yPos = 20;
     }
 
-    doc.text(sanitizeText("3. Important Passed Checks"), margin, yPos);
+    doc.text(sanitizeText(`${sectionNum}. Passed Checks`), margin, yPos);
     yPos += 6;
 
     if (passedItems.length === 0) {
@@ -129,7 +184,7 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
       doc.text(sanitizeText("No passed checks to report."), margin, yPos);
       yPos += 10;
     } else {
-      const passedData = passedItems.map(f => [sanitizeText(f.name)]);
+      const passedData = passedItems.map(f => [sanitizeText(getTranslation(f).name)]);
       autoTable(doc, {
         startY: yPos,
         head: [['Passed Security Checks']],

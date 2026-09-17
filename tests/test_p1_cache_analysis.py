@@ -129,12 +129,12 @@ def test_cdn_cache_restrictive_no_fp(api_module, mock_safe_request):
 
 def test_malformed_headers(auth_module, mock_safe_request):
     resp = MagicMock()
-    resp.url = "https://example.com/login"
+    resp.url = "https://example.com/reset-password?token=123"
     resp.headers = {}
     resp.text = "login form"
     mock_safe_request(resp)
     
-    findings = auth_module.run("https://example.com/login", "example.com", None)
+    findings = auth_module.run("https://example.com/reset-password?token=123", "example.com", None)
     finding_names = [f["name"] for f in findings]
     
     assert "Authentication Response May Be Publicly Cacheable" in finding_names

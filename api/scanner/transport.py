@@ -206,6 +206,7 @@ def safe_request(
     try:
         for attempt in range(max_attempts):
             current_url = url
+            history = []
             try:
                 for _ in range(max_redirects + 1):
                     parsed = urlparse(current_url)
@@ -231,12 +232,14 @@ def safe_request(
                             break
                         if _ == max_redirects:
                             break
+                        history.append(resp)
                         resp.close()
                         current_url = urljoin(current_url, location)
                     else:
                         break
 
                 if resp is not None:
+                    resp.history = history
                     resp.all_headers = accumulated_headers
                     
                     orig_iter_content = resp.iter_content

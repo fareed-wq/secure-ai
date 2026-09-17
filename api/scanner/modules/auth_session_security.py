@@ -1,7 +1,7 @@
 import re
 from typing import List
 import requests
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from api.scanner.base import ScannerModule
 from api.scanner.transport import safe_request
 
@@ -73,30 +73,40 @@ class AuthenticationSessionSecurityModule(ScannerModule):
             cache_lower = cache_control.lower()
             is_highly_sensitive = self.is_auth_related(url) or self.is_auth_related(resp.text)
 
-            if is_highly_sensitive:
-                is_vuln = False
+            from urllib.parse import parse_qsl, urlparse
+            import re
+            parsed_url = urlparse(url)
+            query_keys = {k.lower() for k, v in parse_qsl(parsed_url.query)}
+            token_params = {'token', 'reset_token', 'resettoken', 'verification_token', 'verificationtoken', 'code'}
+            path_keywords = {'reset', 'recover', 'verify', 'confirm', 'callback', 'oauth'}
+
+            is_token_workflow = False
+            sensitive_evidence = ""
+            path_parts = set(re.split(r'[\W_]+', parsed_url.path.lower()))
+            if any(k in path_parts for k in path_keywords):
+                for p in token_params:
+                    if p in query_keys:
+                        is_token_workflow = True
+                        sensitive_evidence = f"Sensitive authentication workflow with token parameter '{p}' detected"
+                        break
+
+            is_vuln = False
+            if is_token_workflow:
                 severity = "Medium"
 
                 if not cache_control:
                     is_vuln = True
-                elif "no-store" in cache_lower or "private" in cache_lower:
+                elif "no-store" in cache_lower or "private" in cache_lower or "no-cache" in cache_lower or "max-age=0" in cache_lower:
                     is_vuln = False
-                elif "public" in cache_lower:
-                    if "max-age=0" in cache_lower and "must-revalidate" in cache_lower:
-                        # Effectively forces revalidation, lower risk but still not strict no-store
-                        is_vuln = True
-                        severity = "Low"
-                    else:
-                        # Positive max-age or s-maxage with public is risky for auth
-                        is_vuln = True
-                        severity = "Medium"
+                elif "public" in cache_lower or "max-age=" in cache_lower or "s-maxage=" in cache_lower:
+                    is_vuln = True
 
                 if is_vuln:
                     findings.append(self.make_finding(
                         "Authentication Response May Be Publicly Cacheable",
                         severity,
                         description="Your website allows sensitive login pages to be saved and stored on public networks.",
-                        evidence=f"Cache-Control: {cache_control}" if cache_control else "No Cache-Control header",
+                        evidence=f"{sensitive_evidence}; response appears publicly cacheable. Cache-Control: {cache_control}" if cache_control else f"{sensitive_evidence}; response appears publicly cacheable. No Cache-Control header.",
                         remediation="Set Cache-Control: no-store, max-age=0 on sensitive pages.",
                         owasp="A05: Security Misconfiguration",
                         category="authentication",
@@ -104,6 +114,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         impact="Other people using the same computer or network might be able to view your users' personal accounts or login details.",
                         rule_id="auth_response_cacheable"
                     ))
+
+            if is_highly_sensitive:
 
                 # Deep Cache Analysis
                 if cache_control and ("no-store" in cache_lower or "no-cache" in cache_lower) and ("max-age=" in cache_lower or "s-maxage=" in cache_lower):
@@ -315,26 +327,51 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     # CSRF Posture (Passive Only)
                     is_state_changing = method in ['POST', 'PUT', 'PATCH', 'DELETE']
                     if is_state_changing:
-                        has_csrf = False
-                        for inp in inputs:
-                            inp_lower = inp.lower()
-                            if 'type="hidden"' in inp_lower or "type='hidden'" in inp_lower:
-                                if any(csrf_kw in inp_lower for csrf_kw in self.CSRF_KEYWORDS):
-                                    has_csrf = True
-                                    break
-                        if not has_csrf:
-                            findings.append(self.make_finding(
-                                "Potential Missing CSRF Protection",
-                                "Medium",
-                                description="Your website has forms that change account settings but appear to lack hidden security tokens.",
-                                evidence="No apparent CSRF token was observed in the analyzed form.",
-                                remediation="Ensure all state-changing endpoints are protected by anti-CSRF tokens.",
-                                owasp="A01: Broken Access Control",
-                                category="authentication",
-                                confidence="Low",
-                                impact="Without Anti-CSRF tokens, authenticated sessions may be susceptible to Cross-Site Request Forgery (CSRF).",
-                                rule_id="auth_csrf_missing"
-                            ))
+                        is_same_origin = True
+                        if action:
+                            alower = action.lower()
+                            if alower.startswith(('javascript:', 'mailto:', 'tel:', 'data:')):
+                                is_same_origin = False
+                            else:
+                                scanned_parsed = urlparse(url)
+                                resolved = urljoin(url, action)
+                                parsed_resolved = urlparse(resolved)
+
+                                def get_origin_tuple(p):
+                                    scheme = p.scheme.lower()
+                                    hostname = p.hostname.lower() if p.hostname else ""
+                                    port = p.port
+                                    if port is None:
+                                        if scheme == 'https':
+                                            port = 443
+                                        elif scheme == 'http':
+                                            port = 80
+                                    return (scheme, hostname, port)
+
+                                if get_origin_tuple(scanned_parsed) != get_origin_tuple(parsed_resolved):
+                                    is_same_origin = False
+
+                        if is_same_origin:
+                            has_csrf = False
+                            for inp in inputs:
+                                inp_lower = inp.lower()
+                                if 'type="hidden"' in inp_lower or "type='hidden'" in inp_lower:
+                                    if any(csrf_kw in inp_lower for csrf_kw in self.CSRF_KEYWORDS):
+                                        has_csrf = True
+                                        break
+                            if not has_csrf:
+                                findings.append(self.make_finding(
+                                    "Potential Missing CSRF Protection",
+                                    "Medium",
+                                    description="Your website has forms that change account settings but appear to lack hidden security tokens.",
+                                    evidence="No apparent CSRF token was observed in the analyzed form.",
+                                    remediation="Ensure all state-changing endpoints are protected by anti-CSRF tokens.",
+                                    owasp="A01: Broken Access Control",
+                                    category="authentication",
+                                    confidence="Low",
+                                    impact="Without Anti-CSRF tokens, authenticated sessions may be susceptible to Cross-Site Request Forgery (CSRF).",
+                                    rule_id="auth_csrf_missing"
+                                ))
 
                 if privileged_surface_links:
                     findings.append(self.make_finding(
