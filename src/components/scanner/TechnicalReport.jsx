@@ -237,6 +237,58 @@ const TechnicalReport = ({ reportData }) => {
 
 
 
+      {/* 2.5. Exposure */}
+      {(() => {
+        const exp = reportData?.exposure;
+        if (!exp) return null;
+
+        let levelColor = "text-slate-400";
+        let bgColor = "bg-slate-900";
+        if (exp.level === "HIGH") { levelColor = "text-red-400"; bgColor = "bg-red-500/10 border-red-500/20"; }
+        else if (exp.level === "MODERATE") { levelColor = "text-amber-400"; bgColor = "bg-amber-500/10 border-amber-500/20"; }
+        else if (exp.level === "LOW") { levelColor = "text-emerald-400"; bgColor = "bg-emerald-500/10 border-emerald-500/20"; }
+
+        return (
+          <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ EXPOSURE</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              <div className="text-center min-w-[100px]">
+                <div className={`text-2xl font-black font-mono ${levelColor}`}>{exp.level}</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Level</div>
+              </div>
+
+              <div className="flex-1 space-y-3">
+                {exp.signals && exp.signals.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Observed Signals:</div>
+                    <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                      {exp.signals.map((sig, i) => (
+                        <li key={i}>{sig}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {exp.limitations && exp.limitations.length > 0 && (
+                  <div className="space-y-1 mt-2">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Limitations / Context:</div>
+                    <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside">
+                      {exp.limitations.map((lim, i) => (
+                        <li key={i}>{lim}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+
+
       {/* 3. Tab Switcher: Vulnerabilities vs Compliance */}
       <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-xl print:hidden">
         <button

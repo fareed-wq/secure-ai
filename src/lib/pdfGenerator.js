@@ -48,6 +48,18 @@ export const generateStructuredPdf = (scanData, scanMode, reportMode) => {
     doc.text(sanitizeText('Assessment Coverage: Not available'), margin, yPos);
   }
 
+  yPos += 6;
+  const expData = scanData.report_data?.exposure || scanData.exposure;
+  if (expData && expData.level) {
+    const expText = expData.level === 'HIGH' ? 'This site exposes additional externally reachable surfaces.' :
+                    expData.level === 'MODERATE' ? 'This site is publicly reachable on the web.' :
+                    expData.level === 'LOW' ? 'This target appears limited to private/local network addressing.' :
+                    'Exposure could not be determined from this scan.';
+    doc.text(sanitizeText(`Exposure: ${expData.level} - ${expText}`), margin, yPos);
+  } else {
+    doc.text(sanitizeText('Exposure: Not available'), margin, yPos);
+  }
+
   // Draw Line
   yPos += 10;
   doc.setDrawColor(203, 213, 225); // slate-300

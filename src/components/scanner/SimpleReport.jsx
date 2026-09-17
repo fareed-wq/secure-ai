@@ -160,6 +160,22 @@ const SimpleReport = ({ reportData }) => {
             <span className="text-xs text-slate-500 ml-2">of intended checks completed</span>
           </div>
         )}
+
+        {reportData?.exposure && reportData.exposure.level && (
+          <div className="mt-2 text-center">
+            <span className="text-sm text-slate-400">Exposure: </span>
+            <span className={`text-sm font-bold ${
+              reportData.exposure.level === 'HIGH' ? 'text-red-400' :
+              reportData.exposure.level === 'MODERATE' ? 'text-amber-400' :
+              reportData.exposure.level === 'LOW' ? 'text-emerald-400' : 'text-slate-400'
+            }`}>
+              {reportData.exposure.level === 'HIGH' ? 'This site exposes additional externally reachable surfaces.' :
+               reportData.exposure.level === 'MODERATE' ? 'This site is publicly reachable on the web.' :
+               reportData.exposure.level === 'LOW' ? 'This target appears limited to private/local network addressing.' :
+               'Exposure could not be determined from this scan.'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* 1.5. Target Surface Breakdown */}

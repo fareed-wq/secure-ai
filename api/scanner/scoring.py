@@ -104,6 +104,115 @@ def _calculate_assessment_coverage(module_execution):
         "execution_incomplete_modules": exec_incomplete_count
     }
 
+def _calculate_exposure(metadata: dict, all_findings: list) -> dict:
+    """Calculate deterministic exposure level based on scan metadata and findings."""
+    import ipaddress
+
+    # 1. Unknown if missing metadata
+    if not metadata or "ip_address" not in metadata:
+        return {
+            "level": "UNKNOWN",
+            "signals": [],
+            "limitations": ["Target IP address and reachability metadata are missing."]
+        }
+
+    ip_str = metadata.get("ip_address")
+    if not ip_str or ip_str == "Unknown IP":
+        return {
+            "level": "UNKNOWN",
+            "signals": [],
+            "limitations": ["Could not resolve a valid IP address for the target."]
+        }
+
+    # 2. Check if IP is private/local
+    is_public = True
+    try:
+        ip_obj = ipaddress.ip_address(ip_str)
+        if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_unspecified:
+            is_public = False
+    except ValueError:
+        return {
+            "level": "UNKNOWN",
+            "signals": [],
+            "limitations": ["Resolved IP address is invalid or unrecognized."]
+        }
+
+    # If private/local ONLY -> LOW
+    if not is_public:
+        return {
+            "level": "LOW",
+            "signals": [f"Target resolved to a private/local IP address ({ip_str})."],
+            "limitations": ["Network reachability implies internal or non-public context."]
+        }
+
+    signals = [f"Target resolved to a public Internet IP address ({ip_str})."]
+    limitations = []
+    level = "UNKNOWN"
+
+    # 3. Check Web Reachability
+    http_status = metadata.get("http_status", "")
+    perf_rating = metadata.get("performance_rating", "")
+
+    # Identify if a usable web response was received
+    web_reachable = False
+    if http_status and "Timeout" not in http_status and "Handshake Aborted" not in http_status and perf_rating not in ["NO HTTP RESPONSE", "REQUEST TIMEOUT"]:
+        web_reachable = True
+        signals.append(f"Target is publicly reachable on the web (HTTP/HTTPS responded).")
+        level = "MODERATE"
+    else:
+        limitations.append("Failed to establish reliable web (HTTP/HTTPS) reachability.")
+
+    if level == "UNKNOWN":
+        return {
+            "level": "UNKNOWN",
+            "signals": signals,
+            "limitations": limitations + ["Exposure level cannot be determined without successful web/network reachability."]
+        }
+
+    # 4. Check for HIGH exposure triggers
+    high_exposure_rule_ids = {
+        "network_port_exposed",
+        "exposed_admin_interface",
+        "api_graphql_ide_exposed",
+        "api_actuator_sensitive_exposed"
+    }
+
+    # Also look at finding categories/names as fallback for network services
+    high_exposure_found = False
+    for finding in all_findings:
+        rule_id = finding.get("rule_id")
+        module_name = finding.get("module")
+        name = finding.get("name", "")
+
+        if rule_id in high_exposure_rule_ids:
+            signals.append(f"Observed privileged/admin or network surface: {name}")
+            high_exposure_found = True
+        elif module_name == "Network" and "Network Service" in name:
+            # Fallback for NetworkServiceExposureModule if rule_id is missing
+            signals.append(f"Observed externally reachable network service: {name}")
+            high_exposure_found = True
+
+    if high_exposure_found:
+        level = "HIGH"
+
+    # 5. Authentication Context (does not change level)
+    auth_observed = False
+    for finding in all_findings:
+        if "Authentication" in finding.get("name", "") or "Login" in finding.get("name", ""):
+            auth_observed = True
+            break
+
+    if auth_observed or "401" in http_status:
+        limitations.append("Authentication interface or requirement observed (may limit effective access).")
+    elif "403" in http_status:
+        limitations.append("403 Forbidden observed (may indicate WAF, IP block, or auth barrier).")
+
+    return {
+        "level": level,
+        "signals": signals,
+        "limitations": limitations
+    }
+
 def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: Optional[requests.Response], scan_incomplete: bool = False, completed_modules: int = -1, module_execution: dict = None) -> dict:
     # Auto-assign security domains to findings based on their source module
     for f in all_findings:
@@ -391,11 +500,15 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     # Phase 1B8 - Assessment Coverage Calculation
     assessment_coverage = _calculate_assessment_coverage(module_execution)
 
+    # Phase 1C - Exposure Model
+    exposure = _calculate_exposure(metadata, all_findings)
+
     result = {
         "url": url,
         "status": "INCOMPLETE" if scan_incomplete else "COMPLETED",
         "score": final_score,
         "assessment_coverage": assessment_coverage,
+        "exposure": exposure,
         "penalties": penalties,
         "severity_counts": severity_counts,
         "category_scores": category_scores,
