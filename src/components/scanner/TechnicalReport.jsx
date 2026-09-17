@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Terminal, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
+import { WhatWasTested } from './WhatWasTested';
+import { getCapabilityLabel } from '../../lib/assessmentReporting';
 import { CSPAnalysisPanel } from './CSPAnalysisPanel';
 
 
@@ -67,7 +69,7 @@ const TechnicalReport = ({ reportData }) => {
 
         {/* Top Header Bar */}
         <div className="flex items-center gap-3 mb-2">
-          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ SCAN_METADATA</span>
+          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">â€º_ SCAN_METADATA</span>
           <span className="text-slate-600 font-mono text-xs">/</span>
           <div className="flex items-center gap-2">
             <div className="bg-emerald-500 animate-pulse w-2 h-2 rounded-full"></div>
@@ -155,7 +157,7 @@ const TechnicalReport = ({ reportData }) => {
                 {reportData?.metadata?.ssl_issuer || 'Unknown Issuer'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
-                {reportData?.metadata?.tls_version || 'TLS'} · <span className={`ml-1 ${
+                {reportData?.metadata?.tls_version || 'TLS'} Â· <span className={`ml-1 ${
                   reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
                   reportData?.metadata?.ssl_days_left_int <= 30 ? "text-amber-400 font-semibold" :
                   "text-emerald-400 font-semibold"
@@ -186,7 +188,7 @@ const TechnicalReport = ({ reportData }) => {
                 {reportData?.metadata?.https_enforced ?? 'HTTPS Status Unknown'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
-                {reportData?.metadata?.http_protocol || 'HTTP/1.1'} · {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}
+                {reportData?.metadata?.http_protocol || 'HTTP/1.1'} Â· {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
@@ -208,7 +210,7 @@ const TechnicalReport = ({ reportData }) => {
         return (
           <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ ASSESSMENT_COVERAGE</span>
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">â€º_ ASSESSMENT_COVERAGE</span>
             </div>
             {cov.available ? (
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -237,6 +239,8 @@ const TechnicalReport = ({ reportData }) => {
 
 
 
+      <WhatWasTested moduleExecution={reportData?.module_execution} />
+
       {/* 2.5. Exposure */}
       {(() => {
         const exp = reportData?.exposure;
@@ -251,7 +255,7 @@ const TechnicalReport = ({ reportData }) => {
         return (
           <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
             <div className="flex items-center gap-3 mb-4">
-              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ EXPOSURE</span>
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">â€º_ EXPOSURE</span>
             </div>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -397,13 +401,25 @@ const TechnicalReport = ({ reportData }) => {
                                         {finding.impact && finding.impact !== "N/A" && (
                                           <div>
                                             <div className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                              <span>⚠️</span> Security Impact & Risk
+                                              <span>âš ï¸</span> Security Impact & Risk
                                             </div>
                                             <p className="technical-risk-text text-rose-200/80 leading-relaxed text-sm">{finding.impact}</p>
                                           </div>
                                         )}
 
                                         <div className="flex flex-wrap gap-8 mb-4">
+                                          {finding.module && (
+                                            <div>
+                                              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Capability</div>
+                                              <div className="text-slate-300 font-mono text-sm">{getCapabilityLabel(finding.module)}</div>
+                                            </div>
+                                          )}
+                                          {finding.rule_id && (
+                                            <div>
+                                              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Rule ID</div>
+                                              <div className="text-slate-400 font-mono text-xs mt-0.5">{finding.rule_id}</div>
+                                            </div>
+                                          )}
                                           {finding.confidence && finding.confidence !== "N/A" && (
                                             (() => {
                                               const lowerConf = finding.confidence.toString().toLowerCase();

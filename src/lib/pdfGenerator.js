@@ -1,6 +1,7 @@
-import { jsPDF } from "jspdf";
+﻿import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { getTranslation } from "./utils/translations";
+import { getTestedState, getCapabilityLabel, getSimpleSummary } from "./assessmentReporting";
 
 const sanitizeText = (text) => {
   if (typeof text !== 'string') return text;
@@ -228,8 +229,19 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
 
         const findingData = [];
 
-        if (f.module || f.category) {
-          findingData.push(['Module/Category', sanitizeText(`${f.module || 'N/A'} / ${f.category || 'N/A'}`)]);
+                if (f.module) {
+          findingData.push(['Capability', sanitizeText(getCapabilityLabel(f.module))]);
+        } else if (f.category) {
+          findingData.push(['Category', sanitizeText(f.category)]);
+        }
+
+        if (f.rule_id) {
+          findingData.push(['Rule ID', sanitizeText(f.rule_id)]);
+        }
+
+        const verificationState = f.verification_state || f.state;
+        if (verificationState) {
+          findingData.push(['Verification', sanitizeText(verificationState)]);
         }
 
         if (f.description) {
