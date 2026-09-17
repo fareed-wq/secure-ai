@@ -18,6 +18,9 @@ class ExposedFilesModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        attempted = 0
+        completed = 0
+        failed = 0
         scheme = "https" if url.startswith("https") else "http"
         base_url = f"{scheme}://{hostname}/"
         homepage_len = 0
@@ -30,9 +33,14 @@ class ExposedFilesModule(ScannerModule):
 
 
         for env_path in ['/.env', '/api/.env']:
+            attempted += 1
             try:
                 env_url = f"{scheme}://{hostname}{env_path}"
                 resp = safe_request("GET", env_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+                if resp is not None:
+                    completed += 1
+                else:
+                    failed += 1
                 if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                     from urllib.parse import urlparse
                     history = getattr(resp, 'history', [])
@@ -77,13 +85,19 @@ class ExposedFilesModule(ScannerModule):
                                 verification_state="Observed"
                             ))
             except Exception as e:
+                failed += 1
                 logger.debug("ExposedFilesModule env fetch failed: %s", e)
 
 
 
+        attempted += 1
         try:
             git_url = f"{scheme}://{hostname}/.git/HEAD"
             resp = safe_request("GET", git_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+            if resp is not None:
+                completed += 1
+            else:
+                failed += 1
             if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                 from urllib.parse import urlparse
                 history = getattr(resp, 'history', [])
@@ -108,11 +122,17 @@ class ExposedFilesModule(ScannerModule):
                             confidence="High"
                         , rule_id='exposed_file_git_repo'))
         except Exception as e:
+            failed += 1
             logger.debug("ExposedFilesModule git config failed: %s", e)
 
+        attempted += 1
         try:
             git_config_url = f"{scheme}://{hostname}/.git/config"
             resp = safe_request("GET", git_config_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+            if resp is not None:
+                completed += 1
+            else:
+                failed += 1
             if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                 from urllib.parse import urlparse
                 history = getattr(resp, 'history', [])
@@ -134,14 +154,19 @@ class ExposedFilesModule(ScannerModule):
                             owasp="A05: Security Misconfiguration",
                             category="information_exposure"
                         , rule_id='exposed_file_git_config'))
-        except Exception as e: pass
+        except Exception as e: failed += 1
 
         docker_finding_added = False
         for docker_path in ['/docker-compose.yml']:
             if docker_finding_added: break
+            attempted += 1
             try:
                 docker_url = f"{scheme}://{hostname}{docker_path}"
                 resp = safe_request("GET", docker_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+                if resp is not None:
+                    completed += 1
+                else:
+                    failed += 1
                 if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                     from urllib.parse import urlparse
                     history = getattr(resp, 'history', [])
@@ -164,11 +189,16 @@ class ExposedFilesModule(ScannerModule):
                                 category="information_exposure"
                             , rule_id='exposed_file_docker_compose', instance_key=docker_path))
                             docker_finding_added = True
-            except Exception as e: pass
+            except Exception as e: failed += 1
 
+        attempted += 1
         try:
             phpinfo_url = f"{scheme}://{hostname}/phpinfo.php"
             resp = safe_request("GET", phpinfo_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+            if resp is not None:
+                completed += 1
+            else:
+                failed += 1
             if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                 from urllib.parse import urlparse
                 history = getattr(resp, 'history', [])
@@ -191,12 +221,19 @@ class ExposedFilesModule(ScannerModule):
                         confidence="High"
                     , rule_id='exposed_file_phpinfo'))
         except Exception as e:
+            failed += 1
             logger.debug("ExposedFilesModule phpinfo fetch failed: %s", e)
 
         def check_admin_panel(path):
+            nonlocal attempted, completed, failed
+            attempted += 1
             try:
                 target_url = urljoin(base_url, path)
                 resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+                if resp is not None:
+                    completed += 1
+                else:
+                    failed += 1
                 if resp and resp.status_code == 200 and 'text/html' in self.get_header_safe(resp, 'Content-Type', '').lower() and not self.is_spa_fallback(resp, homepage_len):
                     from urllib.parse import urlparse
                     history = getattr(resp, 'history', [])
@@ -218,8 +255,9 @@ class ExposedFilesModule(ScannerModule):
                             category="api_surface"
                         , rule_id='exposed_admin_interface', instance_key=path)
             except requests.exceptions.RequestException:
-                pass
+                failed += 1
             except Exception as e:
+                failed += 1
                 logger.debug("ExposedFilesModule admin check failed: %s", e)
             return None
 
@@ -227,7 +265,12 @@ class ExposedFilesModule(ScannerModule):
         if admin_result:
             findings.append(admin_result)
 
-        return findings
+        if completed == attempted and attempted > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
+        elif completed > 0 and failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL)
+        else:
+            return findings
 
 
 class InformationDisclosureModule(ScannerModule):

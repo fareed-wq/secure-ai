@@ -1,3 +1,4 @@
+from api.scanner.core import ModuleResult, AssessmentOutcome
 from typing import List, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -44,19 +45,25 @@ class NetworkServiceExposureModule(ScannerModule):
                 "If a database is actually running, direct Internet reachability should be reviewed and normally restricted when the database is intended to be private.")
     }
 
-    def _check_port(self, hostname: str, port: int, service: str, severity: str, finding_name: str, desc: str, impact: str) -> Optional[dict]:
+    def _check_port(self, hostname: str, port: int, service: str, severity: str, finding_name: str, desc: str, impact: str):
         sock = None
         try:
             try:
                 infos = socket.getaddrinfo(hostname, port, 0, socket.SOCK_STREAM)
                 if not infos:
-                    return None
+                    return None, False
                 target_ip = infos[0][4][0]
             except Exception:
-                return None
+                return None, False
 
-            # Short timeout per port, safe_create_connection includes SSRF protection
-            sock = safe_create_connection((target_ip, port), timeout=1.5)
+            try:
+                sock = safe_create_connection((target_ip, port), timeout=1.5)
+            except ConnectionRefusedError:
+                return None, True
+            except (socket.timeout, TimeoutError):
+                return None, False
+            except Exception:
+                return None, False
 
             return self.make_finding(
                 name=finding_name,
@@ -70,10 +77,9 @@ class NetworkServiceExposureModule(ScannerModule):
                 owasp="Not Mapped",
                 rule_id="network_port_exposed",
                 instance_key=str(port)
-            )
+            ), True
         except Exception:
-            # Timeout, connection refused, unreachable, unexpected errors -> No finding
-            return None
+            return None, False
         finally:
             if sock is not None:
                 try:
@@ -83,6 +89,9 @@ class NetworkServiceExposureModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session) -> List[dict]:
         findings = []
+        attempted = len(self.TARGET_PORTS)
+        completed = 0
+        failed = 0
 
         # Concurrently check ports
         with ThreadPoolExecutor(max_workers=3) as executor:
@@ -92,8 +101,17 @@ class NetworkServiceExposureModule(ScannerModule):
                 futures.append(executor.submit(self._check_port, hostname, port, service, severity, finding_name, desc, impact))
 
             for future in as_completed(futures):
-                result = future.result()
+                result, success = future.result()
+                if success:
+                    completed += 1
+                else:
+                    failed += 1
                 if result:
                     findings.append(result)
 
-        return findings
+        if completed == attempted and attempted > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
+        elif completed > 0 and failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL)
+        else:
+            return findings
