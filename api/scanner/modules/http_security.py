@@ -536,23 +536,27 @@ class SecurityHeadersModule(ScannerModule):
                         "Content-Security-Policy in Report-Only Mode",
                         "Informational",
                         "Your website has a Content Security Policy (CSP) configured, but it is in 'Report-Only' mode and does not actively block threats.",
-                        csp_ro,
+                        {"header": "Content-Security-Policy-Report-Only", "value": csp_ro},
                         impact="Because the policy is in Report-Only mode, it will not actively block unauthorized resources. Report-Only should be used for testing before enabling full enforcement.",
                         remediation="Once testing is complete, change the header to 'Content-Security-Policy' to enforce the rules.",
                         owasp="A05: Security Misconfiguration",
-                        category="http_headers"
-                    , rule_id="headers_csp_report_only"))
+                        category="http_headers",
+                        rule_id="headers_csp_report_only",
+                        verification_state="Observed"
+                    ))
 
                 findings.append(self.make_finding(
                     "Missing Content-Security-Policy (CSP)",
                     "High",
                     "Your website does not enforce a Content Security Policy (CSP).",
-                    "Header not found in response",
+                    {"header": "Content-Security-Policy", "status": "Not Found"},
                     impact="CSP helps limit which scripts and other resources a browser may execute. If a script-injection vulnerability exists elsewhere, the absence of an enforced CSP can increase its impact.",
                     remediation="Introduce CSP gradually, preferably using Report-Only mode first to identify legitimate resources, then move to an enforced policy once tested.",
                     owasp="A05: Security Misconfiguration",
-                    category="http_headers"
-                , rule_id="headers_csp_missing"))
+                    category="http_headers",
+                    rule_id="headers_csp_missing",
+                    verification_state="Observed"
+                ))
             else:
                 if csp_ro:
                     findings.append(self.make_finding(

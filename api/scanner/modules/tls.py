@@ -66,12 +66,13 @@ class EnhancedTLSModule(ScannerModule):
                                 "Weak TLS Cipher Negotiated",
                                 "Medium",
                                 "The scanner successfully negotiated a known-weak or obsolete encryption method.",
-                                f"Cipher: {cipher_name}",
+                                {"cipher": cipher_name, "weak_keywords_matched": [kw for kw in weak_keywords if kw in cipher_name.upper()]},
                                 impact="Weak cryptography provides insufficient protection for sensitive data in transit.",
                                 remediation="Disable weak ciphers (such as RC4, 3DES, or EXPORT) in your server configuration.",
                                 owasp="A02: Cryptographic Failures",
                                 category="encryption_tls",
-                                rule_id="tls_cipher_weak"
+                                rule_id="tls_cipher_weak",
+                                verification_state="Observed"
                             ))
 
                     subject = dict(x[0] for x in cert.get("subject", []))

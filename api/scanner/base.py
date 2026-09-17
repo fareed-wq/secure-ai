@@ -47,7 +47,8 @@ class ScannerModule(ABC):
         impact: Optional[str] = None,
         domain: str = "",
         rule_id: Optional[str] = None,
-        instance_key: Optional[str] = None
+        instance_key: Optional[str] = None,
+        verification_state: Optional[str] = None
     ) -> dict:
         try:
             limit = 1000 if name in ["Exposed Secret in JS Bundle", "Source Map Leak Detected", "Verbose Error / Stack Trace Detected", "Subdomains Discovered"] else 180
@@ -71,8 +72,33 @@ class ScannerModule(ABC):
             if isinstance(evidence, str):
                 evidence = {"raw": evidence[:limit]}
             elif isinstance(evidence, dict):
-                if "proof_snippet" in evidence and isinstance(evidence["proof_snippet"], str):
-                    evidence["proof_snippet"] = evidence["proof_snippet"][:limit]
+                def clip_collection(col, depth=0):
+                    if depth > 3:
+                        return "[MAX_DEPTH_REACHED]"
+                    if isinstance(col, dict):
+                        keys = list(col.keys())
+                        if len(keys) > 10:
+                            col = {k: col[k] for k in keys[:10]}
+                            col["_truncated"] = "Collection exceeded maximum items"
+                        for k, v in col.items():
+                            if isinstance(v, str):
+                                col[k] = v[:limit]
+                            elif isinstance(v, (dict, list)):
+                                col[k] = clip_collection(v, depth + 1)
+                        return col
+                    elif isinstance(col, list):
+                        if len(col) > 10:
+                            col = col[:10]
+                            col.append("[TRUNCATED: Collection exceeded maximum items]")
+                        for i, item in enumerate(col):
+                            if isinstance(item, str):
+                                col[i] = item[:limit]
+                            elif isinstance(item, (dict, list)):
+                                col[i] = clip_collection(item, depth + 1)
+                        return col
+                    return col
+
+                evidence = clip_collection(evidence)
             else:
                 evidence = {"raw": str(evidence)[:limit]}
 
@@ -131,7 +157,8 @@ class ScannerModule(ABC):
             "cvss": cvss,
             "cvss_score": cvss_score,
             "cvss_severity": cvss_severity,
-            "domain": domain
+            "domain": domain,
+            "state": verification_state
         }
 
         if rule_id and str(rule_id).strip():

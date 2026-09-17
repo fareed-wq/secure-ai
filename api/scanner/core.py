@@ -36,6 +36,11 @@ class Config:
         "F": 0
     }
 
+class VerificationState:
+    OBSERVED = "Observed"
+    INFERRED = "Inferred"
+    NOT_VERIFIED = "Not Verified"
+
 # --- RATE LIMITING STATE ---
 IN_MEMORY_LIMITS = defaultdict(list)
 
