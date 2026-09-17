@@ -487,19 +487,22 @@ class SecurityTxtModule(ScannerModule):
                     # Explicitly reject HTML fallbacks
                     if "<html" not in text.lower():
                         return resp, text
-                return None, None
+                return resp, None
 
             used_target = target_primary
             is_legacy = False
 
             resp, content_text = try_fetch(target_primary)
-            if not resp:
-                resp, content_text = try_fetch(target_fallback)
-                if resp:
+            if not content_text:
+                resp_fallback, content_text = try_fetch(target_fallback)
+                if content_text:
+                    resp = resp_fallback
                     used_target = target_fallback
                     is_legacy = True
+                else:
+                    resp = resp_fallback if resp_fallback else resp
 
-            if resp:
+            if content_text:
                 content_type = self.get_header_safe(resp, "Content-Type", "").lower()
 
                 if is_legacy:
@@ -718,7 +721,11 @@ class SecurityTxtModule(ScannerModule):
                 , rule_id='security_txt_not_found'))
         except Exception as e:
             logger.debug("SecurityTxtModule check failed: %s", e)
-        return findings
+            return findings
+
+        if not resp or (resp.status_code >= 400 and resp.status_code != 404):
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class OpenApiModule(ScannerModule):
@@ -977,5 +984,8 @@ class XmlRpcModule(ScannerModule):
                 , rule_id="api_xmlrpc_exposed"))
         except Exception as e:
             logger.debug("XmlRpcModule check failed: %s", e)
+            return findings
 
-        return findings
+        if not resp or (resp.status_code >= 400 and resp.status_code not in (404, 405)):
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)

@@ -93,14 +93,16 @@ class TestScannerModules(unittest.TestCase):
         target_resp = self.mock_response(status_code=200, text="Contact: mailto:security@google.com\nExpires: 2030-12-31T23:59:59Z", headers={"Content-Type": "text/plain"})
         mock_get.side_effect = [hp_resp, target_resp]
         module = SecurityTxtModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(findings[0]['severity'], 'Passed')
 
     @patch('requests.Session.request')
     def test_cors_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Access-Control-Allow-Origin": "*"})
         module = CORSModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]['severity'], 'Informational')
 
@@ -304,7 +306,8 @@ def test_technology_fingerprint_identity_metadata():
 
     session.request.side_effect = mock_get
 
-    findings = mod.run("https://example.com", "example.com", session)
+    result_findings = mod.run("https://example.com", "example.com", session)
+    findings = _findings(result_findings)
 
     tech_findings = [f for f in findings if f["name"] == "Technology Fingerprint Identified"]
     assert len(tech_findings) == 2
@@ -379,7 +382,8 @@ def test_security_txt_branches():
 
 
     session.request.side_effect = mock_get1
-    findings1 = mod.run("https://example.com", "example.com", session)
+    result_findings1 = mod.run("https://example.com", "example.com", session)
+    findings1 = _findings(result_findings1)
     inv1 = [f for f in findings1 if f["name"] == "security.txt Invalid Expires"]
     assert len(inv1) > 0
     assert inv1[0].get("rule_id") == "security_txt_invalid_expires"
@@ -399,7 +403,8 @@ def test_security_txt_branches():
 
 
     session.request.side_effect = mock_get2
-    findings2 = mod.run("https://example.com", "example.com", session)
+    result_findings2 = mod.run("https://example.com", "example.com", session)
+    findings2 = _findings(result_findings2)
     inv2 = [f for f in findings2 if f["name"] == "security.txt Invalid Expires"]
     assert len(inv2) > 0
     assert inv2[0].get("rule_id") == "security_txt_invalid_expires"
@@ -421,7 +426,8 @@ def test_information_disclosure_identity_metadata():
         return resp
 
     session.request.side_effect = mock_get
-    findings = mod.run("https://example.com", "example.com", session)
+    result_findings = mod.run("https://example.com", "example.com", session)
+    findings = _findings(result_findings)
 
     assert len(findings) > 0
     assert findings[0]['name'] == 'Verbose Server Banner'
@@ -448,7 +454,8 @@ def test_3b2_caa_dnssec_identities(monkeypatch):
         return None
 
     monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query)
-    findings = mod.run("https://example.com", "example.com", session)
+    result_findings = mod.run("https://example.com", "example.com", session)
+    findings = _findings(result_findings)
 
     caa = next((f for f in findings if f["name"] == "CAA Records Observed"), None)
     assert caa and caa.get("rule_id") == "dns_caa_observed"
@@ -468,7 +475,8 @@ def test_3b2_caa_dnssec_identities(monkeypatch):
             return {"Status": 0}
         return None
     monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_missing)
-    findings_missing = mod.run("https://example.com", "example.com", session)
+    result_findings_missing = mod.run("https://example.com", "example.com", session)
+    findings_missing = _findings(result_findings_missing)
 
     caa_m = next((f for f in findings_missing if f["name"] == "CAA Record Not Observed"), None)
     assert caa_m and caa_m.get("rule_id") == "dns_caa_missing"

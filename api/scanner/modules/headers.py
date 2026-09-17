@@ -1,4 +1,5 @@
 from typing import List
+from api.scanner.core import ModuleResult, AssessmentOutcome
 import requests
 from api.scanner.base import ScannerModule
 from api.scanner.transport import safe_request, get_all_headers
@@ -289,7 +290,9 @@ class CORSModule(ScannerModule):
                 category="http_headers"
             , rule_id="cors_strict_enforced"))
 
-        return findings
+        if not request_successful or status is None or status >= 400:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 class PermissionsPolicyModule(ScannerModule):
     module_name = "PermissionsPolicy"

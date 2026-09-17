@@ -1,5 +1,6 @@
 import uuid
 from typing import List
+from api.scanner.core import ModuleResult, AssessmentOutcome
 import requests
 
 from api.scanner.base import ScannerModule
@@ -98,7 +99,9 @@ class DNSCAAModule(ScannerModule):
                     rule_id="dns_wildcard_detected"
                 ))
 
-        return findings
+        if data is None or ds_data is None or wildcard_data is None:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 class DNSEmailSecurityModule(ScannerModule):
     def get_name(self) -> str:
