@@ -67,11 +67,14 @@ class ExposedFilesModule(ScannerModule):
                                 "Exposed .env Configuration File",
                                 "High",
                                 "A configuration file containing sensitive environment variables is publicly visible on your website.",
-                                f"Requested: {env_path}\nValidated environment-variable syntax with a sensitive credential-style key.\nValues redacted.",
+                                {"request_path": env_path, "status_code": resp.status_code, "proof_snippet": "Validated environment-variable syntax. Values redacted."},
                                 impact="If working credentials are exposed, it could allow unauthorized access to the associated service or database.",
                                 owasp="A05: Security Misconfiguration",
-                                category="information_exposure"
-                            , rule_id='exposed_file_env', instance_key=env_path))
+                                category="information_exposure",
+                                rule_id='exposed_file_env',
+                                instance_key=env_path,
+                                verification_state="Observed"
+                            ))
             except Exception as e:
                 logger.debug("ExposedFilesModule env fetch failed: %s", e)
 

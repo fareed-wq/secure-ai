@@ -118,17 +118,24 @@ class TechFingerprintModule(ScannerModule):
 
             for tech, info in detected.items():
                 ver_str = f" {info['version']}" if info['version'] else ""
+                evidence_dict = {"product": tech, "source": info['evidence']}
+                if info.get('version'):
+                    evidence_dict["version"] = info['version']
+
                 findings.append(self.make_finding(
                     "Technology Fingerprint Identified",
                     "Informational",
                     f"The scanner identified the following technology used by the application: {tech}{ver_str}",
-                    f"Detected: {tech}{ver_str}\nEvidence: {info['evidence']}",
+                    evidence_dict,
                     impact="Exposing technology details provides reconnaissance information to external observers.",
                     remediation="Configure server to return generic names or remove headers if applicable.",
                     confidence=info['confidence'],
                     owasp="Not Mapped",
-                    category="technology_detection"
-                , rule_id='technology_detected', instance_key=tech))
+                    category="technology_detection",
+                    rule_id='technology_detected',
+                    instance_key=tech,
+                    verification_state="Inferred"
+                ))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass

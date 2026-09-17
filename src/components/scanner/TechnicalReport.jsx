@@ -315,45 +315,58 @@ const TechnicalReport = ({ reportData }) => {
                                           </div>
                                         )}
 
-                                        {finding.confidence && finding.confidence !== "N/A" && (
-                                          (() => {
-                                            const lowerConf = finding.confidence.toString().toLowerCase();
-                                            let level = 'medium';
-                                            if (lowerConf.includes('high')) level = 'high';
-                                            else if (lowerConf.includes('low')) level = 'low';
-                                            else if (lowerConf.includes('%')) {
-                                              const num = parseInt(lowerConf.replace(/[^0-9]/g, ''), 10);
-                                              if (!isNaN(num)) {
-                                                if (num >= 80) level = 'high';
-                                                else if (num <= 40) level = 'low';
-                                              }
-                                            }
+                                        <div className="flex flex-wrap gap-8 mb-4">
+                                          {finding.confidence && finding.confidence !== "N/A" && (
+                                            (() => {
+                                              const lowerConf = finding.confidence.toString().toLowerCase();
+                                              let level = 'medium';
+                                              if (lowerConf.includes('high')) level = 'high';
+                                              else if (lowerConf.includes('low')) level = 'low';
 
-                                            let colorClass = 'text-amber-300';
-                                            if (level === 'high') colorClass = 'text-emerald-400';
-                                            else if (level === 'low') colorClass = 'text-slate-400';
+                                              let colorClass = 'text-amber-300';
+                                              if (level === 'high') colorClass = 'text-emerald-400';
+                                              else if (level === 'low') colorClass = 'text-slate-400';
 
-                                            return (
-                                              <div>
-                                                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Confidence Score</div>
-                                                <div className={`technical-confidence ${colorClass} font-bold mb-4`}>{finding.confidence}</div>
+                                              return (
+                                                <div>
+                                                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Confidence Score</div>
+                                                  <div className={`technical-confidence ${colorClass} font-bold text-sm`}>{finding.confidence}</div>
+                                                </div>
+                                              );
+                                            })()
+                                          )}
+
+                                          {finding.state && (
+                                            <div>
+                                              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Verification State</div>
+                                              <div className={`technical-state font-bold text-sm ${finding.state.toLowerCase() === 'observed' ? 'text-blue-400' : 'text-purple-400'}`}>
+                                                {finding.state.toUpperCase()}
                                               </div>
-                                            );
-                                          })()
-                                        )}
+                                            </div>
+                                          )}
+                                        </div>
 
                                         {finding.evidence && finding.evidence !== "N/A" && (
                                           <div>
                                             <div className="flex items-center justify-between mb-2">
-                                              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Raw Evidence</div>
-                                              <button onClick={() => copyToClipboard(typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence))} className="text-slate-500 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors">
+                                              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Evidence</div>
+                                              <button onClick={() => navigator.clipboard.writeText(typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence, null, 2))} className="text-slate-500 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors">
                                                 <Copy className="w-3 h-3" /> Copy
                                               </button>
                                             </div>
-                                            {typeof finding.evidence === 'object' && finding.evidence.request_path ? (
+                                            {typeof finding.evidence === 'object' && Object.keys(finding.evidence).length > 0 && !finding.evidence.raw && !finding.evidence.request_path ? (
+                                              <div className="technical-evidence bg-slate-950 border border-slate-700/50 rounded-lg p-4 font-mono text-sm space-y-2">
+                                                {Object.entries(finding.evidence).map(([key, value]) => (
+                                                  <div key={key} className="text-slate-300">
+                                                    <span className="text-slate-500 mr-2">{key}:</span>
+                                                    {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            ) : typeof finding.evidence === 'object' && finding.evidence.request_path ? (
                                               <div className="technical-evidence bg-slate-950 border border-slate-700/50 rounded-lg p-4 font-mono text-sm">
                                                 <div className="text-cyan-400 mb-2">
-                                                  GET {finding.evidence.request_path} • Status: {finding.evidence.status_code} • {finding.evidence.content_type}
+                                                  GET {finding.evidence.request_path} &bull; Status: {finding.evidence.status_code}
                                                 </div>
                                                 {finding.evidence.proof_snippet && (
                                                   <div className="text-slate-300 border-t border-slate-700/50 pt-2 mt-2">
@@ -363,7 +376,7 @@ const TechnicalReport = ({ reportData }) => {
                                               </div>
                                             ) : (
                                               <pre className="technical-evidence bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
-                                                {typeof finding.evidence === 'object' && finding.evidence.raw ? finding.evidence.raw : (typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence))}
+                                                {typeof finding.evidence === 'object' && finding.evidence.raw ? finding.evidence.raw : (typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence, null, 2))}
                                               </pre>
                                             )}
                                           </div>
