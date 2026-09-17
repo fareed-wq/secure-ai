@@ -40,6 +40,14 @@ export const generateStructuredPdf = (scanData, scanMode, reportMode) => {
   yPos += 6;
   doc.text(sanitizeText(`Overall Security Score: ${scanData.score !== undefined ? scanData.score + '/100' : 'N/A'}`), margin, yPos);
 
+  yPos += 6;
+  const covData = scanData.report_data?.assessment_coverage || scanData.assessment_coverage;
+  if (covData && covData.available) {
+    doc.text(sanitizeText(`Assessment Coverage: ${Math.round(covData.percentage)}% of intended checks completed`), margin, yPos);
+  } else {
+    doc.text(sanitizeText('Assessment Coverage: Not available'), margin, yPos);
+  }
+
   // Draw Line
   yPos += 10;
   doc.setDrawColor(203, 213, 225); // slate-300

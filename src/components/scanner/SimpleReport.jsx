@@ -152,6 +152,14 @@ const SimpleReport = ({ reportData }) => {
           penalties={reportData?.penalties}
           severityCounts={reportData?.severity_counts}
         />
+
+        {reportData?.assessment_coverage?.available && (
+          <div className="mt-4 text-center">
+            <span className="text-sm text-slate-400">Assessment Coverage: </span>
+            <span className="text-sm font-bold text-slate-200">{Math.round(reportData.assessment_coverage.percentage)}%</span>
+            <span className="text-xs text-slate-500 ml-2">of intended checks completed</span>
+          </div>
+        )}
       </div>
 
       {/* 1.5. Target Surface Breakdown */}

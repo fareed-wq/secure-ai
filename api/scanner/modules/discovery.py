@@ -265,10 +265,13 @@ class ExposedFilesModule(ScannerModule):
         if admin_result:
             findings.append(admin_result)
 
+        progress = {"attempted": attempted, "completed": completed, "failed": failed}
         if completed == attempted and attempted > 0:
-            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED, assessment_progress=progress)
         elif completed > 0 and failed > 0:
-            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL)
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL, assessment_progress=progress)
+        elif failed > 0 and completed == 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
         else:
             return findings
 

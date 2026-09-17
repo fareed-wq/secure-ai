@@ -3,6 +3,107 @@ import requests
 from api.scanner.core import Config
 from api.scanner.data.registry import DOMAIN_MAP
 
+
+def _calculate_assessment_coverage(module_execution):
+    """Calculate assessment coverage from module execution metadata."""
+    if module_execution is None or not isinstance(module_execution, dict):
+        return {
+            "percentage": None,
+            "available": False,
+            "reason": "Missing execution metadata"
+        }
+
+    applicable_count = 0
+    sum_contribution = 0.0
+    completed_count = 0
+    partial_count = 0
+    failed_count = 0
+    blocked_count = 0
+    na_count = 0
+    exec_incomplete_count = 0
+
+    for m_name, meta in module_execution.items():
+        state = meta.get("state")
+        outcome = meta.get("assessment_outcome")
+
+        # Execution-level failures
+        if state in ("FAILED", "TIMED_OUT", "NOT_COMPLETED"):
+            exec_incomplete_count += 1
+            applicable_count += 1
+            continue
+
+        # RETURNED but no explicit outcome = unknown
+        if state == "RETURNED" and not outcome:
+            return {
+                "percentage": None,
+                "available": False,
+                "reason": "Module '" + str(m_name) + "' returned without assessment outcome"
+            }
+
+        if outcome == "NOT_APPLICABLE":
+            na_count += 1
+            continue
+
+        applicable_count += 1
+
+        if outcome == "COMPLETED":
+            completed_count += 1
+            sum_contribution += 1.0
+        elif outcome == "BLOCKED":
+            blocked_count += 1
+        elif outcome == "FAILED":
+            failed_count += 1
+        elif outcome == "PARTIAL":
+            prog = meta.get("assessment_progress")
+            if not prog or not isinstance(prog, dict):
+                return {
+                    "percentage": None,
+                    "available": False,
+                    "reason": "Module '" + str(m_name) + "' has PARTIAL outcome without valid progress"
+                }
+            attempted = prog.get("attempted", 0)
+            completed_p = prog.get("completed", 0)
+            failed_p = prog.get("failed", 0)
+            if not isinstance(attempted, int) or not isinstance(completed_p, int) or not isinstance(failed_p, int):
+                return {
+                    "percentage": None,
+                    "available": False,
+                    "reason": "Module '" + str(m_name) + "' has non-integer progress values"
+                }
+            if attempted <= 0 or completed_p < 0 or failed_p < 0 or (completed_p + failed_p) > attempted:
+                return {
+                    "percentage": None,
+                    "available": False,
+                    "reason": "Module '" + str(m_name) + "' has invalid progress values"
+                }
+            partial_count += 1
+            sum_contribution += completed_p / attempted
+        else:
+            return {
+                "percentage": None,
+                "available": False,
+                "reason": "Module '" + str(m_name) + "' has unknown outcome '" + str(outcome) + "'"
+            }
+
+    if applicable_count == 0:
+        return {
+            "percentage": None,
+            "available": False,
+            "reason": "No applicable modules executed"
+        }
+
+    return {
+        "percentage": 100.0 * sum_contribution / applicable_count,
+        "available": True,
+        "applicable_modules": applicable_count,
+        "completed_modules": completed_count,
+        "partial_modules": partial_count,
+        "failed_modules": failed_count,
+        "blocked_modules": blocked_count,
+        "not_applicable_modules": na_count,
+        "execution_incomplete_modules": exec_incomplete_count
+    }
+
 def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: Optional[requests.Response], scan_incomplete: bool = False, completed_modules: int = -1, module_execution: dict = None) -> dict:
     # Auto-assign security domains to findings based on their source module
     for f in all_findings:
@@ -287,10 +388,14 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     # Therefore, we do not have enough data to issue a 100/100 score.
     final_score = score if completed_modules != 0 else None
 
+    # Phase 1B8 - Assessment Coverage Calculation
+    assessment_coverage = _calculate_assessment_coverage(module_execution)
+
     result = {
         "url": url,
         "status": "INCOMPLETE" if scan_incomplete else "COMPLETED",
         "score": final_score,
+        "assessment_coverage": assessment_coverage,
         "penalties": penalties,
         "severity_counts": severity_counts,
         "category_scores": category_scores,

@@ -56,8 +56,9 @@ class TestPhase1B4Outcomes(unittest.TestCase):
         module = ExposedFilesModule()
         result = module.run(self.url, self.hostname, self.session)
         # Should return raw list (legacy/null outcome)
-        self.assertIsInstance(result, list)
-        self.assertEqual(len(result), 0)
+        self.assertEqual(result.assessment_outcome, "FAILED")
+        self.assertIsInstance(result.findings, list)
+        self.assertEqual(len(getattr(result, "findings", result)), 0)
 
     @patch('api.scanner.modules.discovery.safe_request')
     def test_exposed_files_safe_request_returns_none(self, mock_request):
@@ -66,7 +67,8 @@ class TestPhase1B4Outcomes(unittest.TestCase):
         module = ExposedFilesModule()
         result = module.run(self.url, self.hostname, self.session)
         # Should count as all failed -> legacy list
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, "FAILED")
+        self.assertIsInstance(result.findings, list)
 
     # --- InfrastructureIntelligenceModule ---
     @patch('api.scanner.modules.infrastructure.safe_create_connection')
@@ -109,7 +111,8 @@ class TestPhase1B4Outcomes(unittest.TestCase):
         mock_sock.side_effect = Exception("Sock fail")
         module = InfrastructureIntelligenceModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, "FAILED")
+        self.assertIsInstance(result.findings, list)
 
     # --- NetworkServiceExposureModule ---
     @patch('api.scanner.modules.network_services.socket.getaddrinfo')
@@ -148,7 +151,8 @@ class TestPhase1B4Outcomes(unittest.TestCase):
 
         module = NetworkServiceExposureModule()
         result = module.run(self.url, self.hostname, self.session)
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, "FAILED")
+        self.assertIsInstance(result.findings, list)
 
     @patch('api.scanner.modules.network_services.socket.getaddrinfo')
     @patch('api.scanner.modules.network_services.safe_create_connection')
@@ -159,7 +163,8 @@ class TestPhase1B4Outcomes(unittest.TestCase):
         module = NetworkServiceExposureModule()
         result = module.run(self.url, self.hostname, self.session)
         # Should count as all failed -> legacy list
-        self.assertIsInstance(result, list)
+        self.assertEqual(result.assessment_outcome, "FAILED")
+        self.assertIsInstance(result.findings, list)
 
 if __name__ == '__main__':
     unittest.main()

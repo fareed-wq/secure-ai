@@ -201,6 +201,42 @@ const TechnicalReport = ({ reportData }) => {
 
 
 
+      {/* 2. Assessment Coverage */}
+      {(() => {
+        const cov = reportData?.assessment_coverage;
+        if (!cov) return null;
+        return (
+          <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ ASSESSMENT_COVERAGE</span>
+            </div>
+            {cov.available ? (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div className="text-center">
+                  <div className="text-4xl font-black text-slate-50 font-mono">{Math.round(cov.percentage)}%</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Coverage</div>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex flex-wrap gap-2 text-xs font-mono">
+                    <span className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{cov.completed_modules} Completed</span>
+                    {cov.partial_modules > 0 && <span className="px-2 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">{cov.partial_modules} Partial</span>}
+                    {cov.failed_modules > 0 && <span className="px-2 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20">{cov.failed_modules} Failed</span>}
+                    {cov.blocked_modules > 0 && <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-400 border border-slate-700">{cov.blocked_modules} Blocked</span>}
+                    {cov.execution_incomplete_modules > 0 && <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-400 border border-slate-700">{cov.execution_incomplete_modules} Incomplete</span>}
+                    {cov.not_applicable_modules > 0 && <span className="px-2 py-1 rounded bg-slate-800/60 text-slate-500 border border-slate-800">N/A: {cov.not_applicable_modules}</span>}
+                  </div>
+                  <div className="text-[11px] text-slate-500">Assessment Coverage shows how much of the scanner's intended assessment completed successfully. It is separate from the security score.</div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-slate-500">Assessment Coverage: Not available</div>
+            )}
+          </div>
+        );
+      })()}
+
+
+
       {/* 3. Tab Switcher: Vulnerabilities vs Compliance */}
       <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-xl print:hidden">
         <button
