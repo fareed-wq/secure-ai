@@ -145,7 +145,9 @@ class TechFingerprintModule(ScannerModule):
             logger = logging.getLogger(__name__)
             logger.error(f"TechFingerprintModule error: {e}", exc_info=True)
 
-        return findings
+        if 'resp' not in locals() or not resp:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 class CORSModule(ScannerModule):
     module_name = "CORS"
@@ -300,6 +302,7 @@ class PermissionsPolicyModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        resp = None
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             policy_str = self.get_header_safe(resp, "Permissions-Policy", "")
@@ -355,7 +358,10 @@ class PermissionsPolicyModule(ScannerModule):
             pass
         except Exception:
             pass
-        return findings
+
+        if not resp or getattr(resp, "status_code", 500) >= 400:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 class CSPQualityModule(ScannerModule):
     module_name = "CSPQuality"

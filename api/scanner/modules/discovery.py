@@ -322,7 +322,10 @@ class InformationDisclosureModule(ScannerModule):
                         break
         except Exception as e:
             logger.debug("InformationDisclosureModule head check failed: %s", e)
-        return findings
+
+        if 'resp' not in locals() or not resp:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class RobotsTxtModule(ScannerModule):

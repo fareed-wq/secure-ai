@@ -45,7 +45,8 @@ class TestScannerModules(unittest.TestCase):
     def test_tech_fingerprint_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Server": "nginx", "X-Powered-By": "PHP"})
         module = TechFingerprintModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 2)
         self.assertTrue(all(f['name'] == 'Technology Fingerprint Identified' for f in findings))
 
@@ -53,14 +54,16 @@ class TestScannerModules(unittest.TestCase):
     def test_tech_fingerprint_module_empty(self, mock_get):
         mock_get.return_value = self.mock_response(headers={})
         module = TechFingerprintModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 0)
 
     @patch('requests.Session.request')
     def test_information_disclosure_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Server": "nginx/1.18.0"})
         module = InformationDisclosureModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]['name'], 'Verbose Server Banner')
 
@@ -68,7 +71,8 @@ class TestScannerModules(unittest.TestCase):
     def test_information_disclosure_module_safe(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Server": "nginx"})
         module = InformationDisclosureModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 0)
 
     @patch('requests.Session.request')
@@ -118,7 +122,8 @@ class TestScannerModules(unittest.TestCase):
     def test_https_redirect_module(self, mock_get):
         mock_get.return_value = self.mock_response(status_code=301, headers={"Location": "https://google.com"})
         module = HTTPSRedirectModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(findings[0]['severity'], 'Passed')
         self.assertEqual(findings[0]['rule_id'], 'https_redirect_configured')
 
@@ -141,7 +146,8 @@ class TestScannerModules(unittest.TestCase):
         mock_ssl.return_value = mock_context
 
         module = EnhancedTLSModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
 
         self.assertTrue(any(f['severity'] == 'Passed' for f in findings))
         self.assertTrue(any(f['name'] == 'Wildcard Certificate in Use' for f in findings))
@@ -162,7 +168,8 @@ class TestScannerModules(unittest.TestCase):
     def test_advanced_security_headers_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={})
         module = AdvancedSecurityHeadersModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 3)
 
     # Edge Cases & Timeouts
@@ -178,7 +185,8 @@ class TestScannerModules(unittest.TestCase):
     def test_redirect_loop_handling(self, mock_get):
         mock_get.side_effect = requests.exceptions.TooManyRedirects("Exceeded redirects")
         module = HTTPSRedirectModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 0)
 
     def test_is_public_hostname(self):
