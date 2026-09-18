@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { Terminal, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
+import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
 import { WhatWasTested } from './WhatWasTested';
 import { getCapabilityLabel } from '../../lib/assessmentReporting';
@@ -301,17 +301,108 @@ const TechnicalReport = ({ reportData }) => {
         >
           Vulnerabilities
         </button>
-        <button
-          onClick={() => setActiveView('compliance')}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'compliance' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          Framework Mapping
-        </button>
+                  <button
+            onClick={() => setActiveView('compliance')}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'compliance' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Framework Mapping
+          </button>
+          <button
+            onClick={() => setActiveView('technologies')}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'technologies' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Technologies
+          </button>
       </div>
 
       {/* 4. Main Content Area */}
       <div>
-        {activeView === 'vulnerabilities' && (
+        
+          {activeView === 'technologies' && (
+            <div className="w-full max-w-full overflow-hidden space-y-6">
+              <div className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+                <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                  <Server className="w-4 h-4 text-sky-400" />
+                  <h2 className="font-bold text-slate-50 text-lg">Detected Technologies</h2>
+                </div>
+                
+                <div className="p-6 text-slate-300">
+                  {(!reportData?.technology_identities || reportData.technology_identities.length === 0) ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <Terminal className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                      <p>No deterministic technology identities were observed in this scan.</p>
+                    </div>
+                  ) : (
+                    <div className="w-full overflow-x-auto">
+                      <table className="technical-findings-table w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                            <th className="px-6 py-4">Component</th>
+                            <th className="px-6 py-4">Version</th>
+                            <th className="px-6 py-4">Layer</th>
+                            <th className="px-6 py-4">Confidence</th>
+                            <th className="px-6 py-4">Identity (CPE)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {reportData.technology_identities.map((tech, idx) => {
+                            const getLayerDetails = (layer) => {
+                              switch(layer) {
+                                case 'web_server_proxy': return { label: 'Web Server / Proxy', icon: <Globe className="w-4 h-4 text-blue-400 mr-2 inline" /> };
+                                case 'application_framework': return { label: 'Application Framework', icon: <Layers className="w-4 h-4 text-purple-400 mr-2 inline" /> };
+                                case 'cms': return { label: 'Content Management System', icon: <Box className="w-4 h-4 text-orange-400 mr-2 inline" /> };
+                                case 'language_runtime': return { label: 'Language / Runtime', icon: <Cpu className="w-4 h-4 text-green-400 mr-2 inline" /> };
+                                case 'javascript_framework': return { label: 'JavaScript Framework', icon: <Terminal className="w-4 h-4 text-yellow-400 mr-2 inline" /> };
+                                default: return { label: layer ? layer.replace(/_/g, ' ') : 'Unknown Layer', icon: <Box className="w-4 h-4 text-slate-400 mr-2 inline" /> };
+                              }
+                            };
+                            
+                            const getConfBadge = (conf) => {
+                              const confStr = (conf || '').toUpperCase();
+                              if (confStr === 'HIGH' || confStr.includes('100%')) return <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">High</span>;
+                              if (confStr === 'MEDIUM') return <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">Medium</span>;
+                              if (confStr === 'LOW') return <span className="bg-slate-500/10 text-slate-400 border border-slate-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">Low</span>;
+                              return <span className="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-xs font-bold uppercase">{confStr || 'UNKNOWN'}</span>;
+                            };
+                            
+                            const layerInfo = getLayerDetails(tech.layer);
+                            
+                            return (
+                              <tr key={idx} className="border-b border-slate-800/50 hover:bg-slate-900/30 transition-colors">
+                                <td className="px-6 py-4">
+                                  <div className="font-bold text-slate-200">{tech.product}</div>
+                                  {tech.vendor && <div className="text-xs text-slate-500">{tech.vendor}</div>}
+                                </td>
+                                <td className="px-6 py-4 font-mono text-sm">
+                                  {tech.version && tech.version_precision !== 'UNKNOWN' ? <span className="text-sky-300">{tech.version}</span> : <span className="text-slate-600">-</span>}
+                                </td>
+                                <td className="px-6 py-4 text-sm whitespace-nowrap">
+                                  {layerInfo.icon}
+                                  <span className="capitalize">{layerInfo.label}</span>
+                                </td>
+                                <td className="px-6 py-4">
+                                  {getConfBadge(tech.confidence)}
+                                </td>
+                                <td className="px-6 py-4 font-mono text-xs">
+                                  {tech.cpe ? (
+                                    <code className="bg-slate-900 border border-slate-700 text-pink-400 px-2 py-1 rounded select-all break-all">{tech.cpe}</code>
+                                  ) : (
+                                    <span className="text-slate-600">-</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeView === 'vulnerabilities' && (
           <div className="w-full max-w-full overflow-hidden space-y-6">
             {domainGroups.map((group) => {
               const knownDomainKeys = new Set(domainGroups.map(g => g.key));

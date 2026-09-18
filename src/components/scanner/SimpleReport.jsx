@@ -58,6 +58,10 @@ const SimpleReport = ({ reportData }) => {
     return 70;
   };
 
+  
+  const techIdentities = reportData?.technology_identities || [];
+  const uniqueProducts = Array.from(new Set(techIdentities.map(t => t.product))).filter(Boolean);
+
   const healthMetrics = [
     { name: 'Transport & TLS', val: calculateDomainHealth('transport_tls'), icon: Lock },
     { name: 'Browser Defense', val: calculateDomainHealth('browser_defense'), icon: ShieldAlert },
@@ -81,6 +85,21 @@ const SimpleReport = ({ reportData }) => {
             <p className="text-sm text-slate-500 mt-4 leading-relaxed">
               This assessment is a passive, external scan of publicly observable behavior. It does not replace comprehensive penetration testing or guarantee that no other vulnerabilities exist.
             </p>
+              {uniqueProducts.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-slate-800">
+                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <Layers className="w-4 h-4" /> Detected Technology Profile
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueProducts.map((prod, i) => (
+                      <span key={i} className="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-full text-xs font-medium">
+                        {prod}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             {highRiskCount > 0 && (
               <div className="rounded-xl border border-rose-500/30 border-l-4 border-l-rose-500 bg-rose-500/10 p-3.5 flex items-center gap-3 my-4">
                 <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse flex-shrink-0" />
