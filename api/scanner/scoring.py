@@ -1,4 +1,4 @@
-from typing import Optional
+﻿from typing import Optional
 import requests
 from api.scanner.core import Config
 from api.scanner.data.registry import DOMAIN_MAP
@@ -423,7 +423,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
         if techs:
             frontend_stack = techs[0]
             if subtechs:
-                frontend_subtext = " • ".join(subtechs)
+                frontend_subtext = " â€¢ ".join(subtechs)
             else:
                 frontend_subtext = "Verified Modern Stack"
 
@@ -431,7 +431,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     target_surface["frontend_subtext"] = frontend_subtext
     target_surface["frontend_pill"] = "VERIFIED STACK"
 
-    # 2. API Surface — extract precise endpoint path from evidence
+    # 2. API Surface â€” extract precise endpoint path from evidence
     api_surface = "Unknown" if scan_incomplete else "No Public Spec Exposed"
     api_subtext = "Not Assessed" if scan_incomplete else "GraphQL / OpenAPI Clean"
     api_pill = "NO DATA" if scan_incomplete else "CLEAN SURFACE"
@@ -540,5 +540,13 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
 
     if module_execution is not None:
         result["module_execution"] = module_execution
+
+    try:
+        from api.scanner.technology_identity import extract_technology_identities
+        result['technology_identities'] = extract_technology_identities(all_findings)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f'Failed to extract technology identities: {e}')
+        result['technology_identities'] = []
 
     return result
