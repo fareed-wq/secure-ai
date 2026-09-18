@@ -8,6 +8,7 @@ import { CSPAnalysisPanel } from './CSPAnalysisPanel';
 
 const TechnicalReport = ({ reportData }) => {
   const [expandedRow, setExpandedRow] = useState(null);
+  const [expandedTechRow, setExpandedTechRow] = useState(null);
   const [activeView, setActiveView] = useState('vulnerabilities'); // 'vulnerabilities' | 'compliance'
   const [snippetTabs, setSnippetTabs] = useState({}); // { findingIndex: 'nginx' }
 
@@ -342,6 +343,7 @@ const TechnicalReport = ({ reportData }) => {
                             <th className="px-6 py-4">Layer</th>
                             <th className="px-6 py-4">Confidence</th>
                             <th className="px-6 py-4">Identity (CPE)</th>
+                            <th className="px-6 py-4 text-right">Details</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -368,29 +370,70 @@ const TechnicalReport = ({ reportData }) => {
                             const layerInfo = getLayerDetails(tech.layer);
                             
                             return (
-                              <tr key={idx} className="border-b border-slate-800/50 hover:bg-slate-900/30 transition-colors">
-                                <td className="px-6 py-4">
-                                  <div className="font-bold text-slate-200">{tech.product}</div>
-                                  {tech.vendor && <div className="text-xs text-slate-500">{tech.vendor}</div>}
-                                </td>
-                                <td className="px-6 py-4 font-mono text-sm">
-                                  {tech.version && tech.version_precision !== 'UNKNOWN' ? <span className="text-sky-300">{tech.version}</span> : <span className="text-slate-600">-</span>}
-                                </td>
-                                <td className="px-6 py-4 text-sm whitespace-nowrap">
-                                  {layerInfo.icon}
-                                  <span className="capitalize">{layerInfo.label}</span>
-                                </td>
-                                <td className="px-6 py-4">
-                                  {getConfBadge(tech.confidence)}
-                                </td>
-                                <td className="px-6 py-4 font-mono text-xs">
-                                  {tech.cpe ? (
-                                    <code className="bg-slate-900 border border-slate-700 text-pink-400 px-2 py-1 rounded select-all break-all">{tech.cpe}</code>
-                                  ) : (
-                                    <span className="text-slate-600">-</span>
-                                  )}
-                                </td>
-                              </tr>
+                              <React.Fragment key={idx}>
+                                <tr 
+                                  onClick={() => setExpandedTechRow(expandedTechRow === idx ? null : idx)}
+                                  className={`border-b border-slate-800/50 cursor-pointer hover:bg-slate-900/30 transition-colors ${expandedTechRow === idx ? 'bg-slate-800/30' : ''}`}
+                                >
+                                  <td className="px-6 py-4">
+                                    <div className="font-bold text-slate-200">{tech.product}</div>
+                                    {tech.vendor && <div className="text-xs text-slate-500">{tech.vendor}</div>}
+                                  </td>
+                                  <td className="px-6 py-4 font-mono text-sm">
+                                    {tech.version && tech.version_precision !== 'UNKNOWN' ? <span className="text-sky-300">{tech.version}</span> : <span className="text-slate-600">-</span>}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm whitespace-nowrap">
+                                    {layerInfo.icon}
+                                    <span className="capitalize">{layerInfo.label}</span>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    {getConfBadge(tech.confidence)}
+                                  </td>
+                                  <td className="px-6 py-4 font-mono text-xs">
+                                    {tech.cpe ? (
+                                      <code className="bg-slate-900 border border-slate-700 text-pink-400 px-2 py-1 rounded select-all break-all">{tech.cpe}</code>
+                                    ) : (
+                                      <span className="text-slate-600">-</span>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 text-right align-top">
+                                    <div className="flex flex-col items-end gap-1">
+                                      <button aria-label={expandedTechRow === idx ? "Collapse Details" : "Expand Details"} className="text-slate-500 hover:text-slate-50 transition-colors">
+                                        {expandedTechRow === idx ? <ChevronUp className="w-5 h-5 inline" /> : <ChevronDown className="w-5 h-5 inline" />}
+                                      </button>
+                                      {tech.cves && tech.cves.length > 0 && (
+                                        <span className="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-1.5 py-0.5 rounded font-bold uppercase whitespace-nowrap">{tech.cves.length} CVEs</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                                
+                                {expandedTechRow === idx && (
+                                  <tr className="technical-finding-expanded print:hidden">
+                                    <td colSpan={6} className="p-0 border-b-2 border-slate-700/50">
+                                      <div className="bg-slate-950 p-6 transition-all duration-300">
+                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Known Vulnerabilities</div>
+                                        
+                                        {(!tech.cves || tech.cves.length === 0) ? (
+                                          <div className="text-slate-500 text-sm">No associated CVEs observed.</div>
+                                        ) : (
+                                          <div className="space-y-3">
+                                            {tech.cves.map((cve, cveIdx) => (
+                                              <div key={cveIdx} className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                  <span className="font-mono font-bold text-rose-300 text-sm">{cve.id}</span>
+                                                  {getSeverityBadge(cve.severity.charAt(0).toUpperCase() + cve.severity.slice(1).toLowerCase())}
+                                                </div>
+                                                <p className="text-slate-400 text-sm leading-relaxed">{cve.summary}</p>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
                             );
                           })}
                         </tbody>

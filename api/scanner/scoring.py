@@ -543,7 +543,9 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
 
     try:
         from api.scanner.technology_identity import extract_technology_identities
-        result['technology_identities'] = extract_technology_identities(all_findings)
+        from api.scanner.cve_mapper import enrich_with_cves
+        identities = extract_technology_identities(all_findings)
+        result['technology_identities'] = enrich_with_cves(identities)
     except Exception as e:
         import logging
         logging.getLogger(__name__).error(f'Failed to extract technology identities: {e}')
