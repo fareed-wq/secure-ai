@@ -51,6 +51,7 @@ async def verify_qstash_signature(request: Request):
 @worker_router.post("/enrich-cve")
 async def enrich_cve_worker(request: Request, verified: bool = Depends(verify_qstash_signature)):
     import time
+    import copy
     start_time = time.time()
     BUDGET = 45.0
 
@@ -150,54 +151,85 @@ async def enrich_cve_worker(request: Request, verified: bool = Depends(verify_qs
                 return JSONResponse(status_code=500, content={"error": "persistence_failed"})
             return JSONResponse(status_code=503, content={"error": f"{reason_str}, retry", "status": 503})
 
+    def _get_match_metadata(identity: dict) -> tuple:
+        match_confidence = identity.get("cpe_match_confidence", "LOW")
+        rationale_code = None
+        rationale_text = None
+
+        sources = identity.get("sources", [])
+        if any(s.get("source_type") in ("server_header", "x_powered_by") for s in sources):
+            match_confidence = "MEDIUM"
+            rationale_code = "SPOOFABLE_SOURCE"
+            rationale_text = "Match is based on a spoofable HTTP header."
+
+        return match_confidence, rationale_code, rationale_text
+
     try:
-        enriched_identities = []
+        identity_parsed_cves = []
+        cpe_to_parsed_cves = {}
+        cpe_needs_cache_save = {}
+        has_terminal_intelligence_failure = False
+
+        import time
+        import copy
+        from datetime import datetime, timezone
         for identity in identities:
             if time.time() - start_time > BUDGET:
                 logger.warning(f"Time budget exceeded for scan {scan_id}")
                 return release_worker_state("budget")
 
-            cpe = identity.get("cpe")
-            precision = identity.get("version_precision")
-
-            if "cves" not in identity:
-                identity["cves"] = []
-
-            if not cpe or precision not in ("EXACT_OBSERVED", "PARSED_OBSERVED"):
-                enriched_identities.append(identity)
+            cpe = identity.get("cpe_candidate") or identity.get("cpe")
+            if identity.get("vulnerability_state") == "NOT_EVALUATED" and identity.get("vulnerability_state_reason") in ("INSUFFICIENT_VERSION", "NO_CPE_MAPPING"):
+                identity_parsed_cves.append((identity, None))
                 continue
 
-            # If already has CVEs and not empty (from partial execution), we could skip
-            if identity.get("cves") and len(identity["cves"]) > 0:
-                enriched_identities.append(identity)
+            if not cpe or identity.get("vulnerability_state") in ("MATCHED", "NO_MATCH", "UNAVAILABLE"):
+                identity_parsed_cves.append((identity, None))
                 continue
 
-            # 3. Check Cache
-            cache_resp = requests.get(f"{SUPABASE_URL.rstrip('/')}/rest/v1/cpe_cve_cache?cpe=eq.{requests.utils.quote(cpe)}", headers=headers, timeout=remaining_time(10.0))
+            cache_key = f"{cpe}#v4"
+            if cache_key in cpe_to_parsed_cves:
+                identity_parsed_cves.append((identity, cpe_to_parsed_cves[cache_key]))
+                continue
+
             cached_cves = None
-            if cache_resp.status_code == 200 and cache_resp.json():
-                cache_row = cache_resp.json()[0]
-                expires_at_str = cache_row.get("expires_at")
-                if expires_at_str:
-                    expires_at = datetime.fromisoformat(expires_at_str.replace("Z", "+00:00"))
-                    if expires_at > datetime.now(timezone.utc):
-                        cached_cves = cache_row.get("cves_json", [])
+            try:
+                cache_resp = requests.get(
+                    f"{SUPABASE_URL.rstrip('/')}/rest/v1/cpe_cve_cache?cpe=eq.{requests.utils.quote(cache_key)}",
+                    headers=headers,
+                    timeout=remaining_time(10.0)
+                )
+                if cache_resp.status_code == 200:
+                    cache_data = cache_resp.json()
+                    if cache_data and len(cache_data) > 0:
+                        cached_cves = cache_data[0].get("cves_json")
+            except Exception:
+                pass
 
             if cached_cves is not None:
-                identity["cves"] = cached_cves
-                enriched_identities.append(identity)
+                cpe_to_parsed_cves[cache_key] = cached_cves
+                cpe_needs_cache_save[cache_key] = False
+                identity_parsed_cves.append((identity, cached_cves))
                 continue
 
-            # 4. NVD Lookup (Cache Miss)
             try:
-                url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName={requests.utils.quote(cpe)}"
-                resp = requests.get(url, timeout=remaining_time(5.0))
+                nvd_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName={requests.utils.quote(cpe)}&isVulnerable"
+                resp = requests.get(nvd_url, timeout=remaining_time(15.0))
+
+                if resp.status_code in (403, 429) or resp.status_code >= 500:
+                    if not is_last_retry:
+                        return release_worker_state(f"nvd_transient")
+                    else:
+                        identity["vulnerability_state"] = "UNAVAILABLE"
+                        identity["vulnerability_state_reason"] = "INTELLIGENCE_UNAVAILABLE"
+                        identity["cves"] = []
+                        identity_parsed_cves.append((identity, None))
+                        continue
 
                 if resp.status_code == 200:
                     data = resp.json()
-                    vulnerabilities = data.get("vulnerabilities", [])
-
                     parsed_cves = []
+                    vulnerabilities = data.get("vulnerabilities", [])
                     for vuln_item in vulnerabilities:
                         if len(parsed_cves) >= 5:
                             break
@@ -211,62 +243,250 @@ async def enrich_cve_worker(request: Request, verified: bool = Depends(verify_qs
                                 summary = desc.get("value")
                                 break
 
-                        metrics = cve_data.get("metrics", {})
-                        severity = "UNKNOWN"
-                        if "cvssMetricV31" in metrics and len(metrics["cvssMetricV31"]) > 0:
-                            severity = metrics["cvssMetricV31"][0].get("cvssData", {}).get("baseSeverity", "UNKNOWN")
-                        elif "cvssMetricV30" in metrics and len(metrics["cvssMetricV30"]) > 0:
-                            severity = metrics["cvssMetricV30"][0].get("cvssData", {}).get("baseSeverity", "UNKNOWN")
-                        elif "cvssMetricV2" in metrics and len(metrics["cvssMetricV2"]) > 0:
-                            severity = metrics["cvssMetricV2"][0].get("baseSeverity", "UNKNOWN")
+                        # Phase 5B: CVSS, CWE, Metadata
+                        cvss_assessments = []
+                        cwes = []
+                        metadata = {
+                            "published_at": cve_data.get("published"),
+                            "last_modified_at": cve_data.get("lastModified"),
+                            "fetched_at": datetime.now(timezone.utc).isoformat(),
+                            "source_identifier": cve_data.get("sourceIdentifier")
+                        }
 
-                        parsed_cves.append({"id": cve_id, "severity": severity, "summary": summary})
+                        try:
+                            metrics = cve_data.get("metrics", {})
+                            for version_key in ["cvssMetricV40", "cvssMetricV31", "cvssMetricV30", "cvssMetricV2"]:
+                                if version_key in metrics:
+                                    for metric in metrics[version_key]:
+                                        try:
+                                            cvss_data = metric.get("cvssData", {})
+                                            base_severity = cvss_data.get("baseSeverity")
+                                            if version_key == "cvssMetricV2" and not base_severity:
+                                                base_severity = metric.get("baseSeverity")
 
-                    identity["cves"] = parsed_cves
+                                            base_score = cvss_data.get("baseScore")
+                                            if base_score is None and version_key == "cvssMetricV2":
+                                                base_score = metric.get("baseScore")
+                                            if base_score is not None:
+                                                cvss_assessments.append({
+                                                    "version": cvss_data.get("version"),
+                                                    "source": metric.get("source"),
+                                                    "type": metric.get("type"),
+                                                    "base_score": base_score,
+                                                    "base_severity": base_severity,
+                                                    "vector_string": cvss_data.get("vectorString")
+                                                })
+                                        except Exception:
+                                            pass
+                        except Exception:
+                            pass
 
-                    # 5. Save to Cache
-                    from datetime import timedelta
-                    now = datetime.now(timezone.utc)
-                    expires = (now + timedelta(days=1)).isoformat()
+                        try:
+                            for weakness in cve_data.get("weaknesses", []):
+                                try:
+                                    cwe_source = weakness.get("source")
+                                    cwe_type = weakness.get("type")
+                                    for desc in weakness.get("description", []):
+                                        cwe_id = desc.get("value")
+                                        if cwe_id:
+                                            cwes.append({
+                                                "cwe_id": cwe_id,
+                                                "source": cwe_source,
+                                                "type": cwe_type,
+                                                "name": None
+                                            })
+                                except Exception:
+                                    pass
+                        except Exception:
+                            pass
 
+                        parsed_cves.append({
+                            "id": cve_id,
+                            "summary": summary,
+                            "cvss_assessments": cvss_assessments,
+                            "cwes": cwes,
+                            "metadata": metadata,
+                            "epss": None
+                        })
+
+                    cpe_to_parsed_cves[cache_key] = parsed_cves
+                    cpe_needs_cache_save[cache_key] = True
+                    identity_parsed_cves.append((identity, parsed_cves))
+                else:
+                    has_terminal_intelligence_failure = True
+                    identity["vulnerability_state"] = "UNAVAILABLE"
+                    identity["vulnerability_state_reason"] = "INTELLIGENCE_UNAVAILABLE"
+                    identity["cves"] = []
+                    identity_parsed_cves.append((identity, None))
+                    continue
+
+            except (requests.exceptions.Timeout, Exception) as e:
+                if not is_last_retry:
+                    return release_worker_state("nvd_timeout" if isinstance(e, requests.exceptions.Timeout) else "nvd_exception")
+                else:
+                    has_terminal_intelligence_failure = True
+                    identity["vulnerability_state"] = "UNAVAILABLE"
+                    identity["vulnerability_state_reason"] = "INTELLIGENCE_UNAVAILABLE"
+                    identity["cves"] = []
+                    identity_parsed_cves.append((identity, None))
+                    continue
+
+        # Pass 2: EPSS Fetch globally across all new CVEs
+        unique_cves_for_epss = set()
+        for cache_key, needs_save in cpe_needs_cache_save.items():
+            if needs_save:
+                for c in cpe_to_parsed_cves[cache_key]:
+                    unique_cves_for_epss.add(c["id"])
+
+        unique_cves_for_epss = list(unique_cves_for_epss)
+        epss_terminal_failure = False
+        epss_map = {}
+
+        if unique_cves_for_epss:
+            MAX_CVE_QUERY_CHARS = 1800
+            batches = []
+            current_batch = []
+            current_len = 0
+            for c_id in unique_cves_for_epss:
+                added_len = len(c_id) if not current_batch else len(c_id) + 1
+                if current_len + added_len > MAX_CVE_QUERY_CHARS:
+                    batches.append(current_batch)
+                    current_batch = [c_id]
+                    current_len = len(c_id)
+                else:
+                    current_batch.append(c_id)
+                    current_len += added_len
+            if current_batch:
+                batches.append(current_batch)
+
+            for batch in batches:
+                try:
+                    epss_url = f"https://api.first.org/data/v1/epss?cve={','.join(batch)}"
+                    epss_resp = requests.get(epss_url, timeout=remaining_time(5.0))
+                    if epss_resp.status_code == 200:
+                        data = epss_resp.json().get("data", [])
+                        for item in data:
+                            c_id = item.get("cve")
+                            if not c_id or c_id in epss_map:
+                                continue
+                            try:
+                                score_raw = item.get("epss")
+                                perc_raw = item.get("percentile")
+                                if isinstance(score_raw, bool) or isinstance(perc_raw, bool) or score_raw is None or perc_raw is None:
+                                    continue
+
+                                score_val = float(score_raw)
+                                perc_val = float(perc_raw)
+                                import math
+                                if math.isnan(score_val) or math.isinf(score_val) or math.isnan(perc_val) or math.isinf(perc_val):
+                                    continue
+                                if not (0.0 <= score_val <= 1.0) or not (0.0 <= perc_val <= 1.0):
+                                    continue
+
+                                score_date = item.get("date") or item.get("created")
+                                if not score_date or not isinstance(score_date, str):
+                                    continue
+
+                                import re
+                                if not re.match(r"^\d{4}-\d{2}-\d{2}$", score_date):
+                                    continue
+
+                                try:
+                                    datetime.strptime(score_date, "%Y-%m-%d")
+                                except ValueError:
+                                    continue
+
+                                epss_map[c_id] = {
+                                    "score": score_val,
+                                    "percentile": perc_val,
+                                    "score_date": score_date,
+                                    "source": "FIRST",
+                                    "fetched_at": datetime.now(timezone.utc).isoformat()
+                                }
+                            except Exception:
+                                pass
+                    else:
+                        if not is_last_retry:
+                            return release_worker_state("EPSS_TRANSIENT")
+                        else:
+                            epss_terminal_failure = True
+                            break
+                except Exception as e:
+                    if not is_last_retry:
+                        return release_worker_state("EPSS_TRANSIENT")
+                    else:
+                        epss_terminal_failure = True
+                        break
+
+        from datetime import timedelta
+        import copy
+        now = datetime.now(timezone.utc)
+        expires = (now + timedelta(days=1)).isoformat()
+
+        for cache_key, parsed_cves in cpe_to_parsed_cves.items():
+            if cpe_needs_cache_save[cache_key]:
+                for c in parsed_cves:
+                    c["epss"] = epss_map.get(c["id"])
+
+                if not epss_terminal_failure:
                     cache_payload = {
-                        "cpe": cpe,
+                        "cpe": cache_key,
                         "cves_json": parsed_cves,
                         "fetched_at": now.isoformat(),
                         "expires_at": expires,
                         "updated_at": now.isoformat()
                     }
-                    requests.post(
-                        f"{SUPABASE_URL.rstrip('/')}/rest/v1/cpe_cve_cache",
-                        headers={**headers, "Prefer": "resolution=merge-duplicates"},
-                        json=cache_payload,
-                        timeout=remaining_time(10.0)
-                    )
-                else:
-                    logger.warning(f"NVD API returned {resp.status_code} for {cpe}")
-                    return release_worker_state("nvd_error")
-            except requests.exceptions.Timeout:
-                logger.warning(f"NVD API timeout for {cpe}")
-                return release_worker_state("nvd_timeout")
-            except Exception as e:
-                logger.warning(f"Failed to fetch CVEs for {cpe}: {e}")
-                return release_worker_state("nvd_exception")
+                    try:
+                        requests.post(
+                            f"{SUPABASE_URL.rstrip('/')}/rest/v1/cpe_cve_cache",
+                            headers={**headers, "Prefer": "resolution=merge-duplicates"},
+                            json=cache_payload,
+                            timeout=remaining_time(5.0)
+                        )
+                    except Exception:
+                        pass
+
+        enriched_identities = []
+        for identity, parsed_cves in identity_parsed_cves:
+            if parsed_cves is not None:
+                cves_copy = copy.deepcopy(parsed_cves)
+                match_confidence, rationale_code, rationale_text = _get_match_metadata(identity)
+                for c in cves_copy:
+                    c["match_confidence"] = match_confidence
+                    c["rationale_code"] = rationale_code
+                    c["rationale_text"] = rationale_text
+
+                identity["cves"] = cves_copy
+                identity["vulnerability_state"] = "MATCHED" if cves_copy else "NO_MATCH"
+                identity["vulnerability_state_reason"] = None if cves_copy else "NO_KNOWN_NVD_MATCH"
 
             enriched_identities.append(identity)
 
         save_res = requests.post(
             f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/atomic_save_enriched_identities",
             headers=headers,
-            json={"p_scan_id": scan_id, "p_expected_status": "RUNNING", "p_status": "COMPLETED", "p_identities": enriched_identities},
+            json={"p_scan_id": scan_id, "p_expected_status": "RUNNING", "p_status": "FAILED" if has_terminal_intelligence_failure else "COMPLETED", "p_identities": enriched_identities},
             timeout=remaining_time(10.0)
         )
         if save_res.status_code != 200 or save_res.json() is not True:
             logger.error(f"Failed to persist enriched identities and COMPLETED state for {scan_id}")
             return JSONResponse(status_code=500, content={"error": "persistence_failed"})
-        return JSONResponse(status_code=200, content={"status": "completed"})
+        return JSONResponse(status_code=200, content={"status": "failed" if has_terminal_intelligence_failure else "completed"})
 
     except Exception as e:
         logger.error(f"Enrichment worker failed: {e}")
+        if is_last_retry:
+            try:
+                res = requests.post(
+                    f"{SUPABASE_URL.rstrip('/')}/rest/v1/rpc/atomic_update_cve_status",
+                    headers=headers,
+                    json={"p_scan_id": scan_id, "p_expected_status": "RUNNING", "p_status": "FAILED"}
+                )
+                if res.status_code == 200 and res.json() is True:
+                    return JSONResponse(status_code=200, content={"status": "failed"})
+            except Exception as final_e:
+                logger.error(f"Failed to set status to FAILED: {final_e}")
+
         try:
             return release_worker_state("worker_exception")
         except Exception as inner_e:
