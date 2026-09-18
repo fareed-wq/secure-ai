@@ -252,6 +252,43 @@ def compare_reports(old_scan: Dict[str, Any], new_scan: Dict[str, Any]) -> Dict[
         added.extend(v)
     added.extend(final_unmatched_new_stable_from_old)
 
+    old_tech = old_data.get("technology_identities") or []
+    new_tech = new_data.get("technology_identities") or []
+    
+    tech_added = []
+    tech_removed = []
+    tech_version_changed = []
+    new_cves = []
+    
+    old_tech_map = {(t.get("layer"), t.get("product")): t for t in old_tech}
+    new_tech_map = {(t.get("layer"), t.get("product")): t for t in new_tech}
+    
+    for key, new_t in new_tech_map.items():
+        if key not in old_tech_map:
+            tech_added.append(new_t)
+        else:
+            old_t = old_tech_map[key]
+            if new_t.get("version") and old_t.get("version") and new_t.get("version") != old_t.get("version"):
+                tech_version_changed.append({
+                    "product": new_t.get("product"),
+                    "old_version": old_t.get("version"),
+                    "new_version": new_t.get("version")
+                })
+                
+            old_cves = {c.get("id") for c in (old_t.get("cves") or [])}
+            for new_c in (new_t.get("cves") or []):
+                if new_c.get("id") not in old_cves:
+                    new_cves.append({
+                        "product": new_t.get("product"),
+                        "cve_id": new_c.get("id"),
+                        "severity": new_c.get("severity"),
+                        "summary": new_c.get("summary")
+                    })
+                    
+    for key, old_t in old_tech_map.items():
+        if key not in new_tech_map:
+            tech_removed.append(old_t)
+
     score_change = new_score - old_score
 
     return {
@@ -266,5 +303,9 @@ def compare_reports(old_scan: Dict[str, Any], new_scan: Dict[str, Any]) -> Dict[
         "regressed": regressed,
         "added": added,
         "removed": removed,
-        "unchanged": unchanged
+        "unchanged": unchanged,
+        "tech_added": tech_added,
+        "tech_removed": tech_removed,
+        "tech_version_changed": tech_version_changed,
+        "new_cves": new_cves
     }

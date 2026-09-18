@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
-import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Plus, Minus, Equal } from 'lucide-react';
+import { ArrowLeft, Loader2, TrendingUp, TrendingDown, Plus, Minus, Equal , Layers, Tag, Info, AlertTriangle} from "lucide-react";
 
 import { scanApi } from '../lib/api/scanner';
 import { useAuth } from '../contexts/AuthContext';
@@ -295,6 +295,86 @@ export default function HistoryCompare() {
           </div>
 
 
+
+          
+          {/* Technology & Stack Changes */}
+          {((data.tech_added && data.tech_added.length > 0) || 
+            (data.tech_removed && data.tech_removed.length > 0) || 
+            (data.tech_version_changed && data.tech_version_changed.length > 0) || 
+            (data.new_cves && data.new_cves.length > 0)) && (
+            <div className="mb-10 p-6 bg-slate-900 border border-slate-800 rounded-xl shadow-lg">
+              <h2 className="text-xl font-black text-slate-200 mb-6 flex items-center gap-2">
+                <Layers className="w-5 h-5 text-indigo-400" /> Technology & Stack Changes
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Tech Added & Removed */}
+                <div className="space-y-4">
+                  {data.tech_added && data.tech_added.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Plus className="w-3 h-3" /> Added</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {data.tech_added.map((t, i) => (
+                          <span key={`add-${i}`} className="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded text-xs font-medium">
+                            {t.product} {t.version && <span className="opacity-60">{t.version}</span>}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {data.tech_removed && data.tech_removed.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Minus className="w-3 h-3" /> Removed</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {data.tech_removed.map((t, i) => (
+                          <span key={`rem-${i}`} className="px-2.5 py-1 bg-slate-800 border border-slate-700 text-slate-400 rounded text-xs font-medium opacity-75">
+                            {t.product}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Tech Version Changes & New CVEs */}
+                <div className="space-y-4">
+                  {data.tech_version_changed && data.tech_version_changed.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-bold text-sky-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Info className="w-3 h-3" /> Version Updates</h3>
+                      <div className="space-y-2">
+                        {data.tech_version_changed.map((t, i) => (
+                          <div key={`ver-${i}`} className="text-sm bg-sky-500/5 border border-sky-500/10 px-3 py-2 rounded flex items-center gap-2">
+                            <span className="font-bold text-slate-300">{t.product}</span>
+                            <span className="text-slate-500 line-through text-xs">{t.old_version}</span>
+                            <ArrowRight className="w-3 h-3 text-sky-500" />
+                            <span className="text-sky-300 font-bold text-xs">{t.new_version}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {data.new_cves && data.new_cves.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-bold text-rose-400 uppercase tracking-widest mb-2 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> New Vulnerabilities Detected</h3>
+                      <div className="space-y-2">
+                        {data.new_cves.map((c, i) => (
+                          <div key={`cve-${i}`} className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-lg">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-rose-300 font-mono font-bold text-sm">{c.cve_id}</span>
+                              <span className="text-[10px] uppercase font-bold text-rose-200 bg-rose-500/30 px-1.5 rounded">{c.severity}</span>
+                              <span className="text-xs text-slate-400 ml-auto">on {c.product}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Sections */}
 
