@@ -2,6 +2,28 @@
 import copy
 from typing import List, Dict, Optional, Any
 
+CPE_MAP = {
+    "nginx": "cpe:2.3:a:nginx:nginx",
+    "Microsoft IIS": "cpe:2.3:a:microsoft:internet_information_services",
+    "WordPress": "cpe:2.3:a:wordpress:wordpress",
+    "Apache": "cpe:2.3:a:apache:http_server",
+    "PHP": "cpe:2.3:a:php:php",
+    "jQuery": "cpe:2.3:a:jquery:jquery",
+    "Node.js": "cpe:2.3:a:nodejs:node.js",
+    "React": "cpe:2.3:a:facebook:react",
+    "Vue.js": "cpe:2.3:a:vuejs:vue"
+}
+
+def _generate_cpe(product: str, version: Optional[str], precision: str) -> Optional[str]:
+    if not product or product not in CPE_MAP:
+        return None
+    if not version or precision not in ("EXACT_OBSERVED", "PARSED_OBSERVED"):
+        return None
+    # Safely encode/validate CPE 2.3 components
+    if not re.match(r'^[a-zA-Z0-9\.\-_]+$', version):
+        return None
+    return f"{CPE_MAP[product]}:{version}:*:*:*:*:*:*:*"
+
 # Phase 4A: Real-Producer + Determinism Hardening
 
 def normalize_vendor(product: str) -> Optional[str]:
@@ -116,8 +138,9 @@ def deduplicate_identities(identities: List[Dict]) -> List[Dict]:
                 existing["verification_state"] = ident.get("verification_state", "NOT_VERIFIED")
                 existing["version_precision"] = ident.get("version_precision", "UNKNOWN")
                 
-    # Sort sources deterministically inside each merged identity
+    # Finalize derived fields and sort sources
     for k in merged:
+        merged[k]["cpe"] = _generate_cpe(merged[k]["product"], merged[k]["version"], merged[k]["version_precision"])
         merged[k]["sources"].sort(key=lambda x: (x.get("module", ""), x.get("rule_id", ""), x.get("source_type", "")))
         
     return sorted(list(merged.values()), key=lambda x: (x.get("layer", ""), x.get("vendor") or "", x.get("product", ""), x.get("version") or ""))
