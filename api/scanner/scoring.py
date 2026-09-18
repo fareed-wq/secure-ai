@@ -253,6 +253,34 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
             "cvss": None
         })
 
+    identities = []
+    try:
+        from api.scanner.technology_identity import extract_technology_identities
+        from api.scanner.cve_mapper import enrich_with_cves
+        identities = enrich_with_cves(extract_technology_identities(all_findings))
+        
+        for tech in identities:
+            for cve in tech.get("cves") or []:
+                cve_sev = (cve.get("severity") or "UNKNOWN").upper()
+                mapped_sev = "Low"
+                if cve_sev == "CRITICAL": mapped_sev = "Critical"
+                elif cve_sev == "HIGH": mapped_sev = "High"
+                elif cve_sev == "MEDIUM": mapped_sev = "Medium"
+                
+                all_findings.append({
+                    "rule_id": f"cve_{cve['id'].lower().replace('-', '_')}",
+                    "name": f"{cve['id']} in {tech.get('product', 'Unknown')}",
+                    "severity": mapped_sev,
+                    "category": "vulnerable_components",
+                    "confidence": "High",
+                    "instance_key": tech.get('product', ''),
+                    "description": cve.get('summary', ''),
+                    "evidence": tech.get('cpe') or tech.get('version', '')
+                })
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f'Failed to extract/enrich technology identities: {e}')
+
     # --- SCORING & CATEGORY ENGINE ---
     severity_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0, "Passed": 0}
     penalties = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0}
@@ -263,7 +291,8 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
         "http_headers": 0,
         "domain_email": 0,
         "session_cookies": 0,
-        "information_exposure": 0
+        "information_exposure": 0,
+        "vulnerable_components": 0
     }
 
     owasp_categories = set()
@@ -541,14 +570,6 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     if module_execution is not None:
         result["module_execution"] = module_execution
 
-    try:
-        from api.scanner.technology_identity import extract_technology_identities
-        from api.scanner.cve_mapper import enrich_with_cves
-        identities = extract_technology_identities(all_findings)
-        result['technology_identities'] = enrich_with_cves(identities)
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).error(f'Failed to extract technology identities: {e}')
-        result['technology_identities'] = []
+    result['technology_identities'] = identities
 
     return result
