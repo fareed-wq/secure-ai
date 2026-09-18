@@ -256,30 +256,10 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     identities = []
     try:
         from api.scanner.technology_identity import extract_technology_identities
-        from api.scanner.cve_mapper import enrich_with_cves
-        identities = enrich_with_cves(extract_technology_identities(all_findings))
-        
-        for tech in identities:
-            for cve in tech.get("cves") or []:
-                cve_sev = (cve.get("severity") or "UNKNOWN").upper()
-                mapped_sev = "Low"
-                if cve_sev == "CRITICAL": mapped_sev = "Critical"
-                elif cve_sev == "HIGH": mapped_sev = "High"
-                elif cve_sev == "MEDIUM": mapped_sev = "Medium"
-                
-                all_findings.append({
-                    "rule_id": f"cve_{cve['id'].lower().replace('-', '_')}",
-                    "name": f"{cve['id']} in {tech.get('product', 'Unknown')}",
-                    "severity": mapped_sev,
-                    "category": "vulnerable_components",
-                    "confidence": "High",
-                    "instance_key": tech.get('product', ''),
-                    "description": cve.get('summary', ''),
-                    "evidence": tech.get('cpe') or tech.get('version', '')
-                })
+        identities = extract_technology_identities(all_findings)
     except Exception as e:
         import logging
-        logging.getLogger(__name__).error(f'Failed to extract/enrich technology identities: {e}')
+        logging.getLogger(__name__).error(f'Failed to extract technology identities: {e}')
 
     # --- SCORING & CATEGORY ENGINE ---
     severity_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0, "Passed": 0}
