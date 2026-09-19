@@ -5,14 +5,25 @@ os.environ["QSTASH_CURRENT_SIGNING_KEY"] = "test"
 os.environ["QSTASH_NEXT_SIGNING_KEY"] = "test"
 
 import json
+import pytest
 from fastapi.testclient import TestClient
 from api.index import app
 from api.scanner.enrich_worker import verify_qstash_signature
 from unittest.mock import patch, Mock
 import requests
 
-app.dependency_overrides[verify_qstash_signature] = lambda: True
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def override_qstash_signature():
+    original = app.dependency_overrides.get(verify_qstash_signature)
+    app.dependency_overrides[verify_qstash_signature] = lambda: True
+    yield
+    if original is not None:
+        app.dependency_overrides[verify_qstash_signature] = original
+    elif verify_qstash_signature in app.dependency_overrides:
+        del app.dependency_overrides[verify_qstash_signature]
 
 @patch("api.scanner.enrich_worker.requests.get")
 @patch("api.scanner.enrich_worker.requests.post")
@@ -166,10 +177,10 @@ def test_enrich_worker_nvd_timeout_retries(mock_post, mock_get):
     assert mock_post.call_args_list[-1][1]["json"]["p_new_status"] == "QUEUED"
 
 def test_enrich_worker_signature_fail():
-    override = app.dependency_overrides.pop(verify_qstash_signature, None)
+    app.dependency_overrides.pop(verify_qstash_signature, None)
     resp = client.post("/api/internal/enrich-cve", json={"scan_id": "scan-123"})
     assert resp.status_code == 401
-    app.dependency_overrides[verify_qstash_signature] = override
+    # The autouse fixture will safely clean up at teardown.
 
 @patch("api.scanner.enrich_worker.requests.get")
 @patch("api.scanner.enrich_worker.requests.post")
