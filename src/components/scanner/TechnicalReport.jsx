@@ -71,7 +71,7 @@ const TechnicalReport = ({ reportData }) => {
 
         {/* Top Header Bar */}
         <div className="flex items-center gap-3 mb-2">
-          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ SCAN_METADATA</span>
+          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ SCAN_METADATA</span>
           <span className="text-slate-600 font-mono text-xs">/</span>
           <div className="flex items-center gap-2">
             <div className="bg-emerald-500 animate-pulse w-2 h-2 rounded-full"></div>
@@ -212,7 +212,7 @@ const TechnicalReport = ({ reportData }) => {
         return (
           <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ ASSESSMENT_COVERAGE</span>
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ ASSESSMENT_COVERAGE</span>
             </div>
             {cov.available ? (
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -257,7 +257,7 @@ const TechnicalReport = ({ reportData }) => {
         return (
           <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
             <div className="flex items-center gap-3 mb-4">
-              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ EXPOSURE</span>
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ EXPOSURE</span>
             </div>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
