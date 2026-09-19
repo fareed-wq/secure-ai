@@ -347,6 +347,8 @@ async def enrich_cve_worker(request: Request, verified: bool = Depends(verify_qs
                                         parts = [p for p in _re.split(r'[\s\-_]+', str(k).strip()) if p]
                                         if not parts:
                                             return ""
+                                        if len(parts) == 1:
+                                            return parts[0][:1].lower() + parts[0][1:]
                                         return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
 
                                     if isinstance(options_list, list):

@@ -788,6 +788,7 @@ def test_enrich_worker_kev_ssvc_serialization(mock_post, mock_get):
                                 "version": "2.0.3",
                                 "timestamp": "2024-02-01",
                                 "options": {
+                                    "technicalImpact": "total",
                                     "Technical Impact": "total",
                                     "Exploitation": "active",
                                     "Automatable": "no"
