@@ -1,6 +1,8 @@
 import React from 'react';
 import { getTranslation, getBusinessRisk, getEffort } from '../../lib/utils/translations';
 import SeverityBadge from './SeverityBadge';
+import { calculateFindingPriority } from '../../utils/priority';
+
 
 const FindingCard = ({ issue, idx }) => {
   const trans = getTranslation(issue);
@@ -76,8 +78,9 @@ const FindingCard = ({ issue, idx }) => {
           issue.severity === 'Informational' ? 'simple-business-risk-info' :
           'simple-business-risk-low'
         } ${risk.container} w-full md:w-80`}>
-          <div className="mb-1">
+          <div className="mb-1 flex items-center gap-2">
             <SeverityBadge severity={issue.severity} />
+            <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">Priority: {calculateFindingPriority(issue)}</span>
           </div>
           <div className={`simple-business-risk-description ${risk.text}`}>{risk.desc}</div>
         </div>

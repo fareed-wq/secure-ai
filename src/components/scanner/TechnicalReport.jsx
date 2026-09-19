@@ -1,4 +1,5 @@
-﻿import React, { useState } from 'react';
+﻿import { calculateFindingPriority, calculateCvePriority } from '../../utils/priority';
+import React, { useState } from 'react';
 import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
 import { WhatWasTested } from './WhatWasTested';
@@ -423,6 +424,9 @@ const TechnicalReport = ({ reportData }) => {
                                                 <div className="flex items-center gap-3 mb-2">
                                                   <span className="font-mono font-bold text-rose-300 text-sm">{cve.id}</span>
                                                   {getSeverityBadge(cve.severity.charAt(0).toUpperCase() + cve.severity.slice(1).toLowerCase())}
+                                                    <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 ml-2">
+                                                      Priority: {calculateCvePriority(tech, cve)}
+                                                    </span>
                                                 </div>
                                                 <p className="text-slate-400 text-sm leading-relaxed">{cve.summary}</p>
                                               </div>
@@ -488,6 +492,11 @@ const TechnicalReport = ({ reportData }) => {
                               >
                               <td className="px-6 py-4 whitespace-nowrap align-top">
                                 {getSeverityBadge(finding.severity)}
+                                  <div className="mt-1">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
+                                      Priority: {calculateFindingPriority(finding)}
+                                    </span>
+                                  </div>
                             </td>
                             <td className="px-6 py-4 font-bold text-slate-200 align-top">
                               <div>{finding.name}</div>
