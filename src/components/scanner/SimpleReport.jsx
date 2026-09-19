@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check, Shield, Layers, Code2, Box, Mail, ChevronDown } from 'lucide-react';
 import FindingCard from './FindingCard';
@@ -173,29 +173,33 @@ const SimpleReport = ({ reportData }) => {
           severityCounts={reportData?.severity_counts}
         />
 
-        {reportData?.assessment_coverage?.available && (
-          <div className="mt-4 text-center">
-            <span className="text-sm text-slate-400">Assessment Coverage: </span>
-            <span className="text-sm font-bold text-slate-200">{Math.round(reportData.assessment_coverage.percentage)}%</span>
-            <span className="text-xs text-slate-500 ml-2">of intended checks completed</span>
-          </div>
-        )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            {reportData?.assessment_coverage?.available && (
+              <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 text-left flex flex-col justify-center">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Assessment Coverage</div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-slate-200">{Math.round(reportData.assessment_coverage.percentage)}%</span>
+                  <span className="text-xs text-slate-500">of intended checks completed</span>
+                </div>
+              </div>
+            )}
 
-        {reportData?.exposure && reportData.exposure.level && (
-          <div className="mt-2 text-center">
-            <span className="text-sm text-slate-400">Exposure: </span>
-            <span className={`text-sm font-bold ${
-              reportData.exposure.level === 'HIGH' ? 'text-red-400' :
-              reportData.exposure.level === 'MODERATE' ? 'text-amber-400' :
-              reportData.exposure.level === 'LOW' ? 'text-emerald-400' : 'text-slate-400'
-            }`}>
-              {reportData.exposure.level === 'HIGH' ? 'This site exposes additional externally reachable surfaces.' :
-               reportData.exposure.level === 'MODERATE' ? 'This site is publicly reachable on the web.' :
-               reportData.exposure.level === 'LOW' ? 'This target appears limited to private/local network addressing.' :
-               'Exposure could not be determined from this scan.'}
-            </span>
+            {reportData?.exposure && reportData.exposure.level && (
+              <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 text-left flex flex-col justify-center">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Exposure</div>
+                <div className={`text-sm font-bold leading-tight ${
+                  reportData.exposure.level === 'HIGH' ? 'text-red-400' :
+                  reportData.exposure.level === 'MODERATE' ? 'text-amber-400' :
+                  reportData.exposure.level === 'LOW' ? 'text-emerald-400' : 'text-slate-400'
+                }`}>
+                  {reportData.exposure.level === 'HIGH' ? 'This site exposes additional externally reachable surfaces.' :
+                   reportData.exposure.level === 'MODERATE' ? 'This site is publicly reachable on the web.' :
+                   reportData.exposure.level === 'LOW' ? 'This target appears limited to private/local network addressing.' :
+                   'Exposure could not be determined from this scan.'}
+                </div>
+              </div>
+            )}
           </div>
-        )}
       </div>
 
       {/* 1.5. Target Surface Breakdown */}

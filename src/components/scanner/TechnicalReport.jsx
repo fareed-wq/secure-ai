@@ -268,10 +268,12 @@ const TechnicalReport = ({ reportData }) => {
         else if (exp.level === "LOW") { levelColor = "text-emerald-400"; bgColor = "bg-emerald-500/10 border-emerald-500/20"; }
 
         return (
-          <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ EXPOSURE</span>
-            </div>
+          <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
+              <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4">
+                <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ EXPOSURE</span>
+                <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
+              </summary>
+              <div className="mt-4">
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
               <div className="text-center min-w-[100px]">
@@ -302,7 +304,8 @@ const TechnicalReport = ({ reportData }) => {
                 )}
               </div>
             </div>
-          </div>
+            </div>
+          </details>
         );
       })()}
 
@@ -403,13 +406,17 @@ const TechnicalReport = ({ reportData }) => {
                                   <td className="px-6 py-4">
                                     {getConfBadge(tech.confidence)}
                                   </td>
-                                  <td className="px-6 py-4 font-mono text-xs">
-                                    {tech.cpe ? (
-                                      <code className="bg-slate-900 border border-slate-700 text-pink-400 px-2 py-1 rounded select-all break-all">{tech.cpe}</code>
-                                    ) : (
-                                      <span className="text-slate-600">-</span>
-                                    )}
-                                  </td>
+                                  <td className="px-6 py-4">
+                                      {tech.cpe ? (
+                                        <div className="overflow-x-auto max-w-[200px] sm:max-w-xs hide-scrollbar">
+                                          <code className="bg-slate-900 border border-slate-700 text-pink-400 px-2 py-1 rounded select-all whitespace-nowrap font-mono text-xs inline-block">
+                                            {tech.cpe}
+                                          </code>
+                                        </div>
+                                      ) : (
+                                        <span className="text-slate-600 font-mono text-xs">-</span>
+                                      )}
+                                    </td>
                                   <td className="px-6 py-4 text-right align-top">
                                     <div className="flex flex-col items-end gap-1">
                                       <button aria-label={expandedTechRow === idx ? "Collapse Details" : "Expand Details"} className="text-slate-500 hover:text-slate-50 transition-colors">
@@ -505,8 +512,12 @@ const TechnicalReport = ({ reportData }) => {
 
           {activeView === 'vulnerabilities' && (
           <div className="w-full max-w-full overflow-hidden space-y-6">
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-3">Understanding Priority (P1–P5)</h3>
+              <details className="group bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
+                  <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-3">
+                    <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-0">Understanding Priority (P1–P5)</h3>
+                    <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
+                  </summary>
+                  <div className="mt-4">
                 <p className="text-slate-400 text-sm mb-4">
                   Priority indicates <strong className="text-slate-300">remediation urgency</strong> and is not the same as Severity.
                 </p>
@@ -541,6 +552,7 @@ const TechnicalReport = ({ reportData }) => {
                   <p className="italic">CVSS indicates vulnerability severity; EPSS indicates exploitation likelihood. Priority uses these signals for remediation prioritization.</p>
                 </div>
               </div>
+            </details>
 
             {domainGroups.map((group) => {
               const knownDomainKeys = new Set(domainGroups.map(g => g.key));

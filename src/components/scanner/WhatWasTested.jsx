@@ -1,9 +1,8 @@
-﻿import React, { useState } from 'react';
+﻿import React from 'react';
+import { ChevronDown } from 'lucide-react';
 import { getTestedState, getCapabilityLabel } from '../../lib/assessmentReporting';
 
 export const WhatWasTested = ({ moduleExecution }) => {
-  const [expanded, setExpanded] = useState(false);
-
   const renderScopeLimitations = () => (
     <div className="border-t border-slate-800/50 pt-4 mt-2">
       <div className="text-xs font-bold text-slate-400 mb-2 font-mono uppercase tracking-wider">Not tested by this scan</div>
@@ -20,16 +19,19 @@ export const WhatWasTested = ({ moduleExecution }) => {
 
   if (!moduleExecution || Object.keys(moduleExecution).length === 0) {
     return (
-      <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
-        <div className="flex items-center gap-3 mb-2">
+      <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
+        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-2">
           <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ WHAT_WAS_TESTED</span>
-        </div>
+          <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
+        </summary>
+        <div className="mt-4">
         <div className="text-sm text-slate-500 mb-6">Not available</div>
         <div className="text-[11px] text-slate-500 mb-6">
           These statuses show whether scanner capabilities completed their intended assessment work. They do not indicate whether the target is secure.
         </div>
         {renderScopeLimitations()}
-      </div>
+              </div>
+      </details>
     );
   }
 
@@ -54,20 +56,14 @@ export const WhatWasTested = ({ moduleExecution }) => {
   }
 
   const order = ["Tested", "Partially tested", "Not completed", "Blocked", "Not applicable", "Not available"];
-  
+
   return (
-    <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ WHAT_WAS_TESTED</span>
-        </div>
-        <button 
-          onClick={() => setExpanded(!expanded)}
-          className="text-xs text-slate-400 hover:text-slate-200 transition-colors underline decoration-slate-700 underline-offset-4"
-        >
-          {expanded ? "Hide details" : "Show capabilities"}
-        </button>
-      </div>
+    <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
+      <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4">
+        <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ WHAT_WAS_TESTED</span>
+        <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
+      </summary>
+      <div className="mt-4">
 
       <div className="flex flex-wrap gap-3 mb-3">
         {order.map(state => {
@@ -78,7 +74,7 @@ export const WhatWasTested = ({ moduleExecution }) => {
           else if (state === "Partially tested") color = "bg-amber-500/10 text-amber-400 border-amber-500/20";
           else if (state === "Not completed" || state === "Blocked") color = "bg-red-500/10 text-red-400 border-red-500/20";
           else if (state === "Not available") color = "bg-slate-800/60 text-slate-400 border-slate-700";
-          
+
           return (
             <div key={state} className={`px-3 py-1.5 rounded-md border text-xs font-mono ${color}`}>
               <span className="font-bold">{count}</span> {state}
@@ -91,7 +87,7 @@ export const WhatWasTested = ({ moduleExecution }) => {
         These statuses show whether scanner capabilities completed their intended assessment work. They do not indicate whether the target is secure.
       </div>
 
-      {expanded && (
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 border-t border-slate-800/50 pt-4">
           {order.map(state => {
             if (groups[state].length === 0) return null;
@@ -110,10 +106,10 @@ export const WhatWasTested = ({ moduleExecution }) => {
             );
           })}
         </div>
-      )}
 
       {renderScopeLimitations()}
-    </div>
+          </div>
+    </details>
   );
 };
 
