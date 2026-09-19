@@ -252,17 +252,25 @@ def compare_reports(old_scan: Dict[str, Any], new_scan: Dict[str, Any]) -> Dict[
         added.extend(v)
     added.extend(final_unmatched_new_stable_from_old)
 
+    from api.scanner.priority import calculate_cve_priority
     old_tech = old_data.get("technology_identities") or []
     new_tech = new_data.get("technology_identities") or []
-    
+
     tech_added = []
     tech_removed = []
     tech_version_changed = []
     new_cves = []
-    
+
+    intelligence_acquired = []
+    intelligence_recovered = []
+    intelligence_lost = []
+    cve_no_longer_matched = []
+    cve_removed = []
+    cve_priority_changed = []
+
     old_tech_map = {(t.get("layer"), t.get("product")): t for t in old_tech}
     new_tech_map = {(t.get("layer"), t.get("product")): t for t in new_tech}
-    
+
     for key, new_t in new_tech_map.items():
         if key not in old_tech_map:
             tech_added.append(new_t)
@@ -274,17 +282,64 @@ def compare_reports(old_scan: Dict[str, Any], new_scan: Dict[str, Any]) -> Dict[
                     "old_version": old_t.get("version"),
                     "new_version": new_t.get("version")
                 })
-                
-            old_cves = {c.get("id") for c in (old_t.get("cves") or [])}
-            for new_c in (new_t.get("cves") or []):
-                if new_c.get("id") not in old_cves:
-                    new_cves.append({
+
+            old_state = old_t.get("vulnerability_state", "NOT_EVALUATED")
+            new_state = new_t.get("vulnerability_state", "NOT_EVALUATED")
+
+            if old_state in ("NOT_EVALUATED", "UNAVAILABLE") and new_state in ("MATCHED", "NO_MATCH"):
+                event_type = "intelligence_acquired" if old_state == "NOT_EVALUATED" else "intelligence_recovered"
+                event_list = intelligence_acquired if old_state == "NOT_EVALUATED" else intelligence_recovered
+                event_list.append({"product": new_t.get("product"), "old_state": old_state, "new_state": new_state})
+            elif old_state == "MATCHED" and new_state in ("NOT_EVALUATED", "UNAVAILABLE"):
+                intelligence_lost.append({"product": new_t.get("product"), "old_state": old_state, "new_state": new_state})
+            elif old_state == "NO_MATCH" and new_state == "MATCHED":
+                intelligence_acquired.append({"product": new_t.get("product"), "old_state": old_state, "new_state": new_state})
+            elif old_state == "MATCHED" and new_state == "NO_MATCH":
+                for old_c in (old_t.get("cves") or []):
+                    cve_no_longer_matched.append({
                         "product": new_t.get("product"),
-                        "cve_id": new_c.get("id"),
-                        "severity": new_c.get("severity"),
-                        "summary": new_c.get("summary")
+                        "cve_id": old_c.get("id"),
+                        "severity": old_c.get("severity"),
+                        "summary": old_c.get("summary")
                     })
-                    
+            elif old_state == "MATCHED" and new_state == "MATCHED":
+                old_cves_list = old_t.get("cves") or []
+                new_cves_list = new_t.get("cves") or []
+
+                old_cve_map = {c.get("id"): c for c in old_cves_list}
+                new_cve_map = {c.get("id"): c for c in new_cves_list}
+
+                for c_id, new_c in new_cve_map.items():
+                    if c_id not in old_cve_map:
+                        new_cves.append({
+                            "product": new_t.get("product"),
+                            "cve_id": c_id,
+                            "severity": new_c.get("severity"),
+                            "summary": new_c.get("summary")
+                        })
+                    else:
+                        old_c = old_cve_map[c_id]
+                        old_prio = calculate_cve_priority(old_t, old_c)
+                        new_prio = calculate_cve_priority(new_t, new_c)
+                        if old_prio != new_prio:
+                            cve_priority_changed.append({
+                                "product": new_t.get("product"),
+                                "cve_id": c_id,
+                                "old_priority": old_prio,
+                                "new_priority": new_prio,
+                                "severity": new_c.get("severity"),
+                                "summary": new_c.get("summary")
+                            })
+
+                for c_id, old_c in old_cve_map.items():
+                    if c_id not in new_cve_map:
+                        cve_removed.append({
+                            "product": new_t.get("product"),
+                            "cve_id": c_id,
+                            "severity": old_c.get("severity"),
+                            "summary": old_c.get("summary")
+                        })
+
     for key, old_t in old_tech_map.items():
         if key not in new_tech_map:
             tech_removed.append(old_t)
@@ -307,5 +362,11 @@ def compare_reports(old_scan: Dict[str, Any], new_scan: Dict[str, Any]) -> Dict[
         "tech_added": tech_added,
         "tech_removed": tech_removed,
         "tech_version_changed": tech_version_changed,
-        "new_cves": new_cves
+        "new_cves": new_cves,
+        "intelligence_acquired": intelligence_acquired,
+        "intelligence_recovered": intelligence_recovered,
+        "intelligence_lost": intelligence_lost,
+        "cve_no_longer_matched": cve_no_longer_matched,
+        "cve_removed": cve_removed,
+        "cve_priority_changed": cve_priority_changed
     }

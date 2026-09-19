@@ -296,17 +296,23 @@ export default function HistoryCompare() {
 
 
 
-          
+
           {/* Technology & Stack Changes */}
-          {((data.tech_added && data.tech_added.length > 0) || 
-            (data.tech_removed && data.tech_removed.length > 0) || 
-            (data.tech_version_changed && data.tech_version_changed.length > 0) || 
-            (data.new_cves && data.new_cves.length > 0)) && (
+          {((data.tech_added && data.tech_added.length > 0) ||
+              (data.tech_removed && data.tech_removed.length > 0) ||
+              (data.tech_version_changed && data.tech_version_changed.length > 0) ||
+              (data.new_cves && data.new_cves.length > 0) ||
+              (data.cve_removed && data.cve_removed.length > 0) ||
+              (data.cve_no_longer_matched && data.cve_no_longer_matched.length > 0) ||
+              (data.cve_priority_changed && data.cve_priority_changed.length > 0) ||
+              (data.intelligence_acquired && data.intelligence_acquired.length > 0) ||
+              (data.intelligence_recovered && data.intelligence_recovered.length > 0) ||
+              (data.intelligence_lost && data.intelligence_lost.length > 0)) && (
             <div className="mb-10 p-6 bg-slate-900 border border-slate-800 rounded-xl shadow-lg">
               <h2 className="text-xl font-black text-slate-200 mb-6 flex items-center gap-2">
                 <Layers className="w-5 h-5 text-indigo-400" /> Technology & Stack Changes
               </h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Tech Added & Removed */}
                 <div className="space-y-4">
@@ -322,7 +328,7 @@ export default function HistoryCompare() {
                       </div>
                     </div>
                   )}
-                  
+
                   {data.tech_removed && data.tech_removed.length > 0 && (
                     <div>
                       <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Minus className="w-3 h-3" /> Removed</h3>
@@ -336,7 +342,7 @@ export default function HistoryCompare() {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Tech Version Changes & New CVEs */}
                 <div className="space-y-4">
                   {data.tech_version_changed && data.tech_version_changed.length > 0 && (
@@ -354,7 +360,7 @@ export default function HistoryCompare() {
                       </div>
                     </div>
                   )}
-                  
+
                   {data.new_cves && data.new_cves.length > 0 && (
                     <div>
                       <h3 className="text-xs font-bold text-rose-400 uppercase tracking-widest mb-2 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> New Vulnerabilities Detected</h3>
@@ -371,7 +377,99 @@ export default function HistoryCompare() {
                       </div>
                     </div>
                   )}
-                </div>
+
+                    {data.cve_removed && data.cve_removed.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-widest mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> CVE Removed from Match Set</h3>
+                        <div className="space-y-2">
+                          {data.cve_removed.map((c, i) => (
+                            <div key={"rem-cve-" + i} className="bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-emerald-300 font-mono font-bold text-sm">{c.cve_id}</span>
+                                <span className="text-[10px] uppercase font-bold text-emerald-200 bg-emerald-500/30 px-1.5 rounded">{c.severity}</span>
+                                <span className="text-xs text-slate-400 ml-auto">on {c.product}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {data.cve_no_longer_matched && data.cve_no_longer_matched.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Activity className="w-3 h-3" /> No Longer Matched</h3>
+                        <div className="space-y-2">
+                          {data.cve_no_longer_matched.map((c, i) => (
+                            <div key={"nlm-" + i} className="bg-indigo-500/10 border border-indigo-500/20 p-3 rounded-lg">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-indigo-300 font-mono font-bold text-sm">{c.cve_id}</span>
+                                <span className="text-[10px] uppercase font-bold text-indigo-200 bg-indigo-500/30 px-1.5 rounded">{c.severity}</span>
+                                <span className="text-xs text-slate-400 ml-auto">on {c.product}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {data.cve_priority_changed && data.cve_priority_changed.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Activity className="w-3 h-3" /> Priority Shift</h3>
+                        <div className="space-y-2">
+                          {data.cve_priority_changed.map((c, i) => (
+                            <div key={"prio-" + i} className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-amber-300 font-mono font-bold text-sm">{c.cve_id}</span>
+                                <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 rounded">{c.old_priority} &rarr; {c.new_priority}</span>
+                                <span className="text-xs text-slate-400 ml-auto">on {c.product}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    {data.intelligence_acquired && data.intelligence_acquired.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-bold text-sky-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Activity className="w-3 h-3" /> Intelligence Acquired</h3>
+                        <div className="space-y-2">
+                          {data.intelligence_acquired.map((c, i) => (
+                            <div key={"acq-" + i} className="bg-sky-500/10 border border-sky-500/20 p-3 rounded-lg">
+                              <span className="text-sky-300 text-sm">{c.product}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {data.intelligence_recovered && data.intelligence_recovered.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Activity className="w-3 h-3" /> Intelligence Recovered</h3>
+                        <div className="space-y-2">
+                          {data.intelligence_recovered.map((c, i) => (
+                            <div key={"rec-" + i} className="bg-cyan-500/10 border border-cyan-500/20 p-3 rounded-lg">
+                              <span className="text-cyan-300 text-sm">{c.product}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {data.intelligence_lost && data.intelligence_lost.length > 0 && (
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1"><Activity className="w-3 h-3" /> Intelligence Lost</h3>
+                        <div className="space-y-2">
+                          {data.intelligence_lost.map((c, i) => (
+                            <div key={"lost-" + i} className="bg-slate-800 border border-slate-700 p-3 rounded-lg">
+                              <span className="text-slate-400 text-sm">{c.product}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+\n                </div>
               </div>
             </div>
           )}
