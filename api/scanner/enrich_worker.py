@@ -301,14 +301,89 @@ async def enrich_cve_worker(request: Request, verified: bool = Depends(verify_qs
                         except Exception:
                             pass
 
-                        parsed_cves.append({
+                        kev = None
+                        if isinstance(cve_data, dict) and cve_data.get("cisaExploitAdd"):
+                            kev = {
+                                "added": cve_data.get("cisaExploitAdd"),
+                                "due": cve_data.get("cisaActionDue"),
+                                "action": cve_data.get("cisaRequiredAction"),
+                                "name": cve_data.get("cisaVulnerabilityName")
+                            }
+
+                        ssvc = None
+                        try:
+                            if isinstance(metrics, dict) and "ssvcV203" in metrics:
+                                ssvc_list = metrics["ssvcV203"]
+                                cisa_records = []
+                                if isinstance(ssvc_list, list):
+                                    for s in ssvc_list:
+                                        if isinstance(s, dict) and str(s.get("source", "")).strip().upper() == "CISA-ADP":
+                                            cisa_records.append(s)
+
+                                if cisa_records:
+                                    import json as _json
+                                    def ssvc_sort_key(record):
+                                        if not isinstance(record, dict):
+                                            return ("", "", "", "", "")
+                                        data = record.get("ssvcData", {})
+                                        if not isinstance(data, dict):
+                                            return ("", "", "", "", "")
+                                        ts = str(data.get("timestamp", ""))
+                                        ver = str(data.get("version", ""))
+                                        role = str(data.get("role", ""))
+                                        rec_id = str(data.get("id", ""))
+                                        canonical = _json.dumps(record, sort_keys=True, default=str)
+                                        return (ts, ver, role, rec_id, canonical)
+
+                                    cisa_records.sort(key=ssvc_sort_key, reverse=True)
+                                    cisa_ssvc = cisa_records[0]
+
+                                    ssvc_data = cisa_ssvc.get("ssvcData", {})
+                                    options_list = ssvc_data.get("options", []) if isinstance(ssvc_data, dict) else []
+                                    options_dict = {}
+                                    import re as _re
+                                    def _to_lower_camel(k):
+                                        parts = [p for p in _re.split(r'[\s\-_]+', str(k).strip()) if p]
+                                        if not parts:
+                                            return ""
+                                        return parts[0].lower() + "".join(p.capitalize() for p in parts[1:])
+
+                                    if isinstance(options_list, list):
+                                        for opt in options_list:
+                                            if isinstance(opt, dict):
+                                                for k, v in opt.items():
+                                                    if isinstance(k, str) and k.strip():
+                                                        options_dict[_to_lower_camel(k)] = str(v)
+                                    elif isinstance(options_list, dict):
+                                        for k, v in options_list.items():
+                                            if isinstance(k, str) and k.strip():
+                                                options_dict[_to_lower_camel(k)] = str(v)
+
+                                    if isinstance(ssvc_data, dict):
+                                        ssvc = {
+                                            "source": cisa_ssvc.get("source"),
+                                            "role": ssvc_data.get("role"),
+                                            "version": ssvc_data.get("version"),
+                                            "timestamp": ssvc_data.get("timestamp"),
+                                            "options": options_dict
+                                        }
+                        except Exception:
+                            pass
+
+                        cve_obj = {
                             "id": cve_id,
                             "summary": summary,
                             "cvss_assessments": cvss_assessments,
                             "cwes": cwes,
                             "metadata": metadata,
                             "epss": None
-                        })
+                        }
+                        if kev:
+                            cve_obj["kev"] = kev
+                        if ssvc:
+                            cve_obj["ssvc"] = ssvc
+
+                        parsed_cves.append(cve_obj)
 
                     cpe_to_parsed_cves[cache_key] = parsed_cves
                     cpe_needs_cache_save[cache_key] = True
