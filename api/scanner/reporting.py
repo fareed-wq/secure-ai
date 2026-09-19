@@ -140,6 +140,41 @@ def generate_pdf_report(data: dict) -> str:
         </table>
     </div>
 
+    <div class="card" style="background: #1e293b; border-color: #334155; margin-bottom: 24px;">
+        <h3 style="color: #cbd5e1; margin-top: 0; font-size: 16px; margin-bottom: 12px;">Understanding Priority (P1–P5)</h3>
+        <p style="font-size: 13px; color: #94a3b8; margin: 0 0 12px 0;">
+            Priority indicates <strong style="color: #e2e8f0;">remediation urgency</strong> and is not the same as Severity.
+        </p>
+        <div style="display: flex; gap: 24px;">
+            <div style="flex: 1;">
+                <strong style="color: #e2e8f0; font-size: 13px; display: block; margin-bottom: 4px;">Standard Findings</strong>
+                <span style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;">Priority follows the finding's technical severity:</span>
+                <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: #94a3b8;">
+                    <li>Critical &rarr; P1</li>
+                    <li>High &rarr; P2</li>
+                    <li>Medium &rarr; P3</li>
+                    <li>Low &rarr; P4</li>
+                    <li>Info / Passed &rarr; P5</li>
+                </ul>
+            </div>
+            <div style="flex: 1;">
+                <strong style="color: #e2e8f0; font-size: 13px; display: block; margin-bottom: 4px;">Known Vulnerabilities (CVEs)</strong>
+                <span style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;">Priority is calculated from vulnerability-intelligence signals:</span>
+                <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: #94a3b8;">
+                    <li><strong>P1:</strong> CVSS &ge; 9.0 OR EPSS &ge; 10%</li>
+                    <li><strong>P2:</strong> CVSS &ge; 7.0 OR EPSS &ge; 1%</li>
+                    <li><strong>P3:</strong> CVSS &ge; 4.0</li>
+                    <li><strong>P4:</strong> CVSS &gt; 0</li>
+                    <li><strong>P5:</strong> CVSS = 0, or CVSS unavailable with EPSS &lt; 1%</li>
+                </ul>
+            </div>
+        </div>
+        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #334155; font-size: 12px; color: #94a3b8;">
+            <p style="margin: 0 0 4px 0;"><strong>Important:</strong> Higher-priority conditions take precedence. For example, a CVE meeting a P1 condition remains P1 even if it also meets a lower-tier condition.</p>
+            <p style="margin: 0; font-style: italic;">CVSS indicates vulnerability severity; EPSS indicates exploitation likelihood. Priority uses these signals for remediation prioritization.</p>
+        </div>
+    </div>
+
     <div class="card">
         <h2>Vulnerability & Finding Matrix</h2>
         <table>
