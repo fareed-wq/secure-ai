@@ -1,7 +1,5 @@
 from api.auth.entitlements import ScheduledEligibility
 import os
-os.environ['SUPABASE_URL'] = 'http://mock'
-os.environ['SUPABASE_SECRET_KEY'] = 'token'
 
 import json
 import pytest
@@ -12,6 +10,16 @@ from api.index import app
 from api.scheduling.email_worker import handle_scheduled_email
 
 client = TestClient(app)
+
+@pytest.fixture(autouse=True)
+def _isolate_module_env(monkeypatch):
+    monkeypatch.setenv("SUPABASE_URL", "http://mock")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "token")
+    monkeypatch.setattr("api.scheduling.email_worker.SUPABASE_URL", "http://mock", raising=False)
+    monkeypatch.setattr("api.scheduling.email_worker.SUPABASE_SECRET_KEY", "token", raising=False)
+    monkeypatch.setattr("api.scheduling.router.SUPABASE_URL", "http://mock", raising=False)
+    monkeypatch.setattr("api.scheduling.router.SUPABASE_SECRET_KEY", "token", raising=False)
+
 
 @pytest.fixture(autouse=True)
 def setup_env():
@@ -95,7 +103,7 @@ def test_create_schedule_advanced_email_opt_in(mock_qs, mock_post, mock_get):
         assert "cc" not in kwargs["json"]
         assert "bcc" not in kwargs["json"]
     finally:
-        app.dependency_overrides.clear()
+        pass
 
 
 @patch('api.scheduling.worker.get_next_run_at')

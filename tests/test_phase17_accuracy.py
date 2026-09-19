@@ -273,7 +273,7 @@ class TestPhase17Accuracy(unittest.TestCase):
                                 has_instance_key = True
                         self.assertFalse(has_instance_key, "CSPQuality finding has instance_key")
 
-        expected = {"csp_quality_weak", "csp_quality_inline_styles", "csp_quality_missing_default_src", "csp_quality_object_src_unrestricted"}
+        expected = {"csp_quality_weak", "csp_quality_inline_styles", "csp_quality_missing_default_src", "csp_quality_object_src_unrestricted", "csp_quality_base_uri_unrestricted", "csp_quality_form_action_unrestricted"}
         self.assertEqual(found_rules, expected)
 
     def test_3d_b_advanced_security_headers_identities(self):

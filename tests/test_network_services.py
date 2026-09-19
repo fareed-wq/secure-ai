@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 from unittest.mock import patch, MagicMock
 
 from api.scanner.modules.network_services import NetworkServiceExposureModule
@@ -96,7 +96,7 @@ class TestNetworkServiceExposureModule:
 
         # We need to mock submit to return a mock future to avoid errors in as_completed
         mock_future = MagicMock()
-        mock_future.result.return_value = None
+        mock_future.result.return_value = (None, False)
         mock_executor_instance.submit.return_value = mock_future
 
         # also patch as_completed since it requires an iterable of futures

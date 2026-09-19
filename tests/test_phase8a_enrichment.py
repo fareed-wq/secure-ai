@@ -1,8 +1,4 @@
 import os
-os.environ["VITE_SUPABASE_URL"] = "http://localhost:8000"
-os.environ["SUPABASE_SECRET_KEY"] = "test-key"
-os.environ["QSTASH_CURRENT_SIGNING_KEY"] = "test"
-os.environ["QSTASH_NEXT_SIGNING_KEY"] = "test"
 
 import json
 import pytest
@@ -14,8 +10,23 @@ import requests
 
 client = TestClient(app)
 
+@pytest.fixture(autouse=True)
+def _isolate_module_env(monkeypatch):
+    monkeypatch.setenv("VITE_SUPABASE_URL", "http://localhost:8000")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "test-key")
+    monkeypatch.setenv("QSTASH_CURRENT_SIGNING_KEY", "test")
+    monkeypatch.setenv("QSTASH_NEXT_SIGNING_KEY", "test")
+    monkeypatch.setattr("api.scanner.enrich_worker.SUPABASE_URL", "http://localhost:8000", raising=False)
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_URL", "http://localhost:8000", raising=False)
+    monkeypatch.setattr("api.scanner.enrich_worker.SUPABASE_SECRET_KEY", "test-key" if "test" in "test-key" else "mock_key", raising=False)
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_SECRET_KEY", "test-key", raising=False)
+    monkeypatch.setattr("api.scanner.enrich_worker.QSTASH_CURRENT_SIGNING_KEY", "test", raising=False)
+    monkeypatch.setattr("api.scanner.enrich_worker.QSTASH_NEXT_SIGNING_KEY", "test", raising=False)
+
+
 
 @pytest.fixture(autouse=True)
+# Repaired Phase 8A enrichment test fixture
 def override_qstash_signature():
     original = app.dependency_overrides.get(verify_qstash_signature)
     app.dependency_overrides[verify_qstash_signature] = lambda: True
@@ -761,7 +772,16 @@ def test_enrich_worker_kev_ssvc_serialization(mock_post, mock_get):
                     "ssvcV203": [
                         {"source": "random", "ssvcData": {"role": "random", "timestamp": "2025-01-01"}},
                         {
-                            "source": " CISA-adp ",
+                            "source": "CISA-ADP",
+                            "ssvcData": {
+                                "role": "CISA Coordinator",
+                                "version": "2.0.3",
+                                "timestamp": "2099-01-01",
+                                "options": {"shouldBeIgnored": "true"}
+                            }
+                        },
+                        {
+                            "source": " 134c704f-9b21-4f2e-91b3-4a467353bcc0 ",
                             "ssvcData": {
                                 "role": "CISA Coordinator",
                                 "version": "2.0.3",
@@ -773,18 +793,20 @@ def test_enrich_worker_kev_ssvc_serialization(mock_post, mock_get):
                             }
                         },
                         {
-                            "source": "cisa-adp",
+                            "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0",
                             "ssvcData": {
                                 "role": "CISA Coordinator",
                                 "version": "2.0.3",
                                 "timestamp": "2024-02-01",
                                 "options": {
-                                    "Technical Impact": "total"
+                                    "technicalImpact": "total",
+                                    "Technical Impact": "total",
+                                    "Exploitation": "active",
+                                    "Automatable": "no"
                                 }
                             }
                         },
-                        "malformed_record",
-                        {"source": "CISA-ADP"}
+                        "malformed_record"
                     ]
                 }
             }
@@ -808,9 +830,12 @@ def test_enrich_worker_kev_ssvc_serialization(mock_post, mock_get):
     assert cve_obj["id"] == "CVE-KEV-SSVC"
     assert cve_obj["kev"]["added"] == "2021-11-03"
     assert cve_obj["kev"]["action"] == "Apply updates."
-    assert cve_obj["ssvc"]["source"] == "cisa-adp"
+    assert cve_obj["ssvc"]["source"] == "134c704f-9b21-4f2e-91b3-4a467353bcc0"
     assert cve_obj["ssvc"]["timestamp"] == "2024-02-01"  # Newest valid CISA-ADP
     assert cve_obj["ssvc"]["options"]["technicalImpact"] == "total"
+    assert cve_obj["ssvc"]["options"]["exploitation"] == "active"
+    assert cve_obj["ssvc"]["options"]["automatable"] == "no"
+    assert "shouldBeIgnored" not in cve_obj["ssvc"]["options"]
 
 @patch("api.scanner.enrich_worker.requests.get")
 @patch("api.scanner.enrich_worker.requests.post")

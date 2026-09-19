@@ -292,7 +292,7 @@ class CORSModule(ScannerModule):
                 category="http_headers"
             , rule_id="cors_strict_enforced", confidence="High"))
 
-        if not request_successful or status is None or status >= 400:
+        if not request_successful or not isinstance(status, int) or status >= 400:
             return findings
         return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
@@ -359,7 +359,8 @@ class PermissionsPolicyModule(ScannerModule):
         except Exception:
             pass
 
-        if not resp or getattr(resp, "status_code", 500) >= 400:
+        status = getattr(resp, "status_code", 500)
+        if not resp or not isinstance(status, int) or status >= 400:
             return findings
         return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
@@ -592,6 +593,10 @@ class CSPQualityModule(ScannerModule):
         except Exception:
             pass
 
-        if 'resp' not in locals() or not resp or getattr(resp, "status_code", 500) >= 400:
+        if 'resp' not in locals() or not resp:
+            return findings
+
+        status = getattr(resp, "status_code", 500)
+        if not isinstance(status, int) or status >= 400:
             return findings
         return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)

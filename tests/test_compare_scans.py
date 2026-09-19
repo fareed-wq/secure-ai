@@ -109,7 +109,7 @@ def test_admin_compare_endpoint(mock_requests_get):
         assert data["new_score"] == 90
         assert data["score_change"] == 10
     finally:
-        app.dependency_overrides.clear()
+        pass
 
 def test_compare_reports_score_increase_only():
     old_scan = {
@@ -449,7 +449,7 @@ def test_admin_compare_scans_owner(monkeypatch):
     resp = client.get("/api/admin/scans/compare?scan_id_1=scan-1&scan_id_2=scan-2")
     assert resp.status_code == 200
 
-    app.dependency_overrides.clear()
+    pass
 
 def test_admin_compare_scans_other_user(monkeypatch):
     from api.admin import require_admin
@@ -488,7 +488,7 @@ def test_admin_compare_scans_other_user(monkeypatch):
     resp = client.get("/api/admin/scans/compare?scan_id_1=scan-1&scan_id_2=scan-2")
     assert resp.status_code == 403
 
-    app.dependency_overrides.clear()
+    pass
 
 # === NEW PHASE 1 REGRESSION TESTS ===
 

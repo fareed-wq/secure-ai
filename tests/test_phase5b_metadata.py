@@ -1,12 +1,7 @@
 import os
-os.environ["VITE_SUPABASE_URL"] = "http://localhost:8000"
-os.environ["SUPABASE_SECRET_KEY"] = "mock_key"
-os.environ["QSTASH_CURRENT_SIGNING_KEY"] = "mock_qstash"
-os.environ["QSTASH_NEXT_SIGNING_KEY"] = "mock_qstash"
 
 from api.scanner.enrich_worker import verify_qstash_signature
 from api.index import app
-app.dependency_overrides[verify_qstash_signature] = lambda: True
 
 import pytest
 import copy
@@ -15,6 +10,24 @@ from datetime import datetime, timezone
 from fastapi.testclient import TestClient
 
 client = TestClient(app)
+
+@pytest.fixture(autouse=True)
+def _isolate_module_env(monkeypatch):
+    monkeypatch.setenv("VITE_SUPABASE_URL", "http://localhost:8000")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "mock_key")
+    monkeypatch.setenv("QSTASH_CURRENT_SIGNING_KEY", "mock_qstash")
+    monkeypatch.setenv("QSTASH_NEXT_SIGNING_KEY", "mock_qstash")
+    monkeypatch.setattr("api.scanner.enrich_worker.SUPABASE_URL", "http://localhost:8000", raising=False)
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_URL", "http://localhost:8000", raising=False)
+    monkeypatch.setattr("api.scanner.enrich_worker.SUPABASE_SECRET_KEY", "test-key" if "test" in "mock_key" else "mock_key", raising=False)
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_SECRET_KEY", "test-key", raising=False)
+    monkeypatch.setattr("api.scanner.enrich_worker.QSTASH_CURRENT_SIGNING_KEY", "mock_qstash", raising=False)
+    monkeypatch.setattr("api.scanner.enrich_worker.QSTASH_NEXT_SIGNING_KEY", "mock_qstash", raising=False)
+    from api.auth.entitlements import get_current_user
+    from api.scanner.enrich_worker import verify_qstash_signature
+    app.dependency_overrides[get_current_user] = lambda: {"app_metadata": {"role": "admin", "plan": "professional"}, "sub": "user-123"}
+    app.dependency_overrides[verify_qstash_signature] = lambda: True
+
 
 def run_enrichment(identities, nvd_vulns, mock_get, mock_post, cache_returns=None, report_data_extra=None):
     report_data = {"technology_identities": identities, "cve_enrichment_status": "QUEUED"}

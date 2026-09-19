@@ -83,7 +83,9 @@ def test_entitlements_guest_blocked():
     assert ent.can_download_pdf == False
     assert ent.can_view_scan_history == False
 
-def test_entitlements_free_allowed():
+@patch("api.auth.entitlements.get_user_role", return_value="user")
+@patch("api.auth.entitlements.get_user_plan_and_status", return_value=("free", "active"))
+def test_entitlements_free_allowed(mock_plan, mock_role):
     ent = Entitlements({'sub': 'test-uuid'})
     assert ent.plan == 'free'
     assert ent.can_basic_scan == True

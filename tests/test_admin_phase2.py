@@ -19,6 +19,7 @@ def side_effect_role(uid):
 def test_grant_professional_success():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("free", "active")), \
          patch('api.admin.upsert_user_plan') as mock_upsert, \
          patch('api.admin.audit_log') as mock_audit:
@@ -42,23 +43,25 @@ def test_grant_professional_success():
             {"role": "user", "plan": "professional", "status": "active"}
         )
         
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_grant_professional_normal_user():
     with patch('api.admin.verify_user_exists'), \
-         patch('api.auth.entitlements.get_user_role', return_value="user"):
+         patch('api.auth.entitlements.get_user_role', return_value="user"), \
+         patch('api.admin.get_user_role', return_value="user"):
         from api.auth.entitlements import get_current_user
         app.dependency_overrides[get_current_user] = mock_get_current_user_normal
         
         response = client.post("/api/admin/users/target-1/grant-professional")
         assert response.status_code == 403
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_remove_professional_success():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("professional", "active")), \
          patch('api.admin.upsert_user_plan') as mock_upsert, \
          patch('api.admin.audit_log') as mock_audit:
@@ -71,12 +74,13 @@ def test_remove_professional_success():
         assert response.status_code == 200
         
         mock_upsert.assert_called_once_with("target-1", "free", "active")
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_suspend_success():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("free", "active")), \
          patch('api.admin.upsert_user_plan') as mock_upsert, \
          patch('api.admin.audit_log') as mock_audit:
@@ -88,12 +92,13 @@ def test_suspend_success():
         
         assert response.status_code == 200
         mock_upsert.assert_called_once_with("target-1", "free", "suspended")
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_suspend_self_blocked():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("free", "active")):
          
         from api.auth.entitlements import get_current_user
@@ -104,12 +109,13 @@ def test_suspend_self_blocked():
         
         assert response.status_code == 400
         assert "cannot suspend your own" in response.json()["detail"]
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_reactivate_success():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("free", "suspended")), \
          patch('api.admin.upsert_user_plan') as mock_upsert, \
          patch('api.admin.audit_log') as mock_audit:
@@ -121,12 +127,13 @@ def test_reactivate_success():
         
         assert response.status_code == 200
         mock_upsert.assert_called_once_with("target-1", "free", "active")
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_spoof_role_has_no_effect():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("free", "active")), \
          patch('api.admin.upsert_user_plan') as mock_upsert, \
          patch('api.admin.audit_log') as mock_audit:
@@ -139,11 +146,12 @@ def test_spoof_role_has_no_effect():
         assert response.status_code == 200
         # Should not upsert role=admin anywhere
         mock_upsert.assert_called_once_with("target-1", "professional", "active")
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_grant_professional_user_not_found():
-    with patch('requests.get') as mock_get, patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role):
+    with patch('requests.get') as mock_get, patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role):
         mock_resp = MagicMock()
         mock_resp.status_code = 404
         mock_get.return_value = mock_resp
@@ -155,4 +163,4 @@ def test_grant_professional_user_not_found():
         
         assert response.status_code == 404
         assert response.json()["detail"] == "User not found."
-        app.dependency_overrides.clear()
+        pass

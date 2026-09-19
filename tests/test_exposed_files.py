@@ -129,7 +129,7 @@ def test_aws_secret_detected_high(module, monkeypatch):
     env_finding = next((f for f in findings if f["name"] == "Exposed .env Configuration File"), None)
     assert env_finding is not None
     assert env_finding["severity"] == "High"
-    assert "plausible-value" not in env_finding["evidence"]["raw"]
+    assert "plausible-value" not in env_finding.get("evidence", {}).get("proof_snippet", "")
 
 def test_sql_dump_vs_zip_dump(module, monkeypatch):
     # These probes have been removed. We verify they return no findings even if present.
@@ -232,9 +232,9 @@ def test_env_evidence_format(module, monkeypatch):
     findings = module.run("http://example.com", "example.com", MagicMock())
     env_finding = next((f for f in findings if f["name"] == "Exposed .env Configuration File"), None)
     assert env_finding is not None
-    assert "Requested:" in env_finding.get("evidence", {}).get("raw", "")
-    assert "Validated environment-variable syntax with a sensitive credential-style key." in env_finding.get("evidence", {}).get("raw", "")
-    assert "Values redacted" in env_finding.get("evidence", {}).get("raw", "")
+    assert env_finding["evidence"]["request_path"] == "/.env"
+    assert "Validated environment-variable syntax" in env_finding.get("evidence", {}).get("proof_snippet", "")
+    assert "Values redacted" in env_finding.get("evidence", {}).get("proof_snippet", "")
 
 
 def test_exact_probe_list_and_max_attempts(module, monkeypatch):

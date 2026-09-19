@@ -436,6 +436,38 @@ const TechnicalReport = ({ reportData }) => {
                                                           Priority: {calculateCvePriority(tech, cve)}
                                                         </span>
                                                     </div>
+
+                                                    {(cve.kev || cve.ssvc) && (
+                                                      <div className="flex flex-col gap-1.5 mb-3">
+                                                        {cve.kev && (
+                                                          <div className="flex items-center gap-2 text-xs bg-red-950/30 border border-red-900/30 text-red-300/80 p-2 rounded">
+                                                            <ShieldAlert className="w-4 h-4 text-red-500" />
+                                                            <span>
+                                                              <strong className="text-red-400">CISA KEV</strong>
+                                                              {cve.kev.name && ` - ${cve.kev.name}`}
+                                                              {cve.kev.added && ` | Added: ${cve.kev.added}`}
+                                                              {cve.kev.action && ` | Action: ${cve.kev.action}`}
+                                                              {cve.kev.due && ` (Due: ${cve.kev.due})`}
+                                                            </span>
+                                                          </div>
+                                                        )}
+                                                        {cve.ssvc && (
+                                                          <div className="flex items-center gap-2 text-xs bg-indigo-950/20 border border-indigo-900/20 text-indigo-300/70 p-2 rounded">
+                                                            <Activity className="w-4 h-4 text-indigo-500/80" />
+                                                            <span>
+                                                              <strong className="text-indigo-400">{cve.ssvc.source || "CISA-ADP"} SSVC {cve.ssvc.version ? `v${cve.ssvc.version}` : ''}</strong>
+                                                              {cve.ssvc.timestamp && ` (${cve.ssvc.timestamp})`}
+                                                              {cve.ssvc.options && Object.entries(cve.ssvc.options).map(([k, v]) => (
+                                                                <span key={k} className="ml-2 pl-2 border-l border-indigo-800/40">
+                                                                  <span className="opacity-70">{k}:</span> <span className="font-mono text-[10px]">{v}</span>
+                                                                </span>
+                                                              ))}
+                                                            </span>
+                                                          </div>
+                                                        )}
+                                                      </div>
+                                                    )}
+
                                                     <p className="text-slate-400 text-sm leading-relaxed">{cve.summary}</p>
                                                   </div>
                                                 ))}

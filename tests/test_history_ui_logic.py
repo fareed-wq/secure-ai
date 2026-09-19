@@ -14,8 +14,8 @@ def test_compare_entitlement_unchanged():
     ui_path = os.path.join('src', 'pages', 'ScanHistory.jsx')
     with open(ui_path, 'r', encoding='utf-8') as f:
         content = f.read()
-    assert re.search(r'\{isAdmin\s*&&\s*\(\s*<button[^>]*onClick=\{handleCompare\}', content)
-    assert re.search(r'\{isAdmin\s*&&\s*\(\s*<input[^>]*type="checkbox"', content)
+    assert re.search(r'\{canUseScanCompare\s*&&\s*\(\s*<button[^>]*onClick=\{handleCompare\}', content)
+    assert re.search(r'\{canUseScanCompare\s*&&\s*\(\s*<input[^>]*type="checkbox"', content)
 
 def test_guest_cannot_access_history():
     from api.auth.entitlements import Entitlements
