@@ -17,6 +17,8 @@ def _isolate_module_env(monkeypatch):
     monkeypatch.setenv("SUPABASE_SECRET_KEY", "token")
     monkeypatch.setattr("api.scheduling.email_worker.SUPABASE_URL", "http://mock", raising=False)
     monkeypatch.setattr("api.scheduling.email_worker.SUPABASE_SECRET_KEY", "token", raising=False)
+    monkeypatch.setattr("api.scheduling.router.SUPABASE_URL", "http://mock", raising=False)
+    monkeypatch.setattr("api.scheduling.router.SUPABASE_SECRET_KEY", "token", raising=False)
 
 
 @pytest.fixture(autouse=True)

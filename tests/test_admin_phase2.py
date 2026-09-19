@@ -19,6 +19,7 @@ def side_effect_role(uid):
 def test_grant_professional_success():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("free", "active")), \
          patch('api.admin.upsert_user_plan') as mock_upsert, \
          patch('api.admin.audit_log') as mock_audit:
@@ -47,7 +48,8 @@ def test_grant_professional_success():
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_grant_professional_normal_user():
     with patch('api.admin.verify_user_exists'), \
-         patch('api.auth.entitlements.get_user_role', return_value="user"):
+         patch('api.auth.entitlements.get_user_role', return_value="user"), \
+         patch('api.admin.get_user_role', return_value="user"):
         from api.auth.entitlements import get_current_user
         app.dependency_overrides[get_current_user] = mock_get_current_user_normal
         
@@ -59,6 +61,7 @@ def test_grant_professional_normal_user():
 def test_remove_professional_success():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("professional", "active")), \
          patch('api.admin.upsert_user_plan') as mock_upsert, \
          patch('api.admin.audit_log') as mock_audit:
@@ -77,6 +80,7 @@ def test_remove_professional_success():
 def test_suspend_success():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("free", "active")), \
          patch('api.admin.upsert_user_plan') as mock_upsert, \
          patch('api.admin.audit_log') as mock_audit:
@@ -94,6 +98,7 @@ def test_suspend_success():
 def test_suspend_self_blocked():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("free", "active")):
          
         from api.auth.entitlements import get_current_user
@@ -110,6 +115,7 @@ def test_suspend_self_blocked():
 def test_reactivate_success():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("free", "suspended")), \
          patch('api.admin.upsert_user_plan') as mock_upsert, \
          patch('api.admin.audit_log') as mock_audit:
@@ -127,6 +133,7 @@ def test_reactivate_success():
 def test_spoof_role_has_no_effect():
     with patch('api.admin.verify_user_exists'), \
          patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role), \
          patch('api.admin.get_user_plan_and_status', return_value=("free", "active")), \
          patch('api.admin.upsert_user_plan') as mock_upsert, \
          patch('api.admin.audit_log') as mock_audit:
@@ -143,7 +150,8 @@ def test_spoof_role_has_no_effect():
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_grant_professional_user_not_found():
-    with patch('requests.get') as mock_get, patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role):
+    with patch('requests.get') as mock_get, patch('api.auth.entitlements.get_user_role', side_effect=side_effect_role), \
+         patch('api.admin.get_user_role', side_effect=side_effect_role):
         mock_resp = MagicMock()
         mock_resp.status_code = 404
         mock_get.return_value = mock_resp
