@@ -22,8 +22,8 @@ def generate_pdf_report(data: dict) -> str:
         owasp = html.escape(str(f['owasp']))
         evidence = html.escape(str(f['evidence']))
         table_rows.append(
-            f"<tr><td class='sev-{sev}'>[{priority}] {sev}</td><td>{name}</td><td>{owasp}</td>"
-            f"<td><div class='snippet'>{evidence}</div></td></tr>"
+            f"<tr><td class='sev-{sev}'>{sev}</td><td>{name}</td><td>{owasp}</td>"
+            f"<td>{priority}</td><td><div class='snippet'>{evidence}</div></td></tr>"
         )
     findings_rows = "".join(table_rows)
 
@@ -137,7 +137,7 @@ def generate_pdf_report(data: dict) -> str:
     <div class="card">
         <h2>Vulnerability & Finding Matrix</h2>
         <table>
-            <tr><th>Severity</th><th>Check Name</th><th>OWASP Category</th><th>Evidence</th></tr>
+            <tr><th>Severity</th><th>Check Name</th><th>OWASP Category</th><th>Priority</th><th>Evidence</th></tr>
             {findings_rows}
         </table>
     </div>

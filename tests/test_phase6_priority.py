@@ -66,7 +66,8 @@ def test_integration_pdf_report():
         }]
     }
     html_out = generate_pdf_report(data)
-    assert '[P1] Critical' in html_out
+    assert ">Critical</td>" in html_out
+    assert "<td>P1</td>" in html_out
     assert 'Known Vulnerabilities' in html_out
     assert '[P1] high' in html_out
 

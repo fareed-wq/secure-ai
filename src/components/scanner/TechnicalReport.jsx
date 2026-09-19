@@ -1,4 +1,4 @@
-﻿import { calculateFindingPriority, calculateCvePriority } from '../../utils/priority';
+import { calculateFindingPriority, calculateCvePriority } from '../../utils/priority';
 import React, { useState } from 'react';
 import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
@@ -512,8 +512,9 @@ const TechnicalReport = ({ reportData }) => {
                       <thead>
                         <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
                           <th className="px-6 py-4" style={{ width: '15%' }}>Severity</th>
-                          <th className="px-6 py-4" style={{ width: '45%' }}>Security Check / Finding</th>
+                          <th className="px-6 py-4" style={{ width: '35%' }}>Security Check / Finding</th>
                           <th className="px-6 py-4" style={{ width: '25%' }}>OWASP Map</th>
+                          <th className="px-6 py-4" style={{ width: '10%' }}>Priority</th>
                           <th className="px-6 py-4 text-right print:hidden" style={{ width: '15%' }}>Action</th>
                         </tr>
                       </thead>
@@ -531,24 +532,24 @@ const TechnicalReport = ({ reportData }) => {
                                 onClick={() => setExpandedRow(expandedRow === idx ? null : idx)}
                                 className={`technical-finding-row ${finding.severity === 'Passed' ? 'technical-passed-row' : ''} cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
                               >
-                              <td className="px-6 py-4 whitespace-nowrap align-top">
-                                {getSeverityBadge(finding.severity)}
-                                  <div className="mt-1">
-                                    <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
-                                      Priority: {calculateFindingPriority(finding)}
-                                    </span>
-                                  </div>
-                            </td>
-                            <td className="px-6 py-4 font-bold text-slate-200 align-top">
-                              <div>{finding.name}</div>
-                            </td>
-                            <td className="px-6 py-4 align-top">
-                              {finding.owasp && finding.owasp !== "N/A" ? (
-                                <span className="technical-owasp-badge bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2.5 py-1 rounded-md text-xs hover:bg-indigo-500/20 cursor-pointer">{finding.owasp}</span>
-                              ) : (
-                                <span className="technical-owasp-badge-none text-slate-600 text-xs">-</span>
-                              )}
-                            </td>
+                                <td className="px-6 py-4 whitespace-nowrap align-top">
+                                  {getSeverityBadge(finding.severity)}
+                                </td>
+                                <td className="px-6 py-4 font-bold text-slate-200 align-top">
+                                  <div>{finding.name}</div>
+                                </td>
+                                <td className="px-6 py-4 align-top">
+                                  {finding.owasp && finding.owasp !== "N/A" ? (
+                                    <span className="technical-owasp-badge bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2.5 py-1 rounded-md text-xs hover:bg-indigo-500/20 cursor-pointer">{finding.owasp}</span>
+                                  ) : (
+                                    <span className="technical-owasp-badge-none text-slate-600 text-xs">-</span>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap align-top">
+                                  <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
+                                    {calculateFindingPriority(finding)}
+                                  </span>
+                                </td>
                             <td className="px-6 py-4 text-right print:hidden align-top">
                               <button aria-label={expandedRow === idx ? "Collapse Details" : "Expand Details"} className="text-slate-500 hover:text-slate-50 transition-colors">
                                 {expandedRow === idx ? <ChevronUp className="w-5 h-5 inline" /> : <ChevronDown className="w-5 h-5 inline" />}
