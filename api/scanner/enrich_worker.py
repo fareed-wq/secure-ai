@@ -194,8 +194,9 @@ async def enrich_cve_worker(request: Request, verified: bool = Depends(verify_qs
 
             cached_cves = None
             try:
+                now_utc_str = datetime.now(timezone.utc).isoformat()
                 cache_resp = requests.get(
-                    f"{SUPABASE_URL.rstrip('/')}/rest/v1/cpe_cve_cache?cpe=eq.{requests.utils.quote(cache_key)}",
+                    f"{SUPABASE_URL.rstrip('/')}/rest/v1/cpe_cve_cache?cpe=eq.{requests.utils.quote(cache_key)}&expires_at=gt.{requests.utils.quote(now_utc_str)}",
                     headers=headers,
                     timeout=remaining_time(10.0)
                 )

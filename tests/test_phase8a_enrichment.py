@@ -613,3 +613,111 @@ def test_enrich_worker_claim_not_requested(mock_get, mock_post):
     # Verify both claim attempts
     assert mock_post.call_args_list[0][1]["json"]["p_expected_status"] == "QUEUED"
     assert mock_post.call_args_list[1][1]["json"]["p_expected_status"] == "NOT_REQUESTED"
+
+@patch("api.scanner.enrich_worker.requests.get")
+@patch("api.scanner.enrich_worker.requests.post")
+def test_enrich_worker_cache_expired_fetch_new(mock_post, mock_get):
+    """Phase8A Regression: Expired cache entry is ignored and fresh enrichment proceeds."""
+    from fastapi.testclient import TestClient
+    from api.index import app
+    client = TestClient(app)
+
+    mock_scan_resp = Mock(); mock_scan_resp.status_code = 200
+    mock_scan_resp.json.return_value = [{"id": "scan-expired", "report_data": {"technology_identities": [{"cpe": "cpe:2.3:a:test:test:1.0:*:*:*:*:*:*:*", "version_precision": "EXACT"}], "cve_enrichment_status": "QUEUED"}}]
+
+    # Mock cache GET returning empty list (because expires_at=gt filter naturally excludes it in Supabase,
+    # so requests.get returns [] when filtered out). Or wait, if we mock Supabase filtering out, it just returns [].
+    mock_cache_resp = Mock(); mock_cache_resp.status_code = 200
+    mock_cache_resp.json.return_value = []
+
+    mock_nvd_resp = Mock(); mock_nvd_resp.status_code = 200
+    mock_nvd_resp.json.return_value = {"vulnerabilities": [{"cve": {"id": "CVE-FRESH", "metrics": {"cvssMetricV31": [{"cvssData": {"baseSeverity": "CRITICAL"}}]}}}]}
+
+    mock_epss = Mock(); mock_epss.status_code = 200; mock_epss.json.return_value = {"data": []}
+
+    mock_get.side_effect = [mock_scan_resp, mock_cache_resp, mock_nvd_resp, mock_epss]
+
+    mock_claim = Mock(); mock_claim.status_code = 200; mock_claim.json.return_value = True
+    mock_cache_save = Mock(); mock_cache_save.status_code = 200; mock_cache_save.json.return_value = True
+    mock_save = Mock(); mock_save.status_code = 200; mock_save.json.return_value = True
+    mock_post.side_effect = [mock_claim, mock_cache_save, mock_save]
+
+    client.post("/api/internal/enrich-cve", headers={"Upstash-Signature": "valid"}, json={"scan_id": "scan-expired"})
+
+    # Assert cache GET includes expires_at
+    cache_call_args = mock_get.call_args_list[1][0][0]
+    assert "cpe_cve_cache" in cache_call_args
+    assert "expires_at=gt." in cache_call_args
+
+    # Assert NVD was called because cache was empty
+    nvd_call_args = mock_get.call_args_list[2][0][0]
+    assert "services.nvd.nist.gov" in nvd_call_args
+
+    # Assert save was called with CVE-FRESH
+    save_call = mock_post.call_args_list[2][1]["json"]
+    assert save_call["p_identities"][0]["cves"][0]["id"] == "CVE-FRESH"
+
+@patch("api.scanner.enrich_worker.requests.get")
+@patch("api.scanner.enrich_worker.requests.post")
+def test_enrich_worker_cache_valid_reused(mock_post, mock_get):
+    """Phase8A Regression: Valid unexpired cache entry is reused."""
+    from fastapi.testclient import TestClient
+    from api.index import app
+    client = TestClient(app)
+
+    mock_scan_resp = Mock(); mock_scan_resp.status_code = 200
+    mock_scan_resp.json.return_value = [{"id": "scan-valid", "report_data": {"technology_identities": [{"cpe": "cpe:2.3:a:test:test:1.0:*:*:*:*:*:*:*", "version_precision": "EXACT"}], "cve_enrichment_status": "QUEUED"}}]
+
+    # Supabase returns the valid cache entry
+    mock_cache_resp = Mock(); mock_cache_resp.status_code = 200
+    mock_cache_resp.json.return_value = [{"cves_json": [{"id": "CVE-CACHED", "severity": "HIGH", "summary": "cached"}], "expires_at": "2099-01-01T00:00:00Z"}]
+
+    mock_get.side_effect = [mock_scan_resp, mock_cache_resp]
+
+    mock_claim = Mock(); mock_claim.status_code = 200; mock_claim.json.return_value = True
+    mock_save = Mock(); mock_save.status_code = 200; mock_save.json.return_value = True
+    mock_post.side_effect = [mock_claim, mock_save]
+
+    client.post("/api/internal/enrich-cve", headers={"Upstash-Signature": "valid"}, json={"scan_id": "scan-valid"})
+
+    # Assert cache GET includes expires_at
+    cache_call_args = mock_get.call_args_list[1][0][0]
+    assert "expires_at=gt." in cache_call_args
+
+    # Assert NVD was NOT called (only 2 GETs: scan, cache)
+    assert mock_get.call_count == 2
+
+    # Assert save was called with CVE-CACHED
+    save_call = mock_post.call_args_list[1][1]["json"]
+    assert save_call["p_identities"][0]["cves"][0]["id"] == "CVE-CACHED"
+
+@patch("api.scanner.enrich_worker.requests.get")
+@patch("api.scanner.enrich_worker.requests.post")
+def test_enrich_worker_cache_miss_unchanged(mock_post, mock_get):
+    """Phase8A Regression: Cache-miss behavior remains unchanged."""
+    from fastapi.testclient import TestClient
+    from api.index import app
+    client = TestClient(app)
+
+    mock_scan_resp = Mock(); mock_scan_resp.status_code = 200
+    mock_scan_resp.json.return_value = [{"id": "scan-miss", "report_data": {"technology_identities": [{"cpe": "cpe:2.3:a:test:miss:1.0:*:*:*:*:*:*:*", "version_precision": "EXACT"}], "cve_enrichment_status": "QUEUED"}}]
+
+    mock_cache_resp = Mock(); mock_cache_resp.status_code = 200
+    mock_cache_resp.json.return_value = []
+
+    mock_nvd_resp = Mock(); mock_nvd_resp.status_code = 200
+    mock_nvd_resp.json.return_value = {"vulnerabilities": [{"cve": {"id": "CVE-MISS", "metrics": {"cvssMetricV31": [{"cvssData": {"baseSeverity": "MEDIUM"}}]}}}]}
+
+    mock_epss = Mock(); mock_epss.status_code = 200; mock_epss.json.return_value = {"data": []}
+
+    mock_get.side_effect = [mock_scan_resp, mock_cache_resp, mock_nvd_resp, mock_epss]
+
+    mock_claim = Mock(); mock_claim.status_code = 200; mock_claim.json.return_value = True
+    mock_cache_save = Mock(); mock_cache_save.status_code = 200; mock_cache_save.json.return_value = True
+    mock_save = Mock(); mock_save.status_code = 200; mock_save.json.return_value = True
+    mock_post.side_effect = [mock_claim, mock_cache_save, mock_save]
+
+    client.post("/api/internal/enrich-cve", headers={"Upstash-Signature": "valid"}, json={"scan_id": "scan-miss"})
+
+    nvd_call_args = mock_get.call_args_list[2][0][0]
+    assert "cpeName=cpe%3A2.3%3Aa%3Atest%3Amiss" in nvd_call_args

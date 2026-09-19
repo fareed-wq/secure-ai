@@ -414,25 +414,34 @@ const TechnicalReport = ({ reportData }) => {
                                     <td colSpan={6} className="p-0 border-b-2 border-slate-700/50">
                                       <div className="bg-slate-950 p-6 transition-all duration-300">
                                         <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Known Vulnerabilities</div>
-                                        
-                                        {(!tech.cves || tech.cves.length === 0) ? (
-                                          <div className="text-slate-500 text-sm">No associated CVEs observed.</div>
-                                        ) : (
-                                          <div className="space-y-3">
-                                            {tech.cves.map((cve, cveIdx) => (
-                                              <div key={cveIdx} className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                  <span className="font-mono font-bold text-rose-300 text-sm">{cve.id}</span>
-                                                  {getSeverityBadge(cve.severity.charAt(0).toUpperCase() + cve.severity.slice(1).toLowerCase())}
-                                                    <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 ml-2">
-                                                      Priority: {calculateCvePriority(tech, cve)}
-                                                    </span>
-                                                </div>
-                                                <p className="text-slate-400 text-sm leading-relaxed">{cve.summary}</p>
+                                          {(() => {
+                                            const status = reportData?.cve_enrichment_status;
+                                            if (status === 'QUEUED' || status === 'RUNNING') {
+                                              return <div className="text-amber-400 text-sm">Vulnerability intelligence is being evaluated in the background.</div>;
+                                            }
+                                            if (status === 'FAILED') {
+                                              return <div className="text-rose-400 text-sm">Vulnerability intelligence evaluation failed. Status unavailable.</div>;
+                                            }
+                                            if (!tech.cves || tech.cves.length === 0) {
+                                              return <div className="text-slate-500 text-sm">No associated CVEs observed.</div>;
+                                            }
+                                            return (
+                                              <div className="space-y-3">
+                                                {tech.cves.map((cve, cveIdx) => (
+                                                  <div key={cveIdx} className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                      <span className="font-mono font-bold text-rose-300 text-sm">{cve.id}</span>
+                                                      {getSeverityBadge(cve.severity.charAt(0).toUpperCase() + cve.severity.slice(1).toLowerCase())}
+                                                        <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 ml-2">
+                                                          Priority: {calculateCvePriority(tech, cve)}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-slate-400 text-sm leading-relaxed">{cve.summary}</p>
+                                                  </div>
+                                                ))}
                                               </div>
-                                            ))}
-                                          </div>
-                                        )}
+                                            );
+                                          })()}
                                       </div>
                                     </td>
                                   </tr>
