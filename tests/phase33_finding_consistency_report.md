@@ -12,7 +12,7 @@ All 30 scanner modules utilize the unified `ScannerModule.make_finding()` method
 ## 2. Severity Classification Consistency
 **Status: PASS**
 The scanner engine uses a strict hierarchy: `Critical`, `High`, `Medium`, `Low`, `Informational`, `Passed`.
-- **Critical**: Reserved exclusively for direct credential exposure (e.g., exposed `.env`, AWS keys, Stripe keys, database dumps).
+- **Critical**: Critical severity is currently not emitted by active scanner rules. Direct credential/exposed-secret findings currently use the High severity tier where implemented.
 - **High**: Used for issues providing direct attack vectors (e.g., exposed `.git`, Wildcard CORS with credentials, insecure form actions, missing CSP, deprecated TLS).
 - **Medium**: Used for issues that aid exploitation but aren't direct vectors (e.g., Directory indexing, missing secure flags on cookies, weak ciphers).
 - **Low**: Used for minor informational disclosures or defense-in-depth gaps (e.g., verbose server banners, missing minor headers).

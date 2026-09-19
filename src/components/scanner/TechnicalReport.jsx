@@ -513,14 +513,16 @@ const TechnicalReport = ({ reportData }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <h4 className="text-slate-300 font-bold text-sm mb-2">Standard Findings</h4>
-                    <p className="text-slate-500 text-xs mb-2">Priority follows the finding's technical severity:</p>
-                    <ul className="text-slate-400 text-xs space-y-1 list-disc list-inside">
-                      <li>Critical &rarr; P1</li>
-                      <li>High &rarr; P2</li>
-                      <li>Medium &rarr; P3</li>
-                      <li>Low &rarr; P4</li>
-                      <li>Informational / Passed &rarr; P5</li>
-                    </ul>
+                      <p className="text-slate-500 text-xs mb-2">Priority follows the finding's technical severity:</p>
+                      <ul className="text-slate-400 text-xs space-y-1 list-disc list-inside mb-3">
+                        <li>High &rarr; P2</li>
+                        <li>Medium &rarr; P3</li>
+                        <li>Low &rarr; P4</li>
+                        <li>Informational / Passed &rarr; P5</li>
+                      </ul>
+                      <p className="text-slate-500 text-[11px] leading-tight italic">
+                        The current scanner does not currently emit Critical-severity standard findings. If a Critical finding is introduced in the future, it will map to P1.
+                      </p>
                   </div>
                   <div>
                     <h4 className="text-slate-300 font-bold text-sm mb-2">Known Vulnerabilities (CVEs)</h4>
