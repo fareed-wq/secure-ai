@@ -1291,3 +1291,179 @@ def test_compare_reports_csp_consolidation():
     assert len(result["added"]) == 0
     assert len(result["improved"]) == 0
     assert len(result["regressed"]) == 0
+
+
+def test_compare_not_evaluated_to_matched():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "NOT_EVALUATED"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "MATCHED", "cves": [{"id": "CVE-1"}]}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["intelligence_acquired"]) == 1
+    assert len(res["new_cves"]) == 0
+    assert len(res["cve_removed"]) == 0
+
+def test_compare_unavailable_to_no_match():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "UNAVAILABLE"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "NO_MATCH"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["intelligence_recovered"]) == 1
+
+def test_compare_matched_to_unavailable():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "MATCHED", "cves": [{"id": "CVE-1"}]}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "UNAVAILABLE"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["intelligence_lost"]) == 1
+    assert len(res["cve_removed"]) == 0
+
+def test_compare_matched_to_matched_with_cve_changes():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "MATCHED", "cves": [{"id": "CVE-1", "cvss_assessments": [{"base_score": 9.0}]}, {"id": "CVE-2", "cvss_assessments": [{"base_score": 5.0}]}]}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "MATCHED", "cves": [{"id": "CVE-2", "cvss_assessments": [{"base_score": 2.0}]}, {"id": "CVE-3", "cvss_assessments": [{"base_score": 9.0}]}]}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["cve_removed"]) == 1
+    assert res["cve_removed"][0]["cve_id"] == "CVE-1"
+    assert len(res["new_cves"]) == 1
+    assert res["new_cves"][0]["cve_id"] == "CVE-3"
+    assert len(res["cve_priority_changed"]) == 1
+    assert res["cve_priority_changed"][0]["cve_id"] == "CVE-2"
+    assert res["cve_priority_changed"][0]["old_priority"] == "P3"
+    assert res["cve_priority_changed"][0]["new_priority"] == "P4"
+
+def test_compare_matched_to_no_match():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "MATCHED", "cves": [{"id": "CVE-1"}]}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "NO_MATCH"}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["cve_no_longer_matched"]) == 1
+    assert res["cve_no_longer_matched"][0]["cve_id"] == "CVE-1"
+    assert len(res["cve_removed"]) == 0
+
+def test_compare_no_match_to_matched():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "NO_MATCH"}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "MATCHED", "cves": [{"id": "CVE-1"}]}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["intelligence_acquired"]) == 1
+    assert len(res["new_cves"]) == 0
+
+def test_compare_tech_added_removed_with_cves():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "apache", "vulnerability_state": "MATCHED", "cves": [{"id": "CVE-old"}]}]
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "MATCHED", "cves": [{"id": "CVE-new"}]}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["tech_added"]) == 1
+    assert len(res["tech_removed"]) == 1
+    assert len(res["new_cves"]) == 0
+    assert len(res["cve_removed"]) == 0
+
+def test_compare_missing_historical_state():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx"}] # pre-phase5
+        }
+    }
+    new = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "MATCHED", "cves": [{"id": "CVE-new"}]}]
+        }
+    }
+    res = compare_reports(old, new)
+    assert len(res["intelligence_acquired"]) == 1
+    assert len(res["new_cves"]) == 0
+
+def test_compare_identical_input():
+    old = {
+        "target_url": "https://example.com",
+        "report_data": {
+            "scan_mode": "basic",
+            "technology_identities": [{"layer": "web", "product": "nginx", "vulnerability_state": "MATCHED", "cves": [{"id": "CVE-1", "cvss_assessments": [{"base_score": 9.0}]}]}]
+        }
+    }
+    res = compare_reports(old, old)
+    assert len(res["new_cves"]) == 0
+    assert len(res["cve_removed"]) == 0
+    assert len(res["cve_priority_changed"]) == 0
+    assert len(res["intelligence_acquired"]) == 0

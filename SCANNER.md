@@ -1,59 +1,68 @@
-# Scanner Engine & Modes
+# Scanner Engine
 
-The URLScannerOnline / Secure-AI scanner is built on a concurrent, modular execution engine. The engine enforces a **passive-first, low-impact** philosophy.
+## Safety Model
+- **Passive/non-intrusive**: Read-only observation posture.
+- **No destructive testing**: Never alters application state.
+- **No brute force**: Never attempts credential guessing.
+- **No fuzzing**: Never injects malformed payloads.
+- **No broad crawling**: Constraints navigation strictly to targeted endpoints.
 
-## Basic Scan
-- **Passive Assessment:** Operates exclusively as a passive scanner.
-- **Scope:** 9 passive modules (as verified in the registry) (e.g., header analysis, basic metadata discovery).
-- **Behavior:** Acts like a standard, well-behaved web client. Analyzes publicly broadcasted data without intrusive probing.
+## Scoring
+- **Frozen severity deductions**: Penalties are fixed.
+- **Score cap/minimum**: Strictly bounded limits.
+- **Grade thresholds**: Standardized letter tiers.
+- **Confidence does not affect scanner score**: Scores rely solely on severity.
 
-## Advanced Scan
-- **Authorized Bounded Active/Low-Impact:** Includes all 9 Basic checks plus an additional 20 active/low-impact modules.
-- **Scope:** 20 additional active/low-impact modules (verified in registry). May perform bounded additional HTTP, DNS, and limited TCP checks.
-- **Requirements:** Requires explicit authorization acknowledgement from the user.
-- **Behavior:** Remains low-impact and non-exploitative. It does **not** perform penetration testing.
+## Verification
+- **OBSERVED**: Verified with concrete evidence.
+- **INFERRED**: Highly probable but lacking direct proof.
+- **NOT_VERIFIED**: Hypothetical exposure.
 
-## Shared Safety Rules
-- **Public Targets Only:** The scanner actively rejects requests to loopback addresses, RFC1918 private IPs, link-local addresses, and cloud metadata endpoints.
-- **SSRF Protections:** Strong Server-Side Request Forgery protections are enforced in both Basic and Advanced modes.
-- **Bounded Requests & Timeouts:** All modules are constrained by a global 45-second execution budget (SCAN_BUDGET_SECONDS).
-- **No Active Exploitation:** The scanner will never inject SQLi, XSS, or OS Command payloads.
-- **No Destructive Actions:** No brute forcing, password spraying, authentication bypass attempts, or DoS/stress testing.
+## Vulnerability Intelligence
+- **Vulnerability states**:
+  - NOT_EVALUATED
+  - NO_MATCH
+  - MATCHED
+  - UNAVAILABLE
+- **Reasons**: Provides rationale for non-evaluation.
+- **CVE matching behavior**: Strict NVD adherence.
+- **Authoritative NVD applicability**: The sole source of truth for matches.
+- **CVSS/CWE provenance**: CVSS assessments may originate from NVD, CNA, and ADP.
+- **EPSS score/percentile semantics**: EPSS provides both score and percentile, but Priority uses EPSS score only.
+- **Background enrichment behavior**: Lookups execute asynchronously.
 
-## Scanner Modules
-Modules are executed concurrently to respect serverless platform execution limits.
+## Priority
+### Finding Priority
+- **Critical** ? P1
+- **High** ? P2
+- **Medium** ? P3
+- **Low** ? P4
+- **Informational/Passed** ? P5
+- **invalid/missing** ? UNSCORED
 
-*(discovery.py, infrastructure.py)*
-- **Discovery & Reconnaissance:** Validates the presence of
-obots.txt, sitemap.xml, and security.txt. Analyzes Server and X-Powered-By headers.
-- **Exposed Files:** Checks common paths (e.g., .git/, .env) for accidental information disclosure.
+### CVE Priority
+- **MATCHED** ? evaluate
+- **NO_MATCH** ? N/A
+- **NOT_EVALUATED/UNAVAILABLE** ? UNSCORED
+- Calculates max CVSS across assessments
+- **CVSS Thresholds**:
+  - >= 9 ? P1
+  - >= 7 ? P2
+  - >= 4 ? P3
+  - > 0 ? P4
+  - == 0 ? P5
+- **EPSS score only**:
+  - >= 0.10 ? P1
+  - >= 0.01 ? P2
+  - < 0.01 ? P5
+- Highest resulting tier wins. These are URLScannerOnline deterministic policy thresholds.
+- No Priority persistence.
+- Priority is derived metadata. It does not change scanner score, grade, severity, identity, or persisted Phase5 data. Phase7 may compare Priority changes as derived trend metadata.
 
-*(http_security.py, headers.py)*
-- **HTTP & Header Security:** Enforces the presence of HSTS, CSP, X-Content-Type-Options, and X-Frame-Options.
-- **CORS Misconfiguration:** Analyzes Access-Control-Allow-Origin behavior for insecure configurations.
-- **Authentication & Session Security:** Analyzes Set-Cookie directives for Secure, HttpOnly, and SameSite flags.
-
-*(	ls.py, dns.py,
-etwork_checks.py)*
-- **TLS & Encryption:** Evaluates SSL/TLS certificate validity and checks for deprecated/weak ciphers.
-- **DNS & Infrastructure:** Checks DNS CAA, validates SPF/DMARC TXT records, and passively resolves common subdomains.
-
-*(pi_web_security.py, content.py, javascript_security.py)*
-- **APIs & Web Security:** Probes common GraphQL endpoints for exposed introspection and checks for mixed content.
-
-## Finding Semantics
-Findings are assigned the following severities:
-- **Actionable:** Critical, High, Medium, Low
-- **Non-actionable:** Informational, Inconclusive
-- **Successful:** Passed
-
-*Note: Aliases Info -> Informational and Skipped -> Inconclusive apply. Informational and Inconclusive findings are not counted as "Issues Found".*
-
-## Failure Handling
-- **Graceful Degradation:** Network errors or module timeouts do not automatically become vulnerability findings.
-- **Inconclusive Semantics:** Uncertain results, timeouts, or unreachable targets fail safely and are reported as Inconclusive. A network/infrastructure failure must not automatically become an Informational finding.
-- **Global Timeouts:** If a module exceeds its time budget, the scan continues with partial results rather than failing the entire request.
-
-## Limitations
-- **No Authentication:** The scanner cannot traverse authenticated routes or login portals.
-- **Timeouts:** Long-running modules may be truncated to respect the overall execution budget.
+## Compare / Vulnerability Evolution
+- **Intelligence acquired/recovered/lost**: Lifecycle state transitions.
+- **CVE added/removed**: Identifies delta changes.
+- **CVE no longer matched**: Distinguishes missing matches.
+- **Priority shift**: Reflects dynamic threat evolution.
+- **Technology lifecycle does not imply vulnerability remediation**: Technology/version changes provide context; CVE evolution is determined only by the explicit vulnerability-state/CVE comparison rules.
+- **Missing intelligence is never "safe"**: Explicit lack of safety inference.

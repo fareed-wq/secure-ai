@@ -1,5 +1,6 @@
 import datetime
 import html
+from api.scanner.priority import calculate_finding_priority, calculate_cve_priority
 from urllib.parse import urlparse
 
 def generate_pdf_report(data: dict) -> str:
@@ -16,14 +17,41 @@ def generate_pdf_report(data: dict) -> str:
     table_rows = []
     for f in data['findings']:
         sev = html.escape(str(f['severity']))
+        priority = html.escape(calculate_finding_priority(f))
         name = html.escape(str(f['name']))
         owasp = html.escape(str(f['owasp']))
         evidence = html.escape(str(f['evidence']))
         table_rows.append(
-            f"<tr><td class='sev-{sev}'>{sev}</td><td>{name}</td><td>{owasp}</td>"
+            f"<tr><td class='sev-{sev}'>[{priority}] {sev}</td><td>{name}</td><td>{owasp}</td>"
             f"<td><div class='snippet'>{evidence}</div></td></tr>"
         )
     findings_rows = "".join(table_rows)
+
+    cve_rows = []
+    if 'technology_identities' in data:
+        for ident in data['technology_identities']:
+            if ident.get('vulnerability_state') == 'MATCHED' and 'cves' in ident:
+                for cve in ident['cves']:
+                    cve_id = html.escape(str(cve.get('id', 'Unknown')))
+                    cve_sev = html.escape(str(cve.get('severity', 'Unknown')))
+                    cve_pri = html.escape(calculate_cve_priority(ident, cve))
+                    cve_sum = html.escape(str(cve.get('summary', '')))
+                    cve_rows.append(
+                        f"<tr><td class='sev-{cve_sev}'>[{cve_pri}] {cve_sev}</td><td>{cve_id}</td><td>{cve_sum}</td></tr>"
+                    )
+    cves_html = "".join(cve_rows)
+    if cves_html:
+        cves_section = f"""
+    <div class="card">
+        <h2>Known Vulnerabilities (CVEs)</h2>
+        <table>
+            <tr><th>Severity</th><th>CVE ID</th><th>Summary</th></tr>
+            {cves_html}
+        </table>
+    </div>"""
+    else:
+        cves_section = ""
+
 
     html_content = f"""<!DOCTYPE html>
 <html>
@@ -81,6 +109,7 @@ def generate_pdf_report(data: dict) -> str:
             {findings_rows}
         </table>
     </div>
+{cves_section}
 </body>
 </html>"""
     return html_content

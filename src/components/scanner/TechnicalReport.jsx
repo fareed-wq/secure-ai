@@ -1,4 +1,5 @@
-﻿import React, { useState } from 'react';
+﻿import { calculateFindingPriority, calculateCvePriority } from '../../utils/priority';
+import React, { useState } from 'react';
 import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
 import { WhatWasTested } from './WhatWasTested';
@@ -70,7 +71,7 @@ const TechnicalReport = ({ reportData }) => {
 
         {/* Top Header Bar */}
         <div className="flex items-center gap-3 mb-2">
-          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">â€º_ SCAN_METADATA</span>
+          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ SCAN_METADATA</span>
           <span className="text-slate-600 font-mono text-xs">/</span>
           <div className="flex items-center gap-2">
             <div className="bg-emerald-500 animate-pulse w-2 h-2 rounded-full"></div>
@@ -158,7 +159,7 @@ const TechnicalReport = ({ reportData }) => {
                 {reportData?.metadata?.ssl_issuer || 'Unknown Issuer'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
-                {reportData?.metadata?.tls_version || 'TLS'} Â· <span className={`ml-1 ${
+                {reportData?.metadata?.tls_version || 'TLS'} · <span className={`ml-1 ${
                   reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
                   reportData?.metadata?.ssl_days_left_int <= 30 ? "text-amber-400 font-semibold" :
                   "text-emerald-400 font-semibold"
@@ -189,7 +190,7 @@ const TechnicalReport = ({ reportData }) => {
                 {reportData?.metadata?.https_enforced ?? 'HTTPS Status Unknown'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
-                {reportData?.metadata?.http_protocol || 'HTTP/1.1'} Â· {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}
+                {reportData?.metadata?.http_protocol || 'HTTP/1.1'} · {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
@@ -211,7 +212,7 @@ const TechnicalReport = ({ reportData }) => {
         return (
           <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
-              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">â€º_ ASSESSMENT_COVERAGE</span>
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ ASSESSMENT_COVERAGE</span>
             </div>
             {cov.available ? (
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -256,7 +257,7 @@ const TechnicalReport = ({ reportData }) => {
         return (
           <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
             <div className="flex items-center gap-3 mb-4">
-              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">â€º_ EXPOSURE</span>
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ EXPOSURE</span>
             </div>
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
@@ -413,22 +414,34 @@ const TechnicalReport = ({ reportData }) => {
                                     <td colSpan={6} className="p-0 border-b-2 border-slate-700/50">
                                       <div className="bg-slate-950 p-6 transition-all duration-300">
                                         <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Known Vulnerabilities</div>
-                                        
-                                        {(!tech.cves || tech.cves.length === 0) ? (
-                                          <div className="text-slate-500 text-sm">No associated CVEs observed.</div>
-                                        ) : (
-                                          <div className="space-y-3">
-                                            {tech.cves.map((cve, cveIdx) => (
-                                              <div key={cveIdx} className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-                                                <div className="flex items-center gap-3 mb-2">
-                                                  <span className="font-mono font-bold text-rose-300 text-sm">{cve.id}</span>
-                                                  {getSeverityBadge(cve.severity.charAt(0).toUpperCase() + cve.severity.slice(1).toLowerCase())}
-                                                </div>
-                                                <p className="text-slate-400 text-sm leading-relaxed">{cve.summary}</p>
+                                          {(() => {
+                                            const status = reportData?.cve_enrichment_status;
+                                            if (status === 'QUEUED' || status === 'RUNNING') {
+                                              return <div className="text-amber-400 text-sm">Vulnerability intelligence is being evaluated in the background.</div>;
+                                            }
+                                            if (status === 'FAILED') {
+                                              return <div className="text-rose-400 text-sm">Vulnerability intelligence evaluation failed. Status unavailable.</div>;
+                                            }
+                                            if (!tech.cves || tech.cves.length === 0) {
+                                              return <div className="text-slate-500 text-sm">No associated CVEs observed.</div>;
+                                            }
+                                            return (
+                                              <div className="space-y-3">
+                                                {tech.cves.map((cve, cveIdx) => (
+                                                  <div key={cveIdx} className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                                                    <div className="flex items-center gap-3 mb-2">
+                                                      <span className="font-mono font-bold text-rose-300 text-sm">{cve.id}</span>
+                                                      {getSeverityBadge(cve.severity.charAt(0).toUpperCase() + cve.severity.slice(1).toLowerCase())}
+                                                        <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 ml-2">
+                                                          Priority: {calculateCvePriority(tech, cve)}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-slate-400 text-sm leading-relaxed">{cve.summary}</p>
+                                                  </div>
+                                                ))}
                                               </div>
-                                            ))}
-                                          </div>
-                                        )}
+                                            );
+                                          })()}
                                       </div>
                                     </td>
                                   </tr>
@@ -488,6 +501,11 @@ const TechnicalReport = ({ reportData }) => {
                               >
                               <td className="px-6 py-4 whitespace-nowrap align-top">
                                 {getSeverityBadge(finding.severity)}
+                                  <div className="mt-1">
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
+                                      Priority: {calculateFindingPriority(finding)}
+                                    </span>
+                                  </div>
                             </td>
                             <td className="px-6 py-4 font-bold text-slate-200 align-top">
                               <div>{finding.name}</div>
@@ -535,7 +553,7 @@ const TechnicalReport = ({ reportData }) => {
                                         {finding.impact && finding.impact !== "N/A" && (
                                           <div>
                                             <div className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                              <span>âš ï¸</span> Security Impact & Risk
+                                              <span>⚠️</span> Security Impact & Risk
                                             </div>
                                             <p className="technical-risk-text text-rose-200/80 leading-relaxed text-sm">{finding.impact}</p>
                                           </div>

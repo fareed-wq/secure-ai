@@ -171,7 +171,7 @@ def verify_turnstile(token: str, ip: str = None) -> bool:
             "https://challenges.cloudflare.com/turnstile/v0/siteverify",
             body=encoded_data,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
-            timeout=3.0
+            timeout=1.0
         )
         if resp.status != 200:
             return False
@@ -270,11 +270,13 @@ from api.admin import admin_router
 from api.scheduling.router import router as scheduling_router
 from api.scheduling.worker import worker_router
 from api.scheduling.email_worker import router as email_worker_router
+from api.scanner.enrich_worker import worker_router as enrich_worker_router
 
 app.include_router(admin_router)
 app.include_router(scheduling_router, prefix="/api/schedules", tags=["schedules"])
 app.include_router(worker_router, prefix="/api/internal", tags=["internal"])
 app.include_router(email_worker_router, prefix="/api/internal", tags=["internal"])
+app.include_router(enrich_worker_router, prefix="/api/internal", tags=["internal"])
 
 @app.post("/api/scan")
 @app.post("/scan")
@@ -369,6 +371,9 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
                 if "scan_mode" not in result:
                     result["scan_mode"] = req.scan_mode
 
+                # Phase 8: Always insert as NOT_REQUESTED; upgrade after publish
+                result["cve_enrichment_status"] = "NOT_REQUESTED"
+
                 payload = {
                     "user_id": user["sub"],
                     "target_url": result.get("url", req.url),
@@ -379,8 +384,44 @@ async def scan_single(req: ScanRequest, request: Request, user: dict = Depends(g
                 try:
                     db_res = requests.post(f"{SUPABASE_URL}/rest/v1/scans", headers=headers, json=payload, timeout=10)
                     if db_res.status_code in (200, 201) and db_res.json():
-                        result["id"] = db_res.json()[0].get("id")
+                        scan_id = db_res.json()[0].get("id")
+                        result["id"] = scan_id
                         result["history_saved"] = True
+
+                        # Phase 8: Publish to QStash, then upgrade to QUEUED
+                        from api.scheduling.router import QSTASH_TOKEN
+                        if QSTASH_TOKEN:
+                            import os
+                            APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://api.urlscanonline.com")
+                            qstash_url = os.environ.get("QSTASH_URL", "https://qstash.upstash.io/v2")
+                            publish_url = f"{qstash_url.rstrip('/')}/publish/{APP_BASE_URL.rstrip('/')}/api/internal/enrich-cve"
+                            q_headers = {
+                                "Authorization": f"Bearer {QSTASH_TOKEN}",
+                                "Upstash-Deduplication-Id": scan_id,
+                                "Upstash-Retries": "3",
+                                "Content-Type": "application/json"
+                            }
+                            try:
+                                req_res = requests.post(publish_url, headers=q_headers, json={"scan_id": scan_id}, timeout=1.0)
+                                if req_res.status_code not in (200, 201, 202):
+                                    raise Exception("Publish failed")
+                                # Publish succeeded — atomically upgrade to QUEUED
+                                try:
+                                    q_res = requests.post(
+                                        f"{SUPABASE_URL}/rest/v1/rpc/atomic_update_cve_status",
+                                        headers=headers,
+                                        json={"p_scan_id": scan_id, "p_expected_status": "NOT_REQUESTED", "p_new_status": "QUEUED"},
+                                        timeout=1.0
+                                    )
+                                    if q_res.status_code == 200 and q_res.json() is True:
+                                        result["cve_enrichment_status"] = "QUEUED"
+                                    # else: worker already claimed it (race) — harmless
+                                except Exception:
+                                    pass  # Worker may have already advanced state — harmless
+                            except Exception as q_err:
+                                logging.error(f"Failed to enqueue CVE enrichment: {q_err}")
+                                # Publish failed — DB stays NOT_REQUESTED, no orphan possible
+
                     else:
                         logging.error(f"Failed to persist scan history. Status code: {db_res.status_code}")
                         result["history_saved"] = False
