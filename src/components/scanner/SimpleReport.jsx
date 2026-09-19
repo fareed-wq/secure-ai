@@ -137,7 +137,7 @@ const SimpleReport = ({ reportData }) => {
               </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
-                  ðŸŸ¢ {passed.length} Audits Clean
+                  🟢 {passed.length} Audits Clean
                 </span>
               </div>
             </div>
@@ -148,7 +148,7 @@ const SimpleReport = ({ reportData }) => {
               </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-blue-500/15 text-blue-300 border-blue-500/30">
-                  âšª {informational.length} Observations
+                  ⚪ {informational.length} Observations
                 </span>
               </div>
             </div>
@@ -159,7 +159,7 @@ const SimpleReport = ({ reportData }) => {
               </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-slate-800/40 text-slate-400 border-slate-700">
-                  âš ï¸ {inconclusive.length} Skipped Checks
+                  ⚪ {inconclusive.length} Skipped Checks
                 </span>
               </div>
             </div>
@@ -209,11 +209,11 @@ const SimpleReport = ({ reportData }) => {
         const serverSub = (() => {
           const status = ts.waf_status || '';
           const statusCode = status.match(/\d{3}/)?.[0] || '';
-          if (reportData?.latency && statusCode === '200') return `200 OK â€¢ ${reportData.latency}`;
-          if (statusCode === '200') return '200 OK â€¢ Healthy';
-          if (statusCode === '403') return '403 â€¢ Access Restricted';
-          if (statusCode === '503') return '503 â€¢ Service Issue';
-          if (statusCode) return `${statusCode} â€¢ Detected`;
+          if (reportData?.latency && statusCode === '200') return `200 OK • ${reportData.latency}`;
+          if (statusCode === '200') return '200 OK • Healthy';
+          if (statusCode === '403') return '403 • Access Restricted';
+          if (statusCode === '503') return '503 • Service Issue';
+          if (statusCode) return `${statusCode} • Detected`;
           return perfRating || 'Status Unknown';
         })();
         const wafPill = (() => {
@@ -237,7 +237,7 @@ const SimpleReport = ({ reportData }) => {
         })();
 
         // â”€â”€ 2. FRONTEND STACK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        const detectedTech = reportData?.technologies?.join(' â€¢ ') || reportData?.detected_framework;
+        const detectedTech = reportData?.technologies?.join(' • ') || reportData?.detected_framework;
         const stackVal = detectedTech || ts.frontend_stack || 'Standard Web Stack';
         const stackSub = ts.frontend_subtext || 'HTML5 / JavaScript Application';
         const stackPill = detectedTech ? 'DETECTED STACK' : (ts.frontend_pill || 'VERIFIED STACK');
@@ -390,7 +390,7 @@ const SimpleReport = ({ reportData }) => {
                     )}
                   </span>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${metric.val === -1 ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20' : metric.val >= 90 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : metric.val >= 50 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                    {metric.val === -1 ? 'âšª No Data' : metric.val >= 90 ? 'ðŸŸ¢ Optimal' : metric.val >= 50 ? 'ðŸŸ¡ Needs Attention' : 'ðŸ”´ Vulnerable'}
+                    {metric.val === -1 ? '⚪ No Data' : metric.val >= 90 ? '🟢 Optimal' : metric.val >= 50 ? '🟡 Needs Attention' : '🔴 Vulnerable'}
                   </span>
                 </div>
                 <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden">
@@ -422,7 +422,7 @@ const SimpleReport = ({ reportData }) => {
                   Your Top Priorities
                 </h3>
                 <p className="text-amber-400/80 text-xs md:text-sm mt-0.5 group-open:hidden">
-                  ðŸ”´ {topPriorities.length} priority items identified. [ View Top Priorities â–¾ ]
+                  🔴 {topPriorities.length} priority items identified. [ View Top Priorities ▾ ]
                 </p>
                 <p className="text-amber-400/80 text-xs md:text-sm mt-0.5 hidden group-open:block">
                   Hide Top Priorities

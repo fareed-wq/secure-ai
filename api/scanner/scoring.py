@@ -432,7 +432,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
         if techs:
             frontend_stack = techs[0]
             if subtechs:
-                frontend_subtext = " â€¢ ".join(subtechs)
+                frontend_subtext = " • ".join(subtechs)
             else:
                 frontend_subtext = "Verified Modern Stack"
 
@@ -440,7 +440,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     target_surface["frontend_subtext"] = frontend_subtext
     target_surface["frontend_pill"] = "VERIFIED STACK"
 
-    # 2. API Surface â€” extract precise endpoint path from evidence
+    # 2. API Surface — extract precise endpoint path from evidence
     api_surface = "Unknown" if scan_incomplete else "No Public Spec Exposed"
     api_subtext = "Not Assessed" if scan_incomplete else "GraphQL / OpenAPI Clean"
     api_pill = "NO DATA" if scan_incomplete else "CLEAN SURFACE"
