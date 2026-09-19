@@ -23,6 +23,7 @@ ule_id**: Deterministic vulnerability class identifier.
 - **instance_key**: Deterministic instance location identifier.
 - **Vulnerability state**: Tracks intelligence lifecycle.
 - **CVE/CVSS/CWE/EPSS enrichment**: Curated threat intelligence (CVSS assessments may originate from NVD, CNA, and ADP).
+- **KEV and SSVC metadata**: Optional Known Exploited Vulnerabilities and authoritative CISA-ADP SSVC metadata obtained from the existing NVD enrichment response. They are persisted inside the existing CVE JSONB/cache structure, meaning existing cache freshness semantics remain unchanged. Missing KEV/SSVC does not cause enrichment failure. SSVC is imported from authoritative upstream data and is NOT calculated locally. Because this runs in the existing background enrichment path, it does not affect the fast core scan path.
 - **Derived Priority**: Contextual dynamic sorting value.
 
 ## Technology Identity + CPE

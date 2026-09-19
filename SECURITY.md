@@ -4,6 +4,7 @@
 - **NOT_EVALUATED ? secure**: Missing assessments never imply safety.
 - **UNAVAILABLE ? secure**: Network failures never imply safety.
 - **NO_MATCH ? guarantee of security**: Absence of public CVEs does not prove invulnerability.
+- **KEV/SSVC uncertainty**: Absence of KEV does not imply absence of exploitation. Absence of SSVC does not imply low/no risk. KEV/SSVC describe generalized vulnerability intelligence; they do not establish actual exploitability against the scanned target (target applicability remains strictly dependent on the scanner's technology/CPE matching pipeline).
 
 ## Background Intelligence
 - **NVD/EPSS lookups are third-party intelligence requests**.

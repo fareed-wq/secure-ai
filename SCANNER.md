@@ -28,6 +28,9 @@
 - **CVE matching behavior**: Strict NVD adherence.
 - **Authoritative NVD applicability**: The sole source of truth for matches.
 - **CVSS/CWE provenance**: CVSS assessments may originate from NVD, CNA, and ADP.
+- **KEV metadata**: An informational known-exploitation indicator. Missing KEV does not mean the CVE is not exploited.
+- **SSVC metadata**: Authoritative imported decision-point metadata. Missing SSVC does not mean low/no risk. SSVC outcomes (such as Track, Track*, Attend, Act) must never be inferred locally when not supplied by the authoritative source.
+- **Metadata separation**: KEV and SSVC are informational only. They do NOT alter scanner score, grade, severity, Phase 6 Priority, stable identity, or Compare evolution events.
 - **EPSS score/percentile semantics**: EPSS provides both score and percentile, but Priority uses EPSS score only.
 - **Background enrichment behavior**: Lookups execute asynchronously.
 
