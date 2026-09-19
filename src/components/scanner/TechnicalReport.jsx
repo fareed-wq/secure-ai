@@ -505,6 +505,41 @@ const TechnicalReport = ({ reportData }) => {
 
           {activeView === 'vulnerabilities' && (
           <div className="w-full max-w-full overflow-hidden space-y-6">
+              <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
+                <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-3">Understanding Priority (P1–P5)</h3>
+                <p className="text-slate-400 text-sm mb-4">
+                  Priority indicates <strong className="text-slate-300">remediation urgency</strong> and is not the same as Severity.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="text-slate-300 font-bold text-sm mb-2">Standard Findings</h4>
+                    <p className="text-slate-500 text-xs mb-2">Priority follows the finding's technical severity:</p>
+                    <ul className="text-slate-400 text-xs space-y-1 list-disc list-inside">
+                      <li>Critical &rarr; P1</li>
+                      <li>High &rarr; P2</li>
+                      <li>Medium &rarr; P3</li>
+                      <li>Low &rarr; P4</li>
+                      <li>Informational / Passed &rarr; P5</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="text-slate-300 font-bold text-sm mb-2">Known Vulnerabilities (CVEs)</h4>
+                    <p className="text-slate-500 text-xs mb-2">Priority is calculated from vulnerability-intelligence signals:</p>
+                    <ul className="text-slate-400 text-xs space-y-1 list-disc list-inside">
+                      <li><strong>P1:</strong> CVSS &ge; 9.0 OR EPSS &ge; 10%</li>
+                      <li><strong>P2:</strong> CVSS &ge; 7.0 OR EPSS &ge; 1%</li>
+                      <li><strong>P3:</strong> CVSS &ge; 4.0</li>
+                      <li><strong>P4:</strong> CVSS &gt; 0</li>
+                      <li><strong>P5:</strong> CVSS = 0, or CVSS unavailable with EPSS &lt; 1%</li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-500 space-y-2">
+                  <p><strong>Important:</strong> Higher-priority conditions take precedence. For example, a CVE meeting a P1 condition remains P1 even if it also meets a lower-tier condition.</p>
+                  <p className="italic">CVSS indicates vulnerability severity; EPSS indicates exploitation likelihood. Priority uses these signals for remediation prioritization.</p>
+                </div>
+              </div>
+
             {domainGroups.map((group) => {
               const knownDomainKeys = new Set(domainGroups.map(g => g.key));
               const groupFindings = sortedFindings.filter(f => {
