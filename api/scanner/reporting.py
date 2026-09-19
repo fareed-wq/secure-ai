@@ -22,8 +22,8 @@ def generate_pdf_report(data: dict) -> str:
         owasp = html.escape(str(f['owasp']))
         evidence = html.escape(str(f['evidence']))
         table_rows.append(
-            f"<tr><td class='sev-{sev}'>{sev}</td><td>{name}</td><td>{owasp}</td>"
-            f"<td>{priority}</td><td><div class='snippet'>{evidence}</div></td></tr>"
+            f"<tr><td><span class='pri-{priority}'>{priority}</span></td><td class='sev-{sev}'>{sev}</td>"
+            f"<td>{name}</td><td>{owasp}</td><td><div class='snippet'>{evidence}</div></td></tr>"
         )
     findings_rows = "".join(table_rows)
 
@@ -104,6 +104,12 @@ def generate_pdf_report(data: dict) -> str:
         .sev-Medium {{ color: #f59e0b; font-weight: bold; }}
         .sev-Low {{ color: #eab308; }}
         .sev-Passed {{ color: #10b981; font-weight: bold; }}
+        .pri-P1 {{ color: #fb7185; background: rgba(76, 5, 25, 0.3); padding: 2px 6px; border: 1px solid #9f1239; border-radius: 4px; font-weight: bold; font-size: 11px; }}
+        .pri-P2 {{ color: #fbbf24; background: rgba(69, 26, 3, 0.3); padding: 2px 6px; border: 1px solid #92400e; border-radius: 4px; font-weight: bold; font-size: 11px; }}
+        .pri-P3 {{ color: #facc15; background: rgba(66, 32, 6, 0.3); padding: 2px 6px; border: 1px solid #854d0e; border-radius: 4px; font-weight: bold; font-size: 11px; }}
+        .pri-P4 {{ color: #22d3ee; background: rgba(8, 51, 68, 0.3); padding: 2px 6px; border: 1px solid #155e75; border-radius: 4px; font-weight: bold; font-size: 11px; }}
+        .pri-P5 {{ color: #a78bfa; background: rgba(46, 16, 101, 0.3); padding: 2px 6px; border: 1px solid #5b21b6; border-radius: 4px; font-weight: bold; font-size: 11px; }}
+        .pri-UNSCORED {{ color: #94a3b8; background: #1e293b; padding: 2px 6px; border: 1px solid #334155; border-radius: 4px; font-weight: bold; font-size: 11px; }}
         .snippet {{ background: #030712; padding: 8px; font-family: monospace; font-size: 12px; border-radius: 4px; color: #a7f3d0; border: 1px solid #1f2937; white-space: pre-wrap; }}
     </style>
 </head>
@@ -137,7 +143,7 @@ def generate_pdf_report(data: dict) -> str:
     <div class="card">
         <h2>Vulnerability & Finding Matrix</h2>
         <table>
-            <tr><th>Severity</th><th>Check Name</th><th>OWASP Category</th><th>Priority</th><th>Evidence</th></tr>
+            <tr><th>Priority</th><th>Severity</th><th>Check Name</th><th>OWASP Category</th><th>Evidence</th></tr>
             {findings_rows}
         </table>
     </div>

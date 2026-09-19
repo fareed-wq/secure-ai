@@ -59,15 +59,31 @@ def test_integration_pdf_report():
         'score': 100,
         'potential_issues_count': 0,
         'category_scores': {'encryption_tls': 100, 'http_headers': 100, 'domain_email': 100, 'session_cookies': 100, 'information_exposure': 100},
-        'findings': [{'name': 'Test Finding', 'severity': 'Critical', 'owasp': 'A1', 'evidence': 'test evidence'}],
+        'findings': [
+            {'name': 'Test P1', 'severity': 'Critical', 'owasp': 'A1', 'evidence': 'test1'},
+            {'name': 'Test P2', 'severity': 'High', 'owasp': 'A2', 'evidence': 'test2'},
+            {'name': 'Test P3', 'severity': 'Medium', 'owasp': 'A3', 'evidence': 'test3'},
+            {'name': 'Test P4', 'severity': 'Low', 'owasp': 'A4', 'evidence': 'test4'},
+            {'name': 'Test P5', 'severity': 'Informational', 'owasp': 'A5', 'evidence': 'test5'},
+            {'name': 'Test UNSCORED', 'severity': 'Unknown', 'owasp': 'A6', 'evidence': 'test6'}
+        ],
         'technology_identities': [{
             'vulnerability_state': 'MATCHED',
             'cves': [{'id': 'CVE-123', 'severity': 'high', 'summary': 'test', 'cvss_assessments': [{'base_score': 9.5}]}]
         }]
     }
     html_out = generate_pdf_report(data)
-    assert ">Critical</td>" in html_out
-    assert "<td>P1</td>" in html_out
+    # Verify exact row rendering (Priority before Severity) and correct CSS classes
+    assert "<tr><td><span class='pri-P1'>P1</span></td><td class='sev-Critical'>Critical</td><td>Test P1</td>" in html_out
+    assert "<tr><td><span class='pri-P2'>P2</span></td><td class='sev-High'>High</td><td>Test P2</td>" in html_out
+    assert "<tr><td><span class='pri-P3'>P3</span></td><td class='sev-Medium'>Medium</td><td>Test P3</td>" in html_out
+    assert "<tr><td><span class='pri-P4'>P4</span></td><td class='sev-Low'>Low</td><td>Test P4</td>" in html_out
+    assert "<tr><td><span class='pri-P5'>P5</span></td><td class='sev-Informational'>Informational</td><td>Test P5</td>" in html_out
+    assert "<tr><td><span class='pri-UNSCORED'>UNSCORED</span></td><td class='sev-Unknown'>Unknown</td><td>Test UNSCORED</td>" in html_out
+
+    # Also verify CSS classes are actually injected in the style block
+    assert ".pri-P1 {" in html_out
+    assert ".pri-P5 {" in html_out
     assert 'Known Vulnerabilities' in html_out
     assert '[P1] high' in html_out
 
