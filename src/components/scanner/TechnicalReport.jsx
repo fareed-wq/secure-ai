@@ -44,6 +44,19 @@ const TechnicalReport = ({ reportData }) => {
     return <span className={`uppercase tracking-widest ${styles[severity] || 'bg-slate-700 text-slate-50 font-bold px-2.5 py-1 rounded text-xs shadow-sm'}`}>{severity}</span>;
   };
 
+  const getPriorityBadge = (priority) => {
+    const styles = {
+      'P1': 'text-rose-400 bg-rose-950/30 border-rose-800',
+      'P2': 'text-amber-400 bg-amber-950/30 border-amber-800',
+      'P3': 'text-yellow-400 bg-yellow-950/30 border-yellow-800',
+      'P4': 'text-cyan-400 bg-cyan-950/30 border-cyan-800',
+      'P5': 'text-violet-400 bg-violet-950/30 border-violet-800',
+      'UNSCORED': 'text-slate-400 bg-slate-800 border-slate-700'
+    };
+    const style = styles[priority] || styles['UNSCORED'];
+    return <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${style}`}>{priority}</span>;
+  };
+
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
   };
@@ -511,10 +524,10 @@ const TechnicalReport = ({ reportData }) => {
                     <table className="technical-findings-table w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                          <th className="px-6 py-4" style={{ width: '10%' }}>Priority</th>
                           <th className="px-6 py-4" style={{ width: '15%' }}>Severity</th>
                           <th className="px-6 py-4" style={{ width: '35%' }}>Security Check / Finding</th>
                           <th className="px-6 py-4" style={{ width: '25%' }}>OWASP Map</th>
-                          <th className="px-6 py-4" style={{ width: '10%' }}>Priority</th>
                           <th className="px-6 py-4 text-right print:hidden" style={{ width: '15%' }}>Action</th>
                         </tr>
                       </thead>
@@ -533,6 +546,9 @@ const TechnicalReport = ({ reportData }) => {
                                 className={`technical-finding-row ${finding.severity === 'Passed' ? 'technical-passed-row' : ''} cursor-pointer hover:bg-slate-800/20 transition-colors ${expandedRow === idx ? 'bg-slate-800/30' : ''}`}
                               >
                                 <td className="px-6 py-4 whitespace-nowrap align-top">
+                                  {getPriorityBadge(calculateFindingPriority(finding))}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap align-top">
                                   {getSeverityBadge(finding.severity)}
                                 </td>
                                 <td className="px-6 py-4 font-bold text-slate-200 align-top">
@@ -544,11 +560,6 @@ const TechnicalReport = ({ reportData }) => {
                                   ) : (
                                     <span className="technical-owasp-badge-none text-slate-600 text-xs">-</span>
                                   )}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap align-top">
-                                  <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
-                                    {calculateFindingPriority(finding)}
-                                  </span>
                                 </td>
                             <td className="px-6 py-4 text-right print:hidden align-top">
                               <button aria-label={expandedRow === idx ? "Collapse Details" : "Expand Details"} className="text-slate-500 hover:text-slate-50 transition-colors">
