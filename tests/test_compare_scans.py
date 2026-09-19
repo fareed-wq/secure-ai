@@ -1467,3 +1467,46 @@ def test_compare_identical_input():
     assert len(res["cve_removed"]) == 0
     assert len(res["cve_priority_changed"]) == 0
     assert len(res["intelligence_acquired"]) == 0
+
+def test_compare_ignores_kev_ssvc_metadata_changes():
+    from api.scanner.compare import compare_reports
+
+    old_scan = {
+        "target_url": "http://example.com",
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [
+                {
+                    "rule_id": "cve-match",
+                    "cve_id": "CVE-123",
+                    "severity": "HIGH",
+                    "description": "test",
+                    "instances": []
+                }
+            ]
+        }
+    }
+
+    new_scan = {
+        "target_url": "http://example.com",
+        "report_data": {
+            "scan_mode": "passive",
+            "findings": [
+                {
+                    "rule_id": "cve-match",
+                    "cve_id": "CVE-123",
+                    "severity": "HIGH",
+                    "description": "test",
+                    "instances": [],
+                    "kev": {"added": "2024-01-01"},
+                    "ssvc": {"decision": "Act"}
+                }
+            ]
+        }
+    }
+
+    diff = compare_reports(old_scan, new_scan)
+
+    assert len(diff["added"]) == 0
+    assert len(diff["removed"]) == 0
+    assert len(diff["unchanged"]) == 1

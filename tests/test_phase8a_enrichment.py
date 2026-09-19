@@ -732,3 +732,156 @@ def test_enrich_worker_cache_miss_unchanged(mock_post, mock_get):
 
     nvd_call_args = mock_get.call_args_list[2][0][0]
     assert "cpeName=cpe%3A2.3%3Aa%3Atest%3Amiss" in nvd_call_args
+
+@patch("api.scanner.enrich_worker.requests.get")
+@patch("api.scanner.enrich_worker.requests.post")
+def test_enrich_worker_kev_ssvc_serialization(mock_post, mock_get):
+    """Phase8A KEV and SSVC are correctly parsed when present, handles multiple records deterministically."""
+    from fastapi.testclient import TestClient
+    from api.index import app
+    client = TestClient(app)
+
+    mock_scan_resp = Mock(); mock_scan_resp.status_code = 200
+    mock_scan_resp.json.return_value = [{"id": "scan-kev-ssvc", "report_data": {"technology_identities": [{"cpe": "cpe:2.3:a:test:kev:1.0:*:*:*:*:*:*:*", "version_precision": "EXACT"}], "cve_enrichment_status": "QUEUED"}}]
+
+    mock_cache_resp = Mock(); mock_cache_resp.status_code = 200
+    mock_cache_resp.json.return_value = []
+
+    mock_nvd_resp = Mock(); mock_nvd_resp.status_code = 200
+    mock_nvd_resp.json.return_value = {
+        "vulnerabilities": [{
+            "cve": {
+                "id": "CVE-KEV-SSVC",
+                "cisaExploitAdd": "2021-11-03",
+                "cisaActionDue": "2021-11-17",
+                "cisaRequiredAction": "Apply updates.",
+                "cisaVulnerabilityName": "Test Vuln",
+                "metrics": {
+                    "cvssMetricV31": [{"cvssData": {"baseSeverity": "HIGH"}}],
+                    "ssvcV203": [
+                        {"source": "random", "ssvcData": {"role": "random", "timestamp": "2025-01-01"}},
+                        {
+                            "source": " CISA-adp ",
+                            "ssvcData": {
+                                "role": "CISA Coordinator",
+                                "version": "2.0.3",
+                                "timestamp": "2024-01-01",
+                                "options": [
+                                    {"Exploitation": "active"},
+                                    {"Automatable": "no"}
+                                ]
+                            }
+                        },
+                        {
+                            "source": "cisa-adp",
+                            "ssvcData": {
+                                "role": "CISA Coordinator",
+                                "version": "2.0.3",
+                                "timestamp": "2024-02-01",
+                                "options": {
+                                    "Technical Impact": "total"
+                                }
+                            }
+                        },
+                        "malformed_record",
+                        {"source": "CISA-ADP"}
+                    ]
+                }
+            }
+        }]
+    }
+
+    mock_epss = Mock(); mock_epss.status_code = 200; mock_epss.json.return_value = {"data": []}
+
+    mock_get.side_effect = [mock_scan_resp, mock_cache_resp, mock_nvd_resp, mock_epss]
+
+    mock_claim = Mock(); mock_claim.status_code = 200; mock_claim.json.return_value = True
+    mock_cache_save = Mock(); mock_cache_save.status_code = 200; mock_cache_save.json.return_value = True
+    mock_save = Mock(); mock_save.status_code = 200; mock_save.json.return_value = True
+    mock_post.side_effect = [mock_claim, mock_cache_save, mock_save]
+
+    client.post("/api/internal/enrich-cve", headers={"Upstash-Signature": "valid"}, json={"scan_id": "scan-kev-ssvc"})
+
+    save_call = mock_post.call_args_list[2][1]["json"]
+    cve_obj = save_call["p_identities"][0]["cves"][0]
+
+    assert cve_obj["id"] == "CVE-KEV-SSVC"
+    assert cve_obj["kev"]["added"] == "2021-11-03"
+    assert cve_obj["kev"]["action"] == "Apply updates."
+    assert cve_obj["ssvc"]["source"] == "cisa-adp"
+    assert cve_obj["ssvc"]["timestamp"] == "2024-02-01"  # Newest valid CISA-ADP
+    assert cve_obj["ssvc"]["options"]["technicalImpact"] == "total"
+
+@patch("api.scanner.enrich_worker.requests.get")
+@patch("api.scanner.enrich_worker.requests.post")
+def test_enrich_worker_kev_ssvc_absent(mock_post, mock_get):
+    """Phase8A KEV and SSVC are correctly omitted when absent, leaving CVE structure intact."""
+    from fastapi.testclient import TestClient
+    from api.index import app
+    client = TestClient(app)
+
+    mock_scan_resp = Mock(); mock_scan_resp.status_code = 200
+    mock_scan_resp.json.return_value = [{"id": "scan-kev-ssvc-absent", "report_data": {"technology_identities": [{"cpe": "cpe:2.3:a:test:kev:1.0:*:*:*:*:*:*:*", "version_precision": "EXACT"}], "cve_enrichment_status": "QUEUED"}}]
+
+    mock_cache_resp = Mock(); mock_cache_resp.status_code = 200
+    mock_cache_resp.json.return_value = []
+
+    mock_nvd_resp = Mock(); mock_nvd_resp.status_code = 200
+    mock_nvd_resp.json.return_value = {
+        "vulnerabilities": [{
+            "cve": {
+                "id": "CVE-ABSENT",
+                "metrics": {
+                    "cvssMetricV31": [{"cvssData": {"baseSeverity": "HIGH"}}]
+                }
+            }
+        }]
+    }
+
+    mock_epss = Mock(); mock_epss.status_code = 200; mock_epss.json.return_value = {"data": []}
+    mock_get.side_effect = [mock_scan_resp, mock_cache_resp, mock_nvd_resp, mock_epss]
+
+    mock_claim = Mock(); mock_claim.status_code = 200; mock_claim.json.return_value = True
+    mock_cache_save = Mock(); mock_cache_save.status_code = 200; mock_cache_save.json.return_value = True
+    mock_save = Mock(); mock_save.status_code = 200; mock_save.json.return_value = True
+    mock_post.side_effect = [mock_claim, mock_cache_save, mock_save]
+
+    client.post("/api/internal/enrich-cve", headers={"Upstash-Signature": "valid"}, json={"scan_id": "scan-kev-ssvc-absent"})
+
+    save_call = mock_post.call_args_list[2][1]["json"]
+    cve_obj = save_call["p_identities"][0]["cves"][0]
+
+    assert cve_obj["id"] == "CVE-ABSENT"
+    assert "kev" not in cve_obj
+    assert "ssvc" not in cve_obj
+
+
+@patch("api.scanner.enrich_worker.requests.get")
+@patch("api.scanner.enrich_worker.requests.post")
+def test_enrich_worker_historical_cache_kev_ssvc_absent(mock_post, mock_get):
+    """Phase8A historical cache entries lacking kev/ssvc load cleanly without error."""
+    from fastapi.testclient import TestClient
+    from api.index import app
+    client = TestClient(app)
+
+    mock_scan_resp = Mock(); mock_scan_resp.status_code = 200
+    mock_scan_resp.json.return_value = [{"id": "scan-hist", "report_data": {"technology_identities": [{"cpe": "cpe:2.3:a:test:hist:1.0:*:*:*:*:*:*:*", "version_precision": "EXACT"}], "cve_enrichment_status": "QUEUED"}}]
+
+    # Supabase returns the valid legacy cache entry
+    mock_cache_resp = Mock(); mock_cache_resp.status_code = 200
+    mock_cache_resp.json.return_value = [{"cves_json": [{"id": "CVE-LEGACY", "severity": "HIGH", "summary": "cached"}], "expires_at": "2099-01-01T00:00:00Z"}]
+
+    mock_get.side_effect = [mock_scan_resp, mock_cache_resp]
+
+    mock_claim = Mock(); mock_claim.status_code = 200; mock_claim.json.return_value = True
+    mock_save = Mock(); mock_save.status_code = 200; mock_save.json.return_value = True
+    mock_post.side_effect = [mock_claim, mock_save]
+
+    client.post("/api/internal/enrich-cve", headers={"Upstash-Signature": "valid"}, json={"scan_id": "scan-hist"})
+
+    save_call = mock_post.call_args_list[1][1]["json"]
+    cve_obj = save_call["p_identities"][0]["cves"][0]
+
+    assert cve_obj["id"] == "CVE-LEGACY"
+    assert "kev" not in cve_obj
+    assert "ssvc" not in cve_obj
