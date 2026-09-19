@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from api.scanner.modules.http_security import SecurityHeadersModule
 
 from api.scanner.modules.headers import CSPQualityModule
@@ -117,11 +117,11 @@ def test_malformed_csp():
     findings = run_csp(headers)
     # Shouldn't crash
     assert len(findings) > 0
-def test_csp_structured_metadata():
+@patch('api.scanner.modules.http_security.safe_request')
+def test_csp_structured_metadata(mock_safe_req):
     from api.scanner.modules.http_security import SecurityHeadersModule
     from unittest.mock import MagicMock
     import requests
-    import api.scanner.modules.http_security as http_sec
 
     module = SecurityHeadersModule()
     response = MagicMock(spec=requests.Response)
@@ -129,7 +129,7 @@ def test_csp_structured_metadata():
     response.headers = {
         'Content-Security-Policy': 'default-src \'self\'; script-src \'self\' https://example.com; object-src \'none\'; base-uri \'none\'; frame-ancestors \'none\'; form-action \'self\'; style-src \'unsafe-inline\'; other-src \'ignore\''
     }
-    http_sec.safe_request = MagicMock(return_value=response)
+    mock_safe_req.return_value = response
     findings = module.run('https://example.com', 'example.com', MagicMock())
 
     csp_finding = next(f for f in findings if f['name'] == 'Content-Security-Policy Configured')
@@ -150,11 +150,11 @@ def test_csp_structured_metadata():
     assert 'connect-src' not in directives
     assert evidence['raw'] == response.headers['Content-Security-Policy'][:180]
 
-def test_csp_structured_metadata_multiple_headers():
+@patch('api.scanner.modules.http_security.safe_request')
+def test_csp_structured_metadata_multiple_headers(mock_safe_req):
     from api.scanner.modules.http_security import SecurityHeadersModule
     from unittest.mock import MagicMock
     import requests
-    import api.scanner.modules.http_security as http_sec
 
     module = SecurityHeadersModule()
     response = MagicMock(spec=requests.Response)
@@ -162,7 +162,7 @@ def test_csp_structured_metadata_multiple_headers():
     response.headers = {
         'Content-Security-Policy': 'default-src \'self\', script-src \'none\''
     }
-    http_sec.safe_request = MagicMock(return_value=response)
+    mock_safe_req.return_value = response
     findings = module.run('https://example.com', 'example.com', MagicMock())
 
     csp_finding = next(f for f in findings if f['name'] == 'Content-Security-Policy Configured')

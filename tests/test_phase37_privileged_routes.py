@@ -10,6 +10,7 @@ class DummyResponse:
         self.headers = headers or {}
 
 class MockModule:
+    module_name = "MockModule"
     def run(self, url, hostname, session):
         return [
             {"name": "Privileged API Routes Publicly Documented", "evidence": {"raw": "/api/admin"}, "severity": "Informational", "confidence": "High", "category": "api_surface", "owasp": "Not Mapped"},

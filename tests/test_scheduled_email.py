@@ -34,7 +34,7 @@ def test_send_email_success(mock_pool_manager):
     args, kwargs = mock_http.request.call_args
     assert kwargs['headers']['Authorization'] == 'Bearer test_key'
     assert kwargs['headers']['Idempotency-Key'] == 'idemp-123'
-    assert kwargs['headers']['User-Agent'] == 'URLScannerOnline/1.0'
+    assert kwargs['headers']['User-Agent'] == 'URLScanOnline/1.0'
     # Attachment preserved
     assert b'"filename": "test.pdf"' in kwargs['body']
 

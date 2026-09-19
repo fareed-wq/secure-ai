@@ -1,4 +1,4 @@
-﻿import unittest
+import unittest
 import ast
 import glob
 
@@ -34,7 +34,7 @@ class TestPhase2BConfidenceExplicit(unittest.TestCase):
         v = CallVisitor()
         files = glob.glob('api/scanner/modules/*.py') + glob.glob('api/scanner/scoring.py')
         for f in files:
-            with open(f, 'r', encoding='utf-8') as fh:
+            with open(f, 'r', encoding='utf-8-sig') as fh:
                 tree = ast.parse(fh.read())
             v.visit(tree)
         
