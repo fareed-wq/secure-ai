@@ -73,7 +73,7 @@ class TestSchedules(unittest.TestCase):
             "timezone": "UTC", "authorization_acknowledged": True
         })
         self.assertEqual(resp.status_code, 403)
-        api.index.app.dependency_overrides.clear()
+        pass
 
     # ==========================
     # TESTS 5-8: QSTASH CREATE
@@ -113,7 +113,7 @@ class TestSchedules(unittest.TestCase):
         self.assertIn("schedule_id", body_dict)
         self.assertEqual(len(body_dict), 1)
 
-        api.index.app.dependency_overrides.clear()
+        pass
 
     @patch('api.auth.entitlements.get_user_role', return_value='admin')
     @patch('api.scheduling.router.get_db_headers', return_value={})
@@ -140,7 +140,7 @@ class TestSchedules(unittest.TestCase):
         # Test 8: rollback QStash
         mock_client.schedule.delete.assert_called_once()
 
-        api.index.app.dependency_overrides.clear()
+        pass
 
     # ==========================
     # TESTS 9-10: SIGNATURE
@@ -307,7 +307,7 @@ class TestSchedules(unittest.TestCase):
         resp = client.post("/api/schedules/1/pause")
         self.assertEqual(resp.status_code, 500)
         mock_patch.assert_not_called()
-        api.index.app.dependency_overrides.clear()
+        pass
 
     @patch('api.auth.entitlements.get_user_role', return_value='admin')
     @patch('api.scheduling.router.get_db_headers', return_value={})
@@ -322,7 +322,7 @@ class TestSchedules(unittest.TestCase):
         resp = client.post("/api/schedules/1/pause")
         self.assertEqual(resp.status_code, 200)
         mock_patch.assert_called_once()
-        api.index.app.dependency_overrides.clear()
+        pass
 
     @patch('api.auth.entitlements.get_user_role', return_value='admin')
     @patch('api.scheduling.router.get_db_headers', return_value={})
@@ -339,7 +339,7 @@ class TestSchedules(unittest.TestCase):
         resp = client.post("/api/schedules/1/resume")
         self.assertEqual(resp.status_code, 500)
         mock_patch.assert_not_called()
-        api.index.app.dependency_overrides.clear()
+        pass
 
     @patch('api.auth.entitlements.get_user_role', return_value='admin')
     @patch('api.scheduling.router.get_db_headers', return_value={})
@@ -355,7 +355,7 @@ class TestSchedules(unittest.TestCase):
         resp = client.post("/api/schedules/1/resume")
         self.assertEqual(resp.status_code, 200)
         mock_patch.assert_called_once()
-        api.index.app.dependency_overrides.clear()
+        pass
 
     @patch('api.auth.entitlements.get_user_role', return_value='admin')
     @patch('api.scheduling.router.get_db_headers', return_value={})
@@ -372,7 +372,7 @@ class TestSchedules(unittest.TestCase):
         resp = client.delete("/api/schedules/1")
         self.assertEqual(resp.status_code, 500)
         mock_delete.assert_not_called()
-        api.index.app.dependency_overrides.clear()
+        pass
 
     @patch('api.auth.entitlements.get_user_role', return_value='admin')
     @patch('api.scheduling.router.get_db_headers', return_value={})
@@ -389,7 +389,7 @@ class TestSchedules(unittest.TestCase):
         resp = client.delete("/api/schedules/1")
         self.assertEqual(resp.status_code, 200)
         mock_delete.assert_called_once()
-        api.index.app.dependency_overrides.clear()
+        pass
 
 
     @patch('api.scheduling.router.uuid.uuid4', return_value='00000000-0000-0000-0000-000000000000')
@@ -430,7 +430,7 @@ class TestSchedules(unittest.TestCase):
         self.assertEqual(kwargs['retries'], 0)
         self.assertTrue(kwargs['schedule_id'].startswith("urlscan-"))
 
-        api.index.app.dependency_overrides.clear()
+        pass
 
 
     @patch('api.scheduling.router.QStashClient')
@@ -579,7 +579,7 @@ class TestSchedules(unittest.TestCase):
             "advanced_authorization_acknowledged": True
         }
         response = client.post("/api/schedules", json=req, headers={"Authorization": "Bearer admin"})
-        api.index.app.dependency_overrides.clear()
+        pass
         self.assertEqual(response.status_code, 200)
         mock_qstash.return_value.schedule.create.assert_called_once()
         body = mock_qstash.return_value.schedule.create.call_args[1]["body"]
@@ -605,7 +605,7 @@ class TestSchedules(unittest.TestCase):
             "advanced_authorization_acknowledged": False
         }
         response = client.post("/api/schedules", json=req, headers={"Authorization": "Bearer admin"})
-        api.index.app.dependency_overrides.clear()
+        pass
         self.assertEqual(response.status_code, 400)
         self.assertIn("Must acknowledge advanced authorization", response.json()["error"])
 
@@ -627,7 +627,7 @@ class TestSchedules(unittest.TestCase):
             "scan_mode": "hacked"
         }
         response = client.post("/api/schedules", json=req, headers={"Authorization": "Bearer admin"})
-        api.index.app.dependency_overrides.clear()
+        pass
         self.assertEqual(response.status_code, 400)
         self.assertIn("Invalid scan_mode", response.json()["error"])
 
@@ -715,7 +715,7 @@ class TestSchedules(unittest.TestCase):
             "timezone": "UTC", "authorization_acknowledged": True
         })
         self.assertEqual(resp.status_code, 503)
-        api.index.app.dependency_overrides.clear()
+        pass
 
     @patch('api.scheduling.worker.scan_url')
     @patch('api.scheduling.worker.is_scheduled_scans_eligible', return_value=ScheduledEligibility.ERROR)
@@ -760,7 +760,7 @@ class TestSchedules(unittest.TestCase):
             "advanced_authorization_acknowledged": True
         }
         response = client.post("/api/schedules", json=req)
-        api.index.app.dependency_overrides.clear()
+        pass
         self.assertEqual(response.status_code, 403)
         self.assertIn("Maximum of 3 scheduled scans reached.", response.json()["error"])
 
@@ -780,7 +780,7 @@ class TestSchedules(unittest.TestCase):
             "timezone": "Invalid/Timezone", "authorization_acknowledged": True
         })
         self.assertEqual(resp.status_code, 422)
-        api.index.app.dependency_overrides.clear()
+        pass
 
     def test_dst_aware_timezone(self):
         from api.scheduling.time_utils import get_next_run_at

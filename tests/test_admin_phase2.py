@@ -42,7 +42,7 @@ def test_grant_professional_success():
             {"role": "user", "plan": "professional", "status": "active"}
         )
         
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_grant_professional_normal_user():
@@ -53,7 +53,7 @@ def test_grant_professional_normal_user():
         
         response = client.post("/api/admin/users/target-1/grant-professional")
         assert response.status_code == 403
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_remove_professional_success():
@@ -71,7 +71,7 @@ def test_remove_professional_success():
         assert response.status_code == 200
         
         mock_upsert.assert_called_once_with("target-1", "free", "active")
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_suspend_success():
@@ -88,7 +88,7 @@ def test_suspend_success():
         
         assert response.status_code == 200
         mock_upsert.assert_called_once_with("target-1", "free", "suspended")
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_suspend_self_blocked():
@@ -104,7 +104,7 @@ def test_suspend_self_blocked():
         
         assert response.status_code == 400
         assert "cannot suspend your own" in response.json()["detail"]
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_reactivate_success():
@@ -121,7 +121,7 @@ def test_reactivate_success():
         
         assert response.status_code == 200
         mock_upsert.assert_called_once_with("target-1", "free", "active")
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_spoof_role_has_no_effect():
@@ -139,7 +139,7 @@ def test_spoof_role_has_no_effect():
         assert response.status_code == 200
         # Should not upsert role=admin anywhere
         mock_upsert.assert_called_once_with("target-1", "professional", "active")
-        app.dependency_overrides.clear()
+        pass
 
 @patch.dict('os.environ', {'SUPABASE_URL': 'http://mock', 'SUPABASE_SECRET_KEY': 'token'})
 def test_grant_professional_user_not_found():
@@ -155,4 +155,4 @@ def test_grant_professional_user_not_found():
         
         assert response.status_code == 404
         assert response.json()["detail"] == "User not found."
-        app.dependency_overrides.clear()
+        pass

@@ -65,7 +65,7 @@ def test_quota_visibility(mock_verify):
         from api.admin import require_admin
         app.dependency_overrides[require_admin] = lambda: {"sub": "admin123"}
         response = client.get("/api/admin/users/testuser/quota")
-        app.dependency_overrides.clear()
+        pass
             
         assert response.status_code == 200
         data = response.json()
@@ -83,7 +83,7 @@ def test_quota_reset_exact_key_admin_only(mock_audit, mock_verify):
         from api.admin import require_admin
         app.dependency_overrides[require_admin] = lambda: {"sub": "admin123"}
         response = client.post("/api/admin/users/testuser/reset-quota", json={"reason": "test"})
-        app.dependency_overrides.clear()
+        pass
         
         assert response.status_code == 200
         mock_reset.assert_called_once_with("testuser")

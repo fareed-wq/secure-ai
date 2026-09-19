@@ -1,8 +1,4 @@
 import os
-os.environ["VITE_SUPABASE_URL"] = "http://localhost:8000"
-os.environ["SUPABASE_SECRET_KEY"] = "test-key"
-os.environ["QSTASH_CURRENT_SIGNING_KEY"] = "test"
-os.environ["QSTASH_NEXT_SIGNING_KEY"] = "test"
 
 import json
 import pytest
@@ -14,8 +10,23 @@ import requests
 
 client = TestClient(app)
 
+@pytest.fixture(autouse=True)
+def _isolate_module_env(monkeypatch):
+    monkeypatch.setenv("VITE_SUPABASE_URL", "http://localhost:8000")
+    monkeypatch.setenv("SUPABASE_SECRET_KEY", "test-key")
+    monkeypatch.setenv("QSTASH_CURRENT_SIGNING_KEY", "test")
+    monkeypatch.setenv("QSTASH_NEXT_SIGNING_KEY", "test")
+    monkeypatch.setattr("api.scanner.enrich_worker.SUPABASE_URL", "http://localhost:8000", raising=False)
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_URL", "http://localhost:8000", raising=False)
+    monkeypatch.setattr("api.scanner.enrich_worker.SUPABASE_SECRET_KEY", "test-key" if "test" in "test-key" else "mock_key", raising=False)
+    monkeypatch.setattr("api.auth.entitlements.SUPABASE_SECRET_KEY", "test-key", raising=False)
+    monkeypatch.setattr("api.scanner.enrich_worker.QSTASH_CURRENT_SIGNING_KEY", "test", raising=False)
+    monkeypatch.setattr("api.scanner.enrich_worker.QSTASH_NEXT_SIGNING_KEY", "test", raising=False)
+
+
 
 @pytest.fixture(autouse=True)
+# Repaired Phase 8A enrichment test fixture
 def override_qstash_signature():
     original = app.dependency_overrides.get(verify_qstash_signature)
     app.dependency_overrides[verify_qstash_signature] = lambda: True

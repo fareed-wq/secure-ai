@@ -65,7 +65,7 @@ def test_admin_me_normal_user_override():
         response = client.get("/api/admin/me")
         assert response.status_code == 403
 
-        app.dependency_overrides.clear()
+        pass
 
 def test_admin_me_admin_user():
     def override_get_current_user():
@@ -79,7 +79,7 @@ def test_admin_me_admin_user():
         assert response.status_code == 200
         assert response.json()["role"] == "admin"
 
-        app.dependency_overrides.clear()
+        pass
 
 def test_admin_users_search(mock_get_current_user_admin, mock_get_user_role_admin, monkeypatch):
     monkeypatch.setenv('SUPABASE_URL', 'https://example.com')
@@ -159,8 +159,9 @@ from api.auth.entitlements import get_current_user
 client = TestClient(app)
 
 def test_admin_role_resolution_consistency():
-    app.dependency_overrides.clear()
     from api.auth.entitlements import get_current_user, require_current_user
+    app.dependency_overrides.pop(get_current_user, None)
+    app.dependency_overrides.pop(require_current_user, None)
     # 1. JWT with role='admin', DB says 'user' -> BLOCKED
     def override_get_current_user_jwt_admin():
         return {"sub": "admin-123", "role": "admin"}
@@ -195,4 +196,4 @@ def test_admin_role_resolution_consistency():
         assert res_quota.json().get("role") == "admin"
         assert res_quota.json().get("is_unlimited") is True
 
-    app.dependency_overrides.clear()
+    pass
