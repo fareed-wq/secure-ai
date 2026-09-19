@@ -149,13 +149,13 @@ def generate_pdf_report(data: dict) -> str:
             <div style="flex: 1;">
                 <strong style="color: #e2e8f0; font-size: 13px; display: block; margin-bottom: 4px;">Standard Findings</strong>
                 <span style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 4px;">Priority follows the finding's technical severity:</span>
-                <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: #94a3b8;">
-                    <li>Critical &rarr; P1</li>
+                <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: #94a3b8; margin-bottom: 8px;">
                     <li>High &rarr; P2</li>
                     <li>Medium &rarr; P3</li>
                     <li>Low &rarr; P4</li>
                     <li>Info / Passed &rarr; P5</li>
                 </ul>
+                <span style="font-size: 11px; color: #64748b; font-style: italic; display: block; line-height: 1.3;">The current scanner does not currently emit Critical-severity standard findings. If a Critical finding is introduced in the future, it will map to P1.</span>
             </div>
             <div style="flex: 1;">
                 <strong style="color: #e2e8f0; font-size: 13px; display: block; margin-bottom: 4px;">Known Vulnerabilities (CVEs)</strong>

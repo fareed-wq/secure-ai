@@ -43,6 +43,8 @@
 - **Informational/Passed** ? P5
 - **invalid/missing** ? UNSCORED
 
+> No current scanner module emits Critical severity. Current standard scanner findings therefore begin at High (P2).
+
 ### CVE Priority
 - **MATCHED** ? evaluate
 - **NO_MATCH** ? N/A
