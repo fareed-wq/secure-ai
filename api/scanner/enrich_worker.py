@@ -316,8 +316,9 @@ async def enrich_cve_worker(request: Request, verified: bool = Depends(verify_qs
                                 ssvc_list = metrics["ssvcV203"]
                                 cisa_records = []
                                 if isinstance(ssvc_list, list):
+                                    CISA_ADP_ORG_ID = "134c704f-9b21-4f2e-91b3-4a467353bcc0"
                                     for s in ssvc_list:
-                                        if isinstance(s, dict) and str(s.get("source", "")).strip().upper() == "CISA-ADP":
+                                        if isinstance(s, dict) and str(s.get("source", "")).strip().lower() == CISA_ADP_ORG_ID:
                                             cisa_records.append(s)
 
                                 if cisa_records:
