@@ -18,19 +18,19 @@ class TestPhase23Audit(unittest.TestCase):
         
     def test_masking_beginning(self):
         evidence = "Bearer sk_live_1234567890abcdef is my token"
-        finding = self.base.make_finding("Test", "Low", "Desc", evidence)
+        finding = self.base.make_finding("Test", "Low", "Desc", evidence, confidence="High")
         self.assertIn("Bearer [REDACTED_STRIPE] is my token", finding["evidence"]["raw"])
         self.assertNotIn("sk_live_1234567890abcdef", finding["evidence"]["raw"])
         
     def test_masking_middle(self):
         evidence = "The token is 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X for real"
-        finding = self.base.make_finding("Test", "Low", "Desc", evidence)
+        finding = self.base.make_finding("Test", "Low", "Desc", evidence, confidence="High")
         self.assertIn("[REDACTED_GITHUB_PAT]", finding["evidence"]["raw"])
         self.assertNotIn("github_pat_11AAAAA22BBBBB33CCCCC44DDDDD55EEEEE66FFFFF77GGGGG88HHHHH99IIIII00JJJJJ11KKKKK22LL", finding["evidence"]["raw"])
         
     def test_masking_end(self):
         evidence = "Look at this token=secret_token_123"
-        finding = self.base.make_finding("Test", "Low", "Desc", evidence)
+        finding = self.base.make_finding("Test", "Low", "Desc", evidence, confidence="High")
         self.assertIn("token=[REDACTED]", finding["evidence"]["raw"])
         self.assertNotIn("secret_token_123", finding["evidence"]["raw"])
         
@@ -39,7 +39,7 @@ class TestPhase23Audit(unittest.TestCase):
         padding = "A" * 150
         secret = "AKIAIOSFODNN7EXAMPLE" # 20 chars
         evidence = padding + secret + "B" * 50
-        finding = self.base.make_finding("Test", "Low", "Desc", evidence)
+        finding = self.base.make_finding("Test", "Low", "Desc", evidence, confidence="High")
         
         raw = finding["evidence"]["raw"]
         self.assertEqual(len(raw), 180)
@@ -52,7 +52,7 @@ class TestPhase23Audit(unittest.TestCase):
         padding = "A" * 200
         secret = "AKIAIOSFODNN7EXAMPLE" # 20 chars
         evidence = padding + secret
-        finding = self.base.make_finding("Test", "Low", "Desc", evidence)
+        finding = self.base.make_finding("Test", "Low", "Desc", evidence, confidence="High")
         
         raw = finding["evidence"]["raw"]
         self.assertEqual(len(raw), 180)
@@ -123,11 +123,11 @@ class TestPhase23Audit(unittest.TestCase):
     def test_subdomains_discovered_evidence_limit(self):
         # Create a massive string > 180 chars
         large_evidence = "A" * 500
-        finding = self.base.make_finding("Subdomains Discovered", "Informational", "Desc", large_evidence)
+        finding = self.base.make_finding("Subdomains Discovered", "Informational", "Desc", large_evidence, confidence="High")
         self.assertEqual(len(finding["evidence"]["raw"]), 500)
         
         # Test a non-whitelisted finding
-        normal_finding = self.base.make_finding("Random Issue", "Low", "Desc", large_evidence)
+        normal_finding = self.base.make_finding("Random Issue", "Low", "Desc", large_evidence, confidence="High")
         self.assertEqual(len(normal_finding["evidence"]["raw"]), 180)
 
 if __name__ == "__main__":

@@ -1,8 +1,11 @@
 import re
+import logging
+logger = logging.getLogger(__name__)
 from typing import List
 import requests
 from urllib.parse import urlparse, urljoin
 from api.scanner.base import ScannerModule
+from api.scanner.core import ModuleResult, AssessmentOutcome
 from api.scanner.transport import safe_request
 
 class AuthenticationSessionSecurityModule(ScannerModule):
@@ -34,10 +37,11 @@ class AuthenticationSessionSecurityModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 3.5))
             if not resp:
-                return findings
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 
             headers = resp.headers if resp else {}
 
@@ -53,7 +57,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                     category="authentication",
                     impact="Exposed authentication logic assists external reconnaissance of the security model.",
                     rule_id="auth_scheme_disclosed"
-                ))
+                , confidence="High"))
                 if "basic" in www_auth.lower() and url.startswith("http://"):
                     findings.append(self.make_finding(
                         "Basic Authentication Advertised Over HTTP",
@@ -129,7 +133,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         category="http_headers",
                         impact="Different network proxies may interpret these conflicting rules differently, potentially caching sensitive data unexpectedly.",
                         rule_id="auth_cache_contradictory"
-                    ))
+                    , confidence="High"))
 
                 is_publicly_cacheable = is_vuln or (cache_lower and "max-age" in cache_lower and "max-age=0" not in cache_lower and "no-store" not in cache_lower and "private" not in cache_lower)
 
@@ -149,7 +153,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                 category="http_headers",
                                 impact="The CDN may serve this sensitive data to unauthorized users or store it on public edge servers.",
                                 rule_id="auth_cdn_caching_permissive"
-                            ))
+                            , confidence="High"))
 
                 if is_publicly_cacheable:
                     vary = self.get_header_safe(resp, "Vary", "").lower()
@@ -164,7 +168,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             category="http_headers",
                             impact="If caching is required for sensitive data, ensure 'Vary: Cookie' or 'Vary: Authorization' is present.",
                             rule_id="auth_cache_vary_missing"
-                        ))
+                        , confidence="High"))
 
                 if cache_control and "no-store" in cache_lower:
                     etag = self.get_header_safe(resp, "ETag", "")
@@ -181,7 +185,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                             category="http_headers",
                             impact="Even without caching the content, browsers may send these values back, potentially allowing cross-session tracking.",
                             rule_id="auth_response_tracking_indicator"
-                        ))
+                        , confidence="Medium"))
 
             # Session Management Technology
             set_cookie = self.get_header_safe(resp, "Set-Cookie", "")
@@ -322,7 +326,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                                         category="authentication",
                                         impact="Disabling autocomplete can interfere with password managers, inadvertently encouraging weaker user-memorized passwords.",
                                         rule_id="auth_password_autocomplete"
-                                    ))
+                                    , confidence="High"))
 
                     # CSRF Posture (Passive Only)
                     is_state_changing = method in ['POST', 'PUT', 'PATCH', 'DELETE']
@@ -386,6 +390,8 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                         rule_id="auth_admin_surface_discovered"
                     ))
 
+            success = True
+
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             # Safely skip on network failures to avoid false positives and noise
             pass
@@ -403,4 +409,6 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                 rule_id="auth_session_check_inconclusive"
             ))
 
-        return findings
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)

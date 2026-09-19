@@ -8,6 +8,7 @@ from urllib.parse import urljoin, urlparse
 from html.parser import HTMLParser
 
 from api.scanner.base import ScannerModule
+from api.scanner.core import ModuleResult, AssessmentOutcome
 from api.scanner.transport import safe_request
 from api.scanner.core import Config
 
@@ -121,14 +122,26 @@ class JavaScriptSecurityModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session) -> List[dict]:
         findings = []
+        attempted = 0
+        completed = 0
+        failed = 0
         try:
+            attempted += 1
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
-            if not resp or not resp.text:
-                return findings
+            if not resp:
+                failed += 1
+                progress = {"attempted": attempted, "completed": completed, "failed": failed}
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
+            else:
+                completed += 1
+            if not resp.text:
+                progress = {"attempted": attempted, "completed": completed, "failed": failed}
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
 
             content_type = resp.headers.get("Content-Type", "").lower()
             if "application/json" in content_type:
-                return findings
+                progress = {"attempted": attempted, "completed": completed, "failed": failed}
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.NOT_APPLICABLE, assessment_progress=progress)
 
             parser = JSScriptParser()
             parser.feed(resp.text[:self.MAX_READ_BYTES])
@@ -166,8 +179,41 @@ class JavaScriptSecurityModule(ScannerModule):
             map_count = 0
 
             for js_url in script_urls:
-                js_resp = safe_request("GET", js_url, session=session, timeout=(1.5, 2.5))
-                if not js_resp or js_resp.status_code != 200:
+
+
+                attempted += 1
+
+
+                try:
+
+
+                    js_resp = safe_request("GET", js_url, session=session, timeout=(1.5, 2.5))
+
+
+                    if not js_resp:
+
+
+                        failed += 1
+
+
+                        continue
+
+
+                    completed += 1
+
+
+                    if js_resp.status_code != 200:
+
+
+                        continue
+
+
+                except Exception:
+
+
+                    failed += 1
+
+
                     continue
 
                 js_text = js_resp.text[:self.MAX_READ_BYTES] if js_resp.text else ""
@@ -324,7 +370,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "A highly sensitive password or secret key for another service was found left inside your website's code.",
                     "\\n".join(list(secrets_found)[:5]),
                     impact="Exposed credentials could allow unauthorized access to the associated service.",
-                    confidence="High",
+                    confidence="Medium",
                     category="information_exposure",
                     owasp="A05: Security Misconfiguration"
                 , rule_id="js_hardcoded_secret_key"))
@@ -339,7 +385,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     remediation="Ensure public API keys have HTTP Referrer restrictions configured.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id="js_client_side_api_key"))
+                , rule_id="js_client_side_api_key", confidence="Medium"))
 
             if loopback_hosts:
                 findings.append(self.make_finding(
@@ -384,7 +430,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "We can easily see which tools and frameworks were used to build your website.",
                     ", ".join(frameworks),
                     impact="Exposing technology details provides reconnaissance information to external observers.",
-                    confidence="High",
+                    confidence="Medium",
                     category="technology_detection",
                     owasp="Not Mapped"
                 , rule_id='technology_js_frameworks_detected'))
@@ -413,7 +459,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     "Your website's code contains a list of direct paths (API endpoints) to your backend system.",
                     evidence,
                     impact="Exposed API endpoints provide additional context about the applications backend structure.",
-                    confidence="High",
+                    confidence="Medium",
                     category="api_surface",
                     owasp="Not Mapped"
                 , rule_id="js_api_endpoints_discovered"))
@@ -440,7 +486,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     remediation="Never bundle production passwords or secrets into client-side code.",
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure"
-                , rule_id="js_sensitive_config_reference"))
+                , rule_id="js_sensitive_config_reference", confidence="Medium"))
 
             if source_maps:
                 findings.append(self.make_finding(
@@ -475,7 +521,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     impact="Exposed role configurations provide insight into the application authorization model.",
                     owasp="Not Mapped",
                     category="authentication",
-                    confidence="High"
+                    confidence="Medium"
                 , rule_id="js_auth_roles_disclosed"))
 
             if privileged_apis:
@@ -487,7 +533,7 @@ class JavaScriptSecurityModule(ScannerModule):
                     impact="This may reveal application structure or administrative route names. The scanner did not verify whether the route is reachable, publicly accessible, or improperly authorized.",
                     owasp="Not Mapped",
                     category="api_surface",
-                    confidence="High"
+                    confidence="Medium"
                 , rule_id="js_privileged_api_surface"))
 
             if api_versions:
@@ -499,13 +545,20 @@ class JavaScriptSecurityModule(ScannerModule):
                     impact="Version disclosure assists external reconnaissance by highlighting specific software versions.",
                     owasp="Not Mapped",
                     category="api_surface",
-                    confidence="High"
+                    confidence="Medium"
                 , rule_id="js_versioned_api_surface"))
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
-            # Safely skip on network failures to avoid false positives and noise
-            pass
+            failed += 1
         except Exception as e:
             logger.debug("JavaScriptSecurityModule failed: %s", e)
+            failed += 1
 
-        return findings
+        progress = {"attempted": attempted, "completed": completed, "failed": failed}
+        if completed == 0 and failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
+        if completed == 0:
+            return findings
+        if failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL, assessment_progress=progress)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED, assessment_progress=progress)

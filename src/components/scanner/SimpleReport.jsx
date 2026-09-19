@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check, Shield, Layers, Code2, Box, Mail, ChevronDown } from 'lucide-react';
 import FindingCard from './FindingCard';
 import ScoreDisplay from './ScoreDisplay';
+import { getSimpleSummary } from '../../lib/assessmentReporting';
 
 const SimpleReport = ({ reportData }) => {
   const getCategoryIcon = (category) => {
@@ -57,6 +58,10 @@ const SimpleReport = ({ reportData }) => {
     return 70;
   };
 
+  
+  const techIdentities = reportData?.technology_identities || [];
+  const uniqueProducts = Array.from(new Set(techIdentities.map(t => t.product))).filter(Boolean);
+
   const healthMetrics = [
     { name: 'Transport & TLS', val: calculateDomainHealth('transport_tls'), icon: Lock },
     { name: 'Browser Defense', val: calculateDomainHealth('browser_defense'), icon: ShieldAlert },
@@ -80,6 +85,21 @@ const SimpleReport = ({ reportData }) => {
             <p className="text-sm text-slate-500 mt-4 leading-relaxed">
               This assessment is a passive, external scan of publicly observable behavior. It does not replace comprehensive penetration testing or guarantee that no other vulnerabilities exist.
             </p>
+              {uniqueProducts.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-slate-800">
+                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <Layers className="w-4 h-4" /> Detected Technology Profile
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueProducts.map((prod, i) => (
+                      <span key={i} className="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-full text-xs font-medium">
+                        {prod}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             {highRiskCount > 0 && (
               <div className="rounded-xl border border-rose-500/30 border-l-4 border-l-rose-500 bg-rose-500/10 p-3.5 flex items-center gap-3 my-4">
                 <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse flex-shrink-0" />
@@ -117,7 +137,7 @@ const SimpleReport = ({ reportData }) => {
               </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
-                  🟢 {passed.length} Audits Clean
+                  ðŸŸ¢ {passed.length} Audits Clean
                 </span>
               </div>
             </div>
@@ -128,7 +148,7 @@ const SimpleReport = ({ reportData }) => {
               </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-blue-500/15 text-blue-300 border-blue-500/30">
-                  ⚪ {informational.length} Observations
+                  âšª {informational.length} Observations
                 </span>
               </div>
             </div>
@@ -139,7 +159,7 @@ const SimpleReport = ({ reportData }) => {
               </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-slate-800/40 text-slate-400 border-slate-700">
-                  ⚠️ {inconclusive.length} Skipped Checks
+                  âš ï¸ {inconclusive.length} Skipped Checks
                 </span>
               </div>
             </div>
@@ -152,6 +172,30 @@ const SimpleReport = ({ reportData }) => {
           penalties={reportData?.penalties}
           severityCounts={reportData?.severity_counts}
         />
+
+        {reportData?.assessment_coverage?.available && (
+          <div className="mt-4 text-center">
+            <span className="text-sm text-slate-400">Assessment Coverage: </span>
+            <span className="text-sm font-bold text-slate-200">{Math.round(reportData.assessment_coverage.percentage)}%</span>
+            <span className="text-xs text-slate-500 ml-2">of intended checks completed</span>
+          </div>
+        )}
+
+        {reportData?.exposure && reportData.exposure.level && (
+          <div className="mt-2 text-center">
+            <span className="text-sm text-slate-400">Exposure: </span>
+            <span className={`text-sm font-bold ${
+              reportData.exposure.level === 'HIGH' ? 'text-red-400' :
+              reportData.exposure.level === 'MODERATE' ? 'text-amber-400' :
+              reportData.exposure.level === 'LOW' ? 'text-emerald-400' : 'text-slate-400'
+            }`}>
+              {reportData.exposure.level === 'HIGH' ? 'This site exposes additional externally reachable surfaces.' :
+               reportData.exposure.level === 'MODERATE' ? 'This site is publicly reachable on the web.' :
+               reportData.exposure.level === 'LOW' ? 'This target appears limited to private/local network addressing.' :
+               'Exposure could not be determined from this scan.'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* 1.5. Target Surface Breakdown */}
@@ -160,16 +204,16 @@ const SimpleReport = ({ reportData }) => {
         const findings = reportData?.findings || [];
         const perfRating = reportData?.metadata?.performance_rating || ts.performance || '';
 
-        // ── 1. WAF / SERVER ──────────────────────────────────────────────
+        // â”€â”€ 1. WAF / SERVER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         const serverVal = ts.waf_server || reportData?.server || 'Direct Origin';
         const serverSub = (() => {
           const status = ts.waf_status || '';
           const statusCode = status.match(/\d{3}/)?.[0] || '';
-          if (reportData?.latency && statusCode === '200') return `200 OK • ${reportData.latency}`;
-          if (statusCode === '200') return '200 OK • Healthy';
-          if (statusCode === '403') return '403 • Access Restricted';
-          if (statusCode === '503') return '503 • Service Issue';
-          if (statusCode) return `${statusCode} • Detected`;
+          if (reportData?.latency && statusCode === '200') return `200 OK â€¢ ${reportData.latency}`;
+          if (statusCode === '200') return '200 OK â€¢ Healthy';
+          if (statusCode === '403') return '403 â€¢ Access Restricted';
+          if (statusCode === '503') return '503 â€¢ Service Issue';
+          if (statusCode) return `${statusCode} â€¢ Detected`;
           return perfRating || 'Status Unknown';
         })();
         const wafPill = (() => {
@@ -192,13 +236,13 @@ const SimpleReport = ({ reportData }) => {
           return { label: 'LATENCY CHECKED', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30' };
         })();
 
-        // ── 2. FRONTEND STACK ────────────────────────────────────────────
-        const detectedTech = reportData?.technologies?.join(' • ') || reportData?.detected_framework;
+        // â”€â”€ 2. FRONTEND STACK â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        const detectedTech = reportData?.technologies?.join(' â€¢ ') || reportData?.detected_framework;
         const stackVal = detectedTech || ts.frontend_stack || 'Standard Web Stack';
         const stackSub = ts.frontend_subtext || 'HTML5 / JavaScript Application';
         const stackPill = detectedTech ? 'DETECTED STACK' : (ts.frontend_pill || 'VERIFIED STACK');
 
-        // ── 3. API SURFACE ───────────────────────────────────────────────
+        // â”€â”€ 3. API SURFACE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         const exposedApiFinding = findings.find(f => {
           const id = (f.id || '').toLowerCase();
           const name = (f.name || '').toLowerCase();
@@ -237,7 +281,7 @@ const SimpleReport = ({ reportData }) => {
           ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
           : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
 
-        // ── 4. JS HEALTH ─────────────────────────────────────────────────
+        // â”€â”€ 4. JS HEALTH â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         const mapLeaks = findings.filter(f =>
           (f.id?.includes('map_leak') || f.id?.includes('source_map') || (f.name || '').includes('Source Map'))
           && f.severity !== 'Passed'
@@ -249,7 +293,7 @@ const SimpleReport = ({ reportData }) => {
           ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
           : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
 
-        // ── Build Cards Array ────────────────────────────────────────────
+        // â”€â”€ Build Cards Array â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         const surfaceCards = [
           {
             title: 'WAF / SERVER',
@@ -346,7 +390,7 @@ const SimpleReport = ({ reportData }) => {
                     )}
                   </span>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${metric.val === -1 ? 'bg-slate-500/10 text-slate-400 border border-slate-500/20' : metric.val >= 90 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : metric.val >= 50 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                    {metric.val === -1 ? '⚪ No Data' : metric.val >= 90 ? '🟢 Optimal' : metric.val >= 50 ? '🟡 Needs Attention' : '🔴 Vulnerable'}
+                    {metric.val === -1 ? 'âšª No Data' : metric.val >= 90 ? 'ðŸŸ¢ Optimal' : metric.val >= 50 ? 'ðŸŸ¡ Needs Attention' : 'ðŸ”´ Vulnerable'}
                   </span>
                 </div>
                 <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden">
@@ -378,7 +422,7 @@ const SimpleReport = ({ reportData }) => {
                   Your Top Priorities
                 </h3>
                 <p className="text-amber-400/80 text-xs md:text-sm mt-0.5 group-open:hidden">
-                  🔴 {topPriorities.length} priority items identified. [ View Top Priorities ▾ ]
+                  ðŸ”´ {topPriorities.length} priority items identified. [ View Top Priorities â–¾ ]
                 </p>
                 <p className="text-amber-400/80 text-xs md:text-sm mt-0.5 hidden group-open:block">
                   Hide Top Priorities

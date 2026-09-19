@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 from html.parser import HTMLParser
 
 from api.scanner.base import ScannerModule
+from api.scanner.core import ModuleResult, AssessmentOutcome
 from api.scanner.transport import safe_request
 from api.scanner.core import Config
 
@@ -43,14 +44,17 @@ class MixedContentModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
+        success = False
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
-            if not resp or not resp.text or not url.startswith("https"):
-                return findings
+            if not url.startswith("https"):
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.NOT_APPLICABLE)
+            if not resp or not resp.text:
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 
             ctype = resp.headers.get("Content-Type", "")
             if "application/json" in ctype or hostname.startswith("api."):
-                return findings
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.NOT_APPLICABLE)
 
             parser = SimpleHTMLResourceParser()
             parser.feed(resp.text[:2000000])  # limit to 2MB
@@ -68,7 +72,7 @@ class MixedContentModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="information_exposure",
                     rule_id="mixed_content_detected"
-                ))
+                , confidence="High"))
 
             if parser.insecure_forms:
                 findings.append(self.make_finding(
@@ -81,7 +85,7 @@ class MixedContentModule(ScannerModule):
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls",
                     rule_id="mixed_content_insecure_form"
-                ))
+                , confidence="High"))
 
             if not parser.insecure_resources and not parser.insecure_forms:
                 findings.append(self.make_finding(
@@ -93,7 +97,8 @@ class MixedContentModule(ScannerModule):
                     owasp="Not Mapped",
                     category="encryption_tls",
                     rule_id="mixed_content_none"
-                ))
+                , confidence="High"))
+            success = True
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             # Safely skip on network failures to avoid false positives and noise
@@ -101,7 +106,9 @@ class MixedContentModule(ScannerModule):
         except Exception as e:
             logger.error(f"MixedContentModule error: {e}")
 
-        return findings
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 
 
 class ScriptTagParser(HTMLParser):

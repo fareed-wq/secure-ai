@@ -1,7 +1,217 @@
-from typing import Optional
+﻿from typing import Optional
 import requests
 from api.scanner.core import Config
 from api.scanner.data.registry import DOMAIN_MAP
+
+
+def _calculate_assessment_coverage(module_execution):
+    """Calculate assessment coverage from module execution metadata."""
+    if module_execution is None or not isinstance(module_execution, dict):
+        return {
+            "percentage": None,
+            "available": False,
+            "reason": "Missing execution metadata"
+        }
+
+    applicable_count = 0
+    sum_contribution = 0.0
+    completed_count = 0
+    partial_count = 0
+    failed_count = 0
+    blocked_count = 0
+    na_count = 0
+    exec_incomplete_count = 0
+
+    for m_name, meta in module_execution.items():
+        state = meta.get("state")
+        outcome = meta.get("assessment_outcome")
+
+        # Execution-level failures
+        if state in ("FAILED", "TIMED_OUT", "NOT_COMPLETED"):
+            exec_incomplete_count += 1
+            applicable_count += 1
+            continue
+
+        # RETURNED but no explicit outcome = unknown
+        if state == "RETURNED" and not outcome:
+            return {
+                "percentage": None,
+                "available": False,
+                "reason": "Module '" + str(m_name) + "' returned without assessment outcome"
+            }
+
+        if outcome == "NOT_APPLICABLE":
+            na_count += 1
+            continue
+
+        applicable_count += 1
+
+        if outcome == "COMPLETED":
+            completed_count += 1
+            sum_contribution += 1.0
+        elif outcome == "BLOCKED":
+            blocked_count += 1
+        elif outcome == "FAILED":
+            failed_count += 1
+        elif outcome == "PARTIAL":
+            prog = meta.get("assessment_progress")
+            if not prog or not isinstance(prog, dict):
+                return {
+                    "percentage": None,
+                    "available": False,
+                    "reason": "Module '" + str(m_name) + "' has PARTIAL outcome without valid progress"
+                }
+            attempted = prog.get("attempted", 0)
+            completed_p = prog.get("completed", 0)
+            failed_p = prog.get("failed", 0)
+            if not isinstance(attempted, int) or not isinstance(completed_p, int) or not isinstance(failed_p, int):
+                return {
+                    "percentage": None,
+                    "available": False,
+                    "reason": "Module '" + str(m_name) + "' has non-integer progress values"
+                }
+            if attempted <= 0 or completed_p < 0 or failed_p < 0 or (completed_p + failed_p) > attempted:
+                return {
+                    "percentage": None,
+                    "available": False,
+                    "reason": "Module '" + str(m_name) + "' has invalid progress values"
+                }
+            partial_count += 1
+            sum_contribution += completed_p / attempted
+        else:
+            return {
+                "percentage": None,
+                "available": False,
+                "reason": "Module '" + str(m_name) + "' has unknown outcome '" + str(outcome) + "'"
+            }
+
+    if applicable_count == 0:
+        return {
+            "percentage": None,
+            "available": False,
+            "reason": "No applicable modules executed"
+        }
+
+    return {
+        "percentage": 100.0 * sum_contribution / applicable_count,
+        "available": True,
+        "applicable_modules": applicable_count,
+        "completed_modules": completed_count,
+        "partial_modules": partial_count,
+        "failed_modules": failed_count,
+        "blocked_modules": blocked_count,
+        "not_applicable_modules": na_count,
+        "execution_incomplete_modules": exec_incomplete_count
+    }
+
+def _calculate_exposure(metadata: dict, all_findings: list) -> dict:
+    """Calculate deterministic exposure level based on scan metadata and findings."""
+    import ipaddress
+
+    # 1. Unknown if missing metadata
+    if not metadata or "ip_address" not in metadata:
+        return {
+            "level": "UNKNOWN",
+            "signals": [],
+            "limitations": ["Target IP address and reachability metadata are missing."]
+        }
+
+    ip_str = metadata.get("ip_address")
+    if not ip_str or ip_str == "Unknown IP":
+        return {
+            "level": "UNKNOWN",
+            "signals": [],
+            "limitations": ["Could not resolve a valid IP address for the target."]
+        }
+
+    # 2. Check if IP is private/local
+    is_public = True
+    try:
+        ip_obj = ipaddress.ip_address(ip_str)
+        if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_unspecified:
+            is_public = False
+    except ValueError:
+        return {
+            "level": "UNKNOWN",
+            "signals": [],
+            "limitations": ["Resolved IP address is invalid or unrecognized."]
+        }
+
+    # If private/local ONLY -> LOW
+    if not is_public:
+        return {
+            "level": "LOW",
+            "signals": [f"Target resolved to a private/local IP address ({ip_str})."],
+            "limitations": ["Network reachability implies internal or non-public context."]
+        }
+
+    signals = [f"Target resolved to a public Internet IP address ({ip_str})."]
+    limitations = []
+    level = "UNKNOWN"
+
+    # 3. Check Web Reachability
+    http_status = metadata.get("http_status", "")
+    perf_rating = metadata.get("performance_rating", "")
+
+    # Identify if a usable web response was received
+    web_reachable = False
+    if http_status and "Timeout" not in http_status and "Handshake Aborted" not in http_status and perf_rating not in ["NO HTTP RESPONSE", "REQUEST TIMEOUT"]:
+        web_reachable = True
+        signals.append(f"Target is publicly reachable on the web (HTTP/HTTPS responded).")
+        level = "MODERATE"
+    else:
+        limitations.append("Failed to establish reliable web (HTTP/HTTPS) reachability.")
+
+    if level == "UNKNOWN":
+        return {
+            "level": "UNKNOWN",
+            "signals": signals,
+            "limitations": limitations + ["Exposure level cannot be determined without successful web/network reachability."]
+        }
+
+    # 4. Check for HIGH exposure triggers
+    high_exposure_rule_ids = {
+        "network_port_exposed",
+        "exposed_admin_interface",
+        "api_graphql_ide_exposed",
+        "api_actuator_sensitive_exposed"
+    }
+
+    # Also look at finding categories/names as fallback for network services
+    high_exposure_found = False
+    for finding in all_findings:
+        rule_id = finding.get("rule_id")
+        module_name = finding.get("module")
+        name = finding.get("name", "")
+
+        if rule_id in high_exposure_rule_ids:
+            signals.append(f"Observed privileged/admin or network surface: {name}")
+            high_exposure_found = True
+        elif module_name == "Network" and "Network Service" in name:
+            # Fallback for NetworkServiceExposureModule if rule_id is missing
+            signals.append(f"Observed externally reachable network service: {name}")
+            high_exposure_found = True
+
+    if high_exposure_found:
+        level = "HIGH"
+
+    # 5. Authentication Context (does not change level)
+    auth_observed = False
+    for finding in all_findings:
+        if "Authentication" in finding.get("name", "") or "Login" in finding.get("name", ""):
+            auth_observed = True
+            break
+
+    if auth_observed or "401" in http_status:
+        limitations.append("Authentication interface or requirement observed (may limit effective access).")
+    elif "403" in http_status:
+        limitations.append("403 Forbidden observed (may indicate WAF, IP block, or auth barrier).")
+
+    return {
+        "level": level,
+        "signals": signals,
+        "limitations": limitations
+    }
 
 def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: Optional[requests.Response], scan_incomplete: bool = False, completed_modules: int = -1, module_execution: dict = None) -> dict:
     # Auto-assign security domains to findings based on their source module
@@ -43,6 +253,34 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
             "cvss": None
         })
 
+    identities = []
+    try:
+        from api.scanner.technology_identity import extract_technology_identities
+        from api.scanner.cve_mapper import enrich_with_cves
+        identities = enrich_with_cves(extract_technology_identities(all_findings))
+        
+        for tech in identities:
+            for cve in tech.get("cves") or []:
+                cve_sev = (cve.get("severity") or "UNKNOWN").upper()
+                mapped_sev = "Low"
+                if cve_sev == "CRITICAL": mapped_sev = "Critical"
+                elif cve_sev == "HIGH": mapped_sev = "High"
+                elif cve_sev == "MEDIUM": mapped_sev = "Medium"
+                
+                all_findings.append({
+                    "rule_id": f"cve_{cve['id'].lower().replace('-', '_')}",
+                    "name": f"{cve['id']} in {tech.get('product', 'Unknown')}",
+                    "severity": mapped_sev,
+                    "category": "vulnerable_components",
+                    "confidence": "High",
+                    "instance_key": tech.get('product', ''),
+                    "description": cve.get('summary', ''),
+                    "evidence": tech.get('cpe') or tech.get('version', '')
+                })
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f'Failed to extract/enrich technology identities: {e}')
+
     # --- SCORING & CATEGORY ENGINE ---
     severity_counts = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0, "Passed": 0}
     penalties = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "Informational": 0}
@@ -53,7 +291,8 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
         "http_headers": 0,
         "domain_email": 0,
         "session_cookies": 0,
-        "information_exposure": 0
+        "information_exposure": 0,
+        "vulnerable_components": 0
     }
 
     owasp_categories = set()
@@ -213,7 +452,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
         if techs:
             frontend_stack = techs[0]
             if subtechs:
-                frontend_subtext = " • ".join(subtechs)
+                frontend_subtext = " â€¢ ".join(subtechs)
             else:
                 frontend_subtext = "Verified Modern Stack"
 
@@ -221,7 +460,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     target_surface["frontend_subtext"] = frontend_subtext
     target_surface["frontend_pill"] = "VERIFIED STACK"
 
-    # 2. API Surface — extract precise endpoint path from evidence
+    # 2. API Surface â€” extract precise endpoint path from evidence
     api_surface = "Unknown" if scan_incomplete else "No Public Spec Exposed"
     api_subtext = "Not Assessed" if scan_incomplete else "GraphQL / OpenAPI Clean"
     api_pill = "NO DATA" if scan_incomplete else "CLEAN SURFACE"
@@ -287,10 +526,18 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
     # Therefore, we do not have enough data to issue a 100/100 score.
     final_score = score if completed_modules != 0 else None
 
+    # Phase 1B8 - Assessment Coverage Calculation
+    assessment_coverage = _calculate_assessment_coverage(module_execution)
+
+    # Phase 1C - Exposure Model
+    exposure = _calculate_exposure(metadata, all_findings)
+
     result = {
         "url": url,
         "status": "INCOMPLETE" if scan_incomplete else "COMPLETED",
         "score": final_score,
+        "assessment_coverage": assessment_coverage,
+        "exposure": exposure,
         "penalties": penalties,
         "severity_counts": severity_counts,
         "category_scores": category_scores,
@@ -322,5 +569,7 @@ def calculate_score(url: str, all_findings: list, metadata: dict, initial_resp: 
 
     if module_execution is not None:
         result["module_execution"] = module_execution
+
+    result['technology_identities'] = identities
 
     return result

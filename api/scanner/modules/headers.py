@@ -1,4 +1,5 @@
 from typing import List
+from api.scanner.core import ModuleResult, AssessmentOutcome
 import requests
 from api.scanner.base import ScannerModule
 from api.scanner.transport import safe_request, get_all_headers
@@ -39,9 +40,9 @@ class TechFingerprintModule(ScannerModule):
                     if not "/" in server and re.search(r'\d', name):
                         name = server.strip()
                         version = None
-                    add_tech(name, f"Server header", "High", version=version)
+                    add_tech(name, f"Server header", "Medium", version=version)
                 else:
-                    add_tech(server.strip(), f"Server header", "High")
+                    add_tech(server.strip(), f"Server header", "Medium")
 
             x_powered_by = self.get_header_safe(resp, "X-Powered-By")
             if x_powered_by:
@@ -52,21 +53,21 @@ class TechFingerprintModule(ScannerModule):
                     if not "/" in x_powered_by and re.search(r'\d', name):
                         name = x_powered_by.strip()
                         version = None
-                    add_tech(name, f"X-Powered-By header", "High", version=version)
+                    add_tech(name, f"X-Powered-By header", "Medium", version=version)
                 else:
-                    add_tech(x_powered_by.strip(), f"X-Powered-By header", "High")
+                    add_tech(x_powered_by.strip(), f"X-Powered-By header", "Medium")
 
             asp_net = self.get_header_safe(resp, "X-AspNet-Version")
             if asp_net:
                 match = re.search(r'([\d\.]+)', asp_net)
                 version = match.group(1) if match else None
-                add_tech("ASP.NET", f"X-AspNet-Version header", "High", version=version)
+                add_tech("ASP.NET", f"X-AspNet-Version header", "Medium", version=version)
 
             asp_mvc = self.get_header_safe(resp, "X-AspNetMvc-Version")
             if asp_mvc:
                 match = re.search(r'([\d\.]+)', asp_mvc)
                 version = match.group(1) if match else None
-                add_tech("ASP.NET MVC", f"X-AspNetMvc-Version header", "High", version=version)
+                add_tech("ASP.NET MVC", f"X-AspNetMvc-Version header", "Medium", version=version)
 
             generator_hdr = self.get_header_safe(resp, "X-Generator")
             if generator_hdr:
@@ -74,9 +75,9 @@ class TechFingerprintModule(ScannerModule):
                 if match:
                     name = match.group(1).strip()
                     version = match.group(2)
-                    add_tech(name, f"X-Generator header", "High", version=version)
+                    add_tech(name, f"X-Generator header", "Medium", version=version)
                 else:
-                    add_tech(generator_hdr.strip(), f"X-Generator header", "High")
+                    add_tech(generator_hdr.strip(), f"X-Generator header", "Medium")
 
             # 2. HTML Body
             html = resp.text[:1024 * 500] if resp.text else ""
@@ -91,26 +92,26 @@ class TechFingerprintModule(ScannerModule):
                 if match:
                     name = match.group(1).strip()
                     version = match.group(2)
-                    add_tech(name, "HTML meta generator", "High", version=version)
+                    add_tech(name, "HTML meta generator", "Medium", version=version)
                 else:
-                    add_tech(gen_content, "HTML meta generator", "High")
+                    add_tech(gen_content, "HTML meta generator", "Medium")
 
             # Next.js
             if re.search(r'<script[^>]*id=["\']?__NEXT_DATA__["\']?', html):
-                add_tech("Next.js", "__NEXT_DATA__ marker in HTML", "High")
+                add_tech("Next.js", "__NEXT_DATA__ marker in HTML", "Medium")
             elif "/_next/static/" in html:
                 add_tech("Next.js", "HTML references /_next/static/", "Medium")
 
             # Nuxt
             if "__NUXT__" in html or "__NUXT_DATA__" in html:
-                add_tech("Nuxt", "__NUXT__ / __NUXT_DATA__ strong markers in HTML", "High")
+                add_tech("Nuxt", "__NUXT__ / __NUXT_DATA__ strong markers in HTML", "Medium")
             elif "/_nuxt/" in html:
                 add_tech("Nuxt", "HTML references /_nuxt/", "Medium")
 
             # Angular
             ang_match = re.search(r'ng-version=["\']?([\d\.]+)["\']?', html)
             if ang_match:
-                add_tech("Angular", "ng-version attribute", "High", version=ang_match.group(1))
+                add_tech("Angular", "ng-version attribute", "Medium", version=ang_match.group(1))
 
             # WordPress
             if "/wp-content/" in html or "/wp-includes/" in html:
@@ -144,7 +145,9 @@ class TechFingerprintModule(ScannerModule):
             logger = logging.getLogger(__name__)
             logger.error(f"TechFingerprintModule error: {e}", exc_info=True)
 
-        return findings
+        if 'resp' not in locals() or not resp:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 class CORSModule(ScannerModule):
     module_name = "CORS"
@@ -260,7 +263,7 @@ class CORSModule(ScannerModule):
                     evidence_str,
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
-                , rule_id="cors_specific_origin_configured"))
+                , rule_id="cors_specific_origin_configured", confidence="High"))
 
             # Reached end of evaluation successfully
             request_successful = True
@@ -287,9 +290,11 @@ class CORSModule(ScannerModule):
                 "Origin sent: " + synthetic_origin + chr(10) + "Access-Control-Allow-Origin: not present",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
-            , rule_id="cors_strict_enforced"))
+            , rule_id="cors_strict_enforced", confidence="High"))
 
-        return findings
+        if not request_successful or status is None or status >= 400:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 class PermissionsPolicyModule(ScannerModule):
     module_name = "PermissionsPolicy"
@@ -297,6 +302,7 @@ class PermissionsPolicyModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        resp = None
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
             policy_str = self.get_header_safe(resp, "Permissions-Policy", "")
@@ -315,7 +321,7 @@ class PermissionsPolicyModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
                         rule_id="headers_permissions_policy_missing"
-                    ))
+                    , confidence="High"))
             else:
                 sensitive_features = ["geolocation", "camera", "microphone"]
                 weak_configs = []
@@ -337,7 +343,7 @@ class PermissionsPolicyModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
                         rule_id="headers_permissions_policy_permissive"
-                    ))
+                    , confidence="High"))
                 else:
                     findings.append(self.make_finding(
                         "Permissions-Policy Configured",
@@ -347,12 +353,15 @@ class PermissionsPolicyModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
                         rule_id="headers_permissions_policy_configured"
-                    ))
+                    , confidence="High"))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException):
             pass
         except Exception:
             pass
-        return findings
+
+        if not resp or getattr(resp, "status_code", 500) >= 400:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 class CSPQualityModule(ScannerModule):
     module_name = "CSPQuality"
@@ -582,4 +591,7 @@ class CSPQualityModule(ScannerModule):
             pass
         except Exception:
             pass
-        return findings
+
+        if 'resp' not in locals() or not resp or getattr(resp, "status_code", 500) >= 400:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)

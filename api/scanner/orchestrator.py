@@ -119,10 +119,21 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
                 elapsed = _time.monotonic() - scan_start
                 remaining = max(1, SCAN_BUDGET_SECONDS - elapsed)
                 try:
-                    mod_findings = future.result(timeout=min(getattr(mod, 'timeout', 8), remaining))
-                    all_findings.extend(mod_findings)
+                    result = future.result(timeout=min(getattr(mod, 'timeout', 8), remaining))
+                    if hasattr(result, "findings") and hasattr(result, "assessment_outcome"):
+                        all_findings.extend(result.findings)
+                        exec_info = {"status": ModuleExecutionState.RETURNED}
+                        if result.assessment_outcome is not None:
+                            exec_info["assessment_outcome"] = result.assessment_outcome
+                        if hasattr(result, "assessment_reason") and result.assessment_reason is not None:
+                            exec_info["reason"] = result.assessment_reason
+                        if hasattr(result, "assessment_progress") and result.assessment_progress is not None:
+                            exec_info["assessment_progress"] = result.assessment_progress
+                        module_execution[mod.module_name] = exec_info
+                    else:
+                        all_findings.extend(result)
+                        module_execution[mod.module_name] = {"status": ModuleExecutionState.RETURNED}
                     completed_modules += 1
-                    module_execution[mod.module_name] = {"status": ModuleExecutionState.RETURNED}
                 except (TimeoutError, requests.exceptions.Timeout) as e:
                     logger.error(f"Module {mod.module_name} timed out ({elapsed:.1f}s elapsed)")
                     module_execution[mod.module_name] = {

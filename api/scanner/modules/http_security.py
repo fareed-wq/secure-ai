@@ -8,6 +8,7 @@ import requests
 
 from api.scanner.base import ScannerModule
 from api.scanner.transport import safe_request
+from api.scanner.core import AssessmentOutcome, ModuleResult
 
 logger = logging.getLogger(__name__)
 
@@ -183,7 +184,7 @@ class AdvancedCookieModule(ScannerModule):
                             remediation="Limit cookie lifetimes to 400 days, aligning with modern browser limits.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies"
-                        , rule_id="cookies_excessive_lifetime", instance_key=cookie_name))
+                        , rule_id="cookies_excessive_lifetime", instance_key=cookie_name, confidence="High"))
 
                 # Smart Session Cookie Checks
                 samesite_none_without_secure = (samesite_val == "none" and not is_secure)
@@ -283,7 +284,7 @@ class AdvancedCookieModule(ScannerModule):
                             remediation="Ensure the cookie sets Secure, Path=/, and omits the Domain attribute.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies"
-                        , rule_id="cookies_invalid_host_prefix", instance_key=cookie_name))
+                        , rule_id="cookies_invalid_host_prefix", instance_key=cookie_name, confidence="High"))
                 elif cookie_name.startswith("__Secure-"):
                     if not is_secure:
                         findings.append(self.make_finding(
@@ -295,7 +296,7 @@ class AdvancedCookieModule(ScannerModule):
                             remediation="Ensure the cookie sets the Secure attribute.",
                             owasp="A05: Security Misconfiguration",
                             category="session_cookies"
-                        , rule_id="cookies_invalid_secure_prefix", instance_key=cookie_name))
+                        , rule_id="cookies_invalid_secure_prefix", instance_key=cookie_name, confidence="High"))
 
             all_unsecured = set(missing_secure + missing_samesite)
             if all_unsecured:
@@ -316,7 +317,7 @@ class AdvancedCookieModule(ScannerModule):
                     remediation="Consider adding Secure and SameSite flags to all cookies if appropriate.",
                     owasp="A05: Security Misconfiguration",
                     category="session_cookies"
-                , rule_id="cookies_non_session_unsecured"))
+                , rule_id="cookies_non_session_unsecured", confidence="High"))
 
         except Exception as e:
             print(f"DEBUG EXCEPTION: {e}")
@@ -371,7 +372,9 @@ class AdvancedCookieModule(ScannerModule):
             if key not in unique_findings:
                 unique_findings[key] = f
 
-        return list(unique_findings.values())
+        if not resp:
+            return list(unique_findings.values())
+        return ModuleResult(findings=list(unique_findings.values()), assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class HTTPSRedirectModule(ScannerModule):
@@ -392,7 +395,7 @@ class HTTPSRedirectModule(ScannerModule):
                     impact="Enforcing HTTPS encryption protects the confidentiality and integrity of traffic between the server and the visitor.",
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"
-                , rule_id="https_redirect_configured"))
+                , rule_id="https_redirect_configured", confidence="High"))
             elif resp:
                 findings.append(self.make_finding(
                     "Missing HTTPS Redirection",
@@ -403,10 +406,12 @@ class HTTPSRedirectModule(ScannerModule):
                     remediation="Configure the server to redirect all port 80 traffic to 443 (HTTPS).",
                     owasp="A02: Cryptographic Failures",
                     category="encryption_tls"
-                , rule_id="https_redirect_missing"))
+                , rule_id="https_redirect_missing", confidence="High"))
         except requests.exceptions.RequestException:
             pass
-        return findings
+        if 'resp' not in locals() or not resp:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 
@@ -484,7 +489,7 @@ class SecurityHeadersModule(ScannerModule):
                 remediation="Enable HTTP Strict Transport Security (HSTS) with a long max-age directive and includeSubDomains flag.",
                 owasp="A05: Security Misconfiguration",
                 category="encryption_tls"
-            , rule_id="headers_hsts_missing"))
+            , rule_id="headers_hsts_missing", confidence="High"))
         else:
             if "max-age=0" in hsts.replace(" ", ""):
                 findings.append(self.make_finding(
@@ -522,7 +527,7 @@ class SecurityHeadersModule(ScannerModule):
                             impact="Your visitors are protected from connection downgrade attacks.",
                             owasp="A02: Cryptographic Failures",
                             category="encryption_tls"
-                        , rule_id="headers_hsts_configured"))
+                        , rule_id="headers_hsts_configured", confidence="High"))
                 except Exception:
                     pass
 
@@ -543,7 +548,7 @@ class SecurityHeadersModule(ScannerModule):
                         category="http_headers",
                         rule_id="headers_csp_report_only",
                         verification_state="Observed"
-                    ))
+                    , confidence="High"))
 
                 findings.append(self.make_finding(
                     "Missing Content-Security-Policy (CSP)",
@@ -556,7 +561,7 @@ class SecurityHeadersModule(ScannerModule):
                     category="http_headers",
                     rule_id="headers_csp_missing",
                     verification_state="Observed"
-                ))
+                , confidence="High"))
             else:
                 if csp_ro:
                     findings.append(self.make_finding(
@@ -566,7 +571,7 @@ class SecurityHeadersModule(ScannerModule):
                         csp_ro,
                         owasp="Not Mapped",
                         category="http_headers"
-                    , rule_id="headers_csp_report_only_extra"))
+                    , rule_id="headers_csp_report_only_extra", confidence="High"))
 
                 whitelist = {"default-src", "script-src", "style-src", "object-src", "base-uri", "form-action", "frame-ancestors"}
                 evidence_payload = {"raw": csp[:180]}
@@ -588,7 +593,7 @@ class SecurityHeadersModule(ScannerModule):
                     impact="Your website is well-protected against malicious script injection attacks.",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
-                , rule_id="headers_csp_configured"))
+                , rule_id="headers_csp_configured", confidence="High"))
 
                 positive_indicators = []
                 if "upgrade-insecure-requests" in csp:
@@ -608,7 +613,7 @@ class SecurityHeadersModule(ScannerModule):
                         f"Features detected: {', '.join(positive_indicators)}",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
-                    , rule_id="headers_csp_hardened"))
+                    , rule_id="headers_csp_hardened", confidence="High"))
 
                 if resp and resp.text and re.search(r"<form\b", resp.text, re.IGNORECASE):
                     if re.search(r"form-action(?:$|[\s;])", csp):
@@ -619,7 +624,7 @@ class SecurityHeadersModule(ScannerModule):
                             "form-action present",
                             owasp="A05: Security Misconfiguration",
                             category="http_headers"
-                        , rule_id="headers_csp_form_action_configured"))
+                        , rule_id="headers_csp_form_action_configured", confidence="High"))
 
         if not self.get_header_safe(resp, "X-Permitted-Cross-Domain-Policies"):
             findings.append(self.make_finding(
@@ -631,7 +636,7 @@ class SecurityHeadersModule(ScannerModule):
                 remediation="Set the X-Permitted-Cross-Domain-Policies header to 'none' to prevent Flash/PDF cross-domain data loading.",
                 owasp="Not Mapped",
                 category="http_headers"
-            , rule_id="headers_x_permitted_cross_domain_policies_missing"))
+            , rule_id="headers_x_permitted_cross_domain_policies_missing", confidence="High"))
 
         if not self.get_header_safe(resp, "X-DNS-Prefetch-Control"):
             findings.append(self.make_finding(
@@ -643,7 +648,7 @@ class SecurityHeadersModule(ScannerModule):
                 remediation="Set X-DNS-Prefetch-Control: off to prevent browsers from performing DNS lookups for external links on the page.",
                 owasp="Not Mapped",
                 category="http_headers"
-            , rule_id="headers_x_dns_prefetch_control_missing"))
+            , rule_id="headers_x_dns_prefetch_control_missing", confidence="High"))
 
         xfo_header = self.get_header_safe(resp, "X-Frame-Options") or ""
         has_xfo = False
@@ -699,7 +704,7 @@ class SecurityHeadersModule(ScannerModule):
                 remediation="Apply the specific header to your web server (e.g., CSP frame-ancestors 'none' or X-Frame-Options: DENY) to defend against client-side attacks.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
-            , rule_id="headers_clickjacking_protection_missing"))
+            , rule_id="headers_clickjacking_protection_missing", confidence="High"))
 
         xcto = self.get_header_safe(resp, "X-Content-Type-Options")
         if not xcto or xcto.strip().lower() != "nosniff":
@@ -713,7 +718,7 @@ class SecurityHeadersModule(ScannerModule):
                 remediation="Set X-Content-Type-Options: nosniff to prevent browsers from MIME-sniffing the response.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
-            , rule_id="headers_x_content_type_options_missing"))
+            , rule_id="headers_x_content_type_options_missing", confidence="High"))
 
         referrer = self.get_header_safe(resp, "Referrer-Policy")
         if not referrer:
@@ -726,7 +731,7 @@ class SecurityHeadersModule(ScannerModule):
                 remediation="Set Referrer-Policy to 'strict-origin-when-cross-origin' or 'no-referrer' to explicitly control URL leakage.",
                 owasp="A05: Security Misconfiguration",
                 category="http_headers"
-            , rule_id="headers_referrer_policy_missing"))
+            , rule_id="headers_referrer_policy_missing", confidence="High"))
         else:
             ref_lower = referrer.lower().strip()
             # Tokenize and filter recognized policies
@@ -744,7 +749,7 @@ class SecurityHeadersModule(ScannerModule):
                     remediation="Configure a standard Referrer-Policy such as 'strict-origin-when-cross-origin'.",
                     owasp="A05: Security Misconfiguration",
                     category="http_headers"
-                , rule_id="headers_referrer_policy_invalid"))
+                , rule_id="headers_referrer_policy_invalid", confidence="High"))
             else:
                 # Effective policy is the LAST recognized policy token
                 effective_policy = recognized_tokens[-1]
@@ -770,7 +775,7 @@ class SecurityHeadersModule(ScannerModule):
                         impact="Sensitive information in your web addresses is protected consistently across environments.",
                         owasp="A05: Security Misconfiguration",
                         category="http_headers"
-                    , rule_id="headers_referrer_policy_configured"))
+                    , rule_id="headers_referrer_policy_configured", confidence="High"))
 
         # SRI & Third-Party JavaScript Check
         if resp and resp.text:
@@ -891,7 +896,7 @@ class SecurityHeadersModule(ScannerModule):
                 impact="A permissive or missing Permissions-Policy allows broad access to browser features.",
                 owasp="Not Mapped",
                                 category="http_headers"
-            , rule_id="headers_waf_missing"))
+            , rule_id="headers_waf_missing", confidence="Medium"))
         elif waf_found:
             findings.append(self.make_finding(
                 "Potential WAF / Security Edge Detected",
@@ -901,9 +906,9 @@ class SecurityHeadersModule(ScannerModule):
                 impact="Your website has an active layer of defense against automated hacker tools and floods of bad traffic.",
                 owasp="A05: Security Misconfiguration",
                                 category="http_headers"
-            , rule_id="headers_waf_active"))
+            , rule_id="headers_waf_active", confidence="Medium"))
 
-        return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class AdvancedSecurityHeadersModule(ScannerModule):
@@ -936,7 +941,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         owasp="Not Mapped",
                         category="http_headers",
                         rule_id="headers_coop_missing"
-                    ))
+                    , confidence="High"))
 
                 coep_val = coep.strip().lower() if coep else ""
                 if coep_val not in ("require-corp", "credentialless"):
@@ -951,7 +956,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         owasp="Not Mapped",
                         category="http_headers",
                         rule_id="headers_coep_missing"
-                    ))
+                    , confidence="High"))
 
                 if not corp:
                     findings.append(self.make_finding(
@@ -964,7 +969,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="http_headers",
                         rule_id="headers_corp_missing"
-                    ))
+                    , confidence="High"))
                 else:
                     corp_val = corp.lower().strip()
                     if corp_val not in ["same-origin", "same-site", "cross-origin"]:
@@ -977,7 +982,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                             owasp="A05: Security Misconfiguration",
                             category="http_headers",
                             rule_id="headers_corp_invalid"
-                        ))
+                        , confidence="High"))
                     else:
                         findings.append(self.make_finding(
                             "Cross-Origin-Resource-Policy Configured",
@@ -987,7 +992,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                             owasp="A05: Security Misconfiguration",
                             category="http_headers",
                             rule_id="headers_corp_configured"
-                        ))
+                        , confidence="High"))
 
                 if coop_val in ("same-origin", "same-origin-allow-popups") and coep_val in ("require-corp", "credentialless") and corp and corp.strip().lower() == "same-origin":
                     findings.append(self.make_finding(
@@ -999,7 +1004,7 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                         owasp="Not Mapped",
                         category="http_headers",
                         rule_id="headers_cross_origin_isolation_configured"
-                    ))
+                    , confidence="High"))
 
 
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
@@ -1018,4 +1023,6 @@ class AdvancedSecurityHeadersModule(ScannerModule):
                 rule_id="headers_advanced_check_inconclusive"
             ))
 
-        return findings
+        if 'resp' not in locals() or not resp or getattr(resp, "status_code", 500) >= 400:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)

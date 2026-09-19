@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
-import { Terminal, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
+﻿import React, { useState } from 'react';
+import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
+import { WhatWasTested } from './WhatWasTested';
+import { getCapabilityLabel } from '../../lib/assessmentReporting';
 import { CSPAnalysisPanel } from './CSPAnalysisPanel';
 
 
 const TechnicalReport = ({ reportData }) => {
   const [expandedRow, setExpandedRow] = useState(null);
+  const [expandedTechRow, setExpandedTechRow] = useState(null);
   const [activeView, setActiveView] = useState('vulnerabilities'); // 'vulnerabilities' | 'compliance'
   const [snippetTabs, setSnippetTabs] = useState({}); // { findingIndex: 'nginx' }
 
@@ -67,7 +70,7 @@ const TechnicalReport = ({ reportData }) => {
 
         {/* Top Header Bar */}
         <div className="flex items-center gap-3 mb-2">
-          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">›_ SCAN_METADATA</span>
+          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">â€º_ SCAN_METADATA</span>
           <span className="text-slate-600 font-mono text-xs">/</span>
           <div className="flex items-center gap-2">
             <div className="bg-emerald-500 animate-pulse w-2 h-2 rounded-full"></div>
@@ -155,7 +158,7 @@ const TechnicalReport = ({ reportData }) => {
                 {reportData?.metadata?.ssl_issuer || 'Unknown Issuer'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
-                {reportData?.metadata?.tls_version || 'TLS'} · <span className={`ml-1 ${
+                {reportData?.metadata?.tls_version || 'TLS'} Â· <span className={`ml-1 ${
                   reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
                   reportData?.metadata?.ssl_days_left_int <= 30 ? "text-amber-400 font-semibold" :
                   "text-emerald-400 font-semibold"
@@ -186,7 +189,7 @@ const TechnicalReport = ({ reportData }) => {
                 {reportData?.metadata?.https_enforced ?? 'HTTPS Status Unknown'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
-                {reportData?.metadata?.http_protocol || 'HTTP/1.1'} · {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}
+                {reportData?.metadata?.http_protocol || 'HTTP/1.1'} Â· {reportData?.metadata?.ipv6_supported ? 'IPv6 Supported' : 'IPv4 Only'}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
@@ -201,6 +204,96 @@ const TechnicalReport = ({ reportData }) => {
 
 
 
+      {/* 2. Assessment Coverage */}
+      {(() => {
+        const cov = reportData?.assessment_coverage;
+        if (!cov) return null;
+        return (
+          <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">â€º_ ASSESSMENT_COVERAGE</span>
+            </div>
+            {cov.available ? (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                <div className="text-center">
+                  <div className="text-4xl font-black text-slate-50 font-mono">{Math.round(cov.percentage)}%</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Coverage</div>
+                </div>
+                <div className="flex-1 space-y-2">
+                  <div className="flex flex-wrap gap-2 text-xs font-mono">
+                    <span className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{cov.completed_modules} Completed</span>
+                    {cov.partial_modules > 0 && <span className="px-2 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">{cov.partial_modules} Partial</span>}
+                    {cov.failed_modules > 0 && <span className="px-2 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20">{cov.failed_modules} Failed</span>}
+                    {cov.blocked_modules > 0 && <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-400 border border-slate-700">{cov.blocked_modules} Blocked</span>}
+                    {cov.execution_incomplete_modules > 0 && <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-400 border border-slate-700">{cov.execution_incomplete_modules} Incomplete</span>}
+                    {cov.not_applicable_modules > 0 && <span className="px-2 py-1 rounded bg-slate-800/60 text-slate-500 border border-slate-800">N/A: {cov.not_applicable_modules}</span>}
+                  </div>
+                  <div className="text-[11px] text-slate-500">Assessment Coverage shows how much of the scanner's intended assessment completed successfully. It is separate from the security score.</div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-slate-500">Assessment Coverage: Not available</div>
+            )}
+          </div>
+        );
+      })()}
+
+
+
+      <WhatWasTested moduleExecution={reportData?.module_execution} />
+
+      {/* 2.5. Exposure */}
+      {(() => {
+        const exp = reportData?.exposure;
+        if (!exp) return null;
+
+        let levelColor = "text-slate-400";
+        let bgColor = "bg-slate-900";
+        if (exp.level === "HIGH") { levelColor = "text-red-400"; bgColor = "bg-red-500/10 border-red-500/20"; }
+        else if (exp.level === "MODERATE") { levelColor = "text-amber-400"; bgColor = "bg-amber-500/10 border-amber-500/20"; }
+        else if (exp.level === "LOW") { levelColor = "text-emerald-400"; bgColor = "bg-emerald-500/10 border-emerald-500/20"; }
+
+        return (
+          <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">â€º_ EXPOSURE</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              <div className="text-center min-w-[100px]">
+                <div className={`text-2xl font-black font-mono ${levelColor}`}>{exp.level}</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Level</div>
+              </div>
+
+              <div className="flex-1 space-y-3">
+                {exp.signals && exp.signals.length > 0 && (
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Observed Signals:</div>
+                    <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                      {exp.signals.map((sig, i) => (
+                        <li key={i}>{sig}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {exp.limitations && exp.limitations.length > 0 && (
+                  <div className="space-y-1 mt-2">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Limitations / Context:</div>
+                    <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside">
+                      {exp.limitations.map((lim, i) => (
+                        <li key={i}>{lim}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+
+
       {/* 3. Tab Switcher: Vulnerabilities vs Compliance */}
       <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-xl print:hidden">
         <button
@@ -209,17 +302,150 @@ const TechnicalReport = ({ reportData }) => {
         >
           Vulnerabilities
         </button>
-        <button
-          onClick={() => setActiveView('compliance')}
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'compliance' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
-        >
-          Framework Mapping
-        </button>
+                  <button
+            onClick={() => setActiveView('compliance')}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'compliance' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Framework Mapping
+          </button>
+          <button
+            onClick={() => setActiveView('technologies')}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'technologies' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+          >
+            Technologies
+          </button>
       </div>
 
       {/* 4. Main Content Area */}
       <div>
-        {activeView === 'vulnerabilities' && (
+        
+          {activeView === 'technologies' && (
+            <div className="w-full max-w-full overflow-hidden space-y-6">
+              <div className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+                <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                  <Server className="w-4 h-4 text-sky-400" />
+                  <h2 className="font-bold text-slate-50 text-lg">Detected Technologies</h2>
+                </div>
+                
+                <div className="p-6 text-slate-300">
+                  {(!reportData?.technology_identities || reportData.technology_identities.length === 0) ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <Terminal className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                      <p>No deterministic technology identities were observed in this scan.</p>
+                    </div>
+                  ) : (
+                    <div className="w-full overflow-x-auto">
+                      <table className="technical-findings-table w-full text-left border-collapse">
+                        <thead>
+                          <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                            <th className="px-6 py-4">Component</th>
+                            <th className="px-6 py-4">Version</th>
+                            <th className="px-6 py-4">Layer</th>
+                            <th className="px-6 py-4">Confidence</th>
+                            <th className="px-6 py-4">Identity (CPE)</th>
+                            <th className="px-6 py-4 text-right">Details</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {reportData.technology_identities.map((tech, idx) => {
+                            const getLayerDetails = (layer) => {
+                              switch(layer) {
+                                case 'web_server_proxy': return { label: 'Web Server / Proxy', icon: <Globe className="w-4 h-4 text-blue-400 mr-2 inline" /> };
+                                case 'application_framework': return { label: 'Application Framework', icon: <Layers className="w-4 h-4 text-purple-400 mr-2 inline" /> };
+                                case 'cms': return { label: 'Content Management System', icon: <Box className="w-4 h-4 text-orange-400 mr-2 inline" /> };
+                                case 'language_runtime': return { label: 'Language / Runtime', icon: <Cpu className="w-4 h-4 text-green-400 mr-2 inline" /> };
+                                case 'javascript_framework': return { label: 'JavaScript Framework', icon: <Terminal className="w-4 h-4 text-yellow-400 mr-2 inline" /> };
+                                default: return { label: layer ? layer.replace(/_/g, ' ') : 'Unknown Layer', icon: <Box className="w-4 h-4 text-slate-400 mr-2 inline" /> };
+                              }
+                            };
+                            
+                            const getConfBadge = (conf) => {
+                              const confStr = (conf || '').toUpperCase();
+                              if (confStr === 'HIGH' || confStr.includes('100%')) return <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">High</span>;
+                              if (confStr === 'MEDIUM') return <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">Medium</span>;
+                              if (confStr === 'LOW') return <span className="bg-slate-500/10 text-slate-400 border border-slate-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">Low</span>;
+                              return <span className="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-xs font-bold uppercase">{confStr || 'UNKNOWN'}</span>;
+                            };
+                            
+                            const layerInfo = getLayerDetails(tech.layer);
+                            
+                            return (
+                              <React.Fragment key={idx}>
+                                <tr 
+                                  onClick={() => setExpandedTechRow(expandedTechRow === idx ? null : idx)}
+                                  className={`border-b border-slate-800/50 cursor-pointer hover:bg-slate-900/30 transition-colors ${expandedTechRow === idx ? 'bg-slate-800/30' : ''}`}
+                                >
+                                  <td className="px-6 py-4">
+                                    <div className="font-bold text-slate-200">{tech.product}</div>
+                                    {tech.vendor && <div className="text-xs text-slate-500">{tech.vendor}</div>}
+                                  </td>
+                                  <td className="px-6 py-4 font-mono text-sm">
+                                    {tech.version && tech.version_precision !== 'UNKNOWN' ? <span className="text-sky-300">{tech.version}</span> : <span className="text-slate-600">-</span>}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm whitespace-nowrap">
+                                    {layerInfo.icon}
+                                    <span className="capitalize">{layerInfo.label}</span>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    {getConfBadge(tech.confidence)}
+                                  </td>
+                                  <td className="px-6 py-4 font-mono text-xs">
+                                    {tech.cpe ? (
+                                      <code className="bg-slate-900 border border-slate-700 text-pink-400 px-2 py-1 rounded select-all break-all">{tech.cpe}</code>
+                                    ) : (
+                                      <span className="text-slate-600">-</span>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 text-right align-top">
+                                    <div className="flex flex-col items-end gap-1">
+                                      <button aria-label={expandedTechRow === idx ? "Collapse Details" : "Expand Details"} className="text-slate-500 hover:text-slate-50 transition-colors">
+                                        {expandedTechRow === idx ? <ChevronUp className="w-5 h-5 inline" /> : <ChevronDown className="w-5 h-5 inline" />}
+                                      </button>
+                                      {tech.cves && tech.cves.length > 0 && (
+                                        <span className="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-1.5 py-0.5 rounded font-bold uppercase whitespace-nowrap">{tech.cves.length} CVEs</span>
+                                      )}
+                                    </div>
+                                  </td>
+                                </tr>
+                                
+                                {expandedTechRow === idx && (
+                                  <tr className="technical-finding-expanded print:hidden">
+                                    <td colSpan={6} className="p-0 border-b-2 border-slate-700/50">
+                                      <div className="bg-slate-950 p-6 transition-all duration-300">
+                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Known Vulnerabilities</div>
+                                        
+                                        {(!tech.cves || tech.cves.length === 0) ? (
+                                          <div className="text-slate-500 text-sm">No associated CVEs observed.</div>
+                                        ) : (
+                                          <div className="space-y-3">
+                                            {tech.cves.map((cve, cveIdx) => (
+                                              <div key={cveIdx} className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                  <span className="font-mono font-bold text-rose-300 text-sm">{cve.id}</span>
+                                                  {getSeverityBadge(cve.severity.charAt(0).toUpperCase() + cve.severity.slice(1).toLowerCase())}
+                                                </div>
+                                                <p className="text-slate-400 text-sm leading-relaxed">{cve.summary}</p>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeView === 'vulnerabilities' && (
           <div className="w-full max-w-full overflow-hidden space-y-6">
             {domainGroups.map((group) => {
               const knownDomainKeys = new Set(domainGroups.map(g => g.key));
@@ -309,13 +535,25 @@ const TechnicalReport = ({ reportData }) => {
                                         {finding.impact && finding.impact !== "N/A" && (
                                           <div>
                                             <div className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                              <span>⚠️</span> Security Impact & Risk
+                                              <span>âš ï¸</span> Security Impact & Risk
                                             </div>
                                             <p className="technical-risk-text text-rose-200/80 leading-relaxed text-sm">{finding.impact}</p>
                                           </div>
                                         )}
 
                                         <div className="flex flex-wrap gap-8 mb-4">
+                                          {finding.module && (
+                                            <div>
+                                              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Capability</div>
+                                              <div className="text-slate-300 font-mono text-sm">{getCapabilityLabel(finding.module)}</div>
+                                            </div>
+                                          )}
+                                          {finding.rule_id && (
+                                            <div>
+                                              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Rule ID</div>
+                                              <div className="text-slate-400 font-mono text-xs mt-0.5">{finding.rule_id}</div>
+                                            </div>
+                                          )}
                                           {finding.confidence && finding.confidence !== "N/A" && (
                                             (() => {
                                               const lowerConf = finding.confidence.toString().toLowerCase();

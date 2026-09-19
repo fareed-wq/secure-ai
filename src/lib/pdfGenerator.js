@@ -1,6 +1,7 @@
-import { jsPDF } from "jspdf";
+﻿import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { getTranslation } from "./utils/translations";
+import { getTestedState, getCapabilityLabel, getSimpleSummary } from "./assessmentReporting";
 
 const sanitizeText = (text) => {
   if (typeof text !== 'string') return text;
@@ -39,6 +40,26 @@ export const generateStructuredPdf = (scanData, scanMode, reportMode) => {
   doc.text(sanitizeText(`Report Type: ${reportMode === 'technical' ? 'Technical' : 'Simple'}`), margin, yPos);
   yPos += 6;
   doc.text(sanitizeText(`Overall Security Score: ${scanData.score !== undefined ? scanData.score + '/100' : 'N/A'}`), margin, yPos);
+
+  yPos += 6;
+  const covData = scanData.report_data?.assessment_coverage || scanData.assessment_coverage;
+  if (covData && covData.available) {
+    doc.text(sanitizeText(`Assessment Coverage: ${Math.round(covData.percentage)}% of intended checks completed`), margin, yPos);
+  } else {
+    doc.text(sanitizeText('Assessment Coverage: Not available'), margin, yPos);
+  }
+
+  yPos += 6;
+  const expData = scanData.report_data?.exposure || scanData.exposure;
+  if (expData && expData.level) {
+    const expText = expData.level === 'HIGH' ? 'This site exposes additional externally reachable surfaces.' :
+                    expData.level === 'MODERATE' ? 'This site is publicly reachable on the web.' :
+                    expData.level === 'LOW' ? 'This target appears limited to private/local network addressing.' :
+                    'Exposure could not be determined from this scan.';
+    doc.text(sanitizeText(`Exposure: ${expData.level} - ${expText}`), margin, yPos);
+  } else {
+    doc.text(sanitizeText('Exposure: Not available'), margin, yPos);
+  }
 
   // Draw Line
   yPos += 10;
@@ -208,8 +229,19 @@ High Priority: ${highCount} | Medium Priority: ${mediumCount} | Low Priority: ${
 
         const findingData = [];
 
-        if (f.module || f.category) {
-          findingData.push(['Module/Category', sanitizeText(`${f.module || 'N/A'} / ${f.category || 'N/A'}`)]);
+                if (f.module) {
+          findingData.push(['Capability', sanitizeText(getCapabilityLabel(f.module))]);
+        } else if (f.category) {
+          findingData.push(['Category', sanitizeText(f.category)]);
+        }
+
+        if (f.rule_id) {
+          findingData.push(['Rule ID', sanitizeText(f.rule_id)]);
+        }
+
+        const verificationState = f.verification_state || f.state;
+        if (verificationState) {
+          findingData.push(['Verification', sanitizeText(verificationState)]);
         }
 
         if (f.description) {

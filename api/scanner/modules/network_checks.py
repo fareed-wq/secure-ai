@@ -1,3 +1,4 @@
+from api.scanner.core import ModuleResult, AssessmentOutcome
 import logging
 import ssl
 import socket
@@ -21,13 +22,20 @@ class SubdomainProbingModule(ScannerModule):
         findings = []
         domain = hostname[4:] if hostname.startswith("www.") else hostname
 
+        attempted = 0
+        completed = 0
+        failed = 0
+
         for sub in Config.COMMON_SUBDOMAINS:
             sub_url = f"https://{sub}.{domain}"
+            attempted += 1
             try:
                 resp = safe_request("HEAD", sub_url, session=session, timeout=(1.5, 2.5))
-                if resp:
-                    findings.append(self.make_finding(
-                        f"Active Subdomain Found: {sub}.{domain}",
+                if resp is not None:
+                    completed += 1
+                    if resp:
+                        findings.append(self.make_finding(
+                            f"Active Subdomain Found: {sub}.{domain}",
                         "Informational",
                         "We discovered an active subdomain related to your website.",
                         sub_url,
@@ -36,10 +44,18 @@ class SubdomainProbingModule(ScannerModule):
                                 category="information_exposure",
                         rule_id="network_subdomain_probed",
                         instance_key=f"{sub}.{domain}"
-                    ))
+                    , confidence="Medium"))
+                else:
+                    failed += 1
             except Exception:
-                pass
-        return findings
+                failed += 1
+
+        progress = {"attempted": attempted, "completed": completed, "failed": failed}
+        if completed == attempted and attempted > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED, assessment_progress=progress)
+        if completed > 0 and failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL, assessment_progress=progress)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
 
 
 class SubdomainTakeoverModule(ScannerModule):
@@ -59,6 +75,7 @@ class SubdomainTakeoverModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> list[dict]:
         findings = []
+        success = False
         domain = hostname[4:] if hostname.startswith("www.") else hostname
 
         try:
@@ -66,7 +83,7 @@ class SubdomainTakeoverModule(ScannerModule):
             resp = safe_request("GET", cname_url, session=session, timeout=(1.5, 2.5))
 
             if not resp or resp.status_code != 200:
-                return findings
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 
             data = resp.json()
             answers = data.get("Answer", [])
@@ -80,8 +97,9 @@ class SubdomainTakeoverModule(ScannerModule):
                     owasp="Not Mapped",
                     category="domain_email",
                     rule_id="network_subdomain_takeover_risk_none"
-                ))
-                return findings
+                , confidence="Medium"))
+                success = True
+                return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
             cname_target = answers[0].get("data", "").rstrip(".").lower()
 
@@ -121,7 +139,7 @@ class SubdomainTakeoverModule(ScannerModule):
                         owasp="Not Mapped",
                         category="domain_email",
                         rule_id="network_cname_alias_configured"
-                    ))
+                    , confidence="Medium"))
             else:
                 findings.append(self.make_finding(
                     "No Subdomain Takeover Risk Detected",
@@ -132,15 +150,18 @@ class SubdomainTakeoverModule(ScannerModule):
                     owasp="Not Mapped",
                     category="domain_email",
                     rule_id="network_subdomain_takeover_risk_none"
-                ))
+                , confidence="Medium"))
 
+            success = True
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
             # Safely skip on network failures to avoid false positives and noise
             pass
         except Exception as e:
             logger.error(f"SubdomainTakeoverModule error: {e}")
 
-        return findings
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 
 
 class GraphQLIntrospectionModule(ScannerModule):
@@ -149,9 +170,12 @@ class GraphQLIntrospectionModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5))
-            if resp and resp.status_code == 200:
+            if not resp:
+                return findings
+            if resp.status_code == 200:
                 content_type = resp.headers.get("Content-Type", "").lower()
                 if "application/json" in content_type:
                     text = resp.text
@@ -164,9 +188,12 @@ class GraphQLIntrospectionModule(ScannerModule):
                             impact="Exposed GraphQL introspection provides a complete schema map, assisting reconnaissance.",
                             owasp="Not Mapped",
                             category="information_exposure"
-                        , rule_id="api_graphql_introspection_enabled"))
+                        , rule_id="api_graphql_introspection_enabled", confidence="High"))
+            success = True
         except Exception:
             pass
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
         return findings
 
 class VerboseStackTraceModule(ScannerModule):
@@ -175,6 +202,7 @@ class VerboseStackTraceModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
         try:
             resp = safe_request("GET", url, session=session, timeout=(1.5, 2.5), max_attempts=1)
             if resp and resp.text:
@@ -194,7 +222,10 @@ class VerboseStackTraceModule(ScannerModule):
             pass
         except Exception:
             pass
-        return findings
+
+        if 'resp' not in locals() or not resp:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 class PassiveSubdomainDiscoveryModule(ScannerModule):
     module_name = "PassiveSubdomainDiscovery"
@@ -202,6 +233,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
         domain = hostname[4:] if hostname.startswith("www.") else hostname
         discovered_subdomains = set()
 
@@ -224,6 +256,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
 
                             if clean_name == domain or clean_name.endswith(f".{domain}"):
                                 discovered_subdomains.add(clean_name)
+                success = True
         except Exception as e:
             logger.debug(f"PassiveSubdomainDiscoveryModule error: {e}")
             findings.append(self.make_finding(
@@ -234,7 +267,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
                 owasp="Not Mapped",
                 category="information_exposure",
                 rule_id="network_subdomain_discovery_inconclusive"
-            ))
+            , confidence="Medium"))
 
         if discovered_subdomains:
             sub_list = sorted(list(discovered_subdomains))
@@ -288,7 +321,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
                 owasp="Not Mapped",
                 category="information_exposure",
                 rule_id="network_subdomains_discovered"
-            )
+            , confidence="Medium")
             finding["metadata"] = {
                 "total_subdomains": summary_count,
                 "attack_surface_categories": categories,
@@ -296,5 +329,7 @@ class PassiveSubdomainDiscoveryModule(ScannerModule):
             }
             findings.append(finding)
 
-        return findings
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED)
 

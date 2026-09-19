@@ -248,21 +248,21 @@ class TestEvidencePreservation(unittest.TestCase):
     def test_evidence_field_is_never_empty_string(self):
         """make_finding should not produce empty-string evidence."""
         mod = DummyModule()
-        f = mod.make_finding("Test", "Low", "Desc", "Some evidence", owasp="A01")
+        f = mod.make_finding("Test", "Low", "Desc", "Some evidence", owasp="A01", confidence="High")
         self.assertNotEqual(f["evidence"], "")
         self.assertNotEqual(f["evidence"], {"raw": ""})
 
     def test_stripe_key_masked(self):
         """Stripe secret keys should be masked in evidence."""
         mod = DummyModule()
-        f = mod.make_finding("Test", "Low", "Desc", "sk_live_1234567890abcdefgh", owasp="A01")
+        f = mod.make_finding("Test", "Low", "Desc", "sk_live_1234567890abcdefgh", owasp="A01", confidence="High")
         self.assertIn("[REDACTED_STRIPE]", f["evidence"]["raw"])
         self.assertNotIn("sk_live_", f["evidence"]["raw"])
 
     def test_aws_key_masked(self):
         """AWS access keys should be masked in evidence."""
         mod = DummyModule()
-        f = mod.make_finding("Test", "Low", "Desc", "AKIAIOSFODNN7EXAMPLE", owasp="A01")
+        f = mod.make_finding("Test", "Low", "Desc", "AKIAIOSFODNN7EXAMPLE", owasp="A01", confidence="High")
         self.assertIn("[REDACTED_AWS]", f["evidence"]["raw"])
         self.assertNotIn("AKIA", f["evidence"]["raw"])
 
@@ -270,20 +270,20 @@ class TestEvidencePreservation(unittest.TestCase):
         """GitHub tokens should be masked in evidence."""
         mod = DummyModule()
         # ghp_ followed by exactly 36 alphanumeric chars
-        f = mod.make_finding("Test", "Low", "Desc", "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij", owasp="A01")
+        f = mod.make_finding("Test", "Low", "Desc", "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij", owasp="A01", confidence="High")
         self.assertIn("[REDACTED_GITHUB]", f["evidence"]["raw"])
 
     def test_bearer_token_masked(self):
         """Bearer tokens should be masked in evidence."""
         mod = DummyModule()
-        f = mod.make_finding("Test", "Low", "Desc", "Bearer eyJhbGciOiJIUzI1NiJ9.test", owasp="A01")
+        f = mod.make_finding("Test", "Low", "Desc", "Bearer eyJhbGciOiJIUzI1NiJ9.test", owasp="A01", confidence="High")
         self.assertIn("Bearer [REDACTED]", f["evidence"]["raw"])
 
     def test_evidence_truncation_deterministic(self):
         """Evidence over 180 chars should be truncated deterministically."""
         mod = DummyModule()
         long_evidence = "A" * 300
-        f = mod.make_finding("Test", "Low", "Desc", long_evidence, owasp="A01")
+        f = mod.make_finding("Test", "Low", "Desc", long_evidence, owasp="A01", confidence="High")
         self.assertLessEqual(len(f["evidence"]["raw"]), 180)
 
     def test_masking_happens_before_truncation(self):
@@ -291,7 +291,7 @@ class TestEvidencePreservation(unittest.TestCase):
         mod = DummyModule()
         # Secret appears before position 180, should be masked before truncation
         evidence = "a" * 150 + " sk_live_1234567890abcdefgh"
-        f = mod.make_finding("Test", "Low", "Desc", evidence, owasp="A01")
+        f = mod.make_finding("Test", "Low", "Desc", evidence, owasp="A01", confidence="High")
         self.assertNotIn("sk_live_", f["evidence"]["raw"])
         self.assertIn("[REDACTED_STRIPE]", f["evidence"]["raw"])
 
@@ -317,7 +317,7 @@ class TestFindingFieldCompleteness(unittest.TestCase):
         """Severity must be preserved exactly as provided."""
         mod = DummyModule()
         for sev in ["Critical", "High", "Medium", "Low", "Informational", "Passed"]:
-            f = mod.make_finding("Test", sev, "Desc", "Ev", owasp="A01")
+            f = mod.make_finding("Test", sev, "Desc", "Ev", owasp="A01", confidence="High")
             self.assertEqual(f["severity"], sev)
 
     def test_confidence_preserved_exactly(self):
@@ -338,7 +338,7 @@ class TestFindingFieldCompleteness(unittest.TestCase):
     def test_module_name_set(self):
         """Module name must be set on findings."""
         mod = DummyModule()
-        f = mod.make_finding("Test", "Low", "Desc", "Ev", owasp="A01")
+        f = mod.make_finding("Test", "Low", "Desc", "Ev", owasp="A01", confidence="High")
         self.assertEqual(f["module"], "Dummy")
 
     def test_category_preserved(self):

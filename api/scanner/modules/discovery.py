@@ -6,6 +6,7 @@ import re
 
 from api.scanner.base import ScannerModule
 from api.scanner.transport import safe_request
+from api.scanner.core import VerificationState, AssessmentOutcome, ModuleResult
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,9 @@ class ExposedFilesModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        attempted = 0
+        completed = 0
+        failed = 0
         scheme = "https" if url.startswith("https") else "http"
         base_url = f"{scheme}://{hostname}/"
         homepage_len = 0
@@ -29,9 +33,14 @@ class ExposedFilesModule(ScannerModule):
 
 
         for env_path in ['/.env', '/api/.env']:
+            attempted += 1
             try:
                 env_url = f"{scheme}://{hostname}{env_path}"
                 resp = safe_request("GET", env_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+                if resp is not None:
+                    completed += 1
+                else:
+                    failed += 1
                 if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                     from urllib.parse import urlparse
                     history = getattr(resp, 'history', [])
@@ -74,15 +83,21 @@ class ExposedFilesModule(ScannerModule):
                                 rule_id='exposed_file_env',
                                 instance_key=env_path,
                                 verification_state="Observed"
-                            ))
+                            , confidence="High"))
             except Exception as e:
+                failed += 1
                 logger.debug("ExposedFilesModule env fetch failed: %s", e)
 
 
 
+        attempted += 1
         try:
             git_url = f"{scheme}://{hostname}/.git/HEAD"
             resp = safe_request("GET", git_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+            if resp is not None:
+                completed += 1
+            else:
+                failed += 1
             if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                 from urllib.parse import urlparse
                 history = getattr(resp, 'history', [])
@@ -107,11 +122,17 @@ class ExposedFilesModule(ScannerModule):
                             confidence="High"
                         , rule_id='exposed_file_git_repo'))
         except Exception as e:
+            failed += 1
             logger.debug("ExposedFilesModule git config failed: %s", e)
 
+        attempted += 1
         try:
             git_config_url = f"{scheme}://{hostname}/.git/config"
             resp = safe_request("GET", git_config_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+            if resp is not None:
+                completed += 1
+            else:
+                failed += 1
             if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                 from urllib.parse import urlparse
                 history = getattr(resp, 'history', [])
@@ -132,15 +153,20 @@ class ExposedFilesModule(ScannerModule):
                             impact="May disclose repository configuration, remote URLs, and internal repository details.",
                             owasp="A05: Security Misconfiguration",
                             category="information_exposure"
-                        , rule_id='exposed_file_git_config'))
-        except Exception as e: pass
+                        , rule_id='exposed_file_git_config', confidence="High"))
+        except Exception as e: failed += 1
 
         docker_finding_added = False
         for docker_path in ['/docker-compose.yml']:
             if docker_finding_added: break
+            attempted += 1
             try:
                 docker_url = f"{scheme}://{hostname}{docker_path}"
                 resp = safe_request("GET", docker_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+                if resp is not None:
+                    completed += 1
+                else:
+                    failed += 1
                 if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                     from urllib.parse import urlparse
                     history = getattr(resp, 'history', [])
@@ -161,13 +187,18 @@ class ExposedFilesModule(ScannerModule):
                                 impact="May reveal service names, container images, build configuration, ports, or deployment structure.",
                                 owasp="A05: Security Misconfiguration",
                                 category="information_exposure"
-                            , rule_id='exposed_file_docker_compose', instance_key=docker_path))
+                            , rule_id='exposed_file_docker_compose', instance_key=docker_path, confidence="High"))
                             docker_finding_added = True
-            except Exception as e: pass
+            except Exception as e: failed += 1
 
+        attempted += 1
         try:
             phpinfo_url = f"{scheme}://{hostname}/phpinfo.php"
             resp = safe_request("GET", phpinfo_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+            if resp is not None:
+                completed += 1
+            else:
+                failed += 1
             if resp and resp.status_code == 200 and not self.is_spa_fallback(resp, homepage_len):
                 from urllib.parse import urlparse
                 history = getattr(resp, 'history', [])
@@ -190,12 +221,19 @@ class ExposedFilesModule(ScannerModule):
                         confidence="High"
                     , rule_id='exposed_file_phpinfo'))
         except Exception as e:
+            failed += 1
             logger.debug("ExposedFilesModule phpinfo fetch failed: %s", e)
 
         def check_admin_panel(path):
+            nonlocal attempted, completed, failed
+            attempted += 1
             try:
                 target_url = urljoin(base_url, path)
                 resp = safe_request("GET", target_url, session=session, timeout=(1.5, 2.5), max_attempts=1)
+                if resp is not None:
+                    completed += 1
+                else:
+                    failed += 1
                 if resp and resp.status_code == 200 and 'text/html' in self.get_header_safe(resp, 'Content-Type', '').lower() and not self.is_spa_fallback(resp, homepage_len):
                     from urllib.parse import urlparse
                     history = getattr(resp, 'history', [])
@@ -217,8 +255,9 @@ class ExposedFilesModule(ScannerModule):
                             category="api_surface"
                         , rule_id='exposed_admin_interface', instance_key=path)
             except requests.exceptions.RequestException:
-                pass
+                failed += 1
             except Exception as e:
+                failed += 1
                 logger.debug("ExposedFilesModule admin check failed: %s", e)
             return None
 
@@ -226,7 +265,15 @@ class ExposedFilesModule(ScannerModule):
         if admin_result:
             findings.append(admin_result)
 
-        return findings
+        progress = {"attempted": attempted, "completed": completed, "failed": failed}
+        if completed == attempted and attempted > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED, assessment_progress=progress)
+        elif completed > 0 and failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL, assessment_progress=progress)
+        elif failed > 0 and completed == 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
+        else:
+            return findings
 
 
 class InformationDisclosureModule(ScannerModule):
@@ -250,7 +297,8 @@ class InformationDisclosureModule(ScannerModule):
                     impact="Exposing detailed server/version information gives external observers additional information that may assist reconnaissance.",
                     remediation="Configure server to only return generic names (e.g., 'nginx').",
                     owasp="Not Mapped",
-                    category="information_exposure"
+                    category="information_exposure",
+                    confidence="High"
                 , rule_id='info_disclosure_server_banner'))
 
 
@@ -300,7 +348,8 @@ class InformationDisclosureModule(ScannerModule):
                         impact="Exposed internal IPs reveal network topology and may assist reconnaissance.",
                         remediation="Remove internal IP addresses from the public response.",
                         owasp="Not Mapped",
-                        category="information_exposure"
+                        category="information_exposure",
+                        confidence="Medium"
                     , rule_id='info_disclosure_private_ip'))
 
                 # Passive Stack Trace check
@@ -316,12 +365,16 @@ class InformationDisclosureModule(ScannerModule):
                             impact="Verbose system reports provide reconnaissance information to external observers.",
                             remediation="Configure production environment to mask verbose error stack traces.",
                             owasp="A05: Security Misconfiguration",
-                            category="information_exposure"
+                            category="information_exposure",
+                            confidence="Medium"
                         , rule_id='info_disclosure_stack_trace'))
                         break
         except Exception as e:
             logger.debug("InformationDisclosureModule head check failed: %s", e)
-        return findings
+
+        if 'resp' not in locals() or not resp:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class RobotsTxtModule(ScannerModule):
@@ -373,7 +426,7 @@ class RobotsTxtModule(ScannerModule):
                         impact="Robots.txt can inadvertently disclose the location of administrative or sensitive paths.",
                         owasp="A05: Security Misconfiguration",
                         category="information_exposure"
-                    , rule_id='robots_txt_disclosure'))
+                    , rule_id='robots_txt_disclosure', confidence="High"))
 
                 if privileged_paths:
                     findings.append(self.make_finding(
@@ -382,7 +435,7 @@ class RobotsTxtModule(ScannerModule):
                         "Your website publicly lists the addresses of administrative login pages or control panels.",
                         "\\n".join(privileged_paths[:10]),
                         impact="Exposed administrative endpoints provide targets for unauthorized access attempts.",
-                        confidence="High",
+                        confidence="Medium",
                         owasp="Not Mapped",
                         category="api_surface"
                     , rule_id='robots_txt_admin_surface'))
@@ -395,7 +448,7 @@ class RobotsTxtModule(ScannerModule):
                     impact="This is normal and helps search engines know what parts of your site to index.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id='robots_txt_found'))
+                , rule_id='robots_txt_found', confidence="High"))
             else:
                 findings.append(self.make_finding(
                     "robots.txt Missing",
@@ -405,10 +458,13 @@ class RobotsTxtModule(ScannerModule):
                     impact="Search engines might index parts of your website you didn't intend to be public, or they might not index your site efficiently.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id='robots_txt_missing'))
+                , rule_id='robots_txt_missing', confidence="High"))
         except Exception as e:
             logger.debug("RobotsTxtModule check failed: %s", e)
-        return findings
+            return findings
+        if not resp or (resp.status_code >= 400 and resp.status_code != 404):
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class SitemapModule(ScannerModule):
@@ -437,7 +493,7 @@ class SitemapModule(ScannerModule):
                     impact="This is a standard file that helps search engines discover all the public pages on your website.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id='sitemap_xml_found'))
+                , rule_id='sitemap_xml_found', confidence="High"))
             else:
                 findings.append(self.make_finding(
                     "sitemap.xml Missing",
@@ -447,10 +503,13 @@ class SitemapModule(ScannerModule):
                     impact="Search engines might have a harder time discovering and ranking all the public pages on your website.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id='sitemap_xml_missing'))
+                , rule_id='sitemap_xml_missing', confidence="High"))
         except Exception as e:
             logger.debug("SitemapModule check failed: %s", e)
-        return findings
+            return findings
+        if not resp or (resp.status_code >= 400 and resp.status_code != 404):
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class SecurityTxtModule(ScannerModule):
@@ -480,19 +539,22 @@ class SecurityTxtModule(ScannerModule):
                     # Explicitly reject HTML fallbacks
                     if "<html" not in text.lower():
                         return resp, text
-                return None, None
+                return resp, None
 
             used_target = target_primary
             is_legacy = False
 
             resp, content_text = try_fetch(target_primary)
-            if not resp:
-                resp, content_text = try_fetch(target_fallback)
-                if resp:
+            if not content_text:
+                resp_fallback, content_text = try_fetch(target_fallback)
+                if content_text:
+                    resp = resp_fallback
                     used_target = target_fallback
                     is_legacy = True
+                else:
+                    resp = resp_fallback if resp_fallback else resp
 
-            if resp:
+            if content_text:
                 content_type = self.get_header_safe(resp, "Content-Type", "").lower()
 
                 if is_legacy:
@@ -503,7 +565,7 @@ class SecurityTxtModule(ScannerModule):
                         used_target,
                         owasp="Not Mapped",
                         category="information_exposure"
-                    , rule_id='security_txt_legacy_location'))
+                    , rule_id='security_txt_legacy_location', confidence="High"))
 
                 is_correct_content_type = False
                 media_type = content_type.split(";", 1)[0].strip()
@@ -523,7 +585,7 @@ class SecurityTxtModule(ScannerModule):
                         f"Content-Type: {content_type}",
                         owasp="Not Mapped",
                         category="information_exposure"
-                    , rule_id='security_txt_invalid_content_type'))
+                    , rule_id='security_txt_invalid_content_type', confidence="High"))
 
                 # Parse lines
                 contacts = []
@@ -596,7 +658,7 @@ class SecurityTxtModule(ScannerModule):
                         remediation="Add at least one valid Contact directive (e.g., Contact: mailto:security@example.com).",
                         owasp="Not Mapped",
                         category="information_exposure"
-                    , rule_id='security_txt_missing_contact'))
+                    , rule_id='security_txt_missing_contact', confidence="High"))
 
                 # Expires
                 if not expires_lines:
@@ -608,7 +670,7 @@ class SecurityTxtModule(ScannerModule):
                         remediation="Add an Expires directive with an RFC3339 formatted date.",
                         owasp="Not Mapped",
                         category="information_exposure"
-                    , rule_id='security_txt_missing_expires'))
+                    , rule_id='security_txt_missing_expires', confidence="High"))
                 elif len(expires_lines) > 1:
                     findings.append(self.make_finding(
                         "security.txt Multiple Expires",
@@ -618,7 +680,7 @@ class SecurityTxtModule(ScannerModule):
                         remediation="Ensure exactly one Expires directive exists.",
                         owasp="Not Mapped",
                         category="information_exposure"
-                    , rule_id='security_txt_multiple_expires'))
+                    , rule_id='security_txt_multiple_expires', confidence="High"))
                 else:
                     # Parse RFC3339 date
                     expires_str = expires_lines[0]
@@ -636,7 +698,7 @@ class SecurityTxtModule(ScannerModule):
                             remediation="Format the date using RFC3339 with timezone (e.g., 2024-12-31T23:59:59Z).",
                             owasp="Not Mapped",
                             category="information_exposure"
-                        , rule_id='security_txt_invalid_expires'))
+                        , rule_id='security_txt_invalid_expires', confidence="High"))
                     else:
                         clean_date = expires_str.upper().replace('Z', '+00:00')
                         try:
@@ -655,7 +717,7 @@ class SecurityTxtModule(ScannerModule):
                                     remediation="Review your security.txt policies and update the Expires date.",
                                     owasp="Not Mapped",
                                     category="information_exposure"
-                                , rule_id='security_txt_expired'))
+                                , rule_id='security_txt_expired', confidence="High"))
                             elif valid_contacts:
                                 if not is_legacy and is_correct_content_type:
                                     findings.append(self.make_finding(
@@ -666,7 +728,7 @@ class SecurityTxtModule(ScannerModule):
                                         impact="This is an excellent practice that allows security researchers to safely report vulnerabilities.",
                                         owasp="Not Mapped",
                                         category="information_exposure"
-                                    , rule_id='security_txt_valid'))
+                                    , rule_id='security_txt_valid', confidence="High"))
 
                         except ValueError:
                             findings.append(self.make_finding(
@@ -677,7 +739,7 @@ class SecurityTxtModule(ScannerModule):
                                 remediation="Format the date using RFC3339 with timezone (e.g., 2024-12-31T23:59:59Z).",
                                 owasp="Not Mapped",
                                 category="information_exposure"
-                            , rule_id='security_txt_invalid_expires'))
+                            , rule_id='security_txt_invalid_expires', confidence="High"))
 
                 # Optional info
                 if policies:
@@ -688,7 +750,7 @@ class SecurityTxtModule(ScannerModule):
                         policies[0],
                         category="information_exposure",
                         owasp="Not Mapped"
-                    , rule_id='security_txt_policy_configured'))
+                    , rule_id='security_txt_policy_configured', confidence="High"))
                 if languages:
                     findings.append(self.make_finding(
                         "security.txt Preferred-Languages Configured",
@@ -697,7 +759,7 @@ class SecurityTxtModule(ScannerModule):
                         languages[0],
                         category="information_exposure",
                         owasp="Not Mapped"
-                    , rule_id='security_txt_preferred_languages'))
+                    , rule_id='security_txt_preferred_languages', confidence="High"))
             else:
                 findings.append(self.make_finding(
                     "security.txt Not Found",
@@ -708,10 +770,14 @@ class SecurityTxtModule(ScannerModule):
                     remediation="Publish a security.txt file at /.well-known/security.txt.",
                     owasp="Not Mapped",
                     category="information_exposure"
-                , rule_id='security_txt_not_found'))
+                , rule_id='security_txt_not_found', confidence="High"))
         except Exception as e:
             logger.debug("SecurityTxtModule check failed: %s", e)
-        return findings
+            return findings
+
+        if not resp or (resp.status_code >= 400 and resp.status_code != 404):
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 
 class OpenApiModule(ScannerModule):
@@ -723,11 +789,16 @@ class OpenApiModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
 
         def check_path(target):
+            nonlocal success
             local_findings = []
             try:
                 resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
+                if resp is None:
+                    return local_findings
+                success = True
                 if resp and resp.status_code == 200 and "application/json" in resp.headers.get("Content-Type", "").lower():
                     try:
                         data = resp.json()
@@ -805,7 +876,7 @@ class OpenApiModule(ScannerModule):
                                     "Your website publicly documents secret administrative connections and data channels.",
                                     "\\n".join(list(privileged_routes)[:5]),
                                     impact="Exposed administrative endpoints provide targets for unauthorized access attempts.",
-                                    confidence="High",
+                                    confidence="Medium",
                                     category="api_surface",
                                     owasp="A01: Broken Access Control"
                                 , rule_id="api_openapi_privileged_routes"))
@@ -817,7 +888,7 @@ class OpenApiModule(ScannerModule):
                                 "This observation is derived from the OpenAPI specification and does NOT confirm the endpoint is actually unauthenticated. Runtime authorization enforcement was not tested.",
                                 "\n".join(list(unprotected_privileged)[:5]),
                                 impact="If true, anyone could perform administrative actions on your website without needing to log in.",
-                                confidence="High",
+                                confidence="Medium",
                                 category="authentication",
                                 owasp="Not Mapped"
                                 , rule_id="api_openapi_unprotected_privileged_routes"))
@@ -844,6 +915,8 @@ class OpenApiModule(ScannerModule):
         result_list = check_path(url)
         if result_list:
             findings.extend(result_list)
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
         return findings
 
 
@@ -853,10 +926,15 @@ class GraphqlIdeModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
 
         def check_path(target):
+            nonlocal success
             try:
                 resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
+                if resp is None:
+                    return None
+                success = True
                 if resp and resp.status_code == 200 and "text/html" in resp.headers.get("Content-Type", "").lower():
                     lower_text = resp.text.lower()
                     if "graphiql" in lower_text or "graphql playground" in lower_text:
@@ -877,6 +955,8 @@ class GraphqlIdeModule(ScannerModule):
         result = check_path(url)
         if result:
             findings.append(result)
+        if success:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
         return findings
 
 
@@ -886,10 +966,15 @@ class ActuatorModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        success = False
 
         def check_path(target):
+            nonlocal success
             try:
                 resp = safe_request("GET", target, session=session, timeout=(1.5, 2.5))
+                if resp is None:
+                    return None
+                success = True
                 if resp and resp.status_code == 200 and "json" in resp.headers.get("Content-Type", "").lower():
                     try:
                         data = resp.json()
@@ -943,7 +1028,10 @@ class ActuatorModule(ScannerModule):
             if highest_severity_finding is None or severity_order.get(finding["severity"], 0) > severity_order.get(highest_severity_finding["severity"], 0):
                 highest_severity_finding = finding
 
-        return [highest_severity_finding] if highest_severity_finding else []
+        final_findings = [highest_severity_finding] if highest_severity_finding else []
+        if success:
+            return ModuleResult(findings=final_findings, assessment_outcome=AssessmentOutcome.COMPLETED)
+        return final_findings
 
 
 class XmlRpcModule(ScannerModule):
@@ -970,5 +1058,8 @@ class XmlRpcModule(ScannerModule):
                 , rule_id="api_xmlrpc_exposed"))
         except Exception as e:
             logger.debug("XmlRpcModule check failed: %s", e)
+            return findings
 
-        return findings
+        if not resp or (resp.status_code >= 400 and resp.status_code not in (404, 405)):
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)

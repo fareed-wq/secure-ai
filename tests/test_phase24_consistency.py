@@ -128,23 +128,23 @@ class TestPhase24Consistency(unittest.TestCase):
     def test_evidence_masking(self):
         mod = DummyModule()
         # Secret at beginning
-        f1 = mod.make_finding("T", "Low", "D", "sk_live_1234567890abcdefGH " + "a"*200)
+        f1 = mod.make_finding("T", "Low", "D", "sk_live_1234567890abcdefGH " + "a"*200, confidence="High")
         self.assertTrue("[REDACTED_STRIPE]" in f1["evidence"]["raw"])
         self.assertFalse("sk_live" in f1["evidence"]["raw"])
         
         # Secret in middle
-        f2 = mod.make_finding("T", "Low", "D", "prefix " + "sk_live_1234567890abcdefGH " + "a"*200)
+        f2 = mod.make_finding("T", "Low", "D", "prefix " + "sk_live_1234567890abcdefGH " + "a"*200, confidence="High")
         self.assertTrue("[REDACTED_STRIPE]" in f2["evidence"]["raw"])
         self.assertFalse("sk_live" in f2["evidence"]["raw"])
         
         # Secret at end
-        f3 = mod.make_finding("T", "Low", "D", "a"*150 + " sk_live_1234567890abcdefGH")
+        f3 = mod.make_finding("T", "Low", "D", "a"*150 + " sk_live_1234567890abcdefGH", confidence="High")
         self.assertTrue("[REDACTED_STRIPE]" in f3["evidence"]["raw"])
         self.assertFalse("sk_live" in f3["evidence"]["raw"])
         
         # Secret at truncation boundary
         # If boundary is 180, secret starts at 160
-        f4 = mod.make_finding("T", "Low", "D", "a"*160 + " sk_live_1234567890abcdefGH " + "b"*10)
+        f4 = mod.make_finding("T", "Low", "D", "a"*160 + " sk_live_1234567890abcdefGH " + "b"*10, confidence="High")
         self.assertTrue("[REDACTED_STRIPE]" in f4["evidence"]["raw"])
         self.assertFalse("sk_live" in f4["evidence"]["raw"])
 

@@ -1,3 +1,4 @@
+from api.scanner.core import ModuleResult, AssessmentOutcome
 import logging
 import ssl
 import re
@@ -63,11 +64,15 @@ class InfrastructureIntelligenceModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        attempted = 0
+        completed = 0
+        failed = 0
         domain = hostname[4:] if hostname.startswith("www.") else hostname
 
         discovered_hostnames = set()
 
         # 1. Certificate SAN Correlation
+        attempted += 1
         try:
             context = ssl.create_default_context()
             context.check_hostname = False
@@ -103,9 +108,11 @@ class InfrastructureIntelligenceModule(ScannerModule):
                                 owasp="Not Mapped",
                                 rule_id="infra_certificate_sans"
                             ))
+                    completed += 1
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
-            pass
+            failed += 1
         except Exception as e:
+            failed += 1
             logger.debug(f"Infrastructure SAN extraction failed: {e}")
 
         # Gather CNAME/A/MX/NS for fingerprinting
@@ -113,9 +120,14 @@ class InfrastructureIntelligenceModule(ScannerModule):
         cname_targets = []
 
         # NS Records
+        attempted += 1
         try:
             ns_url = f"https://dns.google/resolve?name={domain}&type=NS"
             resp = safe_request("GET", ns_url, session=session, timeout=(1.5, 2.5))
+            if resp is not None:
+                completed += 1
+            else:
+                failed += 1
             if resp and resp.status_code == 200:
                 ns_by_provider = {}
                 for rec in resp.json().get("Answer", []):
@@ -143,14 +155,19 @@ class InfrastructureIntelligenceModule(ScannerModule):
                         instance_key=provider.lower().replace(" ", "_")
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
-            pass
+            failed += 1
         except Exception:
-            pass
+            failed += 1
 
         # MX Records
+        attempted += 1
         try:
             mx_url = f"https://dns.google/resolve?name={domain}&type=MX"
             resp = safe_request("GET", mx_url, session=session, timeout=(1.5, 2.5))
+            if resp is not None:
+                completed += 1
+            else:
+                failed += 1
             if resp and resp.status_code == 200:
                 mx_by_provider = {}
                 for rec in resp.json().get("Answer", []):
@@ -178,15 +195,20 @@ class InfrastructureIntelligenceModule(ScannerModule):
                         instance_key=provider.lower().replace(" ", "_")
                     ))
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
-            pass
+            failed += 1
         except Exception:
-            pass
+            failed += 1
 
         # CNAME / A (for target domain and www)
         for h in [domain, f"www.{domain}"]:
+            attempted += 1
             try:
                 cname_url = f"https://dns.google/resolve?name={h}&type=CNAME"
                 resp = safe_request("GET", cname_url, session=session, timeout=(1.5, 2.5))
+                if resp is not None:
+                    completed += 1
+                else:
+                    failed += 1
                 if resp and resp.status_code == 200:
                     for rec in resp.json().get("Answer", []):
                         c = rec.get("data", "").lower().rstrip('.')
@@ -195,9 +217,9 @@ class InfrastructureIntelligenceModule(ScannerModule):
                             if any(re.search(p, c) for p in patterns):
                                 cloud_fingerprints.add((provider, c))
             except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
-                pass
+                failed += 1
             except Exception:
-                pass
+                failed += 1
 
         # Aggregate Cloud Fingerprinting
         if cloud_fingerprints:
@@ -222,9 +244,14 @@ class InfrastructureIntelligenceModule(ScannerModule):
                 dangling_candidates.append(c)
 
         for cand in dangling_candidates[:3]: # Bounded to max 3
+            attempted += 1
             try:
                 d_url = f"http://{cand}/"
                 d_resp = safe_request("GET", d_url, session=session, timeout=(1.5, 2.5))
+                if d_resp is not None:
+                    completed += 1
+                else:
+                    failed += 1
                 if d_resp:
                     body = d_resp.text
                     status = d_resp.status_code
@@ -245,8 +272,16 @@ class InfrastructureIntelligenceModule(ScannerModule):
                             ))
                             break
             except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
-                pass
+                failed += 1
             except Exception:
-                pass
+                failed += 1
 
-        return findings
+        progress = {"attempted": attempted, "completed": completed, "failed": failed}
+        if completed == attempted and attempted > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED, assessment_progress=progress)
+        elif completed > 0 and failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL, assessment_progress=progress)
+        elif failed > 0 and completed == 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
+        else:
+            return findings

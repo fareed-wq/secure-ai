@@ -87,7 +87,7 @@ class TestPhase32CoverageAudit(unittest.TestCase):
         """Verify CVSS vector is NO LONGER generated purely from severity"""
         class DummyModule(ScannerModule):
             def run(self, url, hostname, session):
-                return [self.make_finding("Test Critical", "Critical", "Desc", "Ev")]
+                return [self.make_finding("Test Critical", "Critical", "Desc", "Ev", confidence="High")]
 
         module = DummyModule()
         findings = module.run("http://test", "test", None)

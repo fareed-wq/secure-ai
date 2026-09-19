@@ -1,5 +1,6 @@
 import uuid
 from typing import List
+from api.scanner.core import ModuleResult, AssessmentOutcome
 import requests
 
 from api.scanner.base import ScannerModule
@@ -24,6 +25,9 @@ class DNSCAAModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        attempted = 0
+        completed = 0
+        failed = 0
         domain = hostname[4:] if hostname.startswith("www.") else hostname
 
         data = query_doh(domain, "CAA", session)
@@ -69,7 +73,7 @@ class DNSCAAModule(ScannerModule):
                     owasp="Not Mapped",
                     category="dns_security",
                     rule_id="dns_dnssec_observed"
-                ))
+                , confidence="High"))
             elif ds_status == 0:
                 findings.append(self.make_finding(
                     "DNSSEC Delegation Not Observed",
@@ -80,7 +84,7 @@ class DNSCAAModule(ScannerModule):
                     owasp="Not Mapped",
                     category="dns_security",
                     rule_id="dns_dnssec_missing"
-                ))
+                , confidence="High"))
 
         # Wildcard DNS Detection
         rand_subdomain = f"{uuid.uuid4().hex[:12]}.{domain}"
@@ -98,7 +102,9 @@ class DNSCAAModule(ScannerModule):
                     rule_id="dns_wildcard_detected"
                 ))
 
-        return findings
+        if data is None or ds_data is None or wildcard_data is None:
+            return findings
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED)
 
 class DNSEmailSecurityModule(ScannerModule):
     def get_name(self) -> str:
@@ -109,12 +115,18 @@ class DNSEmailSecurityModule(ScannerModule):
 
     def run(self, url: str, hostname: str, session: requests.Session) -> List[dict]:
         findings = []
+        attempted = 0
+        completed = 0
+        failed = 0
         domain = hostname[4:] if hostname.startswith("www.") else hostname
 
         # 1. Query MX
         mx_observed = False
         null_mx = False
+        attempted += 1
         mx_data = query_doh(domain, "MX", session)
+        if mx_data is not None: completed += 1
+        else: failed += 1
         if mx_data is not None and mx_data.get("Status") == 0 and mx_data.get("Answer"):
             mx_observed = True
             for rec in mx_data["Answer"]:
@@ -124,7 +136,10 @@ class DNSEmailSecurityModule(ScannerModule):
                     break
 
         # 2. Query root TXT / SPF
+        attempted += 1
         spf_data = query_doh(domain, "TXT", session)
+        if spf_data is not None: completed += 1
+        else: failed += 1
         spf_records = []
         all_txt_records = []
         if spf_data is not None and spf_data.get("Status") == 0:
@@ -138,7 +153,10 @@ class DNSEmailSecurityModule(ScannerModule):
                         spf_records.append(data_str)
 
         # 3. Query DMARC TXT
+        attempted += 1
         dmarc_data = query_doh(f"_dmarc.{domain}", "TXT", session)
+        if dmarc_data is not None: completed += 1
+        else: failed += 1
         dmarc_records = []
         if dmarc_data is not None and dmarc_data.get("Status") == 0:
             if dmarc_data.get("Answer"):
@@ -225,7 +243,7 @@ class DNSEmailSecurityModule(ScannerModule):
                             owasp="A05: Security Misconfiguration",
                             category="domain_email",
                     rule_id="dns_email_spf_malformed_multiple_all"
-                        ))
+                        , confidence="High"))
 
                     if tokens and tokens[0] != "v=spf1":
                         spf_malformed = True
@@ -237,7 +255,7 @@ class DNSEmailSecurityModule(ScannerModule):
                             owasp="A05: Security Misconfiguration",
                             category="domain_email",
                     rule_id="dns_email_spf_malformed_version"
-                        ))
+                        , confidence="High"))
 
                     # Passed ONLY if effectively -all or ~all and NOT malformed
                     # NO passed for ?all
@@ -281,7 +299,7 @@ class DNSEmailSecurityModule(ScannerModule):
                             owasp="Not Mapped",
                             category="domain_email",
                     rule_id="dns_email_spf_analysis"
-                        ))
+                        , confidence="High"))
 
             # Passive Cloud/Infrastructure TXT Record Analysis
             infrastructure_findings = []
@@ -396,7 +414,7 @@ class DNSEmailSecurityModule(ScannerModule):
                     owasp="A05: Security Misconfiguration",
                     category="domain_email",
                     rule_id="dns_email_dmarc_multiple"
-                ))
+                , confidence="High"))
             elif len(dmarc_records) == 1:
                 d_str = dmarc_records[0]
                 tags = [t.strip() for t in d_str.split(";")]
@@ -490,7 +508,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="Not Mapped",
                         category="domain_email",
                     rule_id="dns_email_dmarc_analysis"
-                    ))
+                    , confidence="High"))
 
                 if duplicate_tags:
                     findings.append(self.make_finding(
@@ -501,7 +519,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="domain_email",
                     rule_id="dns_email_dmarc_malformed_duplicate_tags"
-                    ))
+                    , confidence="High"))
                 elif malformed:
                     findings.append(self.make_finding(
                         "Malformed DMARC Record",
@@ -511,7 +529,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="domain_email",
                     rule_id="dns_email_dmarc_malformed"
-                    ))
+                    , confidence="High"))
 
                 if p_val in ("quarantine", "reject") and not malformed and pct_int == 0:
                     findings.append(self.make_finding(
@@ -524,7 +542,7 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="A05: Security Misconfiguration",
                         category="domain_email",
                     rule_id="dns_email_dmarc_pct_zero"
-                    ))
+                    , confidence="High"))
                 elif not malformed and not duplicate_tags and p_val in ("quarantine", "reject") and 0 < pct_int < 100:
                     findings.append(self.make_finding(
                         "Partial DMARC Enforcement",
@@ -536,11 +554,14 @@ class DNSEmailSecurityModule(ScannerModule):
                         owasp="Not Mapped",
                         category="domain_email",
                     rule_id="dns_email_dmarc_partial_enforcement"
-                    ))
+                    , confidence="High"))
 
         # 7. Evaluate MTA-STS
         if mx_observed and not null_mx:
+            attempted += 1
             mta_data = query_doh(f"_mta-sts.{domain}", "TXT", session)
+            if mta_data is not None: completed += 1
+            else: failed += 1
             mta_status = mta_data.get("Status") if mta_data else None
 
             if mta_status == 0:
@@ -572,4 +593,11 @@ class DNSEmailSecurityModule(ScannerModule):
                     rule_id="dns_email_mta_sts_missing"
                     ))
 
-        return findings
+        progress = {"attempted": attempted, "completed": completed, "failed": failed}
+        if completed == 0 and failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.FAILED, assessment_progress=progress)
+        if completed == 0:
+            return findings
+        if failed > 0:
+            return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.PARTIAL, assessment_progress=progress)
+        return ModuleResult(findings=findings, assessment_outcome=AssessmentOutcome.COMPLETED, assessment_progress=progress)

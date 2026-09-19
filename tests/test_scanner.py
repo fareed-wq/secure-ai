@@ -1,4 +1,8 @@
 import unittest
+
+from api.scanner.core import ModuleResult
+def _findings(result):
+    return result.findings if isinstance(result, ModuleResult) else result
 from unittest.mock import patch, MagicMock
 import requests
 import datetime
@@ -41,7 +45,8 @@ class TestScannerModules(unittest.TestCase):
     def test_tech_fingerprint_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Server": "nginx", "X-Powered-By": "PHP"})
         module = TechFingerprintModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 2)
         self.assertTrue(all(f['name'] == 'Technology Fingerprint Identified' for f in findings))
 
@@ -49,14 +54,16 @@ class TestScannerModules(unittest.TestCase):
     def test_tech_fingerprint_module_empty(self, mock_get):
         mock_get.return_value = self.mock_response(headers={})
         module = TechFingerprintModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 0)
 
     @patch('requests.Session.request')
     def test_information_disclosure_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Server": "nginx/1.18.0"})
         module = InformationDisclosureModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]['name'], 'Verbose Server Banner')
 
@@ -64,21 +71,24 @@ class TestScannerModules(unittest.TestCase):
     def test_information_disclosure_module_safe(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Server": "nginx"})
         module = InformationDisclosureModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 0)
 
     @patch('requests.Session.request')
     def test_robots_txt_module(self, mock_get):
         mock_get.return_value = self.mock_response(status_code=200, text="User-agent: *\nDisallow: /admin")
         module = RobotsTxtModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 1)
 
     @patch('requests.Session.request')
     def test_sitemap_module(self, mock_get):
         mock_get.return_value = self.mock_response(status_code=200, text="<urlset></urlset>")
         module = SitemapModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 1)
 
     @patch('requests.Session.request')
@@ -87,14 +97,16 @@ class TestScannerModules(unittest.TestCase):
         target_resp = self.mock_response(status_code=200, text="Contact: mailto:security@google.com\nExpires: 2030-12-31T23:59:59Z", headers={"Content-Type": "text/plain"})
         mock_get.side_effect = [hp_resp, target_resp]
         module = SecurityTxtModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(findings[0]['severity'], 'Passed')
 
     @patch('requests.Session.request')
     def test_cors_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Access-Control-Allow-Origin": "*"})
         module = CORSModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 1)
         self.assertEqual(findings[0]['severity'], 'Informational')
 
@@ -102,14 +114,16 @@ class TestScannerModules(unittest.TestCase):
     def test_advanced_cookie_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={"Set-Cookie": "session=123; path=/"})
         module = AdvancedCookieModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 3) # Missing HttpOnly, Secure, SameSite
 
     @patch('requests.Session.request')
     def test_https_redirect_module(self, mock_get):
         mock_get.return_value = self.mock_response(status_code=301, headers={"Location": "https://google.com"})
         module = HTTPSRedirectModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(findings[0]['severity'], 'Passed')
         self.assertEqual(findings[0]['rule_id'], 'https_redirect_configured')
 
@@ -132,7 +146,8 @@ class TestScannerModules(unittest.TestCase):
         mock_ssl.return_value = mock_context
 
         module = EnhancedTLSModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
 
         self.assertTrue(any(f['severity'] == 'Passed' for f in findings))
         self.assertTrue(any(f['name'] == 'Wildcard Certificate in Use' for f in findings))
@@ -141,7 +156,8 @@ class TestScannerModules(unittest.TestCase):
     def test_security_headers_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={})
         module = SecurityHeadersModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 8) # All missing headers
         hsts_finding = next((f for f in findings if "Missing Strict-Transport-Security" in f["name"]), None)
         self.assertIsNotNone(hsts_finding)
@@ -152,7 +168,8 @@ class TestScannerModules(unittest.TestCase):
     def test_advanced_security_headers_module(self, mock_get):
         mock_get.return_value = self.mock_response(headers={})
         module = AdvancedSecurityHeadersModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 3)
 
     # Edge Cases & Timeouts
@@ -160,14 +177,16 @@ class TestScannerModules(unittest.TestCase):
     def test_timeout_handling(self, mock_get):
         mock_get.side_effect = requests.exceptions.Timeout("Connection timed out")
         module = SecurityHeadersModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 0)
 
     @patch('requests.Session.request')
     def test_redirect_loop_handling(self, mock_get):
         mock_get.side_effect = requests.exceptions.TooManyRedirects("Exceeded redirects")
         module = HTTPSRedirectModule()
-        findings = module.run(self.url, self.hostname, self.session)
+        result = module.run(self.url, self.hostname, self.session)
+        findings = _findings(result)
         self.assertEqual(len(findings), 0)
 
     def test_is_public_hostname(self):
@@ -223,7 +242,7 @@ class TestScannerBaseFactory(unittest.TestCase):
 
     def test_make_finding_legacy_unchanged(self):
         # Call without new fields
-        f = self.module.make_finding("Test", "High", "Desc", "Ev")
+        f = self.module.make_finding("Test", "High", "Desc", "Ev", confidence="High")
         self.assertNotIn("rule_id", f)
         self.assertNotIn("instance_key", f)
         self.assertEqual(f["name"], "Test")
@@ -233,7 +252,7 @@ class TestScannerBaseFactory(unittest.TestCase):
         f = self.module.make_finding(
             "Test", "High", "Desc", "Ev",
             rule_id="test_rule_1"
-        )
+        , confidence="High")
         self.assertEqual(f["rule_id"], "test_rule_1")
         self.assertNotIn("instance_key", f)
 
@@ -242,7 +261,7 @@ class TestScannerBaseFactory(unittest.TestCase):
             "Test", "High", "Desc", "Ev",
             rule_id="test_rule_2",
             instance_key="/api/test"
-        )
+        , confidence="High")
         self.assertEqual(f["rule_id"], "test_rule_2")
         self.assertEqual(f["instance_key"], "/api/test")
 
@@ -250,7 +269,7 @@ class TestScannerBaseFactory(unittest.TestCase):
         f = self.module.make_finding(
             "Test", "High", "Desc", "Ev",
             instance_key="/api/only"
-        )
+        , confidence="High")
         self.assertNotIn("rule_id", f)
         self.assertEqual(f["instance_key"], "/api/only")
 
@@ -259,7 +278,7 @@ class TestScannerBaseFactory(unittest.TestCase):
             "Test", "High", "Desc", "Ev",
             rule_id="",
             instance_key="   "
-        )
+        , confidence="High")
         self.assertNotIn("rule_id", f)
         self.assertNotIn("instance_key", f)
 
@@ -268,7 +287,7 @@ class TestScannerBaseFactory(unittest.TestCase):
             "Test", "High", "Desc", "Ev",
             category="custom_cat",
             rule_id="r1"
-        )
+        , confidence="High")
         self.assertEqual(f["name"], "Test")
         self.assertEqual(f["severity"], "High")
         self.assertEqual(f["category"], "custom_cat")
@@ -295,7 +314,8 @@ def test_technology_fingerprint_identity_metadata():
 
     session.request.side_effect = mock_get
 
-    findings = mod.run("https://example.com", "example.com", session)
+    result_findings = mod.run("https://example.com", "example.com", session)
+    findings = _findings(result_findings)
 
     tech_findings = [f for f in findings if f["name"] == "Technology Fingerprint Identified"]
     assert len(tech_findings) == 2
@@ -333,7 +353,8 @@ def test_robots_txt_identity_metadata():
 
 
     session.request.side_effect = mock_get
-    findings = mod.run("https://example.com", "example.com", session)
+    result = mod.run("https://example.com", "example.com", session)
+    findings = _findings(result)
 
     disc = [f for f in findings if f["name"] == "Internal Paths Disclosed in Robots.txt"]
     assert len(disc) > 0
@@ -369,7 +390,8 @@ def test_security_txt_branches():
 
 
     session.request.side_effect = mock_get1
-    findings1 = mod.run("https://example.com", "example.com", session)
+    result_findings1 = mod.run("https://example.com", "example.com", session)
+    findings1 = _findings(result_findings1)
     inv1 = [f for f in findings1 if f["name"] == "security.txt Invalid Expires"]
     assert len(inv1) > 0
     assert inv1[0].get("rule_id") == "security_txt_invalid_expires"
@@ -389,7 +411,8 @@ def test_security_txt_branches():
 
 
     session.request.side_effect = mock_get2
-    findings2 = mod.run("https://example.com", "example.com", session)
+    result_findings2 = mod.run("https://example.com", "example.com", session)
+    findings2 = _findings(result_findings2)
     inv2 = [f for f in findings2 if f["name"] == "security.txt Invalid Expires"]
     assert len(inv2) > 0
     assert inv2[0].get("rule_id") == "security_txt_invalid_expires"
@@ -411,7 +434,8 @@ def test_information_disclosure_identity_metadata():
         return resp
 
     session.request.side_effect = mock_get
-    findings = mod.run("https://example.com", "example.com", session)
+    result_findings = mod.run("https://example.com", "example.com", session)
+    findings = _findings(result_findings)
 
     assert len(findings) > 0
     assert findings[0]['name'] == 'Verbose Server Banner'
@@ -438,7 +462,8 @@ def test_3b2_caa_dnssec_identities(monkeypatch):
         return None
 
     monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query)
-    findings = mod.run("https://example.com", "example.com", session)
+    result_findings = mod.run("https://example.com", "example.com", session)
+    findings = _findings(result_findings)
 
     caa = next((f for f in findings if f["name"] == "CAA Records Observed"), None)
     assert caa and caa.get("rule_id") == "dns_caa_observed"
@@ -458,7 +483,8 @@ def test_3b2_caa_dnssec_identities(monkeypatch):
             return {"Status": 0}
         return None
     monkeypatch.setattr("api.scanner.modules.dns.query_doh", mock_query_missing)
-    findings_missing = mod.run("https://example.com", "example.com", session)
+    result_findings_missing = mod.run("https://example.com", "example.com", session)
+    findings_missing = _findings(result_findings_missing)
 
     caa_m = next((f for f in findings_missing if f["name"] == "CAA Record Not Observed"), None)
     assert caa_m and caa_m.get("rule_id") == "dns_caa_missing"
@@ -484,7 +510,8 @@ def test_3b2_subdomain_checks_identities(monkeypatch):
     monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_safe_req)
     monkeypatch.setattr("api.scanner.modules.network_checks.Config.COMMON_SUBDOMAINS", ["admin", "api", "dev"])
 
-    findings_probe = mod_probe.run("https://example.com", "example.com", session)
+    result_probe = mod_probe.run("https://example.com", "example.com", session)
+    findings_probe = getattr(result_probe, "findings", result_probe)
     admin = next((f for f in findings_probe if f["name"] == "Active Subdomain Found: admin.example.com"), None)
     assert admin is not None
     assert admin.get("rule_id") == "network_subdomain_probed"
@@ -508,7 +535,7 @@ def test_3b2_subdomain_checks_identities(monkeypatch):
         return m
     monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_takeover_vuln)
 
-    findings_take = mod_take.run("https://example.com", "example.com", session)
+    findings_take = _findings(mod_take.run("https://example.com", "example.com", session))
     vuln = next((f for f in findings_take if f["name"] == "Subdomain Takeover Vulnerability (Dangling CNAME)"), None)
     assert vuln is not None
     assert vuln.get("rule_id") == "network_subdomain_takeover_vulnerability"
@@ -525,7 +552,7 @@ def test_3b2_subdomain_checks_identities(monkeypatch):
         return m
     monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_takeover_alias)
 
-    findings_take2 = mod_take.run("https://example.com", "example.com", session)
+    findings_take2 = _findings(mod_take.run("https://example.com", "example.com", session))
     alias = next((f for f in findings_take2 if f["name"] == "CNAME Alias Configured"), None)
     assert alias is not None
     assert alias.get("rule_id") == "network_cname_alias_configured"
@@ -538,8 +565,10 @@ def test_3b2_subdomain_checks_identities(monkeypatch):
         m.json.return_value = {"Answer": []}
         return m
     monkeypatch.setattr("api.scanner.modules.network_checks.safe_request", mock_takeover_none)
-    findings_take3 = mod_take.run("https://example.com", "example.com", session)
+    findings_take3 = _findings(mod_take.run("https://example.com", "example.com", session))
     none_f = next((f for f in findings_take3 if f["name"] == "No Subdomain Takeover Risk Detected"), None)
     assert none_f is not None
     assert none_f.get("rule_id") == "network_subdomain_takeover_risk_none"
     assert "instance_key" not in none_f
+
+

@@ -79,7 +79,7 @@ class TestPhase20Accuracy(unittest.TestCase):
             "proof_snippet": "Here is my token ghp_123456789012345678901234567890123456 and glpat-abcdefghijklmnopqrst and xoxb-1234-5678 and npm_098765432109876543210987654321098765. Also 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."
         }
         
-        finding = self.dummy_module.make_finding("Test", "High", "Desc", evidence)
+        finding = self.dummy_module.make_finding("Test", "High", "Desc", evidence, confidence="High")
         ev_str = finding["evidence"]["proof_snippet"]
         
         self.assertIn("[REDACTED_GITHUB]", ev_str)
@@ -99,7 +99,7 @@ class TestPhase20Accuracy(unittest.TestCase):
         
         # Test existing
         evidence_aws = "Here is my AKIAIOSFODNN7EXAMPLE and sk-proj-12345678901234567890123456789012"
-        finding_aws = self.dummy_module.make_finding("Test", "High", "Desc", evidence_aws)
+        finding_aws = self.dummy_module.make_finding("Test", "High", "Desc", evidence_aws, confidence="High")
         self.assertIn("[REDACTED_AWS]", finding_aws["evidence"]["raw"])
         self.assertIn("[REDACTED_OPENAI]", finding_aws["evidence"]["raw"])
         self.assertNotIn("AKIAIOSFODNN7EXAMPLE", finding_aws["evidence"]["raw"])
