@@ -36,6 +36,38 @@ def generate_pdf_report(data: dict) -> str:
                     cve_sev = html.escape(str(cve.get('severity', 'Unknown')))
                     cve_pri = html.escape(calculate_cve_priority(ident, cve))
                     cve_sum = html.escape(str(cve.get('summary', '')))
+
+                    meta_html = ""
+                    kev = cve.get('kev')
+                    if kev:
+                        action = html.escape(str(kev.get('action', ''))) if kev.get('action') else ''
+                        due = html.escape(str(kev.get('due', ''))) if kev.get('due') else ''
+                        added = html.escape(str(kev.get('added', ''))) if kev.get('added') else ''
+                        name = html.escape(str(kev.get('name', ''))) if kev.get('name') else ''
+
+                        kev_parts = []
+                        if name: kev_parts.append(name)
+                        if added: kev_parts.append(f"Added: {added}")
+                        if action: kev_parts.append(f"Action: {action}")
+                        if due: kev_parts.append(f"(Due: {due})")
+
+                        meta_html += f"<div style='margin-bottom:4px;font-size:0.85em;color:#b91c1c;'><strong>[CISA KEV]</strong> {' | '.join(kev_parts)}</div>"
+
+                    ssvc = cve.get('ssvc')
+                    if ssvc:
+                        src = html.escape(str(ssvc.get('source', ''))) if ssvc.get('source') else 'Unknown'
+                        ver = html.escape(str(ssvc.get('version', ''))) if ssvc.get('version') else ''
+                        ts = html.escape(str(ssvc.get('timestamp', ''))) if ssvc.get('timestamp') else ''
+                        opts = ssvc.get('options', {})
+                        opt_str = " | ".join([f"{html.escape(k)}: {html.escape(str(v))}" for k, v in opts.items()])
+
+                        ver_str = f" v{ver}" if ver else ""
+                        ts_str = f" ({ts})" if ts else ""
+                        meta_html += f"<div style='margin-bottom:4px;font-size:0.85em;color:#4338ca;'><strong>[{src} SSVC{ver_str}]{ts_str}</strong> {opt_str}</div>"
+
+                    if meta_html:
+                        cve_sum = f"{meta_html}<div style='margin-top:6px;'>{cve_sum}</div>"
+
                     cve_rows.append(
                         f"<tr><td class='sev-{cve_sev}'>[{cve_pri}] {cve_sev}</td><td>{cve_id}</td><td>{cve_sum}</td></tr>"
                     )

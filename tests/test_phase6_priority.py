@@ -79,3 +79,100 @@ def test_integration_ui_files():
     with open('src/components/scanner/TechnicalReport.jsx', 'r', encoding='utf-8') as f:
         content = f.read()
     assert 'calculateCvePriority(' in content
+
+
+def test_reporting_kev_ssvc_rendering():
+    from api.scanner.reporting import generate_pdf_report
+    data = {
+        "url": "http://example.com",
+        "executive_summary": "Summary",
+        "findings": [],
+        "score": 100,
+        "potential_issues_count": 0,
+        "category_scores": {
+            "encryption_tls": 100,
+            "http_headers": 100,
+            "domain_email": 100,
+            "session_cookies": 100,
+            "information_exposure": 100
+        },
+
+
+
+
+        "scan_mode": "passive",
+        "technology_identities": [
+            {
+                "vulnerability_state": "MATCHED",
+                "cves": [
+                    {
+                        "id": "CVE-KEV",
+                        "severity": "CRITICAL",
+                        "summary": "KEV Test",
+                        "kev": {
+                            "added": "2024-01-01",
+                            "due": "2024-02-01",
+                            "action": "Fix it",
+                            "name": "Vuln Name"
+                        }
+                    },
+                    {
+                        "id": "CVE-SSVC",
+                        "severity": "HIGH",
+                        "summary": "SSVC Test",
+                        "ssvc": {
+                            "source": "CISA-ADP",
+                            "version": "2.0.3",
+                            "timestamp": "2024-01-01",
+                            "options": {
+                                "exploitation": "active",
+                                "automatable": "no",
+                                "technicalImpact": "total"
+                            }
+                        }
+                    },
+                    {
+                        "id": "CVE-ABSENT",
+                        "severity": "MEDIUM",
+                        "summary": "Absent Test"
+                    },
+                    {
+                        "id": "CVE-ESCAPE",
+                        "severity": "LOW",
+                        "summary": "Escape Test",
+                        "kev": {
+                            "action": "<script>alert(1)</script>"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+
+    html = generate_pdf_report(data)
+
+    # KEV test
+    assert "CVE-KEV" in html
+    assert "[CISA KEV]" in html
+    assert "Vuln Name" in html
+    assert "Added: 2024-01-01" in html
+    assert "Action: Fix it" in html
+    assert "(Due: 2024-02-01)" in html
+
+    # SSVC test
+    assert "CVE-SSVC" in html
+    assert "[CISA-ADP SSVC v2.0.3] (2024-01-01)" in html
+    assert "exploitation: active" in html
+    assert "automatable: no" in html
+    assert "technicalImpact: total" in html
+    assert "Track" not in html
+    assert "Attend" not in html
+
+    # Absent test
+    assert "CVE-ABSENT" in html
+    assert "not exploited" not in html.lower()
+
+    # Escape test
+    assert "CVE-ESCAPE" in html
+    assert "<script>" not in html
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
