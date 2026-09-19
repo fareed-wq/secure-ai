@@ -16,6 +16,7 @@ client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
+# Repaired Phase 8A enrichment test fixture
 def override_qstash_signature():
     original = app.dependency_overrides.get(verify_qstash_signature)
     app.dependency_overrides[verify_qstash_signature] = lambda: True
