@@ -65,6 +65,7 @@ class TestPhase33CoverageAccuracy(unittest.TestCase):
         mod = AdvancedSecurityHeadersModule()
         
         resp = MagicMock()
+        resp.status_code = 200
         resp.headers = {}
         resp.url = "https://example.com"
         

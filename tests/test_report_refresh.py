@@ -77,7 +77,7 @@ def test_authenticated_scan_navigates_to_permanent_url():
     """Authenticated scan success must navigate to /history/<id>."""
     with open(os.path.join('src', 'pages', 'Scanner.jsx'), 'r', encoding='utf-8') as f:
         src = f.read()
-    assert re.search(r"navigate\(`/history/\$\{data\.id\}`", src), \
+    assert re.search(r"navigate\(`/history/\$\{data\.id\}(?:\?mode=\$\{reportModeValue\})?`", src), \
         "must navigate to /history/<id> for authenticated users"
 
 
@@ -123,7 +123,7 @@ def test_scanner_navigates_without_from_param():
     """Scanner must navigate to /history/<id> WITHOUT ?from=history."""
     with open(os.path.join('src', 'pages', 'Scanner.jsx'), 'r', encoding='utf-8') as f:
         src = f.read()
-    nav_match = re.search(r"navigate\(`/history/\$\{data\.id\}`", src)
+    nav_match = re.search(r"navigate\(`/history/\$\{data\.id\}(?:\?mode=\$\{reportModeValue\})?`", src)
     assert nav_match, "must navigate to /history/<id>"
     # Verify no ?from=history in the navigate call
     nav_line_start = nav_match.start()
@@ -165,7 +165,8 @@ def test_backend_returns_scan_id_for_auth_users():
     """Backend must persist scan and return the DB id for authenticated users."""
     with open(os.path.join('api', 'index.py'), 'r', encoding='utf-8') as f:
         src = f.read()
-    assert 'result["id"] = db_res.json()[0].get("id")' in src
+    assert 'scan_id = db_res.json()[0].get("id")' in src
+    assert 'result["id"] = scan_id' in src
 
 
 # ============================================================

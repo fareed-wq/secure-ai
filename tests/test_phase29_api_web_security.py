@@ -140,6 +140,8 @@ class TestPhase29ApiWebSecurity(unittest.TestCase):
         mock_oidc = MagicMock()
         mock_oidc.status_code = 200
         mock_oidc.text = ""
+        mock_oidc.history = []
+        mock_oidc.url = "https://example.com/.well-known/openid-configuration"
         mock_oidc.headers = {"Content-Type": "application/json"}
         mock_oidc.json.return_value = {
             "issuer": "https://example.com",
@@ -277,10 +279,13 @@ def test_3b3a_api_web_identities(monkeypatch):
 
     # 5. OIDC
     def mock_safe_request_oidc(*a, **kw):
-        mock_resp = requests.Response()
+        mock_resp = MagicMock()
         mock_resp.status_code = 200
+        mock_resp.history = []
+        mock_resp.url = "https://example.com/.well-known/openid-configuration"
         mock_resp.headers = {"Content-Type": "application/json"}
-        mock_resp._content = b'{"issuer": "x", "authorization_endpoint": "y"}'
+        mock_resp.text = ""
+        mock_resp.json.return_value = {"issuer": "x", "authorization_endpoint": "y"}
         return mock_resp
     monkeypatch.setattr("api.scanner.modules.api_web_security.safe_request", mock_safe_request_oidc)
     findings = module.run("https://example.com/.well-known/openid-configuration", "example.com", session)
