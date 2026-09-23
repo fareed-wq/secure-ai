@@ -19,7 +19,7 @@ const TrustAndPolicy = () => {
       <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Link
           to="/security-trust"
-          className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer"
+          className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
         >
           <div className="w-12 h-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-6 group-hover:scale-110 transition-transform">
             <Shield size={24} />
@@ -35,7 +35,7 @@ const TrustAndPolicy = () => {
 
         <Link
           to="/privacy-policy"
-          className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer"
+          className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
         >
           <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform">
             <Lock size={24} />
@@ -51,7 +51,7 @@ const TrustAndPolicy = () => {
 
         <Link
           to="/terms"
-          className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer"
+          className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
         >
           <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-6 group-hover:scale-110 transition-transform">
             <FileText size={24} />
@@ -67,7 +67,7 @@ const TrustAndPolicy = () => {
 
         <Link
           to="/responsible-disclosure"
-          className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer"
+          className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
         >
           <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400 mb-6 group-hover:scale-110 transition-transform">
             <AlertTriangle size={24} />

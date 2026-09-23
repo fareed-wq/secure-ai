@@ -9,7 +9,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-xl">
+      <div className="bg-slate-900 border border-slate-700 p-3 rounded-lg shadow-md">
         <p className="text-slate-50 font-medium mb-1">{data.domain}</p>
         <p className="text-slate-400 text-xs mb-2">{data.timestamp}</p>
         <p className="text-indigo-400 font-bold">Score: {data.score}/100</p>
@@ -211,7 +211,7 @@ const Dashboard = () => {
         </div>
         <button
           onClick={handleNewScan}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg flex items-center transition-colors gap-2"
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg flex items-center transition-colors gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
         >
           <Plus size={18} /> New Scan
         </button>
@@ -389,7 +389,7 @@ const Dashboard = () => {
           </div>
 
           {/* Needs Attention Section */}
-          {topAttention.length > 0 && (
+          {topAttention.length > 0 ? (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
               <div className="p-6 border-b border-slate-800 flex justify-between items-center">
                 <h2 className="text-lg font-semibold text-slate-50">Needs Attention</h2>
@@ -416,7 +416,7 @@ const Dashboard = () => {
                       </div>
                       <Link
                         to={`/history/${finding.scanId}`}
-                        className="text-sm font-medium text-indigo-400 hover:text-indigo-300 flex items-center gap-1 shrink-0"
+                        className="text-sm font-medium text-indigo-400 hover:text-indigo-300 flex items-center gap-1 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                       >
                         View Report <ChevronRight size={16} />
                       </Link>
@@ -424,6 +424,14 @@ const Dashboard = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          ) : (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center flex flex-col items-center justify-center h-full mt-4">
+              <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-4 text-emerald-400 mx-auto">
+                <ShieldCheck size={32} />
+              </div>
+              <h2 className="text-lg font-bold text-slate-200 mb-2">No Active Threats</h2>
+              <p className="text-slate-400 text-sm max-w-md mx-auto">You don't have any Medium, High, or Critical findings across your latest scans. Run a new scan to ensure you stay protected.</p>
             </div>
           )}
         </>

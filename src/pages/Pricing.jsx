@@ -129,11 +129,11 @@ const Pricing = () => {
 
               <div className="mt-8 pt-6 border-t border-slate-800/60">
                 {plan.disabled ? (
-                  <button disabled className="w-full py-3 px-4 rounded-xl font-medium text-center transition-colors bg-slate-800/50 text-slate-500 border border-slate-700 cursor-not-allowed">
+                  <button disabled className="w-full py-3 px-4 rounded-xl font-medium text-center transition-colors bg-slate-800/50 text-slate-500 border border-slate-700 cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
                     {plan.ctaText}
                   </button>
                 ) : (
-                  <Link to={plan.ctaLink} className="w-full block py-3 px-4 rounded-xl font-medium text-center transition-colors bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/20">
+                  <Link to={plan.ctaLink} className="w-full block py-3 px-4 rounded-xl font-medium text-center transition-colors bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
                     {plan.ctaText}
                   </Link>
                 )}

@@ -86,14 +86,14 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
 
       <aside
         className={`fixed top-0 left-0 bottom-0 md:relative z-50 flex flex-col bg-slate-950 border-r border-slate-800 h-[100dvh] transition-transform md:transition-all duration-300
-          ${isMobileOpen ? 'translate-x-0 w-60' : '-translate-x-full md:translate-x-0'}
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${isMobileOpen ? 'translate-x-0 w-60' : '-translate-x-full md:translate-x-0'}
           ${isCollapsed ? 'md:w-16' : 'md:w-60'}
         `}
       >
         {/* 1. HEADER */}
         <div className="flex items-center p-4 border-b border-slate-800">
           {!isCollapsed && (
-            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0" aria-label="URLScanOnline">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900" aria-label="URLScanOnline">
               <div className="relative flex items-center justify-center shrink-0 w-7 h-7">
                 <svg width="0" height="0" className="absolute">
                   <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -161,7 +161,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               <Link
                 key={item.href}
                 to={item.href}
-                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
                   isActive
                     ? 'bg-slate-800/80 text-slate-50'
                     : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-50'
@@ -195,7 +195,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
             <>
               <Link
                 to="/settings"
-                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
                   location.pathname === '/settings'
                     ? 'bg-slate-800/80 text-slate-50'
                     : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-50'
@@ -208,7 +208,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               </Link>
               <button
                 onClick={signOut}
-                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors w-full text-left focus:outline-none focus:ring-2 focus:ring-rose-500 ${isCollapsed ? 'justify-center' : ''}`}
+                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors w-full text-left focus:outline-none focus:ring-2 focus:ring-rose-500  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${isCollapsed ? 'justify-center' : ''}`}
                 title={isCollapsed ? "Log Out" : undefined}
                 aria-label="Log Out"
               >
@@ -220,7 +220,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
             <>
               <Link
                 to="/login"
-                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isCollapsed ? 'justify-center' : ''}`}
+                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${isCollapsed ? 'justify-center' : ''}`}
                 title={isCollapsed ? "Log In" : undefined}
                 aria-label="Log In"
               >
@@ -229,7 +229,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
               </Link>
               <Link
                 to="/register"
-                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isCollapsed ? 'justify-center' : ''}`}
+                className={`flex items-center gap-3 p-2 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800/50 hover:text-slate-50 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${isCollapsed ? 'justify-center' : ''}`}
                 title={isCollapsed ? "Sign Up" : undefined}
                 aria-label="Sign Up"
               >

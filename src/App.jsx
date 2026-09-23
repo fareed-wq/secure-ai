@@ -16,7 +16,6 @@ const Schedules = React.lazy(() => import('./pages/Schedules'));
 const ScanHistory = React.lazy(() => import('./pages/ScanHistory'));
 const ScanReport = React.lazy(() => import('./pages/ScanReport'));
 const HistoryCompare = React.lazy(() => import('./pages/HistoryCompare'));
-const Compare = React.lazy(() => import('./pages/Compare'));
 const Settings = React.lazy(() => import('./pages/Settings'));
 const Services = React.lazy(() => import('./pages/Services'));
 const ScannerCapabilities = React.lazy(() => import('./pages/ScannerCapabilities'));
@@ -103,7 +102,6 @@ const App = () => {
                 <Route path="/history" element={<ScanHistory />} />
                 <Route path="/history/compare" element={<HistoryCompare />} />
                 <Route path="/history/:scanId" element={<ScanReport />} />
-                <Route path="/compare" element={<Compare />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
 

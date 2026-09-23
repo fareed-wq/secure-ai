@@ -43,7 +43,7 @@ const About = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-indigo-500/5">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/80 hover:shadow-md hover:shadow-indigo-500/5">
             <div className="w-10 h-10 rounded-lg border border-indigo-500/30 bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-4">
               <Zap className="w-5 h-5" />
             </div>
@@ -53,7 +53,7 @@ const About = () => {
             </p>
           </div>
 
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-indigo-500/5">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/80 hover:shadow-md hover:shadow-indigo-500/5">
             <div className="w-10 h-10 rounded-lg border border-indigo-500/30 bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-4">
               <Lock className="w-5 h-5" />
             </div>
@@ -63,7 +63,7 @@ const About = () => {
             </p>
           </div>
 
-          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/80 hover:shadow-xl hover:shadow-indigo-500/5">
+          <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/80 hover:shadow-md hover:shadow-indigo-500/5">
             <div className="w-10 h-10 rounded-lg border border-indigo-500/30 bg-indigo-500/10 flex items-center justify-center text-indigo-400 mb-4">
               <Users className="w-5 h-5" />
             </div>
@@ -158,7 +158,7 @@ const About = () => {
             </div>
           </div>
           <div className="mt-8 text-center">
-            <Link to="/services/scanner-capabilities" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+            <Link to="/services/scanner-capabilities" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
               Compare all scanner capabilities &rarr;
             </Link>
           </div>
@@ -199,10 +199,10 @@ const About = () => {
               Run a fast, non-intrusive security assessment and get actionable findings in seconds.
             </p>
             <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
-              <Link className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all" to="/scan">
+              <Link className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-500 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900" to="/scan">
                 Start Free Scan
               </Link>
-              <Link className="rounded-xl border border-slate-700 bg-slate-900/80 px-6 py-3 text-sm font-semibold text-slate-300 hover:text-slate-50 hover:border-slate-600 transition-all" to="/services">
+              <Link className="rounded-xl border border-slate-700 bg-slate-900/80 px-6 py-3 text-sm font-semibold text-slate-300 hover:text-slate-50 hover:border-slate-600 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900" to="/services">
                 Explore Services
               </Link>
             </div>

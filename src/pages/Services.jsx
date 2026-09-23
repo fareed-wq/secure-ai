@@ -23,7 +23,7 @@ const Services = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* CARD 1 */}
-        <Link to="/services/scanner-capabilities" className="group flex flex-col justify-between relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-10 hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all min-h-[230px]">
+        <Link to="/services/scanner-capabilities" className="group flex flex-col justify-between relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-10 hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all min-h-[230px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
           <div>
             <div className="p-3 bg-indigo-500/10 rounded-xl inline-block mb-6 group-hover:bg-indigo-500/20 transition-colors">
               <Activity className="w-8 h-8 text-indigo-400" />
@@ -39,7 +39,7 @@ const Services = () => {
         </Link>
 
         {/* CARD 2 */}
-        <Link to="/services/security-audits" className="group flex flex-col justify-between relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-10 hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all min-h-[230px]">
+        <Link to="/services/security-audits" className="group flex flex-col justify-between relative overflow-hidden rounded-3xl bg-slate-900 border border-slate-800 p-8 md:p-10 hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all min-h-[230px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
           <div>
             <div className="p-3 bg-indigo-500/10 rounded-xl inline-block mb-6 group-hover:bg-indigo-500/20 transition-colors">
               <Shield className="w-8 h-8 text-indigo-400" />

@@ -124,7 +124,7 @@ const Login = () => {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-indigo-500 focus:ring-indigo-500 border-slate-700 rounded bg-slate-950"
+                  className="h-4 w-4 text-indigo-500 border-slate-700 rounded bg-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-slate-300">
                   Remember me

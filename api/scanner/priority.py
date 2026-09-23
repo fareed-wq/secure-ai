@@ -1,6 +1,22 @@
 def calculate_finding_priority(finding: dict) -> str:
+    # 1. Check CVE intelligence for P1 thresholds
+    max_cvss = -1.0
+    cvss = finding.get('cvss_score')
+    if isinstance(cvss, (int, float)):
+        max_cvss = float(cvss)
+
+    epss_score = -1.0
+    epss_info = finding.get('epss_info')
+    if isinstance(epss_info, dict) and epss_info.get('status') == 'AVAILABLE':
+        val = epss_info.get('epss')
+        if isinstance(val, (int, float)):
+            epss_score = float(val)
+
+    if max_cvss >= 9.0 or epss_score >= 0.1:
+        return 'P1'
+
+    # 2. Fall back to standard severity mapping for P2-P5
     severity = finding.get('severity')
-    if severity == 'Critical': return 'P1'
     if severity == 'High': return 'P2'
     if severity == 'Medium': return 'P3'
     if severity == 'Low': return 'P4'
@@ -12,26 +28,38 @@ def calculate_cve_priority(identity: dict, cve: dict) -> str:
     if state == 'NO_MATCH': return 'N/A'
     if state in ['NOT_EVALUATED', 'UNAVAILABLE']: return 'UNSCORED'
 
-    cvss = cve.get('cvss_assessments')
-    epss = cve.get('epss')
-
-    has_cvss = isinstance(cvss, list) and len(cvss) > 0
-    has_epss = isinstance(epss, dict) and isinstance(epss.get('score'), (int, float))
-
-    if not has_cvss and not has_epss:
-        return 'UNSCORED'
-
+    # 1. Resolve CVSS Score
     max_cvss = -1.0
-    if has_cvss:
-        for c in cvss:
-            score = c.get('base_score')
-            if isinstance(score, (int, float)):
-                if score > max_cvss:
+
+    # Phase 5 Schema
+    phase5_cvss = cve.get('cvss_score')
+    if isinstance(phase5_cvss, (int, float)):
+        max_cvss = float(phase5_cvss)
+    else:
+        # Legacy Schema
+        cvss = cve.get('cvss_assessments')
+        if isinstance(cvss, list):
+            for c in cvss:
+                score = c.get('base_score')
+                if isinstance(score, (int, float)) and score > max_cvss:
                     max_cvss = float(score)
 
+    # 2. Resolve EPSS Score
     epss_score = -1.0
-    if has_epss:
-        epss_score = float(epss.get('score'))
+
+    # Phase 5 Schema
+    epss_info = cve.get('epss_info')
+    if isinstance(epss_info, dict) and epss_info.get('status') == 'AVAILABLE':
+        val = epss_info.get('epss')
+        if isinstance(val, (int, float)):
+            epss_score = float(val)
+    else:
+        # Legacy Schema
+        epss = cve.get('epss')
+        if isinstance(epss, dict):
+            val = epss.get('score')
+            if isinstance(val, (int, float)):
+                epss_score = float(val)
 
     if max_cvss < 0 and epss_score < 0:
         return 'UNSCORED'
