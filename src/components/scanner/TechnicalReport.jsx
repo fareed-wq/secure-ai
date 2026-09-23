@@ -112,7 +112,7 @@ const TechnicalReport = ({ reportData }) => {
           * { border-color: #e2e8f0 !important; }
           .bg-\\[\\#0D1117\\], .bg-slate-900, .bg-slate-900\\/50, .bg-slate-800 { background: white !important; box-shadow: none !important; }
           .text-slate-50, .text-slate-200, .text-slate-300 { color: #0f172a !important; }
-          .text-slate-400, .text-slate-500 { color: #475569 !important; }
+          .text-slate-400, .text-slate-400 { color: #475569 !important; }
           .shadow-2xl, .shadow-xl, .shadow-inner { box-shadow: none !important; }
           .text-indigo-400 { color: #4338ca !important; }
           .text-emerald-400 { color: #059669 !important; }
@@ -271,7 +271,7 @@ const TechnicalReport = ({ reportData }) => {
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                 <div className="text-center">
                   <div className="text-4xl font-black text-slate-50 font-mono">{Math.round(cov.percentage)}%</div>
-                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Coverage</div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Coverage</div>
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="flex flex-wrap gap-2 text-xs font-mono">
@@ -280,13 +280,13 @@ const TechnicalReport = ({ reportData }) => {
                     {cov.failed_modules > 0 && <span className="px-2 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20">{cov.failed_modules} Failed</span>}
                     {cov.blocked_modules > 0 && <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-400 border border-slate-700">{cov.blocked_modules} Blocked</span>}
                     {cov.execution_incomplete_modules > 0 && <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-400 border border-slate-700">{cov.execution_incomplete_modules} Incomplete</span>}
-                    {cov.not_applicable_modules > 0 && <span className="px-2 py-1 rounded bg-slate-800/60 text-slate-500 border border-slate-800">N/A: {cov.not_applicable_modules}</span>}
+                    {cov.not_applicable_modules > 0 && <span className="px-2 py-1 rounded bg-slate-800/60 text-slate-400 border border-slate-800">N/A: {cov.not_applicable_modules}</span>}
                   </div>
-                  <div className="text-[11px] text-slate-500">Assessment Coverage shows how much of the scanner's intended assessment completed successfully. It is separate from the security score.</div>
+                  <div className="text-[11px] text-slate-400">Assessment Coverage shows how much of the scanner's intended assessment completed successfully. It is separate from the security score.</div>
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-slate-500">Assessment Coverage: Not available</div>
+              <div className="text-sm text-slate-400">Assessment Coverage: Not available</div>
             )}
           </div>
         );
@@ -311,7 +311,7 @@ const TechnicalReport = ({ reportData }) => {
           <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
             <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4">
               <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ EXPOSURE</span>
-              <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
+              <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-400" /></span>
             </summary>
             <div className="mt-4">
 
@@ -321,7 +321,7 @@ const TechnicalReport = ({ reportData }) => {
                 </div>
                 <div>
                   <div className="text-sm font-bold text-slate-50 uppercase tracking-wide">Exposure Level</div>
-                  <div className="text-[11px] text-slate-500 font-mono uppercase tracking-wider mt-0.5">Based on observed reachability</div>
+                  <div className="text-[11px] text-slate-400 font-mono uppercase tracking-wider mt-0.5">Based on observed reachability</div>
                 </div>
               </div>
 
@@ -329,7 +329,7 @@ const TechnicalReport = ({ reportData }) => {
                 {exp.signals && exp.signals.length > 0 && (
                   <div>
                     <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <Activity className="w-4 h-4 text-slate-500" />
+                      <Activity className="w-4 h-4 text-slate-400" />
                       Observed Signals
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -346,7 +346,7 @@ const TechnicalReport = ({ reportData }) => {
                 {exp.limitations && exp.limitations.length > 0 && (
                   <div className={`pt-1 ${exp.signals && exp.signals.length > 0 ? 'border-t border-slate-800/50 mt-5 pt-5' : ''}`}>
                     <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-slate-500" />
+                      <ShieldAlert className="w-4 h-4 text-slate-400" />
                       Limitations / Context
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -372,7 +372,7 @@ const TechnicalReport = ({ reportData }) => {
       <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6 print:hidden">
         <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4">
           <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ UNDERSTANDING_PRIORITY (P1–P5)</span>
-          <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
+          <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-400" /></span>
         </summary>
         <div className="mt-4">
           <p className="text-slate-400 text-sm mb-6">
@@ -386,7 +386,7 @@ const TechnicalReport = ({ reportData }) => {
                 <Shield className="w-4 h-4 text-indigo-400" />
                 Standard Findings
               </div>
-              <p className="text-slate-500 text-xs mb-4">Priority directly follows the finding's technical severity:</p>
+              <p className="text-slate-400 text-xs mb-4">Priority directly follows the finding's technical severity:</p>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
@@ -406,7 +406,7 @@ const TechnicalReport = ({ reportData }) => {
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-800/50 text-xs text-slate-500 leading-tight italic">
+              <div className="mt-4 pt-3 border-t border-slate-800/50 text-xs text-slate-400 leading-tight italic">
                 * The scanner does not currently emit Critical-severity standard findings. If introduced, they will map to P1.
               </div>
             </div>
@@ -417,15 +417,15 @@ const TechnicalReport = ({ reportData }) => {
                 <Activity className="w-4 h-4 text-rose-400" />
                 Known Vulnerabilities (CVEs)
               </div>
-              <p className="text-slate-500 text-xs mb-4">Priority is calculated from vulnerability-intelligence signals:</p>
+              <p className="text-slate-400 text-xs mb-4">Priority is calculated from vulnerability-intelligence signals:</p>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 9.0 <strong className="text-slate-500 mx-1">OR</strong> EPSS &ge; 10%</span>
+                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 9.0 <strong className="text-slate-400 mx-1">OR</strong> EPSS &ge; 10%</span>
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-rose-400 bg-rose-950/30 border-rose-800">P1</span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 7.0 <strong className="text-slate-500 mx-1">OR</strong> EPSS &ge; 1%</span>
+                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 7.0 <strong className="text-slate-400 mx-1">OR</strong> EPSS &ge; 1%</span>
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
@@ -437,13 +437,13 @@ const TechnicalReport = ({ reportData }) => {
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800">P4</span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS = 0 <strong className="text-slate-500 mx-1">OR</strong> (No CVSS + EPSS &lt; 1%)</span>
+                  <span className="text-xs font-medium text-slate-400">CVSS = 0 <strong className="text-slate-400 mx-1">OR</strong> (No CVSS + EPSS &lt; 1%)</span>
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
                 </div>
               </div>
             </div>
           </div>
-          <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-500 space-y-2">
+          <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-2">
             <p><strong>Important:</strong> Higher-priority conditions take precedence. For example, a CVE meeting a P1 condition remains P1 even if it also meets a lower-tier condition.</p>
             <p className="italic">CVSS indicates vulnerability severity; EPSS indicates exploitation likelihood. Priority uses these signals for remediation prioritization.</p>
           </div>
@@ -494,7 +494,7 @@ const TechnicalReport = ({ reportData }) => {
 
               <div className="p-6 text-slate-300">
                 {(!reportData?.technology_identities || reportData.technology_identities.length === 0) ? (
-                  <div className="text-center py-8 text-slate-500">
+                  <div className="text-center py-8 text-slate-400">
                     <Terminal className="w-12 h-12 mx-auto mb-3 opacity-20" />
                     <p>No deterministic technology identities were observed in this scan.</p>
                   </div>
@@ -535,17 +535,17 @@ const TechnicalReport = ({ reportData }) => {
                             <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
                               <div className="min-w-[160px]">
                                 <div className="font-bold text-slate-200 text-[15px]">{tech.product}</div>
-                                {tech.vendor && <div className="text-[11px] text-slate-500 font-bold tracking-wider uppercase mt-1">{tech.vendor}</div>}
+                                {tech.vendor && <div className="text-[11px] text-slate-400 font-bold tracking-wider uppercase mt-1">{tech.vendor}</div>}
                               </div>
 
                               <div className="flex items-center gap-8">
                                 <div>
-                                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Version</div>
+                                  <div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Version</div>
                                   {tech.version && tech.version_precision !== 'UNKNOWN' ? <div className="font-mono text-sky-300 text-sm">{tech.version}</div> : <div className="text-slate-600 font-mono text-sm">-</div>}
                                 </div>
 
                                 <div>
-                                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Layer</div>
+                                  <div className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Layer</div>
                                   <div className="text-sm text-slate-300 flex items-center whitespace-nowrap">
                                     {layerInfo.icon}
                                     <span className="capitalize">{layerInfo.label}</span>
@@ -563,7 +563,7 @@ const TechnicalReport = ({ reportData }) => {
                                   {tech.cves.length} CVEs
                                 </span>
                               )}
-                              <button aria-label={expandedTechRow === idx ? "Collapse technology details" : "Expand technology details"} className="text-slate-500 hover:text-slate-50 transition-colors ml-1 p-1">
+                              <button aria-label={expandedTechRow === idx ? "Collapse technology details" : "Expand technology details"} className="text-slate-400 hover:text-slate-50 transition-colors ml-1 p-1">
                                 {expandedTechRow === idx ? <ChevronUp className="w-5 h-5" aria-hidden="true" /> : <ChevronDown className="w-5 h-5" aria-hidden="true" />}
                               </button>
                             </div>
@@ -573,7 +573,7 @@ const TechnicalReport = ({ reportData }) => {
                             <div className="border-t border-slate-800/50 bg-slate-950 p-4 sm:p-6 transition-all duration-300 print:hidden">
                               {/* Identity (CPE) Card */}
                               <div className="mb-6 bg-slate-900 border border-slate-800 rounded-lg p-4">
-                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                                   <Box className="w-3.5 h-3.5 text-slate-400" />
                                   Component Identity (CPE)
                                 </div>
@@ -582,11 +582,11 @@ const TechnicalReport = ({ reportData }) => {
                                     {tech.cpe}
                                   </code>
                                 ) : (
-                                  <span className="text-slate-500 text-xs italic">No structured CPE identity established.</span>
+                                  <span className="text-slate-400 text-xs italic">No structured CPE identity established.</span>
                                 )}
                               </div>
 
-                              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                                 <ShieldAlert className="w-4 h-4 text-slate-400" />
                                 Known Vulnerabilities
                               </div>
@@ -599,7 +599,7 @@ const TechnicalReport = ({ reportData }) => {
                                   return <div className="text-rose-400 text-sm">Vulnerability intelligence evaluation failed. Status unavailable.</div>;
                                 }
                                 if (!tech.cves || tech.cves.length === 0) {
-                                  return <div className="text-slate-500 text-sm">No associated CVEs observed.</div>;
+                                  return <div className="text-slate-400 text-sm">No associated CVEs observed.</div>;
                                 }
                                 return (
                                   <div className="space-y-3">
@@ -683,7 +683,7 @@ const TechnicalReport = ({ reportData }) => {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 pl-9 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 placeholder:text-slate-600"
                     />
-                    <Search className="w-4 h-4 text-slate-500 absolute left-2.5 top-2.5" aria-hidden="true" />
+                    <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-2.5" aria-hidden="true" />
                   </div>
                   {/* Severity Filter */}
                   <label htmlFor="severity-filter" className="sr-only">Filter by severity</label>
@@ -716,7 +716,7 @@ const TechnicalReport = ({ reportData }) => {
                   </select>
                 </div>
               </div>
-              <div className="text-xs text-slate-500 mt-2">
+              <div className="text-xs text-slate-400 mt-2">
                 Showing {filteredFindings.length} of {sortedFindings.length} findings
                 {searchQuery && <span className="text-indigo-400 ml-1"> (search: "{searchQuery}")</span>}
               </div>
@@ -754,7 +754,7 @@ const TechnicalReport = ({ reportData }) => {
                         <col style={{ width: '15%' }} />
                       </colgroup>
                       <thead>
-                        <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-widest">
                           <th className="px-6 py-4" style={{ width: '10%' }}>Priority</th>
                           <th className="px-6 py-4" style={{ width: '15%' }}>Severity</th>
                           <th className="px-6 py-4" style={{ width: '35%' }}>Security Check / Finding</th>
@@ -793,7 +793,7 @@ const TechnicalReport = ({ reportData }) => {
                                   )}
                                 </td>
                                 <td className="px-6 py-4 text-right print:hidden align-top">
-                                  <button aria-label={expandedRow === idx ? "Collapse details" : "Expand details"} className="text-slate-500 hover:text-slate-50 transition-colors">
+                                  <button aria-label={expandedRow === idx ? "Collapse details" : "Expand details"} className="text-slate-400 hover:text-slate-50 transition-colors">
                                     {expandedRow === idx ? <ChevronUp className="w-5 h-5 inline" aria-hidden="true" /> : <ChevronDown className="w-5 h-5 inline" aria-hidden="true" />}
                                   </button>
                                 </td>
@@ -804,7 +804,7 @@ const TechnicalReport = ({ reportData }) => {
                                 <tr className="hidden print:table-row">
                                   <td colSpan={5} className="px-6 pb-6 pt-0 w-full block">
                                     <div className="bg-slate-50 p-4 rounded border border-slate-200 w-full block">
-                                      <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">Remediation Snippet (Nginx/Server)</div>
+                                      <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Remediation Snippet (Nginx/Server)</div>
                                       <pre className="text-slate-800 font-mono text-[10px] whitespace-pre-wrap">{finding.remediation_snippets.nginx}</pre>
                                     </div>
                                   </td>
@@ -821,7 +821,7 @@ const TechnicalReport = ({ reportData }) => {
 
                                         <div className="lg:col-span-2 space-y-6">
                                           <div>
-                                            <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Technical Description</div>
+                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Technical Description</div>
                                             <p className="technical-description text-slate-300 leading-relaxed text-sm">{finding.description}</p>
                                           </div>
 
@@ -837,13 +837,13 @@ const TechnicalReport = ({ reportData }) => {
                                           <div className="flex flex-wrap gap-8 mb-4">
                                             {finding.module && (
                                               <div>
-                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Capability</div>
+                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Capability</div>
                                                 <div className="text-slate-300 font-mono text-sm">{getCapabilityLabel(finding.module)}</div>
                                               </div>
                                             )}
                                             {finding.rule_id && (
                                               <div>
-                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Rule ID</div>
+                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Rule ID</div>
                                                 <div className="text-slate-400 font-mono text-xs mt-0.5">{finding.rule_id}</div>
                                               </div>
                                             )}
@@ -860,7 +860,7 @@ const TechnicalReport = ({ reportData }) => {
 
                                                 return (
                                                   <div>
-                                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Confidence Score</div>
+                                                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Confidence Score</div>
                                                     <div className={`technical-confidence ${colorClass} font-bold text-sm`}>{finding.confidence}</div>
                                                   </div>
                                                 );
@@ -869,7 +869,7 @@ const TechnicalReport = ({ reportData }) => {
 
                                             {finding.state && (
                                               <div>
-                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Verification State</div>
+                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Verification State</div>
                                                 <div className={`technical-state font-bold text-sm ${finding.state.toLowerCase() === 'observed' ? 'text-blue-400' : 'text-purple-400'}`}>
                                                   {finding.state.toUpperCase()}
                                                 </div>
@@ -880,8 +880,8 @@ const TechnicalReport = ({ reportData }) => {
                                           {finding.evidence && finding.evidence !== "N/A" && (
                                             <div>
                                               <div className="flex items-center justify-between mb-2">
-                                                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Evidence</div>
-                                                <button onClick={() => navigator.clipboard.writeText(typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence, null, 2))} className="text-slate-500 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors" aria-label="Copy evidence to clipboard">
+                                                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Evidence</div>
+                                                <button onClick={() => navigator.clipboard.writeText(typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence, null, 2))} className="text-slate-400 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors" aria-label="Copy evidence to clipboard">
                                                   <Copy className="w-3 h-3" aria-hidden="true" /> Copy
                                                 </button>
                                               </div>
@@ -889,7 +889,7 @@ const TechnicalReport = ({ reportData }) => {
                                                 <div className="technical-evidence bg-slate-950 border border-slate-700/50 rounded-lg p-4 font-mono text-sm space-y-2">
                                                   {Object.entries(finding.evidence).map(([key, value]) => (
                                                     <div key={key} className="text-slate-300">
-                                                      <span className="text-slate-500 mr-2">{key}:</span>
+                                                      <span className="text-slate-400 mr-2">{key}:</span>
                                                       {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                                                     </div>
                                                   ))}
@@ -906,7 +906,7 @@ const TechnicalReport = ({ reportData }) => {
                                                   )}
                                                 </div>
                                               ) : (
-                                                <pre className="technical-evidence bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                                                <pre className="technical-evidence bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto overflow-y-auto max-h-96 whitespace-pre-wrap leading-relaxed shadow-inner">
                                                   {typeof finding.evidence === 'object' && finding.evidence.raw ? finding.evidence.raw : (typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence, null, 2))}
                                                 </pre>
                                               )}
@@ -945,11 +945,11 @@ const TechnicalReport = ({ reportData }) => {
 
                                             <div className="space-y-3 mt-auto pt-4 border-t border-slate-800/80">
                                               <div className="flex justify-between items-center text-xs">
-                                                <span className="text-slate-500">Category</span>
+                                                <span className="text-slate-400">Category</span>
                                                 <span className="font-mono text-slate-300 uppercase">{finding.category}</span>
                                               </div>
                                               <div className="flex justify-between items-center text-xs">
-                                                <span className="text-slate-500">Scanner Module</span>
+                                                <span className="text-slate-400">Scanner Module</span>
                                                 <span className="font-mono text-slate-300">{finding.module}</span>
                                               </div>
 
@@ -965,7 +965,7 @@ const TechnicalReport = ({ reportData }) => {
                                                           </span>
                                                         </div>
                                                         {finding.cvss.startsWith('CVSS:4.0') && (
-                                                          <span className="text-xs text-slate-500 font-medium">CVSS-B</span>
+                                                          <span className="text-xs text-slate-400 font-medium">CVSS-B</span>
                                                         )}
                                                       </div>
 
@@ -979,7 +979,7 @@ const TechnicalReport = ({ reportData }) => {
                                                       )}
 
                                                       <div className="flex flex-col mt-2">
-                                                        <span className="text-xs text-slate-500 mb-1">Vector:</span>
+                                                        <span className="text-xs text-slate-400 mb-1">Vector:</span>
                                                         <div className="bg-slate-950 p-2 rounded border border-slate-800 min-w-0">
                                                           <span className="text-xs font-mono text-slate-300 break-words whitespace-normal inline-block w-full text-left" style={{ overflowWrap: 'anywhere' }}>
                                                             {finding.cvss}
@@ -990,7 +990,7 @@ const TechnicalReport = ({ reportData }) => {
                                                   ) : (
                                                     <div className="flex flex-col">
                                                       <span className="text-xs font-bold text-slate-400">CVSS</span>
-                                                      <span className="text-xs text-slate-500 mt-1">Not Applicable</span>
+                                                      <span className="text-xs text-slate-400 mt-1">Not Applicable</span>
                                                     </div>
                                                   )}
                                                 </div>
@@ -1080,7 +1080,7 @@ const TechnicalReport = ({ reportData }) => {
                         <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
                         <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
                           {(reportData?.technical_compliance?.pci_dss_4_0?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                          {reportData?.technical_compliance?.pci_dss_4_0?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
+                          {reportData?.technical_compliance?.pci_dss_4_0?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-400">None</li>}
                         </ul>
                       </div>
                     </div>
@@ -1108,7 +1108,7 @@ const TechnicalReport = ({ reportData }) => {
                         <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
                         <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
                           {(reportData?.technical_compliance?.nist_sp_800_53?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                          {reportData?.technical_compliance?.nist_sp_800_53?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
+                          {reportData?.technical_compliance?.nist_sp_800_53?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-400">None</li>}
                         </ul>
                       </div>
                     </div>
@@ -1136,13 +1136,13 @@ const TechnicalReport = ({ reportData }) => {
                         <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
                         <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
                           {(reportData?.technical_compliance?.iso_27001?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                          {reportData?.technical_compliance?.iso_27001?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
+                          {reportData?.technical_compliance?.iso_27001?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-400">None</li>}
                         </ul>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-6 text-xs text-slate-500 leading-relaxed">
+                  <div className="mt-6 text-xs text-slate-400 leading-relaxed">
                     Framework mappings show how externally observable findings may relate to selected security controls. They are not a formal compliance assessment, audit, or certification.
                   </div>
                 </div>

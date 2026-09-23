@@ -117,7 +117,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
             ref={urlInputRef}
             type="text"
             required
-            placeholder="example.com"
+            aria-label="Target Website URL" placeholder="example.com"
             value={url}
             disabled={quotaReached}
             onChange={(e) => {
