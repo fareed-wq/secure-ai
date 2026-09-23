@@ -9,7 +9,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
   const exportMenuRef = React.useRef(null);
 
   return (
-    <div className="relative z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl shadow-xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
+    <div className="relative z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl shadow-md flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
       <div className="flex-1">
         <h2 className="text-2xl font-bold mb-1 text-slate-50">Security Posture Report</h2>
         <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
@@ -40,7 +40,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
           <button
             type="button"
             onClick={() => onToggleMode('simple')}
-            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeMode === 'simple'
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset ${activeMode === 'simple'
               ? 'bg-emerald-500/20 text-emerald-400 shadow'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
@@ -50,7 +50,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
           <button
             type="button"
             onClick={() => onToggleMode('technical')}
-            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeMode === 'technical'
+            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset ${activeMode === 'technical'
               ? 'bg-blue-500/20 text-blue-400 shadow'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
               }`}
@@ -65,17 +65,17 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
             type="button"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowExportMenu(!showExportMenu); }}
             title="Export Report"
-            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700"
+            className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             <Download className="w-4 h-4" />
           </button>
 
           {showExportMenu && (
-            <div className="absolute right-0 sm:right-auto sm:left-0 sm:mt-2 w-full sm:w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-xl z-50 overflow-hidden" ref={exportMenuRef}>
+            <div className="absolute right-0 sm:right-auto sm:left-0 sm:mt-2 w-full sm:w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-md z-50 overflow-hidden" ref={exportMenuRef}>
               <button
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onExportPdf(e); setShowExportMenu(false); }}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-50 transition-colors text-left"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-50 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset"
               >
                 <FileSpreadsheet className="w-4 h-4" />
                 Export PDF
@@ -83,7 +83,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
               <button
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); exportJSON(reportData); setShowExportMenu(false); }}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-50 transition-colors text-left"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-50 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset"
               >
                 <FileJson className="w-4 h-4" />
                 Export JSON
@@ -91,7 +91,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
               <button
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); exportCSV(reportData); setShowExportMenu(false); }}
-                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-50 transition-colors text-left"
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-50 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset"
               >
                 <FileSpreadsheet className="w-4 h-4" />
                 Export CSV

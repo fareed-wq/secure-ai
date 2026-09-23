@@ -102,7 +102,7 @@ const SimpleReport = ({ reportData }) => {
       {/* 1. Executive Summary & Score */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-        <div className="simple-executive-summary lg:col-span-2 bg-slate-900 border border-slate-800 text-slate-50 p-6 lg:p-8 rounded-3xl shadow-xl flex flex-col h-fit">
+        <div className="simple-executive-summary lg:col-span-2 bg-slate-900 border border-slate-800 text-slate-50 p-6 lg:p-8 rounded-3xl shadow-md flex flex-col h-fit">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-2xl font-black">Executive Summary</h2>
@@ -514,7 +514,7 @@ const SimpleReport = ({ reportData }) => {
           },
         ];
         return (
-          <div className="simple-surface-section rounded-2xl border border-slate-800 bg-slate-950/80 p-6 backdrop-blur-md shadow-xl">
+          <div className="simple-surface-section rounded-2xl border border-slate-800 bg-slate-950/80 p-6 backdrop-blur-md shadow-md">
             <div className="flex items-center gap-2.5 mb-6">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" aria-hidden="true">
                 <span className="relative flex h-2.5 w-2.5">
@@ -528,7 +528,7 @@ const SimpleReport = ({ reportData }) => {
               {surfaceCards.map((card, idx) => {
                 const Icon = card.icon;
                 return (
-                  <div key={idx} className="simple-surface-card w-full min-w-0 min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
+                  <div key={idx} className="simple-surface-card w-full min-w-0 min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:">
                     <div>
                       <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
                         <Icon className={`w-3.5 h-3.5 shrink-0 ${card.iconColor}`} aria-hidden="true" />
@@ -592,7 +592,7 @@ const SimpleReport = ({ reportData }) => {
 
       {/* 3. Important Findings — High-level summary of top actionable issues */}
       {issues.length > 0 && (
-        <div className="simple-important-findings bg-slate-900 border border-slate-800 rounded-3xl shadow-xl overflow-hidden">
+        <div className="simple-important-findings bg-slate-900 border border-slate-800 rounded-3xl shadow-md overflow-hidden">
           <div className="bg-slate-950/80 border-b border-slate-800 p-6 md:p-8">
             <div className="flex items-center gap-4">
               <div className="bg-rose-500/20 p-2.5 md:p-3 rounded-xl text-rose-400 shrink-0" aria-hidden="true">
@@ -667,7 +667,7 @@ const SimpleReport = ({ reportData }) => {
                     </div>
                     <div className="flex items-center md:justify-end flex-shrink-0">
                       <span className="text-slate-500 text-sm font-medium hidden md:block pr-2">Details below</span>
-                      <button aria-label="Expand details" className="text-slate-500 hover:text-slate-50 transition-colors md:hidden p-1">
+                      <button aria-label="Expand details" className="text-slate-500 hover:text-slate-50 transition-colors md:hidden p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
                         <ChevronDown className="w-5 h-5" />
                       </button>
                     </div>
@@ -736,7 +736,7 @@ const SimpleReport = ({ reportData }) => {
       {passed.length > 0 && (
         <div className="simple-passed-section bg-emerald-950/20 border border-emerald-900/50 p-6 md:p-8 rounded-3xl mt-12">
           <details className="group">
-            <summary className="flex items-center gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+            <summary className="flex items-center gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
               <div className="bg-emerald-500/20 p-2.5 md:p-3 rounded-xl text-emerald-400 shrink-0" aria-hidden="true">
                 <Check className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
               </div>

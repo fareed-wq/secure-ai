@@ -29,8 +29,8 @@ export const WhatWasTested = ({ moduleExecution }) => {
 
   if (!moduleExecution || Object.keys(moduleExecution).length === 0) {
     return (
-      <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
-        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-2">
+      <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg mt-6">
+        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
           <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ WHAT_WAS_TESTED</span>
           <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
         </summary>
@@ -90,8 +90,8 @@ export const WhatWasTested = ({ moduleExecution }) => {
   const totalModules = Object.values(groups).flat().length;
 
   return (
-    <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
-      <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4">
+    <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg mt-6">
+      <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
         <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ WHAT_WAS_TESTED</span>
         <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
       </summary>

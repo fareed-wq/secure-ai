@@ -37,14 +37,14 @@ const FindingCard = ({ issue, idx }) => {
   }, []);
 
   return (
-    <details className={`simple-finding-card finding-card border-y border-r border-slate-800 rounded-3xl overflow-hidden shadow-xl ${issue.severity === 'Critical' || issue.severity === 'High' ? 'simple-risk-high border-l-4 border-l-red-500 bg-red-950/10' :
+    <details className={`simple-finding-card finding-card border-y border-r border-slate-800 rounded-3xl overflow-hidden shadow-md ${issue.severity === 'Critical' || issue.severity === 'High' ? 'simple-risk-high border-l-4 border-l-red-500 bg-red-950/10' :
       issue.severity === 'Medium' ? 'simple-risk-medium border-l-4 border-l-amber-500 bg-amber-950/10' :
         issue.severity === 'Informational' ? 'simple-risk-info border-l-4 border-l-blue-500 bg-blue-900/10' :
           'simple-risk-low border-l-4 border-l-slate-600 bg-slate-900/40'
       }`}>
 
       {/* Collapsed Header */}
-      <summary className="flex flex-col md:flex-row md:items-center gap-4 p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-slate-800/30 transition-colors">
+      <summary className="flex flex-col md:flex-row md:items-center gap-4 p-6 cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-slate-800/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="w-10 h-10 rounded-full bg-slate-800/80 text-slate-50 font-bold text-xl flex items-center justify-center shrink-0" aria-hidden="true">{idx + 1}</div>
           <div className="flex-1 min-w-0">

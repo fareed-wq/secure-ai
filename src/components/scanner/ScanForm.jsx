@@ -67,7 +67,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-slate-900 border border-rose-500/30 shadow-2xl shadow-rose-500/10 rounded-2xl p-6 max-w-md w-full relative"
+              className="bg-slate-900 border border-rose-500/30 shadow-lg  rounded-2xl p-6 max-w-md w-full relative"
             >
               <div className="flex flex-col items-center text-center">
                 <div className="bg-rose-500/10 p-3 rounded-full mb-4">
@@ -111,7 +111,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
           </div>
         )}
 
-        <div className="scan-url-shell relative w-full rounded-2xl p-1 bg-slate-900/80 border border-slate-700/60 shadow-[0_0_30px_rgba(124,58,237,0.25)] flex items-center focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 focus-within:shadow-[0_0_40px_rgba(124,58,237,0.4)] transition-all duration-300">
+        <div className="scan-url-shell relative w-full rounded-2xl p-1 bg-slate-900/80 border border-slate-700/60 shadow-lg flex items-center focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/50 transition-all duration-300">
           <Search className="w-5 h-5 text-slate-400 ml-4 shrink-0 hidden sm:block" />
           <input
             ref={urlInputRef}
@@ -126,7 +126,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
             }}
             className="scan-url-input w-full bg-transparent px-4 h-12 text-slate-100 placeholder-slate-500 focus:outline-none disabled:opacity-50"
           />
-          <button type="submit" disabled={quotaReached} className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 h-12 rounded-xl transition-all flex items-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
+          <button type="submit" disabled={quotaReached} className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-6 h-12 rounded-xl transition-all flex items-center gap-2 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
             Scan <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -177,16 +177,16 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
         
 
           {isGuest && (
-            <div className={`w-full max-w-2xl bg-slate-900/90 border rounded-xl p-6 mt-4 text-center shadow-xl ${quotaReached ? 'border-rose-500/30' : 'border-indigo-500/20'}`}>
+            <div className={`w-full max-w-2xl bg-slate-900/90 border rounded-xl p-6 mt-4 text-center shadow-md ${quotaReached ? 'border-rose-500/30' : 'border-indigo-500/20'}`}>
               {quotaReached && (
                 <h3 className="text-rose-400 font-bold text-lg mb-2">You've used your 3 free Guest scans for this week.</h3>
               )}
               <p className="text-slate-300 text-sm mb-5 font-medium">Create a free account to unlock Advanced Scan, get 5 scans every week, download PDF reports, and access your scan history.</p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto shadow-lg shadow-indigo-500/20">
+                <Link to="/register" className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto shadow-lg  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
                   Create Free Account
                 </Link>
-                <Link to="/login" className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto border border-slate-700">
+                <Link to="/login" className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-6 rounded-xl transition-all w-full sm:w-auto border border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
                   Sign In
                 </Link>
               </div>

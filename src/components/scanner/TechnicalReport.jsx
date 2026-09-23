@@ -113,7 +113,7 @@ const TechnicalReport = ({ reportData }) => {
           .bg-\\[\\#0D1117\\], .bg-slate-900, .bg-slate-900\\/50, .bg-slate-800 { background: white !important; box-shadow: none !important; }
           .text-slate-50, .text-slate-200, .text-slate-300 { color: #0f172a !important; }
           .text-slate-400, .text-slate-400 { color: #475569 !important; }
-          .shadow-2xl, .shadow-xl, .shadow-inner { box-shadow: none !important; }
+          .shadow-lg, .shadow-md, .shadow-inner { box-shadow: none !important; }
           .text-indigo-400 { color: #4338ca !important; }
           .text-emerald-400 { color: #059669 !important; }
           .text-red-500, .text-red-400 { color: #dc2626 !important; }
@@ -123,7 +123,7 @@ const TechnicalReport = ({ reportData }) => {
       `}</style>
 
       {/* 1. Technical Metadata Table HUD */}
-      <div className="technical-section report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+      <div className="technical-section report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg relative overflow-hidden">
 
         {/* Top Header Bar */}
         <div className="flex items-center gap-3 mb-2">
@@ -138,7 +138,7 @@ const TechnicalReport = ({ reportData }) => {
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
 
           {/* Card 1: Network & Edge Security */}
-          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
+          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
                 <Globe className="w-3.5 h-3.5 shrink-0 text-slate-400" />
@@ -167,7 +167,7 @@ const TechnicalReport = ({ reportData }) => {
           </div>
 
           {/* Card 2: HTTP & Performance */}
-          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
+          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
                 <Activity className="w-3.5 h-3.5 shrink-0 text-slate-400" />
@@ -201,7 +201,7 @@ const TechnicalReport = ({ reportData }) => {
           </div>
 
           {/* Card 3: SSL/TLS Certificate */}
-          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
+          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
                 <Lock className="w-3.5 h-3.5 shrink-0 text-slate-400" />
@@ -233,7 +233,7 @@ const TechnicalReport = ({ reportData }) => {
           </div>
 
           {/* Card 4: Traffic & Protocol Posture */}
-          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
+          <div className="technical-metadata w-full min-w-0 h-full min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:">
             <div>
               <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
                 <ShieldCheck className="w-3.5 h-3.5 shrink-0 text-slate-400" />
@@ -263,7 +263,7 @@ const TechnicalReport = ({ reportData }) => {
         const cov = reportData?.assessment_coverage;
         if (!cov) return null;
         return (
-          <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl">
+          <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
             <div className="flex items-center gap-3 mb-4">
               <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ ASSESSMENT_COVERAGE</span>
             </div>
@@ -308,8 +308,8 @@ const TechnicalReport = ({ reportData }) => {
         else if (exp.level === "LOW") { levelColor = "text-emerald-400"; bgColor = "bg-emerald-500/10 border-emerald-500/30"; }
 
         return (
-          <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
-            <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4">
+          <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg mt-6">
+            <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
               <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ EXPOSURE</span>
               <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-400" /></span>
             </summary>
@@ -369,8 +369,8 @@ const TechnicalReport = ({ reportData }) => {
 
 
       {/* 2.6. Priority Guide */}
-      <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6 print:hidden">
-        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4">
+      <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg mt-6 print:hidden">
+        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
           <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ UNDERSTANDING_PRIORITY (P1–P5)</span>
           <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-400" /></span>
         </summary>
@@ -451,7 +451,7 @@ const TechnicalReport = ({ reportData }) => {
       </details>
 
       {/* 3. Tab Switcher: Vulnerabilities vs Compliance */}
-      <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-xl print:hidden" role="tablist">
+      <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-md print:hidden" role="tablist">
         <button
           onClick={() => setActiveView('vulnerabilities')}
           role="tab"
@@ -486,7 +486,7 @@ const TechnicalReport = ({ reportData }) => {
 
         {activeView === 'technologies' && (
           <div className="w-full max-w-full overflow-hidden space-y-6">
-            <div className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+            <div className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
               <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
                 <Server className="w-4 h-4 text-sky-400" />
                 <h2 className="font-bold text-slate-50 text-lg">Detected Technologies</h2>
@@ -563,7 +563,7 @@ const TechnicalReport = ({ reportData }) => {
                                   {tech.cves.length} CVEs
                                 </span>
                               )}
-                              <button aria-label={expandedTechRow === idx ? "Collapse technology details" : "Expand technology details"} className="text-slate-400 hover:text-slate-50 transition-colors ml-1 p-1">
+                              <button aria-label={expandedTechRow === idx ? "Collapse technology details" : "Expand technology details"} className="text-slate-400 hover:text-slate-50 transition-colors ml-1 p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
                                 {expandedTechRow === idx ? <ChevronUp className="w-5 h-5" aria-hidden="true" /> : <ChevronDown className="w-5 h-5" aria-hidden="true" />}
                               </button>
                             </div>
@@ -737,7 +737,7 @@ const TechnicalReport = ({ reportData }) => {
               if (groupFindings.length === 0) return null;
 
               return (
-                <div key={group.key} className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+                <div key={group.key} className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
                   <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
                     {group.icon}
                     <h2 className="font-bold text-slate-50 text-lg">{group.label}</h2>
@@ -793,7 +793,7 @@ const TechnicalReport = ({ reportData }) => {
                                   )}
                                 </td>
                                 <td className="px-6 py-4 text-right print:hidden align-top">
-                                  <button aria-label={expandedRow === idx ? "Collapse details" : "Expand details"} className="text-slate-400 hover:text-slate-50 transition-colors">
+                                  <button aria-label={expandedRow === idx ? "Collapse details" : "Expand details"} className="text-slate-400 hover:text-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
                                     {expandedRow === idx ? <ChevronUp className="w-5 h-5 inline" aria-hidden="true" /> : <ChevronDown className="w-5 h-5 inline" aria-hidden="true" />}
                                   </button>
                                 </td>
@@ -1051,7 +1051,7 @@ const TechnicalReport = ({ reportData }) => {
         {activeView === 'compliance' && reportData?.technical_compliance && (
           <div className="w-full max-w-full overflow-hidden">
             <div className="technical-section report-section grid grid-cols-1 gap-6">
-              <div className="technical-compliance-section bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-2xl">
+              <div className="technical-compliance-section bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-lg">
                 <div className="flex items-center gap-3 mb-6">
                   <ShieldAlert className="w-5 h-5 text-indigo-400" />
                   <h2 className="font-bold text-slate-50 text-lg">Security Framework Mapping</h2>
