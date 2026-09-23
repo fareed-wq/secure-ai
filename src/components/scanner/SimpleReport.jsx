@@ -187,12 +187,12 @@ const SimpleReport = ({ reportData }) => {
                     <span className="text-[10px] text-slate-500 uppercase tracking-wider">Findings</span>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 flex-1 w-full">
+                <div className="flex flex-col justify-center gap-2 flex-1 w-full sm:w-48 ml-0 sm:ml-8 mt-4 sm:mt-0">
                   {activeDistribution.map((seg, i) => (
-                    <div key={i} className="flex items-center gap-2 text-sm">
-                      <span className={`w-3 h-3 rounded-full ${seg.dot}`}></span>
-                      <span className="text-slate-300 font-medium">{seg.label}</span>
-                      <span className="text-slate-500 font-mono text-xs ml-auto">{seg.count}</span>
+                    <div key={i} className="flex items-center text-sm">
+                      <span className={`w-3 h-3 rounded-full ${seg.dot} mr-3 flex-shrink-0`}></span>
+                      <span className="text-slate-300 font-medium flex-1">{seg.label}</span>
+                      <span className="text-slate-500 font-mono text-xs pl-4">{seg.count}</span>
                     </div>
                   ))}
                 </div>
@@ -200,73 +200,6 @@ const SimpleReport = ({ reportData }) => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 w-full">
-            <div className="simple-stat-card bg-amber-500/10 border border-amber-500/30 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
-              <div>
-                <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Issues Found</div>
-                <div className="text-4xl font-extrabold tracking-tight mt-2 block text-slate-50">{issues.length}</div>
-              </div>
-              <div className="sr-only" aria-live="polite">
-                {issues.length} security issues found
-              </div>
-              <div className="border-t border-slate-800/80 pt-2.5 mt-3 flex flex-wrap items-center gap-2">
-                <span className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${highRiskCount > 0 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
-                  <span className={`w-3 h-3 rounded-full border border-slate-900 flex-shrink-0 ${highRiskCount > 0 ? 'bg-red-500' : 'bg-slate-600'}`}></span>
-                  High {highRiskCount}
-                </span>
-                <span className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${mediumRiskCount > 0 ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
-                  <span className={`w-3 h-3 rounded-full border border-slate-900 flex-shrink-0 ${mediumRiskCount > 0 ? 'bg-amber-500' : 'bg-slate-600'}`}></span>
-                  Medium {mediumRiskCount}
-                </span>
-                <span className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${lowRiskCount > 0 ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
-                  <span className={`w-3 h-3 rounded-full border border-slate-900 flex-shrink-0 ${lowRiskCount > 0 ? 'bg-purple-500' : 'bg-slate-600'}`}></span>
-                  Low {lowRiskCount}
-                </span>
-              </div>
-            </div>
-            <div className="simple-stat-card bg-emerald-500/10 border border-emerald-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
-              <div>
-                <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Passed Checks</div>
-                <div className="text-4xl font-extrabold tracking-tight mt-2 block text-emerald-400">{passed.length}</div>
-              </div>
-              <div className="sr-only" aria-live="polite">
-                {passed.length} security checks passed
-              </div>
-              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
-                <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
-                  🟢 {passed.length} Audits Clean
-                </span>
-              </div>
-            </div>
-            <div className="simple-stat-card bg-blue-500/10 border border-blue-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
-              <div>
-                <div className="text-xs font-bold text-blue-500 uppercase tracking-wider">Informational</div>
-                <div className="text-4xl font-extrabold tracking-tight mt-2 block text-blue-400">{informational.length}</div>
-              </div>
-              <div className="sr-only" aria-live="polite">
-                {informational.length} informational observations
-              </div>
-              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
-                <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-blue-500/15 text-blue-300 border-blue-500/30">
-                  ⚪ {informational.length} Observations
-                </span>
-              </div>
-            </div>
-            <div className="simple-stat-card bg-slate-500/10 border border-slate-500/20 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
-              <div>
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Inconclusive</div>
-                <div className="text-4xl font-extrabold tracking-tight mt-2 block text-slate-300">{inconclusive.length}</div>
-              </div>
-              <div className="sr-only" aria-live="polite">
-                {inconclusive.length} inconclusive checks
-              </div>
-              <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
-                <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-slate-800/40 text-slate-400 border-slate-700">
-                  ⚪ {inconclusive.length} Skipped Checks
-                </span>
-              </div>
-            </div>
-          </div>
         </div>
 
         <ScoreDisplay
@@ -276,107 +209,6 @@ const SimpleReport = ({ reportData }) => {
           severityCounts={reportData?.severity_counts}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          {reportData?.assessment_coverage?.available && (() => {
-            const cov = reportData.assessment_coverage;
-            const total = cov.completed_modules + cov.partial_modules + cov.failed_modules + cov.blocked_modules + cov.execution_incomplete_modules + cov.not_applicable_modules;
-            const completed = cov.completed_modules + cov.partial_modules;
-            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-            let statusColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
-            let statusText = 'Optimal';
-            if (cov.failed_modules > 0 || cov.blocked_modules > 0) {
-              statusColor = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
-              statusText = 'Incomplete';
-            } else if (cov.partial_modules > 0) {
-              statusColor = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
-              statusText = 'Partial';
-            } else if (cov.execution_incomplete_modules > 0) {
-              statusColor = 'bg-slate-500/10 text-slate-400 border-slate-500/30';
-              statusText = 'In Progress';
-            }
-
-            return (
-              <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-lg">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Assessment Coverage</div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold text-slate-50">{percentage}%</span>
-                      <span className="text-xs text-slate-500">of intended checks completed</span>
-                    </div>
-                  </div>
-                  <div className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${statusColor}`}>
-                    {statusText}
-                  </div>
-                </div>
-
-                {/* Horizontal Progress Bar */}
-                <div className="w-full bg-slate-950 rounded-full h-2.5 mb-4 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${percentage >= 90 ? 'bg-emerald-500' : percentage >= 70 ? 'bg-amber-500' : percentage >= 50 ? 'bg-amber-600' : 'bg-rose-500'}`}
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-
-                {/* Module Counts */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
-                  {cov.completed_modules > 0 && (
-                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 text-center">
-                      <div className="font-bold text-emerald-400">{cov.completed_modules}</div>
-                      <div className="text-slate-500">Completed</div>
-                    </div>
-                  )}
-                  {cov.partial_modules > 0 && (
-                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 text-center">
-                      <div className="font-bold text-amber-400">{cov.partial_modules}</div>
-                      <div className="text-slate-500">Partial</div>
-                    </div>
-                  )}
-                  {cov.failed_modules > 0 && (
-                    <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-2 text-center">
-                      <div className="font-bold text-rose-400">{cov.failed_modules}</div>
-                      <div className="text-slate-500">Failed</div>
-                    </div>
-                  )}
-                  {cov.blocked_modules > 0 && (
-                    <div className="bg-slate-500/10 border border-slate-500/30 rounded-lg p-2 text-center">
-                      <div className="font-bold text-slate-400">{cov.blocked_modules}</div>
-                      <div className="text-slate-500">Blocked</div>
-                    </div>
-                  )}
-                  {cov.execution_incomplete_modules > 0 && (
-                    <div className="bg-slate-500/10 border border-slate-500/30 rounded-lg p-2 text-center">
-                      <div className="font-bold text-slate-400">{cov.execution_incomplete_modules}</div>
-                      <div className="text-slate-500">Incomplete</div>
-                    </div>
-                  )}
-                  {cov.not_applicable_modules > 0 && (
-                    <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-2 text-center">
-                      <div className="font-bold text-slate-400">{cov.not_applicable_modules}</div>
-                      <div className="text-slate-500">N/A</div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
-
-          {reportData?.exposure && reportData.exposure.level && (
-            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 text-left flex flex-col justify-center">
-              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Exposure</div>
-              <div className={`text-sm font-bold leading-tight ${reportData.exposure.level === 'HIGH' ? 'text-red-400' :
-                reportData.exposure.level === 'MODERATE' ? 'text-amber-400' :
-                  reportData.exposure.level === 'LOW' ? 'text-emerald-400' : 'text-slate-400'
-                }`}>
-                {reportData.exposure.level === 'HIGH' ? 'This site exposes additional externally reachable surfaces.' :
-                  reportData.exposure.level === 'MODERATE' ? 'This site is publicly reachable on the web.' :
-                    reportData.exposure.level === 'LOW' ? 'This target appears limited to private/local network addressing.' :
-                      'Exposure could not be determined from this scan.'}
-              </div>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* 3. Important Findings — High-level summary of top actionable issues */}
