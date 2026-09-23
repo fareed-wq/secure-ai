@@ -136,7 +136,7 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
           <span><strong className="text-slate-300">Passive Mode & Non-Intrusive</strong> • Read-only security checks designed to minimize impact on live websites.</span>
         </div>
 
-        <details className="group mt-6 text-left">
+        <details open className="group mt-6 text-left">
           <summary className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-300 cursor-pointer list-none [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded p-1 transition-colors">
             <Settings2 className="w-4 h-4" />
             Scan Options
