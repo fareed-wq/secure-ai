@@ -834,7 +834,7 @@ const TechnicalReport = ({ reportData }) => {
                                             </div>
                                           )}
 
-                                          <div className="flex flex-wrap gap-8 mb-4">
+                                          <div className="bg-slate-900/40 rounded-xl p-5 flex flex-wrap gap-8 border border-slate-800/60">
                                             {finding.module && (
                                               <div>
                                                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Capability</div>

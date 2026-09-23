@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Search, ArrowRight, ShieldAlert, Lock, AlertCircle } from 'lucide-react';
+import { Search, ArrowRight, ShieldAlert, Lock, AlertCircle, Settings2, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -136,7 +136,13 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
           <span><strong className="text-slate-300">Passive Mode & Non-Intrusive</strong> • Read-only security checks designed to minimize impact on live websites.</span>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 w-full mt-4 text-left">
+        <details className="group mt-6 text-left">
+          <summary className="inline-flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-300 cursor-pointer list-none [&::-webkit-details-marker]:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded p-1 transition-colors">
+            <Settings2 className="w-4 h-4" />
+            Scan Options
+            <ChevronDown className="w-4 h-4 group-open:rotate-180 transition-transform ml-1" />
+          </summary>
+          <div className="flex flex-col sm:flex-row gap-4 w-full mt-3 text-left">
           <div className="scan-config-card flex-1 bg-slate-900/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-900/80 transition-colors relative overflow-hidden">
             <h2 className="text-sm font-semibold text-slate-300 mb-2.5">Scan Configuration</h2>
             <div className="flex flex-col gap-1.5 relative z-10">
@@ -173,6 +179,8 @@ const ScanForm = ({ onScan, quotaInfo, user }) => {
             </div>
           </div>
         </div>
+        </details>
+
 
         
 

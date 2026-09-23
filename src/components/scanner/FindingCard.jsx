@@ -71,23 +71,27 @@ const FindingCard = ({ issue, idx }) => {
 
       {/* Expanded Content */}
       <div className="px-6 pb-6 pt-2">
-        <div className="space-y-4">
+        <div className="space-y-6">
           {issue.confidence && issue.confidence !== 'N/A' && (
             <div className={`flex items-center gap-2 w-fit px-3 py-1.5 rounded-lg border ${getConfidenceStyles(issue.confidence)}`} aria-label={`Confidence: ${issue.confidence}`}>
               <span className="text-xs font-bold uppercase tracking-wider opacity-80">Confidence:</span>
               <span className="text-sm font-bold">{issue.confidence}</span>
             </div>
           )}
-          <span className="text-lg font-bold text-slate-100 block mb-1" aria-hidden="true">What was detected?</span>
-          <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.problem}</span>
-          <span className="text-lg font-bold text-slate-100 block mb-1" aria-hidden="true">Why does it matter?</span>
-          <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.why}</span>
+          <div>
+            <span className="text-lg font-bold text-slate-100 block mb-1" aria-hidden="true">What was detected?</span>
+            <span className="text-lg text-slate-300 leading-relaxed block">{trans.problem}</span>
+          </div>
+          <div>
+            <span className="text-lg font-bold text-slate-100 block mb-1" aria-hidden="true">Why does it matter?</span>
+            <span className="text-lg text-slate-300 leading-relaxed block">{trans.why}</span>
+          </div>
 
           {trans.action && issue.severity !== 'Passed' && (
-            <>
-              <span className="text-lg font-bold text-slate-100 block mb-1" aria-hidden="true">What to do</span>
-              <span className="text-lg text-slate-300 leading-relaxed block mb-4">{trans.action}</span>
-            </>
+            <div>
+                <span className="text-lg font-bold text-slate-100 block mb-1" aria-hidden="true">What to do</span>
+                <span className="text-lg text-slate-300 leading-relaxed block">{trans.action}</span>
+              </div>
           )}
 
           {/* Business Risk Box */}
