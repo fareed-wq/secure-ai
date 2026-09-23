@@ -456,9 +456,9 @@ const SimpleReport = ({ reportData }) => {
                     </div>
                     <div className="flex items-center md:justify-end flex-shrink-0">
                       <span className="text-slate-500 text-sm font-medium hidden md:block pr-2">Details below</span>
-                      <button aria-label="Expand details" className="text-slate-500 hover:text-slate-50 transition-colors md:hidden p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
+                      <span aria-hidden="true" className="text-slate-500 md:hidden p-1">
                         <ChevronDown className="w-5 h-5" />
-                      </button>
+                      </span>
                     </div>
                   </div>
                 </div>

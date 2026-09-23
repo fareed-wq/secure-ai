@@ -457,7 +457,7 @@ const TechnicalReport = ({ reportData }) => {
           role="tab"
           aria-selected={activeView === 'vulnerabilities'}
           aria-controls="vulnerabilities-panel"
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'vulnerabilities' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'vulnerabilities' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950`}
         >
           Vulnerabilities
         </button>
@@ -466,7 +466,7 @@ const TechnicalReport = ({ reportData }) => {
           role="tab"
           aria-selected={activeView === 'compliance'}
           aria-controls="compliance-panel"
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'compliance' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'compliance' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950`}
         >
           Framework Mapping
         </button>
@@ -475,7 +475,7 @@ const TechnicalReport = ({ reportData }) => {
           role="tab"
           aria-selected={activeView === 'technologies'}
           aria-controls="technologies-panel"
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'technologies' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'technologies' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950`}
         >
           Technologies
         </button>
@@ -881,7 +881,7 @@ const TechnicalReport = ({ reportData }) => {
                                             <div>
                                               <div className="flex items-center justify-between mb-2">
                                                 <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Evidence</div>
-                                                <button onClick={() => navigator.clipboard.writeText(typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence, null, 2))} className="text-slate-400 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors" aria-label="Copy evidence to clipboard">
+                                                <button onClick={() => navigator.clipboard.writeText(typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence, null, 2))} className="text-slate-400 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-950" aria-label="Copy evidence to clipboard">
                                                   <Copy className="w-3 h-3" aria-hidden="true" /> Copy
                                                 </button>
                                               </div>
@@ -1021,7 +1021,7 @@ const TechnicalReport = ({ reportData }) => {
                           {searchQuery && (
                             <button
                               onClick={() => setSearchQuery('')}
-                              className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 underline"
+                              className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-950 rounded"
                             >
                               Clear search
                             </button>
@@ -1032,7 +1032,7 @@ const TechnicalReport = ({ reportData }) => {
                                 setSeverityFilter('All');
                                 setOwaspFilter('All');
                               }}
-                              className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 underline"
+                              className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-950 rounded"
                             >
                               Clear filters
                             </button>

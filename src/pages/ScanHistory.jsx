@@ -169,7 +169,7 @@ const ScanHistory = () => {
           {searchInput && (
             <button
               onClick={() => { setSearchInput(''); setSearchTerm(''); }}
-              className="absolute right-3 top-2.5 text-slate-400 hover:text-white"
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-white" aria-label="Clear search"
             >
               <X className="h-4 w-4" />
             </button>
@@ -265,7 +265,7 @@ const ScanHistory = () => {
                           <button
                             type="button"
                             onClick={() => setDeleteConfirmId(scan.id)}
-                            className="inline-flex items-center gap-1 text-rose-500 hover:text-rose-400 transition-colors"
+                            className="inline-flex items-center gap-1 text-rose-500 hover:text-rose-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                             aria-label="Delete scan"
                           >
                             <Trash2 className="w-4 h-4" /> Delete

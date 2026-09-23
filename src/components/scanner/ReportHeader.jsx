@@ -65,6 +65,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
             type="button"
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowExportMenu(!showExportMenu); }}
             title="Export Report"
+              aria-label="Export Report"
             className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-50 rounded-lg transition-colors border border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             <Download className="w-4 h-4" />
