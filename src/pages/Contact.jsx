@@ -131,15 +131,15 @@ const Contact = () => {
             Contact Us
           </h1>
           <div className="text-lg text-slate-400 max-w-lg space-y-2">
-            <p>Have questions or need assistance? Fill out the form below or reach us directly at <a href="mailto:contact@urlscanonline.com" className="font-medium text-indigo-400 hover:underline underline-offset-2">contact@urlscanonline.com</a>.</p>
+            <p>Have questions or need assistance? Fill out the form below or reach us directly at <a href="mailto:contact@urlscanonline.com" className="font-medium text-indigo-400 hover:underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">contact@urlscanonline.com</a>.</p>
           </div>
         </header>
 
         {/* Glassmorphism Card */}
-        <div className="contact-card w-full bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 sm:p-10">
+        <div className="contact-card w-full bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-lg p-6 sm:p-10">
           {submitSuccess ? (
             <div className="text-center py-10 animate-in fade-in zoom-in duration-500">
-              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mx-auto mb-6 ring-1 ring-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mx-auto mb-6 ring-1 ring-emerald-500/20 shadow-md">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <h3 className="text-2xl font-bold text-white mb-3">Message Sent</h3>
@@ -173,7 +173,7 @@ const Contact = () => {
                     value={topic}
                     onChange={handleTopicChange}
                     required
-                    className="contact-input w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                    className="contact-input w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white transition-all appearance-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                   >
                     <option value="General Question">General Question</option>
                     <option value="Security / Bug Report">Security / Bug Report</option>
@@ -196,7 +196,7 @@ const Contact = () => {
                   type="email"
                   required
                   placeholder="you@example.com"
-                  className="contact-input w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-slate-600"
+                  className="contact-input w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white transition-all placeholder:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                 />
               </div>
 
@@ -230,7 +230,7 @@ const Contact = () => {
                   required
                   rows="4"
                   placeholder="How can we help?"
-                  className="contact-input w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none placeholder:text-slate-600"
+                  className="contact-input w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white transition-all resize-none placeholder:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                 ></textarea>
               </div>
 
@@ -248,7 +248,7 @@ const Contact = () => {
               <button
                 type="submit"
                 disabled={isSubmitting || !turnstileToken}
-                className="w-full relative group overflow-hidden flex items-center justify-center px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/25"
+                className="w-full relative group overflow-hidden flex items-center justify-center px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                 style={{ color: '#ffffff' }}
               >
                 <span className="relative z-10 flex items-center gap-2">

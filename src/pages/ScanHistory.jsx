@@ -148,7 +148,7 @@ const ScanHistory = () => {
             <button
               onClick={handleCompare}
               disabled={selectedScans.length !== 2}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             >
               Compare Selected ({selectedScans.length})
             </button>
@@ -161,7 +161,7 @@ const ScanHistory = () => {
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           <input
             type="text"
-            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-9 pr-10 py-2 text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors"
+            className="w-full bg-slate-800/50 border border-slate-700 rounded-lg pl-9 pr-10 py-2 text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-indigo-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
             placeholder="Search history by target or scan type..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -189,9 +189,13 @@ const ScanHistory = () => {
           {error}
         </div>
       ) : filteredScans.length === 0 ? (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 text-center text-slate-400">
-          {searchTerm ? 'No results found for your search.' : 'You have no scan history yet. Try running your first scan!'}
-        </div>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center flex flex-col items-center justify-center">
+            <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-4 text-slate-400">
+              <Search className="w-8 h-8" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-200 mb-2">{searchTerm ? 'No Results Found' : 'No Scan History'}</h2>
+            <p className="text-slate-400 text-sm max-w-md mx-auto">{searchTerm ? 'Try adjusting your search terms or filters.' : 'You have no scan history yet. Run a new scan from the dashboard to get started.'}</p>
+          </div>
       ) : (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
@@ -255,7 +259,7 @@ const ScanHistory = () => {
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-4">
-                          <Link to={`/history/${scan.id}?from=history`} className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors">
+                          <Link to={`/history/${scan.id}?from=history`} className="inline-flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900">
                             View Report <ExternalLink className="w-4 h-4" />
                           </Link>
                           <button
@@ -280,7 +284,7 @@ const ScanHistory = () => {
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 max-w-sm w-full shadow-lg">
             <h3 className="text-xl font-bold text-slate-50 mb-2">Delete scan?</h3>
             <p className="text-slate-400 text-sm mb-6">
               Are you sure you want to delete this scan from your history? This action cannot be undone.

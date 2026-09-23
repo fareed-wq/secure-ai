@@ -194,7 +194,7 @@ const Settings = () => {
                     disabled
                     readOnly
                     value={formData.email}
-                    className="block w-full pl-10 pr-24 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-400 cursor-not-allowed sm:text-sm"
+                    className="block w-full pl-10 pr-24 bg-slate-950 border border-slate-700 rounded-lg py-2.5 text-slate-400 cursor-not-allowed sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                   />
                   {isEmailVerified && (
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -212,7 +212,7 @@ const Settings = () => {
               <button
                 type="submit"
                 disabled={loading || !isProfileDirty}
-                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save Profile
@@ -332,7 +332,7 @@ const Settings = () => {
                   !validatePassword(passwordData.newPassword).isValid ||
                   passwordData.newPassword !== passwordData.confirmPassword
                 }
-                className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Update Password
@@ -355,7 +355,7 @@ const Settings = () => {
             </div>
             <button
               onClick={handleSignOut}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
