@@ -267,25 +267,62 @@ const TechnicalReport = ({ reportData }) => {
             <div className="flex items-center gap-3 mb-4">
               <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ ASSESSMENT_COVERAGE</span>
             </div>
-            {cov.available ? (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                <div className="text-center">
-                  <div className="text-4xl font-black text-slate-50 font-mono">{Math.round(cov.percentage)}%</div>
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Coverage</div>
-                </div>
-                <div className="flex-1 space-y-2">
-                  <div className="flex flex-wrap gap-2 text-xs font-mono">
-                    <span className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{cov.completed_modules} Completed</span>
-                    {cov.partial_modules > 0 && <span className="px-2 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">{cov.partial_modules} Partial</span>}
-                    {cov.failed_modules > 0 && <span className="px-2 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20">{cov.failed_modules} Failed</span>}
-                    {cov.blocked_modules > 0 && <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-400 border border-slate-700">{cov.blocked_modules} Blocked</span>}
-                    {cov.execution_incomplete_modules > 0 && <span className="px-2 py-1 rounded bg-slate-500/10 text-slate-400 border border-slate-700">{cov.execution_incomplete_modules} Incomplete</span>}
-                    {cov.not_applicable_modules > 0 && <span className="px-2 py-1 rounded bg-slate-800/60 text-slate-400 border border-slate-800">N/A: {cov.not_applicable_modules}</span>}
+            {cov.available ? (() => {
+              const covData = [
+                { label: 'Completed', count: cov.completed_modules || 0, color: 'text-emerald-500', dot: 'bg-emerald-500' },
+                { label: 'Partial', count: cov.partial_modules || 0, color: 'text-amber-500', dot: 'bg-amber-500' },
+                { label: 'Failed', count: cov.failed_modules || 0, color: 'text-red-500', dot: 'bg-red-500' },
+                { label: 'Blocked', count: cov.blocked_modules || 0, color: 'text-slate-500', dot: 'bg-slate-500' },
+                { label: 'Incomplete', count: cov.execution_incomplete_modules || 0, color: 'text-slate-400', dot: 'bg-slate-400' },
+                { label: 'N/A', count: cov.not_applicable_modules || 0, color: 'text-slate-600', dot: 'bg-slate-600' }
+              ];
+              const activeCovData = covData.filter(d => d.count > 0);
+              const totalModules = activeCovData.reduce((acc, curr) => acc + curr.count, 0) || 1;
+              const DONUT_CIRCUMFERENCE = 2 * Math.PI * 52;
+
+              return (
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0" role="img" aria-label={`Assessment Coverage: ${covData.map(d => `${d.label}: ${d.count}`).join(', ')}`}>
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 128 128">
+                      <circle cx="64" cy="64" r="52" stroke="currentColor" strokeWidth="14" fill="transparent" className="text-slate-800" aria-hidden="true" />
+                      {activeCovData.map((seg, i) => {
+                        const prevFraction = activeCovData.slice(0, i).reduce((s, p) => s + p.count, 0) / totalModules;
+                        const dashLen = DONUT_CIRCUMFERENCE * (seg.count / totalModules);
+                        return (
+                          <circle
+                            key={i}
+                            cx="64"
+                            cy="64"
+                            r="52"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="14"
+                            strokeDasharray={`${dashLen} ${DONUT_CIRCUMFERENCE - dashLen}`}
+                            strokeDashoffset={DONUT_CIRCUMFERENCE * (1 - prevFraction)}
+                            strokeLinecap="butt"
+                            className={seg.color}
+                          />
+                        );
+                      })}
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-2xl font-black text-slate-50 font-mono">{Math.round(cov.percentage)}%</span>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-wider">Complete</span>
+                    </div>
                   </div>
-                  <div className="text-[11px] text-slate-400">Assessment Coverage shows how much of the scanner's intended assessment completed successfully. It is separate from the security score.</div>
+
+                  <div className="flex flex-col justify-center gap-2 flex-1 w-full sm:w-48 ml-0 sm:ml-8 mt-4 sm:mt-0">
+                    {covData.map((seg, i) => (
+                      <div key={i} className="flex items-center text-sm">
+                        <span className={`w-3 h-3 rounded-full ${seg.dot} mr-3 flex-shrink-0`}></span>
+                        <span className="text-slate-300 font-medium flex-1">{seg.label}</span>
+                        <span className="text-slate-500 font-mono text-xs pl-4">{seg.count}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : (
+              );
+            })() : (
               <div className="text-sm text-slate-400">Assessment Coverage: Not available</div>
             )}
           </div>
