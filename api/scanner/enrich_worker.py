@@ -173,7 +173,7 @@ async def enrich_cve_worker(request: Request, verified: bool = Depends(verify_qs
         import time
         import copy
         from datetime import datetime, timezone
-        
+
         for identity in identities:
             if time.time() - start_time > BUDGET:
                 logger.warning(f"Time budget exceeded for scan {scan_id}")
@@ -181,7 +181,7 @@ async def enrich_cve_worker(request: Request, verified: bool = Depends(verify_qs
 
             cpe = identity.get("cpe_candidate") or identity.get("cpe")
             cpe_auth = identity.get("cpe_authority")
-            
+
             # Explicit no-match semantics
             if identity.get("vulnerability_state") == "NOT_EVALUATED" and identity.get("vulnerability_state_reason") in ("INSUFFICIENT_VERSION", "NO_CPE_MAPPING"):
                 identity_parsed_cves.append((identity, None))
@@ -253,3 +253,61 @@ async def enrich_cve_worker(request: Request, verified: bool = Depends(verify_qs
         except Exception as inner_e:
             logger.error(f"Failed to release worker state after exception: {inner_e}")
             return JSONResponse(status_code=500, content={"error": "Internal error", "status": 500})
+
+@worker_router.post("/sync-intelligence")
+async def sync_intelligence_worker(request: Request, verified: bool = Depends(verify_qstash_signature)):
+    """
+    Background job triggered periodically via QStash to refresh stale CPEs in the local cache.
+    """
+    if not SUPABASE_URL or not SUPABASE_SECRET_KEY:
+        return JSONResponse(status_code=500, content={"error": "Supabase not configured"})
+
+    headers = {
+        "apikey": SUPABASE_SECRET_KEY,
+        "Authorization": f"Bearer {SUPABASE_SECRET_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    import requests
+    from datetime import datetime, timezone
+
+    # 1. Query stale CPEs
+    now_utc = datetime.now(timezone.utc).isoformat()
+    url = f"{SUPABASE_URL.rstrip('/')}/rest/v1/cpe_cve_cache?expires_at=lt.{now_utc}&limit=10"
+
+    try:
+        resp = requests.get(url, headers=headers, timeout=10.0)
+        if resp.status_code != 200:
+            logger.error("Failed to fetch stale cache records")
+            return JSONResponse(status_code=500, content={"error": "cache_fetch_failed"})
+
+        stale_records = resp.json()
+    except Exception as e:
+        logger.error(f"Failed to fetch stale cache: {e}")
+        return JSONResponse(status_code=500, content={"error": "db_error"})
+
+    if not stale_records:
+        return JSONResponse(status_code=200, content={"status": "completed", "synced": 0})
+
+    from api.scanner.cve_sync import sync_cpe_cve_cache
+    sess = requests.Session()
+
+    synced_count = 0
+    failed_count = 0
+
+    for rec in stale_records:
+        cpe = rec.get("cpe")
+        if not cpe: continue
+
+        success = sync_cpe_cve_cache(cpe, session=sess)
+        if success:
+            synced_count += 1
+        else:
+            failed_count += 1
+
+    return JSONResponse(status_code=200, content={
+        "status": "completed",
+        "synced": synced_count,
+        "failed": failed_count,
+        "total": len(stale_records)
+    })

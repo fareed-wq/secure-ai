@@ -29,31 +29,51 @@ def sync_cpe_cve_cache(cpe: str, session: Optional[requests.Session] = None) -> 
         "Prefer": "return=representation, resolution=merge-duplicates"
     }
 
-    # 1. Fetch from NVD (bounded network call, no unbounded loop)
+    # 1. Fetch existing cache early
+    import urllib.parse
+    existing_cves = {}
+    existing_cache = None
+    try:
+        ext_url = f"{supabase_url.rstrip('/')}/rest/v1/cpe_cve_cache?cpe=eq.{urllib.parse.quote(cpe)}&select=*"
+        ext_resp = sess.get(ext_url, headers=headers, timeout=10.0)
+        if ext_resp.status_code == 200 and ext_resp.json():
+            existing_cache = ext_resp.json()[0]
+            for c in existing_cache.get("cves_json", []):
+                existing_cves[c["id"]] = c
+    except Exception as e:
+        logger.warning(f"Could not fetch existing cache for {cpe}: {e}")
+
+    def _bump_expiration():
+        if existing_cache:
+            now = datetime.now(timezone.utc)
+            expires = (now + timedelta(hours=1)).isoformat()
+            try:
+                sess.patch(
+                    f"{supabase_url.rstrip('/')}/rest/v1/cpe_cve_cache?cpe=eq.{urllib.parse.quote(cpe)}",
+                    headers=headers,
+                    json={"expires_at": expires},
+                    timeout=5.0
+                )
+            except Exception:
+                pass
+
+    # 2. Fetch from NVD (bounded network call, no unbounded loop)
     try:
         nvd_url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName={requests.utils.quote(cpe)}"
         resp = sess.get(nvd_url, timeout=15.0)
 
         if resp.status_code != 200:
             logger.warning(f"NVD API returned {resp.status_code} for {cpe}. Preserving existing cache.")
+            _bump_expiration()
             return False
 
         data = resp.json()
     except Exception as e:
         logger.warning(f"NVD sync failed for {cpe}: {e}. Preserving existing cache.")
+        _bump_expiration()
         return False
 
-    # 2. Deterministic Parsing & Provenance
-    import urllib.parse
-    existing_cves = {}
-    try:
-        ext_url = f"{supabase_url.rstrip('/')}/rest/v1/cpe_cve_cache?cpe=eq.{urllib.parse.quote(cpe)}&select=cves_json"
-        ext_resp = sess.get(ext_url, headers=headers, timeout=10.0)
-        if ext_resp.status_code == 200 and ext_resp.json():
-            for c in ext_resp.json()[0].get("cves_json", []):
-                existing_cves[c["id"]] = c
-    except Exception as e:
-        logger.warning(f"Could not fetch existing cache for {cpe}: {e}")
+    # 3. Deterministic Parsing & Provenance
 
     parsed_cves: List[Dict[str, Any]] = []
     seen_cves = set()
@@ -277,12 +297,21 @@ def sync_cpe_cve_cache(cpe: str, session: Optional[requests.Session] = None) -> 
     }
 
     try:
-        upsert_resp = sess.post(
-            f"{supabase_url.rstrip('/')}/rest/v1/cpe_cve_cache",
-            headers=headers,
-            json=payload,
-            timeout=10.0
-        )
+        import urllib.parse
+        if existing_cache:
+            # Prevent older/stale job from overwriting newer job's data (OCC)
+            patch_url = f"{supabase_url.rstrip('/')}/rest/v1/cpe_cve_cache?cpe=eq.{urllib.parse.quote(cpe)}&updated_at=eq.{existing_cache['updated_at']}"
+            upsert_resp = sess.patch(patch_url, headers=headers, json=payload, timeout=10.0)
+            if upsert_resp.status_code in (200, 204) and len(upsert_resp.json()) == 0:
+                # Concurrent update won; silently yield
+                return True
+        else:
+            upsert_resp = sess.post(
+                f"{supabase_url.rstrip('/')}/rest/v1/cpe_cve_cache",
+                headers=headers,
+                json=payload,
+                timeout=10.0
+            )
         if upsert_resp.status_code not in (200, 201):
             logger.error(f"Failed to upsert cache for {cpe}: {upsert_resp.status_code} {upsert_resp.text}")
             return False

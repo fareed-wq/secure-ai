@@ -81,7 +81,10 @@ def test_sync_cpe_cve_cache_nvd_failure(mock_env):
     
     # Should fail cleanly, preserving existing cache
     assert result is False
-    assert len(responses.calls) == 1
+    nvd_calls = [call for call in responses.calls if "nvd.nist.gov" in call.request.url]
+    assert len(nvd_calls) == 1
+    cache_get = [call for call in responses.calls if "cpe_cve_cache" in call.request.url and call.request.method == "GET"]
+    assert len(cache_get) == 1
 
 @responses.activate
 def test_sync_cpe_cve_cache_deduplication(mock_env):

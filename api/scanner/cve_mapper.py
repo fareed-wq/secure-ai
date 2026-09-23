@@ -35,6 +35,21 @@ def get_cached_cves(cpe: str, supabase_url: str, supabase_key: str, session: req
             if data and len(data) > 0:
                 # Return the cached deterministic CVE list
                 return data[0].get("cves_json", [])
+            else:
+                # Targeted refresh: ensure a shell record exists so the background sync job picks it up
+                payload = {
+                    "cpe": cpe,
+                    "cves_json": [],
+                    "fetched_at": "1970-01-01T00:00:00Z",
+                    "expires_at": "1970-01-01T00:00:00Z",
+                    "updated_at": "1970-01-01T00:00:00Z"
+                }
+                headers_upsert = headers.copy()
+                headers_upsert["Prefer"] = "return=minimal, resolution=ignore-duplicates"
+                try:
+                    sess.post(f"{supabase_url.rstrip('/')}/rest/v1/cpe_cve_cache", headers=headers_upsert, json=payload, timeout=2.0)
+                except Exception:
+                    pass
     except Exception as e:
         logger.warning(f"Failed to fetch cached CVEs for {cpe}: {e}")
 
