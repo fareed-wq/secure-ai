@@ -29,6 +29,15 @@ const TechnicalReport = ({ reportData }) => {
     return Array.from(owaspSet).sort();
   }, [findings]);
 
+  const sortedFindings = [...findings].sort((a, b) => {
+    const weights = { Critical: 6, High: 5, Medium: 4, Low: 3, Informational: 2, Passed: 1 };
+    const weightDiff = (weights[b.severity] || 0) - (weights[a.severity] || 0);
+    if (weightDiff !== 0) return weightDiff;
+    const nameA = a.name || '';
+    const nameB = b.name || '';
+    return nameA.localeCompare(nameB);
+  });
+
   // Client-side filtering
   const filteredFindings = useMemo(() => {
     return sortedFindings.filter(finding => {
@@ -57,15 +66,6 @@ const TechnicalReport = ({ reportData }) => {
       return true;
     });
   }, [sortedFindings, severityFilter, owaspFilter, searchQuery]);
-
-  const sortedFindings = [...findings].sort((a, b) => {
-    const weights = { Critical: 6, High: 5, Medium: 4, Low: 3, Informational: 2, Passed: 1 };
-    const weightDiff = (weights[b.severity] || 0) - (weights[a.severity] || 0);
-    if (weightDiff !== 0) return weightDiff;
-    const nameA = a.name || '';
-    const nameB = b.name || '';
-    return nameA.localeCompare(nameB);
-  });
 
   const domainGroups = [
     { key: 'transport_tls', label: 'Transport & TLS Security', icon: <Lock className="w-4 h-4 text-cyan-400" /> },
