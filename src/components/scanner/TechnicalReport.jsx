@@ -1,4 +1,4 @@
-import { calculateFindingPriority, calculateCvePriority } from '../../utils/priority';
+import { calculateFindingPriority, calculateCvePriority, getPriorityBadgeClasses } from '../../utils/priority';
 import React, { useState, useMemo } from 'react';
 import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck, Search, Filter } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
@@ -88,15 +88,7 @@ const TechnicalReport = ({ reportData }) => {
   };
 
   const getPriorityBadge = (priority) => {
-    const styles = {
-      'P1': 'text-rose-400 bg-rose-950/30 border-rose-800',
-      'P2': 'text-amber-400 bg-amber-950/30 border-amber-800',
-      'P3': 'text-yellow-400 bg-yellow-950/30 border-yellow-800',
-      'P4': 'text-cyan-400 bg-cyan-950/30 border-cyan-800',
-      'P5': 'text-violet-400 bg-violet-950/30 border-violet-800',
-      'UNSCORED': 'text-slate-400 bg-slate-800 border-slate-700'
-    };
-    const style = styles[priority] || styles['UNSCORED'];
+    const style = getPriorityBadgeClasses(priority);
     return <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${style}`}>{priority}</span>;
   };
 

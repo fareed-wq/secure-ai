@@ -5,7 +5,7 @@ import FindingCard from './FindingCard';
 import ScoreDisplay from './ScoreDisplay';
 import { getSimpleSummary } from '../../lib/assessmentReporting';
 import { getTranslation } from '../../lib/utils/translations';
-import { calculateFindingPriority } from '../../utils/priority';
+import { calculateFindingPriority, getPriorityBadgeClasses } from '../../utils/priority';
 
 const SimpleReport = ({ reportData }) => {
   const getCategoryIcon = (category) => {
@@ -251,7 +251,7 @@ const SimpleReport = ({ reportData }) => {
                           <span className={`w-1.5 h-1.5 rounded-full ${severityDot}`}></span>
                           {issue.severity}
                         </span>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 shrink-0">
+                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border shrink-0 ${getPriorityBadgeClasses(priority)}`}>
                           {priority}
                         </span>
                       </div>
