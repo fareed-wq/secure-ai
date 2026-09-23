@@ -94,31 +94,6 @@ const FindingCard = ({ issue, idx }) => {
               </div>
           )}
 
-          {/* Business Risk Box */}
-          <div className={`simple-business-risk-box ${issue.severity === 'Critical' || issue.severity === 'High' ? 'simple-business-risk-high' :
-            issue.severity === 'Medium' ? 'simple-business-risk-medium' :
-              issue.severity === 'Informational' ? 'simple-business-risk-info' :
-                'simple-business-risk-low'
-            } ${risk.container} w-full max-w-full sm:max-w-md`}>
-            <div className="mb-1 flex items-center gap-2">
-              <SeverityBadge severity={issue.severity} />
-              <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">Priority: {calculateFindingPriority(issue)}</span>
-            </div>
-            <div className={`simple-business-risk-description ${risk.text}`}>{risk.desc}</div>
-          </div>
-
-          {/* Estimated Effort */}
-          {effort && effort !== 'N/A' && (
-            <div className="bg-slate-900/80 border border-indigo-500/30 rounded-xl p-4 shadow-sm w-full max-w-full sm:max-w-md">
-              <div className="text-xs font-mono font-bold text-indigo-400 tracking-wider uppercase flex items-center gap-1.5" aria-label="Estimated effort to fix">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Estimated Effort
-              </div>
-              <div className="text-base font-bold text-slate-50 mt-1 block">{effort}</div>
-            </div>
-          )}
         </div>
       </div>
     </details>

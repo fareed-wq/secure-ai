@@ -303,12 +303,12 @@ const TechnicalReport = ({ reportData }) => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-center gap-2 flex-1 w-full sm:w-48 ml-0 sm:ml-8 mt-4 sm:mt-0">
+                  <div className="flex flex-col justify-center gap-2 w-max ml-0 sm:ml-8 mt-4 sm:mt-0">
                     {covData.map((seg, i) => (
-                      <div key={i} className="flex items-center text-sm">
-                        <span className={`w-3 h-3 rounded-full ${seg.dot} mr-3 flex-shrink-0`}></span>
-                        <span className="text-slate-300 font-medium flex-1">{seg.label}</span>
-                        <span className="text-slate-500 font-mono text-xs pl-4">{seg.count}</span>
+                      <div key={i} className="inline-flex items-center gap-2 text-sm">
+                        <span className={`w-3 h-3 rounded-full ${seg.dot} flex-shrink-0`}></span>
+                        <span className="text-slate-300 font-medium">{seg.label}</span>
+                        <span className="text-slate-500 font-mono text-xs font-bold">{seg.count}</span>
                       </div>
                     ))}
                   </div>
