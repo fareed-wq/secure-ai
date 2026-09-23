@@ -1,5 +1,22 @@
 export function calculateFindingPriority(finding) {
     if (!finding) return 'UNSCORED';
+
+    // 1. Check CVE intelligence for P1 thresholds
+    let maxCvss = -1.0;
+    if (typeof finding.cvss_score === 'number') {
+        maxCvss = finding.cvss_score;
+    }
+
+    let epssScore = -1.0;
+    if (finding.epss_info && finding.epss_info.status === 'AVAILABLE' && typeof finding.epss_info.epss === 'number') {
+        epssScore = finding.epss_info.epss;
+    }
+
+    if (maxCvss >= 9.0 || epssScore >= 0.1) {
+        return 'P1';
+    }
+
+    // 2. Fall back to standard severity mapping for P2-P5
     const severity = finding.severity;
     if (severity === 'High') return 'P2';
     if (severity === 'Medium') return 'P3';

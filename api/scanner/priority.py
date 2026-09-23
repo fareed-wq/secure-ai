@@ -1,4 +1,21 @@
 def calculate_finding_priority(finding: dict) -> str:
+    # 1. Check CVE intelligence for P1 thresholds
+    max_cvss = -1.0
+    cvss = finding.get('cvss_score')
+    if isinstance(cvss, (int, float)):
+        max_cvss = float(cvss)
+
+    epss_score = -1.0
+    epss_info = finding.get('epss_info')
+    if isinstance(epss_info, dict) and epss_info.get('status') == 'AVAILABLE':
+        val = epss_info.get('epss')
+        if isinstance(val, (int, float)):
+            epss_score = float(val)
+
+    if max_cvss >= 9.0 or epss_score >= 0.1:
+        return 'P1'
+
+    # 2. Fall back to standard severity mapping for P2-P5
     severity = finding.get('severity')
     if severity == 'High': return 'P2'
     if severity == 'Medium': return 'P3'
