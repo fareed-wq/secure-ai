@@ -71,7 +71,7 @@ def test_sync_cpe_cve_cache_full_cvss_cwe(mock_env):
     result = sync_cpe_cve_cache(cpe, session=sess)
     
     assert result is True
-    post_call = responses.calls[1]
+    post_call = next(c for c in responses.calls if c.request.method == 'POST')
     data = json.loads(post_call.request.body.decode('utf-8'))
     
     cve_rec = data["cves_json"][0]
@@ -122,7 +122,8 @@ def test_sync_cpe_cve_cache_multiple_cvss_versions(mock_env):
     
     sess = requests.Session()
     sync_cpe_cve_cache(cpe, session=sess)
-    data = json.loads(responses.calls[1].request.body.decode('utf-8'))
+    post_call = next(c for c in responses.calls if c.request.method == "POST")
+    data = json.loads(post_call.request.body.decode('utf-8'))
     
     cve_rec = data["cves_json"][0]
     # We expect V3.1 to take precedence if we follow V4 > V3.1 > V3.0 > V2
@@ -156,7 +157,8 @@ def test_sync_cpe_cve_cache_no_enrichment(mock_env):
     
     sess = requests.Session()
     sync_cpe_cve_cache(cpe, session=sess)
-    data = json.loads(responses.calls[1].request.body.decode('utf-8'))
+    post_call = next(c for c in responses.calls if c.request.method == "POST")
+    data = json.loads(post_call.request.body.decode('utf-8'))
     
     cve_rec = data["cves_json"][0]
     assert "cvss_score" not in cve_rec or cve_rec["cvss_score"] is None
@@ -191,7 +193,8 @@ def test_sync_cpe_cve_cache_duplicate_cwe(mock_env):
     
     sess = requests.Session()
     sync_cpe_cve_cache(cpe, session=sess)
-    data = json.loads(responses.calls[1].request.body.decode('utf-8'))
+    post_call = next(c for c in responses.calls if c.request.method == "POST")
+    data = json.loads(post_call.request.body.decode('utf-8'))
     
     cve_rec = data["cves_json"][0]
     # CWES must be deduplicated and sorted deterministically
@@ -306,7 +309,8 @@ def test_sync_cpe_cve_cache_missing_cvss_fields(mock_env):
     cs.sync_cpe_cve_cache(cpe, session=sess)
     
     import json
-    data = json.loads(responses.calls[1].request.body.decode('utf-8'))
+    post_call = next(c for c in responses.calls if c.request.method == "POST")
+    data = json.loads(post_call.request.body.decode('utf-8'))
     cve_rec = data["cves_json"][0]
     
     # Must explicitly be None, not 0.0 or "UNKNOWN" or ""

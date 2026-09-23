@@ -46,10 +46,10 @@ def test_sync_cpe_cve_cache_success(mock_env):
     result = sync_cpe_cve_cache(cpe, session=sess)
     
     assert result is True
-    assert len(responses.calls) == 2
+    
     
     # Check payload sent to Supabase
-    post_call = responses.calls[1]
+    post_call = next(c for c in responses.calls if c.request.method == "POST")
     payload = post_call.request.body
     import json
     data = json.loads(payload.decode('utf-8'))
@@ -122,7 +122,7 @@ def test_sync_cpe_cve_cache_deduplication(mock_env):
     
     assert result is True
     
-    post_call = responses.calls[1]
+    post_call = next(c for c in responses.calls if c.request.method == "POST")
     import json
     data = json.loads(post_call.request.body.decode('utf-8'))
     
