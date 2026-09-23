@@ -1012,7 +1012,7 @@ const TechnicalReport = ({ reportData }) => {
                       })()}
 
                       {/* Empty State */}
-                      {elements.length === 0 && (
+                      {groupFindings.length === 0 && (
                         <div className="text-center py-12">
                           <Search className="w-12 h-12 mx-auto mb-3 text-slate-600 opacity-50" aria-hidden="true" />
                           <p className="text-slate-400 text-sm">
