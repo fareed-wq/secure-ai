@@ -22,7 +22,7 @@ def test_13_normal_scan_no_external_calls(mock_env):
     # 11. shell-record creation only once
     cpe = "cpe:2.3:a:nginx:nginx:1.20.0:*:*:*:*:*:*:*"
     encoded_cpe = urllib.parse.quote(cpe)
-    
+
     responses.add(
         responses.GET,
         re.compile(r"http://mock-supabase/rest/v1/cpe_cve_cache.*"),
@@ -35,14 +35,14 @@ def test_13_normal_scan_no_external_calls(mock_env):
         json={},
         status=201
     )
-    
+
     res = get_cached_cves(cpe, "http://mock-supabase", "test")
     assert res is None
-    
+
     # Assert no NVD calls
     for call in responses.calls:
         assert "nvd.nist.gov" not in call.request.url
-    
+
     # Assert shell record inserted
     post_calls = [c for c in responses.calls if c.request.method == "POST"]
     assert len(post_calls) == 1
@@ -56,7 +56,7 @@ def test_7_nvd_failure_preserves(mock_env):
     # 10. stale/current semantics (backoff bump)
     cpe = "cpe:2.3:a:nginx:nginx:1.20.0:*:*:*:*:*:*:*"
     encoded_cpe = urllib.parse.quote(cpe)
-    
+
     responses.add(
         responses.GET,
         re.compile(r"http://mock-supabase/rest/v1/cpe_cve_cache.*"),
@@ -74,10 +74,10 @@ def test_7_nvd_failure_preserves(mock_env):
         json={},
         status=200
     )
-    
+
     res = sync_cpe_cve_cache(cpe)
     assert res is False
-    
+
     patch_calls = [c for c in responses.calls if c.request.method == "PATCH"]
     post_calls = [c for c in responses.calls if c.request.method == "POST"]
     assert len(patch_calls) == 1
@@ -100,15 +100,15 @@ def test_1_3_4_scheduled_sync(mock_env):
         ],
         status=200
     )
-    
+
     with patch("api.scanner.cve_sync.sync_cpe_cve_cache") as mock_sync, \
          patch("api.scanner.enrich_worker.SUPABASE_URL", "http://mock-supabase"), \
          patch("api.scanner.enrich_worker.SUPABASE_SECRET_KEY", "test-key"):
         mock_sync.return_value = True
-        
+
         req = MagicMock(spec=Request)
         res = asyncio.run(sync_intelligence_worker(req, verified=True))
-        
+
         assert res.status_code == 200
         body = json.loads(res.body)
         assert body["status"] == "completed"
@@ -120,7 +120,7 @@ def test_8_epss_failure_preserves(mock_env):
     # 8. FIRST EPSS failure preserves existing EPSS
     cpe = "cpe:2.3:a:nginx:nginx:1.20.0:*:*:*:*:*:*:*"
     encoded_cpe = urllib.parse.quote(cpe)
-    
+
     responses.add(
         responses.GET,
         re.compile(r"http://mock-supabase/rest/v1/cpe_cve_cache.*"),
@@ -153,18 +153,18 @@ def test_8_epss_failure_preserves(mock_env):
         json=[{"id": "patched"}],
         status=200
     )
-    
+
     res = sync_cpe_cve_cache(cpe)
     assert res is True
-    
+
     patch_calls = [c for c in responses.calls if c.request.method == "PATCH" and "updated_at=eq" in c.request.url]
     assert len(patch_calls) == 1
     req_body = json.loads(patch_calls[0].request.body)
     saved_cves = req_body["cves_json"]
-    
+
     assert len(saved_cves) == 1
     cve = saved_cves[0]
-    
+
     # EPSS failed (standalone API) so it MUST preserve old
     assert cve["epss_info"]["status"] == "AVAILABLE"
     assert cve["epss_info"]["epss"] == 0.5
@@ -174,7 +174,7 @@ def test_12_concurrent_overwrite_protection(mock_env):
     # 12. concurrent/stale overwrite protection
     cpe = "cpe:2.3:a:nginx:nginx:1.20.0:*:*:*:*:*:*:*"
     encoded_cpe = urllib.parse.quote(cpe)
-    
+
     responses.add(
         responses.GET,
         re.compile(r"http://mock-supabase/rest/v1/cpe_cve_cache.*"),
@@ -187,7 +187,7 @@ def test_12_concurrent_overwrite_protection(mock_env):
         json={"vulnerabilities": []},
         status=200
     )
-    
+
     # 0 rows returned = concurrent update happened
     responses.add(
         responses.PATCH,
@@ -195,6 +195,93 @@ def test_12_concurrent_overwrite_protection(mock_env):
         json=[],
         status=200
     )
-    
+
     res = sync_cpe_cve_cache(cpe)
     assert res is True # Yields silently
+
+@responses.activate
+def test_duplicate_stale_cpe_elimination(mock_env):
+    responses.add(
+        responses.GET,
+        re.compile(r"http://mock-supabase/rest/v1/cpe_cve_cache\?expires_at=lt.*limit=10"),
+        json=[
+            {"cpe": "cpe:2.3:a:nginx:nginx:1.20.0:*:*:*:*:*:*:*"},
+            {"cpe": "cpe:2.3:a:nginx:nginx:1.20.0:*:*:*:*:*:*:*"}
+        ],
+        status=200
+    )
+
+    with patch("api.scanner.cve_sync.sync_cpe_cve_cache") as mock_sync, \
+         patch("api.scanner.enrich_worker.SUPABASE_URL", "http://mock-supabase"), \
+         patch("api.scanner.enrich_worker.SUPABASE_SECRET_KEY", "test-key"):
+        mock_sync.return_value = True
+
+        req = MagicMock(spec=Request)
+        res = asyncio.run(sync_intelligence_worker(req, verified=True))
+
+        body = json.loads(res.body)
+        assert body["synced"] == 1
+        assert mock_sync.call_count == 1
+
+@responses.activate
+def test_one_cpe_failure_does_not_corrupt_others(mock_env):
+    responses.add(
+        responses.GET,
+        re.compile(r"http://mock-supabase/rest/v1/cpe_cve_cache\?expires_at=lt.*limit=10"),
+        json=[
+            {"cpe": "cpe:2.3:a:bad:cpe:1.0:*:*:*:*:*:*:*"},
+            {"cpe": "cpe:2.3:a:good:cpe:1.0:*:*:*:*:*:*:*"}
+        ],
+        status=200
+    )
+
+    def side_effect(cpe, session):
+        if "bad" in cpe: return False
+        return True
+
+    with patch("api.scanner.cve_sync.sync_cpe_cve_cache") as mock_sync, \
+         patch("api.scanner.enrich_worker.SUPABASE_URL", "http://mock-supabase"), \
+         patch("api.scanner.enrich_worker.SUPABASE_SECRET_KEY", "test-key"):
+        mock_sync.side_effect = side_effect
+
+        req = MagicMock(spec=Request)
+        res = asyncio.run(sync_intelligence_worker(req, verified=True))
+
+        body = json.loads(res.body)
+        assert body["synced"] == 1
+        assert body["failed"] == 1
+        assert mock_sync.call_count == 2
+
+@responses.activate
+def test_successful_refresh_resets_freshness(mock_env):
+    cpe = "cpe:2.3:a:nginx:nginx:1.20.0:*:*:*:*:*:*:*"
+    responses.add(
+        responses.GET,
+        re.compile(r"http://mock-supabase/rest/v1/cpe_cve_cache.*select=.*\*"),
+        json=[],
+        status=200
+    )
+    responses.add(
+        responses.GET,
+        re.compile(r"https://services.nvd.nist.gov/rest/json/cves/2.0.*"),
+        json={"vulnerabilities": []},
+        status=200
+    )
+    responses.add(
+        responses.POST,
+        re.compile(r"http://mock-supabase/rest/v1/cpe_cve_cache"),
+        json={},
+        status=201
+    )
+
+    res = sync_cpe_cve_cache(cpe)
+    assert res is True
+
+    post_calls = [c for c in responses.calls if c.request.method == "POST"]
+    assert len(post_calls) == 1
+    req_body = json.loads(post_calls[0].request.body)
+
+    expires = datetime.fromisoformat(req_body["expires_at"].replace("Z", "+00:00"))
+    now = datetime.now(timezone.utc)
+    diff = expires - now
+    assert 6 <= diff.days <= 7

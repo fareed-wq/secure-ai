@@ -292,12 +292,22 @@ async def sync_intelligence_worker(request: Request, verified: bool = Depends(ve
     from api.scanner.cve_sync import sync_cpe_cve_cache
     sess = requests.Session()
 
+    import time
+    start_time = time.time()
+    BUDGET = 45.0
+
     synced_count = 0
     failed_count = 0
+    seen = set()
 
     for rec in stale_records:
+        if time.time() - start_time > BUDGET:
+            break
+
         cpe = rec.get("cpe")
-        if not cpe: continue
+        if not cpe or cpe in seen:
+            continue
+        seen.add(cpe)
 
         success = sync_cpe_cve_cache(cpe, session=sess)
         if success:
