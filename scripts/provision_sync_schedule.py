@@ -23,10 +23,10 @@ def provision_sync_schedule():
         except Exception:
             pass
             
-        print(f"Creating QStash schedule for {destination} every 5 minutes...")
+        print(f"Creating QStash schedule for {destination} daily at 03:00 UTC...")
         res_id = client.schedule.create(
             destination=destination,
-            cron="*/5 * * * *",
+            cron="0 3 * * *",
             headers={
                 "Content-Type": "application/json"
             },
