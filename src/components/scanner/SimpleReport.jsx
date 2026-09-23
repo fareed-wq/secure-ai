@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, ShieldAlert, Target, CheckCircle2, AlertTriangle, Info, Activity, Lock, Globe, Layout, Key, Copy, Check, Shield, Layers, Code2, Box, Mail, ChevronDown } from 'lucide-react';
 import FindingCard from './FindingCard';
 import ScoreDisplay from './ScoreDisplay';
 import { getSimpleSummary } from '../../lib/assessmentReporting';
+import { getTranslation } from '../../lib/utils/translations';
+import { calculateFindingPriority } from '../../utils/priority';
 
 const SimpleReport = ({ reportData }) => {
   const getCategoryIcon = (category) => {
@@ -29,6 +31,31 @@ const SimpleReport = ({ reportData }) => {
   const score = reportData?.score;
   const isWafBlocked = findings.length === 1 && findings[0]?.name?.includes('WAF');
 
+  // Finding distribution derived only from real report data (no fabricated values)
+  const totalFindings = findings.length;
+  const findingDistribution = [
+    { label: 'High', count: highRiskCount, color: 'text-red-500', dot: 'bg-red-500' },
+    { label: 'Medium', count: mediumRiskCount, color: 'text-amber-500', dot: 'bg-amber-500' },
+    { label: 'Low', count: lowRiskCount, color: 'text-purple-500', dot: 'bg-purple-500' },
+    { label: 'Passed', count: passed.length, color: 'text-emerald-500', dot: 'bg-emerald-500' },
+    { label: 'Informational', count: informational.length, color: 'text-blue-500', dot: 'bg-blue-500' },
+    { label: 'Inconclusive', count: inconclusive.length, color: 'text-slate-500', dot: 'bg-slate-500' },
+  ];
+  const activeDistribution = findingDistribution.filter(d => d.count > 0);
+  const DONUT_CIRCUMFERENCE = 2 * Math.PI * 52;
+
+  // Risk-level status badge derived only from the real overall score
+  const getRiskBadge = () => {
+    if (isWafBlocked || score == null) {
+      return { label: 'Scan Incomplete', dot: 'bg-slate-400', color: 'bg-slate-500/10 text-slate-400 border-slate-500/30' };
+    }
+    if (score >= 90) return { label: 'Low Risk', dot: 'bg-emerald-400', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' };
+    if (score >= 80) return { label: 'Moderate Risk', dot: 'bg-teal-400', color: 'bg-teal-500/10 text-teal-400 border-teal-500/30' };
+    if (score >= 70) return { label: 'Elevated Risk', dot: 'bg-amber-400', color: 'bg-amber-500/10 text-amber-400 border-amber-500/30' };
+    return { label: 'High Risk', dot: 'bg-rose-400', color: 'bg-rose-500/10 text-rose-400 border-rose-500/30' };
+  };
+  const riskBadge = getRiskBadge();
+
   let healthSummary = "";
   if (reportData?.executive_summary && isWafBlocked) {
     healthSummary = reportData.executive_summary;
@@ -46,29 +73,28 @@ const SimpleReport = ({ reportData }) => {
     healthSummary = "Your website faces critical security risks. Resolving the top priorities below is strongly recommended to protect your users.";
   }
 
-  // Calculate domain-based health from backend findings
-  const calculateDomainHealth = (domain) => {
-    if (score === null) return -1; // Zero meaningful checks completed overall
+  // Calculate domain-based health from backend findings - memoized
+  const calculateDomainHealth = useMemo(() => (domain) => {
+    if (score === null) return -1;
     const domainFindings = findings.filter(f => f.domain === domain);
     const domainIssues = domainFindings.filter(f => f.severity !== 'Passed' && f.severity !== 'Informational');
-    if (domainFindings.length === 0) return 100; // Meaningful checks ran but found no issues
+    if (domainFindings.length === 0) return 100;
     if (domainIssues.length === 0) return 100;
     if (domainIssues.some(f => f.severity === 'Critical' || f.severity === 'High')) return 20;
     if (domainIssues.some(f => f.severity === 'Medium')) return 50;
     return 70;
-  };
+  }, [findings, score]);
 
-  
   const techIdentities = reportData?.technology_identities || [];
   const uniqueProducts = Array.from(new Set(techIdentities.map(t => t.product))).filter(Boolean);
 
-  const healthMetrics = [
+  const healthMetrics = useMemo(() => [
     { name: 'Transport & TLS', val: calculateDomainHealth('transport_tls'), icon: Lock },
     { name: 'Browser Defense', val: calculateDomainHealth('browser_defense'), icon: ShieldAlert },
     { name: 'API Surface', val: calculateDomainHealth('api_surface'), icon: Code2 },
     { name: 'Email & Domain', val: calculateDomainHealth('email_domain'), icon: Mail },
     { name: 'Network & Service Exposure', val: calculateDomainHealth('network_services'), icon: Activity }
-  ];
+  ], [calculateDomainHealth]);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="simple-report space-y-8" id="report-content">
@@ -77,43 +103,111 @@ const SimpleReport = ({ reportData }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
         <div className="simple-executive-summary lg:col-span-2 bg-slate-900 border border-slate-800 text-slate-50 p-6 lg:p-8 rounded-3xl shadow-xl flex flex-col h-fit">
-          <div>
-            <h2 className="text-2xl font-black mb-4">Executive Summary</h2>
-            <p className="text-xl text-slate-300 leading-relaxed">
-              {healthSummary}
-            </p>
-            <p className="text-sm text-slate-500 mt-4 leading-relaxed">
-              This assessment is a passive, external scan of publicly observable behavior. It does not replace comprehensive penetration testing or guarantee that no other vulnerabilities exist.
-            </p>
-              {uniqueProducts.length > 0 && (
-                <div className="mt-8 pt-6 border-t border-slate-800">
-                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <Layers className="w-4 h-4" /> Detected Technology Profile
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {uniqueProducts.map((prod, i) => (
-                      <span key={i} className="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-full text-xs font-medium">
-                        {prod}
-                      </span>
-                    ))}
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-black">Executive Summary</h2>
+              <div className="flex items-center gap-2 mt-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                </span>
+                <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">Passive External Assessment</span>
+              </div>
+            </div>
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border ${riskBadge.color}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${riskBadge.dot}`}></span>
+              {riskBadge.label}
+            </span>
+          </div>
+
+          <p className="text-xl text-slate-300 leading-relaxed mt-4">
+            {healthSummary}
+          </p>
+          <p className="text-sm text-slate-500 mt-4 leading-relaxed">
+            This assessment is a passive, external scan of publicly observable behavior. It does not replace comprehensive penetration testing or guarantee that no other vulnerabilities exist.
+          </p>
+
+          {uniqueProducts.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-slate-800">
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <Layers className="w-4 h-4" /> Detected Technology Profile
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {uniqueProducts.map((prod, i) => (
+                  <span key={i} className="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-full text-xs font-medium">
+                    {prod}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {highRiskCount > 0 && (
+            <div className="rounded-xl border border-rose-500/30 border-l-4 border-l-rose-500 bg-rose-500/10 p-3.5 flex items-center gap-3 mt-6" role="alert">
+              <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse flex-shrink-0" aria-hidden="true" />
+              <p className="text-xs text-rose-200">
+                <strong>Priority Focus:</strong> Resolve {highRiskCount} High-risk finding(s) to optimize overall security posture.
+              </p>
+            </div>
+          )}
+
+          {/* Finding Distribution - real report data only */}
+          {totalFindings > 0 && (
+            <div className="mt-6 pt-6 border-t border-slate-800">
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Activity className="w-4 h-4" aria-hidden="true" /> Finding Distribution
+              </h3>
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0" role="img" aria-label={`Finding distribution: ${findingDistribution.map(d => `${d.label}: ${d.count}`).join(', ')}`}>
+                  <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 128 128">
+                    <circle cx="64" cy="64" r="52" stroke="currentColor" strokeWidth="14" fill="transparent" className="text-slate-800" aria-hidden="true" />
+                    {activeDistribution.map((seg, i) => {
+                      // Calculate cumulative fraction once per segment (O(n) instead of O(n²))
+                      const prevFraction = activeDistribution.slice(0, i).reduce((s, p) => s + p.count, 0) / totalFindings;
+                      const dashLen = DONUT_CIRCUMFERENCE * (seg.count / totalFindings);
+                      return (
+                        <circle
+                          key={i}
+                          cx="64"
+                          cy="64"
+                          r="52"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="14"
+                          strokeDasharray={`${dashLen} ${DONUT_CIRCUMFERENCE - dashLen}`}
+                          strokeDashoffset={DONUT_CIRCUMFERENCE * (1 - prevFraction)}
+                          strokeLinecap="butt"
+                          className={seg.color}
+                        />
+                      );
+                    })}
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-2xl font-black text-slate-50">{totalFindings}</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider">Findings</span>
                   </div>
                 </div>
-              )}
-
-            {highRiskCount > 0 && (
-              <div className="rounded-xl border border-rose-500/30 border-l-4 border-l-rose-500 bg-rose-500/10 p-3.5 flex items-center gap-3 my-4">
-                <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse flex-shrink-0" />
-                <p className="text-xs text-rose-200">
-                  <strong>Priority Focus:</strong> Resolve {highRiskCount} High-risk finding(s) to optimize overall security posture.
-                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 flex-1 w-full">
+                  {activeDistribution.map((seg, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className={`w-3 h-3 rounded-full ${seg.dot}`}></span>
+                      <span className="text-slate-300 font-medium">{seg.label}</span>
+                      <span className="text-slate-500 font-mono text-xs ml-auto">{seg.count}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 w-full">
             <div className="simple-stat-card bg-amber-500/10 border border-amber-500/30 rounded-xl min-h-[140px] p-4 flex flex-col justify-between h-full">
               <div>
                 <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">Issues Found</div>
                 <div className="text-4xl font-extrabold tracking-tight mt-2 block text-slate-50">{issues.length}</div>
+              </div>
+              <div className="sr-only" aria-live="polite">
+                {issues.length} security issues found
               </div>
               <div className="border-t border-slate-800/80 pt-2.5 mt-3 flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium ${highRiskCount > 0 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-slate-800/40 text-slate-500 border-slate-800'}`}>
@@ -135,6 +229,9 @@ const SimpleReport = ({ reportData }) => {
                 <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Passed Checks</div>
                 <div className="text-4xl font-extrabold tracking-tight mt-2 block text-emerald-400">{passed.length}</div>
               </div>
+              <div className="sr-only" aria-live="polite">
+                {passed.length} security checks passed
+              </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-emerald-500/15 text-emerald-300 border-emerald-500/30">
                   🟢 {passed.length} Audits Clean
@@ -146,6 +243,9 @@ const SimpleReport = ({ reportData }) => {
                 <div className="text-xs font-bold text-blue-500 uppercase tracking-wider">Informational</div>
                 <div className="text-4xl font-extrabold tracking-tight mt-2 block text-blue-400">{informational.length}</div>
               </div>
+              <div className="sr-only" aria-live="polite">
+                {informational.length} informational observations
+              </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-blue-500/15 text-blue-300 border-blue-500/30">
                   ⚪ {informational.length} Observations
@@ -156,6 +256,9 @@ const SimpleReport = ({ reportData }) => {
               <div>
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Inconclusive</div>
                 <div className="text-4xl font-extrabold tracking-tight mt-2 block text-slate-300">{inconclusive.length}</div>
+              </div>
+              <div className="sr-only" aria-live="polite">
+                {inconclusive.length} inconclusive checks
               </div>
               <div className="pt-3 mt-3 border-t border-slate-800/80 flex items-center">
                 <span className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-mono font-medium bg-slate-800/40 text-slate-400 border-slate-700">
@@ -173,33 +276,107 @@ const SimpleReport = ({ reportData }) => {
           severityCounts={reportData?.severity_counts}
         />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-            {reportData?.assessment_coverage?.available && (
-              <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 text-left flex flex-col justify-center">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Assessment Coverage</div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl font-bold text-slate-200">{Math.round(reportData.assessment_coverage.percentage)}%</span>
-                  <span className="text-xs text-slate-500">of intended checks completed</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+          {reportData?.assessment_coverage?.available && (() => {
+            const cov = reportData.assessment_coverage;
+            const total = cov.completed_modules + cov.partial_modules + cov.failed_modules + cov.blocked_modules + cov.execution_incomplete_modules + cov.not_applicable_modules;
+            const completed = cov.completed_modules + cov.partial_modules;
+            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            let statusColor = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
+            let statusText = 'Optimal';
+            if (cov.failed_modules > 0 || cov.blocked_modules > 0) {
+              statusColor = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
+              statusText = 'Incomplete';
+            } else if (cov.partial_modules > 0) {
+              statusColor = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+              statusText = 'Partial';
+            } else if (cov.execution_incomplete_modules > 0) {
+              statusColor = 'bg-slate-500/10 text-slate-400 border-slate-500/30';
+              statusText = 'In Progress';
+            }
+
+            return (
+              <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-lg">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Assessment Coverage</div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-slate-50">{percentage}%</span>
+                      <span className="text-xs text-slate-500">of intended checks completed</span>
+                    </div>
+                  </div>
+                  <div className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${statusColor}`}>
+                    {statusText}
+                  </div>
+                </div>
+
+                {/* Horizontal Progress Bar */}
+                <div className="w-full bg-slate-950 rounded-full h-2.5 mb-4 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${percentage >= 90 ? 'bg-emerald-500' : percentage >= 70 ? 'bg-amber-500' : percentage >= 50 ? 'bg-amber-600' : 'bg-rose-500'}`}
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+
+                {/* Module Counts */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
+                  {cov.completed_modules > 0 && (
+                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2 text-center">
+                      <div className="font-bold text-emerald-400">{cov.completed_modules}</div>
+                      <div className="text-slate-500">Completed</div>
+                    </div>
+                  )}
+                  {cov.partial_modules > 0 && (
+                    <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 text-center">
+                      <div className="font-bold text-amber-400">{cov.partial_modules}</div>
+                      <div className="text-slate-500">Partial</div>
+                    </div>
+                  )}
+                  {cov.failed_modules > 0 && (
+                    <div className="bg-rose-500/10 border border-rose-500/20 rounded-lg p-2 text-center">
+                      <div className="font-bold text-rose-400">{cov.failed_modules}</div>
+                      <div className="text-slate-500">Failed</div>
+                    </div>
+                  )}
+                  {cov.blocked_modules > 0 && (
+                    <div className="bg-slate-500/10 border border-slate-500/30 rounded-lg p-2 text-center">
+                      <div className="font-bold text-slate-400">{cov.blocked_modules}</div>
+                      <div className="text-slate-500">Blocked</div>
+                    </div>
+                  )}
+                  {cov.execution_incomplete_modules > 0 && (
+                    <div className="bg-slate-500/10 border border-slate-500/30 rounded-lg p-2 text-center">
+                      <div className="font-bold text-slate-400">{cov.execution_incomplete_modules}</div>
+                      <div className="text-slate-500">Incomplete</div>
+                    </div>
+                  )}
+                  {cov.not_applicable_modules > 0 && (
+                    <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-2 text-center">
+                      <div className="font-bold text-slate-400">{cov.not_applicable_modules}</div>
+                      <div className="text-slate-500">N/A</div>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
+            );
+          })()}
 
-            {reportData?.exposure && reportData.exposure.level && (
-              <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 text-left flex flex-col justify-center">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Exposure</div>
-                <div className={`text-sm font-bold leading-tight ${
-                  reportData.exposure.level === 'HIGH' ? 'text-red-400' :
-                  reportData.exposure.level === 'MODERATE' ? 'text-amber-400' :
+          {reportData?.exposure && reportData.exposure.level && (
+            <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 text-left flex flex-col justify-center">
+              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Exposure</div>
+              <div className={`text-sm font-bold leading-tight ${reportData.exposure.level === 'HIGH' ? 'text-red-400' :
+                reportData.exposure.level === 'MODERATE' ? 'text-amber-400' :
                   reportData.exposure.level === 'LOW' ? 'text-emerald-400' : 'text-slate-400'
                 }`}>
-                  {reportData.exposure.level === 'HIGH' ? 'This site exposes additional externally reachable surfaces.' :
-                   reportData.exposure.level === 'MODERATE' ? 'This site is publicly reachable on the web.' :
-                   reportData.exposure.level === 'LOW' ? 'This target appears limited to private/local network addressing.' :
-                   'Exposure could not be determined from this scan.'}
-                </div>
+                {reportData.exposure.level === 'HIGH' ? 'This site exposes additional externally reachable surfaces.' :
+                  reportData.exposure.level === 'MODERATE' ? 'This site is publicly reachable on the web.' :
+                    reportData.exposure.level === 'LOW' ? 'This target appears limited to private/local network addressing.' :
+                      'Exposure could not be determined from this scan.'}
               </div>
-            )}
-          </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 1.5. Target Surface Breakdown */}
@@ -339,7 +516,7 @@ const SimpleReport = ({ reportData }) => {
         return (
           <div className="simple-surface-section rounded-2xl border border-slate-800 bg-slate-950/80 p-6 backdrop-blur-md shadow-xl">
             <div className="flex items-center gap-2.5 mb-6">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20" aria-hidden="true">
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
@@ -354,7 +531,7 @@ const SimpleReport = ({ reportData }) => {
                   <div key={idx} className="simple-surface-card w-full min-w-0 min-h-[150px] p-4 bg-slate-900/60 border border-slate-800 hover:border-slate-700/80 rounded-xl flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5">
                     <div>
                       <div className="flex items-center gap-2 text-[11px] font-bold font-mono tracking-wider text-slate-400 uppercase h-5">
-                        <Icon className={`w-3.5 h-3.5 shrink-0 ${card.iconColor}`} />
+                        <Icon className={`w-3.5 h-3.5 shrink-0 ${card.iconColor}`} aria-hidden="true" />
                         {card.title}
                       </div>
                       <div className="text-base sm:text-lg font-bold text-slate-50 mt-2">
@@ -387,7 +564,7 @@ const SimpleReport = ({ reportData }) => {
               <div key={i} className="space-y-2">
                 <div className="flex justify-between items-center text-sm font-bold mb-1">
                   <span className="text-slate-300 flex items-center gap-2">
-                    <MetricIcon className="w-4 h-4 text-slate-500 shrink-0" />
+                    <MetricIcon className="w-4 h-4 text-slate-500 shrink-0" aria-hidden="true" />
                     {metric.name}
                     {metric.val !== -1 && (
                       <span className="text-[11px] font-mono text-slate-500">{metric.val}%</span>
@@ -413,39 +590,113 @@ const SimpleReport = ({ reportData }) => {
         </div>
       </div>
 
-      {/* 3. Action Checklist (Top Priorities) */}
-      {topPriorities.length > 0 && (
-        <div className="simple-priorities-section bg-amber-950/20 border border-amber-900/50 p-6 md:p-8 rounded-3xl mt-12 mb-12">
-          <details className="group">
-            <summary className="flex items-center gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-              <div className="bg-amber-500/20 p-2.5 md:p-3 rounded-xl text-amber-400 shrink-0">
+      {/* 3. Important Findings — High-level summary of top actionable issues */}
+      {issues.length > 0 && (
+        <div className="simple-important-findings bg-slate-900 border border-slate-800 rounded-3xl shadow-xl overflow-hidden">
+          <div className="bg-slate-950/80 border-b border-slate-800 p-6 md:p-8">
+            <div className="flex items-center gap-4">
+              <div className="bg-rose-500/20 p-2.5 md:p-3 rounded-xl text-rose-400 shrink-0" aria-hidden="true">
                 <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
               </div>
               <div className="flex-1">
-                <h3 className="font-black text-lg md:text-xl text-slate-50 uppercase tracking-wider text-amber-400">
-                  Your Top Priorities
+                <h3 className="font-black text-lg md:text-xl text-slate-50 uppercase tracking-wider">
+                  Important Findings
                 </h3>
-                <p className="text-amber-400/80 text-xs md:text-sm mt-0.5 group-open:hidden">
-                  🔴 {topPriorities.length} priority items identified. [ View Top Priorities ▾ ]
+                <p className="text-slate-400 mt-1 text-sm md:text-base">
+                  {issues.length === 1 ? '1 actionable issue requires attention.' : `${issues.length} actionable issues identified — top ${Math.min(3, issues.length)} shown below.`}
                 </p>
-                <p className="text-amber-400/80 text-xs md:text-sm mt-0.5 hidden group-open:block">
-                  Hide Top Priorities
-                </p>
-              </div>
-              <div className="text-amber-500 bg-amber-500/10 p-2 rounded-full group-open:rotate-180 transition-transform">
-                <ChevronDown size={20} />
-              </div>
-            </summary>
-
-            <div className="mt-6 pt-6 border-t border-amber-900/30">
-              <p className="text-slate-400 mb-6">Review these business risks with your IT provider or web developer.</p>
-              <div className="grid gap-6">
-                {topPriorities.map((issue, idx) => (
-                  <FindingCard key={`priority-${idx}`} issue={issue} idx={idx} />
-                ))}
               </div>
             </div>
-          </details>
+          </div>
+
+          <div className="p-6 md:p-8 space-y-4">
+            {topPriorities.map((issue, idx) => {
+              const trans = getTranslation(issue);
+              const priority = calculateFindingPriority(issue);
+              const severityColor = issue.severity === 'High' || issue.severity === 'Critical' ? 'text-rose-400 bg-rose-500/10 border-rose-500/30' :
+                issue.severity === 'Medium' ? 'text-amber-400 bg-amber-500/10 border-amber-500/30' :
+                  'text-purple-400 bg-purple-500/10 border-purple-500/30';
+              const severityDot = issue.severity === 'High' || issue.severity === 'Critical' ? 'bg-rose-400' :
+                issue.severity === 'Medium' ? 'bg-amber-400' :
+                  'bg-purple-400';
+
+              return (
+                <div key={`important-${idx}`} className="simple-important-finding bg-slate-950/50 border border-slate-800/50 rounded-2xl p-5 hover:border-slate-700/50 transition-colors">
+                  <div className="flex flex-col md:flex-row md:items-start gap-4">
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-slate-800/80 text-slate-50 font-bold text-xl flex items-center justify-center shrink-0">{idx + 1}</div>
+                      <div className="flex flex-col items-center gap-1">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${severityColor}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${severityDot}`}></span>
+                          {issue.severity}
+                        </span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 shrink-0">
+                          {priority}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-lg md:text-xl font-bold text-slate-50 tracking-tight truncate">
+                        {trans.name}
+                      </h4>
+                      <p className="text-slate-300 mt-2 text-sm md:text-base leading-relaxed line-clamp-2">
+                        {trans.problem}
+                      </p>
+                      {trans.action && (
+                        <p className="text-emerald-400 mt-2 text-sm font-medium">
+                          → {trans.action}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-2 mt-3">
+                        {issue.owasp && (
+                          <span className="text-[10px] font-mono text-slate-500 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                            {issue.owasp}
+                          </span>
+                        )}
+                        {issue.cvss_score && (
+                          <span className="text-[10px] font-mono text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30">
+                            CVSS {issue.cvss_score}
+                          </span>
+                        )}
+                        {issue.cve_ids && issue.cve_ids.length > 0 && (
+                          <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">
+                            {issue.cve_ids.slice(0, 2).join(', ')}{issue.cve_ids.length > 2 ? ` +${issue.cve_ids.length - 2}` : ''}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center md:justify-end flex-shrink-0">
+                      <span className="text-slate-500 text-sm font-medium hidden md:block pr-2">Details below</span>
+                      <button aria-label="Expand details" className="text-slate-500 hover:text-slate-50 transition-colors md:hidden p-1">
+                        <ChevronDown className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="bg-slate-950/80 border-t border-slate-800 p-4 md:p-6">
+            <p className="text-slate-400 text-sm text-center">
+              Full details for all {issues.length} issue{issues.length !== 1 ? 's' : ''} are available in the <strong className="text-slate-300">Issues That Need Attention</strong> section below.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state: no actionable issues */}
+      {issues.length === 0 && findings.length > 0 && (
+        <div className="simple-no-issues bg-emerald-950/20 border border-emerald-900/50 rounded-3xl p-6 md:p-8 text-center">
+          <div className="bg-emerald-500/20 p-3 rounded-xl text-emerald-400 shrink-0 w-fit mx-auto mb-4" aria-hidden="true">
+            <Check className="w-6 h-6" strokeWidth={2.5} />
+          </div>
+          <h3 className="font-black text-lg md:text-xl text-slate-50 uppercase tracking-wider text-emerald-400">
+            No Actionable Issues
+          </h3>
+          <p className="text-slate-400 mt-2 max-w-xl mx-auto">
+            This passive assessment did not identify any scored security issues. All checks passed or returned informational observations only.
+          </p>
         </div>
       )}
 
@@ -469,24 +720,24 @@ const SimpleReport = ({ reportData }) => {
         )}
       </div>
 
-        {/* 3.75 Additional Observations */}
-        {informational.length > 0 && (
-          <div className="simple-informational-section bg-slate-800/30 border border-slate-700/50 p-6 rounded-2xl mt-12">
-            <div className="flex flex-col">
-              <h3 className="font-black text-lg text-slate-200 uppercase tracking-wider">Additional Technical Observations</h3>
-              <p className="text-slate-400 mt-2">
-                {informational.length} additional technical {informational.length === 1 ? 'observation was' : 'observations were'} collected. These do not affect your score. View the Technical report for detailed diagnostic information.
-              </p>
-            </div>
+      {/* 3.75 Additional Observations */}
+      {informational.length > 0 && (
+        <div className="simple-informational-section bg-slate-800/30 border border-slate-700/50 p-6 rounded-2xl mt-12">
+          <div className="flex flex-col">
+            <h3 className="font-black text-lg text-slate-200 uppercase tracking-wider">Additional Technical Observations</h3>
+            <p className="text-slate-400 mt-2">
+              {informational.length} additional technical {informational.length === 1 ? 'observation was' : 'observations were'} collected. These do not affect your score. View the Technical report for detailed diagnostic information.
+            </p>
           </div>
-        )}
+        </div>
+      )}
 
       {/* 4. Security Strengths (Passed Checks) */}
       {passed.length > 0 && (
         <div className="simple-passed-section bg-emerald-950/20 border border-emerald-900/50 p-6 md:p-8 rounded-3xl mt-12">
           <details className="group">
             <summary className="flex items-center gap-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-              <div className="bg-emerald-500/20 p-2.5 md:p-3 rounded-xl text-emerald-400 shrink-0">
+              <div className="bg-emerald-500/20 p-2.5 md:p-3 rounded-xl text-emerald-400 shrink-0" aria-hidden="true">
                 <Check className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
               </div>
               <div className="flex-1">

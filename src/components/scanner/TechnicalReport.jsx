@@ -1,6 +1,6 @@
 import { calculateFindingPriority, calculateCvePriority } from '../../utils/priority';
-import React, { useState } from 'react';
-import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck, Search, Filter } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
 import { WhatWasTested } from './WhatWasTested';
 import { getCapabilityLabel } from '../../lib/assessmentReporting';
@@ -12,8 +12,51 @@ const TechnicalReport = ({ reportData }) => {
   const [expandedTechRow, setExpandedTechRow] = useState(null);
   const [activeView, setActiveView] = useState('vulnerabilities'); // 'vulnerabilities' | 'compliance'
   const [snippetTabs, setSnippetTabs] = useState({}); // { findingIndex: 'nginx' }
+  const [searchQuery, setSearchQuery] = useState('');
+  const [severityFilter, setSeverityFilter] = useState('All');
+  const [owaspFilter, setOwaspFilter] = useState('All');
 
   const findings = reportData?.findings || [];
+
+  // Extract unique OWASP values from findings
+  const owaspValues = useMemo(() => {
+    const owaspSet = new Set();
+    findings.forEach(f => {
+      if (f.owasp && f.owasp !== 'N/A') {
+        owaspSet.add(f.owasp);
+      }
+    });
+    return Array.from(owaspSet).sort();
+  }, [findings]);
+
+  // Client-side filtering
+  const filteredFindings = useMemo(() => {
+    return sortedFindings.filter(finding => {
+      // Severity filter
+      if (severityFilter !== 'All' && finding.severity !== severityFilter) {
+        return false;
+      }
+
+      // OWASP filter
+      if (owaspFilter !== 'All' && finding.owasp !== owaspFilter) {
+        return false;
+      }
+
+      // Search filter - search in name and description/impact/remediation
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const nameMatch = (finding.name || '').toLowerCase().includes(query);
+        const descMatch = (finding.description || '').toLowerCase().includes(query);
+        const impactMatch = (finding.impact || '').toLowerCase().includes(query);
+        const remediationMatch = (finding.remediation || '').toLowerCase().includes(query);
+        if (!nameMatch && !descMatch && !impactMatch && !remediationMatch) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [sortedFindings, severityFilter, owaspFilter, searchQuery]);
 
   const sortedFindings = [...findings].sort((a, b) => {
     const weights = { Critical: 6, High: 5, Medium: 4, Low: 3, Informational: 2, Passed: 1 };
@@ -139,20 +182,19 @@ const TechnicalReport = ({ reportData }) => {
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
                 {(reportData?.metadata?.server_header)
                   ? (String(reportData?.metadata?.server_header).startsWith("Server:")
-                     ? (reportData?.metadata?.server_header)
-                     : `Server: ${reportData?.metadata?.server_header}`)
+                    ? (reportData?.metadata?.server_header)
+                    : `Server: ${reportData?.metadata?.server_header}`)
                   : 'Server: Hidden'
                 }
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${
-                reportData?.metadata?.performance_rating === 'NO HTTP RESPONSE' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${reportData?.metadata?.performance_rating === 'NO HTTP RESPONSE' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
                 reportData?.metadata?.performance_rating === 'REQUEST TIMEOUT' ? 'bg-slate-500/10 text-slate-400 border-slate-500/30' :
-                reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
-                reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
-                (reportData?.metadata?.performance_rating === 'High Latency' || reportData?.metadata?.performance_rating === 'SERVER ERROR' || reportData?.metadata?.performance_rating === 'CLIENT ERROR' || reportData?.metadata?.performance_rating === 'TIMEOUT') ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-slate-500/10 text-slate-400 border-slate-500/30'
-              }`}>
+                  reportData?.metadata?.performance_rating === 'Optimal Latency' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                    reportData?.metadata?.performance_rating === 'Average Latency' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                      (reportData?.metadata?.performance_rating === 'High Latency' || reportData?.metadata?.performance_rating === 'SERVER ERROR' || reportData?.metadata?.performance_rating === 'CLIENT ERROR' || reportData?.metadata?.performance_rating === 'TIMEOUT') ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-slate-500/10 text-slate-400 border-slate-500/30'
+                }`}>
                 {reportData?.metadata?.performance_rating || 'Latency Unknown'}
               </span>
             </div>
@@ -172,21 +214,19 @@ const TechnicalReport = ({ reportData }) => {
                 {reportData?.metadata?.ssl_issuer || 'Unknown Issuer'}
               </div>
               <div className="text-xs text-slate-400 truncate mt-0.5 h-5 flex items-center">
-                {reportData?.metadata?.tls_version || 'TLS'} · <span className={`ml-1 ${
-                  reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
+                {reportData?.metadata?.tls_version || 'TLS'} · <span className={`ml-1 ${reportData?.metadata?.ssl_days_left_int < 14 ? "text-rose-400 font-semibold" :
                   reportData?.metadata?.ssl_days_left_int <= 30 ? "text-amber-400 font-semibold" :
-                  "text-emerald-400 font-semibold"
-                }`}>{reportData?.metadata?.ssl_days_left || 'Unknown Status'}</span>
+                    "text-emerald-400 font-semibold"
+                  }`}>{reportData?.metadata?.ssl_days_left || 'Unknown Status'}</span>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-1.5 mt-auto pt-2 w-full">
-              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${
-                reportData?.metadata?.ssl_badge === 'EXPIRED' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold tracking-wider whitespace-nowrap shrink-0 max-w-full overflow-hidden text-ellipsis uppercase border ${reportData?.metadata?.ssl_badge === 'EXPIRED' ? 'bg-red-500/10 text-red-400 border-red-500/30' :
                 reportData?.metadata?.ssl_badge === 'RENEWAL IMMINENT' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' :
-                reportData?.metadata?.ssl_badge === 'VALID CERTIFICATE (UNTRUSTED)' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
-                reportData?.metadata?.ssl_badge === 'VALID CERTIFICATE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
-                'bg-slate-500/10 text-slate-400 border-slate-500/30'
-              }`}>
+                  reportData?.metadata?.ssl_badge === 'VALID CERTIFICATE (UNTRUSTED)' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' :
+                    reportData?.metadata?.ssl_badge === 'VALID CERTIFICATE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                      'bg-slate-500/10 text-slate-400 border-slate-500/30'
+                }`}>
                 {reportData?.metadata?.ssl_badge || 'SSL Unknown'}
               </span>
             </div>
@@ -262,48 +302,65 @@ const TechnicalReport = ({ reportData }) => {
         if (!exp) return null;
 
         let levelColor = "text-slate-400";
-        let bgColor = "bg-slate-900";
-        if (exp.level === "HIGH") { levelColor = "text-red-400"; bgColor = "bg-red-500/10 border-red-500/20"; }
-        else if (exp.level === "MODERATE") { levelColor = "text-amber-400"; bgColor = "bg-amber-500/10 border-amber-500/20"; }
-        else if (exp.level === "LOW") { levelColor = "text-emerald-400"; bgColor = "bg-emerald-500/10 border-emerald-500/20"; }
+        let bgColor = "bg-slate-900 border-slate-800";
+        if (exp.level === "HIGH") { levelColor = "text-red-400"; bgColor = "bg-red-500/10 border-red-500/30"; }
+        else if (exp.level === "MODERATE") { levelColor = "text-amber-400"; bgColor = "bg-amber-500/10 border-amber-500/30"; }
+        else if (exp.level === "LOW") { levelColor = "text-emerald-400"; bgColor = "bg-emerald-500/10 border-emerald-500/30"; }
 
         return (
           <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6">
-              <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4">
-                <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ EXPOSURE</span>
-                <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
-              </summary>
-              <div className="mt-4">
+            <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4">
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ EXPOSURE</span>
+              <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
+            </summary>
+            <div className="mt-4">
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div className="text-center min-w-[100px]">
-                <div className={`text-2xl font-black font-mono ${levelColor}`}>{exp.level}</div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Level</div>
+              <div className="flex items-center gap-4 mb-6 pb-5 border-b border-slate-800/50">
+                <div className={`px-5 py-2.5 rounded-xl border ${bgColor} flex flex-col items-center justify-center shadow-inner`}>
+                  <span className={`text-2xl font-black font-mono ${levelColor}`}>{exp.level}</span>
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-50 uppercase tracking-wide">Exposure Level</div>
+                  <div className="text-[11px] text-slate-500 font-mono uppercase tracking-wider mt-0.5">Based on observed reachability</div>
+                </div>
               </div>
 
-              <div className="flex-1 space-y-3">
+              <div className="space-y-6">
                 {exp.signals && exp.signals.length > 0 && (
-                  <div className="space-y-1">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Observed Signals:</div>
-                    <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-slate-500" />
+                      Observed Signals
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                       {exp.signals.map((sig, i) => (
-                        <li key={i}>{sig}</li>
+                        <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm bg-slate-900 border border-slate-700/50 text-slate-200 shadow-sm hover:bg-slate-800 transition-colors">
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                          {sig}
+                        </span>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 )}
+
                 {exp.limitations && exp.limitations.length > 0 && (
-                  <div className="space-y-1 mt-2">
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Limitations / Context:</div>
-                    <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside">
+                  <div className={`pt-1 ${exp.signals && exp.signals.length > 0 ? 'border-t border-slate-800/50 mt-5 pt-5' : ''}`}>
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-slate-500" />
+                      Limitations / Context
+                    </div>
+                    <div className="flex flex-wrap gap-2">
                       {exp.limitations.map((lim, i) => (
-                        <li key={i}>{lim}</li>
+                        <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs bg-slate-950 border border-slate-800 text-slate-400 shadow-sm hover:bg-slate-900 transition-colors">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+                          {lim}
+                        </span>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
+
             </div>
           </details>
         );
@@ -311,255 +368,372 @@ const TechnicalReport = ({ reportData }) => {
 
 
 
+      {/* 2.6. Priority Guide */}
+      <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-2xl mt-6 print:hidden">
+        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4">
+          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ UNDERSTANDING_PRIORITY (P1–P5)</span>
+          <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
+        </summary>
+        <div className="mt-4">
+          <p className="text-slate-400 text-sm mb-6">
+            Priority indicates <strong className="text-slate-200">remediation urgency</strong> and is distinct from technical severity.
+          </p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Standard Findings */}
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800/50 pb-3">
+                <Shield className="w-4 h-4 text-indigo-400" />
+                Standard Findings
+              </div>
+              <p className="text-slate-500 text-xs mb-4">Priority directly follows the finding's technical severity:</p>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">High</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Medium</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800">P3</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Low</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800">P4</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Informational / Passed</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-800/50 text-xs text-slate-500 leading-tight italic">
+                * The scanner does not currently emit Critical-severity standard findings. If introduced, they will map to P1.
+              </div>
+            </div>
+
+            {/* Known Vulnerabilities (CVEs) */}
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800/50 pb-3">
+                <Activity className="w-4 h-4 text-rose-400" />
+                Known Vulnerabilities (CVEs)
+              </div>
+              <p className="text-slate-500 text-xs mb-4">Priority is calculated from vulnerability-intelligence signals:</p>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 9.0 <strong className="text-slate-500 mx-1">OR</strong> EPSS &ge; 10%</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-rose-400 bg-rose-950/30 border-rose-800">P1</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 7.0 <strong className="text-slate-500 mx-1">OR</strong> EPSS &ge; 1%</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 4.0</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800">P3</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &gt; 0</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800">P4</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS = 0 <strong className="text-slate-500 mx-1">OR</strong> (No CVSS + EPSS &lt; 1%)</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-500 space-y-2">
+            <p><strong>Important:</strong> Higher-priority conditions take precedence. For example, a CVE meeting a P1 condition remains P1 even if it also meets a lower-tier condition.</p>
+            <p className="italic">CVSS indicates vulnerability severity; EPSS indicates exploitation likelihood. Priority uses these signals for remediation prioritization.</p>
+          </div>
+        </div>
+      </details>
+
       {/* 3. Tab Switcher: Vulnerabilities vs Compliance */}
-      <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-xl print:hidden">
+      <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-xl print:hidden" role="tablist">
         <button
           onClick={() => setActiveView('vulnerabilities')}
+          role="tab"
+          aria-selected={activeView === 'vulnerabilities'}
+          aria-controls="vulnerabilities-panel"
           className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'vulnerabilities' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
         >
           Vulnerabilities
         </button>
-                  <button
-            onClick={() => setActiveView('compliance')}
-            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'compliance' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-            Framework Mapping
-          </button>
-          <button
-            onClick={() => setActiveView('technologies')}
-            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'technologies' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
-          >
-            Technologies
-          </button>
+        <button
+          onClick={() => setActiveView('compliance')}
+          role="tab"
+          aria-selected={activeView === 'compliance'}
+          aria-controls="compliance-panel"
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'compliance' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          Framework Mapping
+        </button>
+        <button
+          onClick={() => setActiveView('technologies')}
+          role="tab"
+          aria-selected={activeView === 'technologies'}
+          aria-controls="technologies-panel"
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeView === 'technologies' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200'}`}
+        >
+          Technologies
+        </button>
       </div>
 
       {/* 4. Main Content Area */}
       <div>
-        
-          {activeView === 'technologies' && (
-            <div className="w-full max-w-full overflow-hidden space-y-6">
-              <div className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
-                <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
-                  <Server className="w-4 h-4 text-sky-400" />
-                  <h2 className="font-bold text-slate-50 text-lg">Detected Technologies</h2>
-                </div>
-                
-                <div className="p-6 text-slate-300">
-                  {(!reportData?.technology_identities || reportData.technology_identities.length === 0) ? (
-                    <div className="text-center py-8 text-slate-500">
-                      <Terminal className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                      <p>No deterministic technology identities were observed in this scan.</p>
-                    </div>
-                  ) : (
-                    <div className="w-full overflow-x-auto">
-                      <table className="technical-findings-table w-full text-left border-collapse">
-                        <thead>
-                          <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
-                            <th className="px-6 py-4">Component</th>
-                            <th className="px-6 py-4">Version</th>
-                            <th className="px-6 py-4">Layer</th>
-                            <th className="px-6 py-4">Confidence</th>
-                            <th className="px-6 py-4">Identity (CPE)</th>
-                            <th className="px-6 py-4 text-right">Details</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {reportData.technology_identities.map((tech, idx) => {
-                            const getLayerDetails = (layer) => {
-                              switch(layer) {
-                                case 'web_server_proxy': return { label: 'Web Server / Proxy', icon: <Globe className="w-4 h-4 text-blue-400 mr-2 inline" /> };
-                                case 'application_framework': return { label: 'Application Framework', icon: <Layers className="w-4 h-4 text-purple-400 mr-2 inline" /> };
-                                case 'cms': return { label: 'Content Management System', icon: <Box className="w-4 h-4 text-orange-400 mr-2 inline" /> };
-                                case 'language_runtime': return { label: 'Language / Runtime', icon: <Cpu className="w-4 h-4 text-green-400 mr-2 inline" /> };
-                                case 'javascript_framework': return { label: 'JavaScript Framework', icon: <Terminal className="w-4 h-4 text-yellow-400 mr-2 inline" /> };
-                                default: return { label: layer ? layer.replace(/_/g, ' ') : 'Unknown Layer', icon: <Box className="w-4 h-4 text-slate-400 mr-2 inline" /> };
-                              }
-                            };
-                            
-                            const getConfBadge = (conf) => {
-                              const confStr = (conf || '').toUpperCase();
-                              if (confStr === 'HIGH' || confStr.includes('100%')) return <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">High</span>;
-                              if (confStr === 'MEDIUM') return <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">Medium</span>;
-                              if (confStr === 'LOW') return <span className="bg-slate-500/10 text-slate-400 border border-slate-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">Low</span>;
-                              return <span className="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-xs font-bold uppercase">{confStr || 'UNKNOWN'}</span>;
-                            };
-                            
-                            const layerInfo = getLayerDetails(tech.layer);
-                            
-                            return (
-                              <React.Fragment key={idx}>
-                                <tr 
-                                  onClick={() => setExpandedTechRow(expandedTechRow === idx ? null : idx)}
-                                  className={`border-b border-slate-800/50 cursor-pointer hover:bg-slate-900/30 transition-colors ${expandedTechRow === idx ? 'bg-slate-800/30' : ''}`}
-                                >
-                                  <td className="px-6 py-4">
-                                    <div className="font-bold text-slate-200">{tech.product}</div>
-                                    {tech.vendor && <div className="text-xs text-slate-500">{tech.vendor}</div>}
-                                  </td>
-                                  <td className="px-6 py-4 font-mono text-sm">
-                                    {tech.version && tech.version_precision !== 'UNKNOWN' ? <span className="text-sky-300">{tech.version}</span> : <span className="text-slate-600">-</span>}
-                                  </td>
-                                  <td className="px-6 py-4 text-sm whitespace-nowrap">
+
+        {activeView === 'technologies' && (
+          <div className="w-full max-w-full overflow-hidden space-y-6">
+            <div className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-2xl">
+              <div className="bg-slate-900 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+                <Server className="w-4 h-4 text-sky-400" />
+                <h2 className="font-bold text-slate-50 text-lg">Detected Technologies</h2>
+              </div>
+
+              <div className="p-6 text-slate-300">
+                {(!reportData?.technology_identities || reportData.technology_identities.length === 0) ? (
+                  <div className="text-center py-8 text-slate-500">
+                    <Terminal className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                    <p>No deterministic technology identities were observed in this scan.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reportData.technology_identities.map((tech, idx) => {
+                      const getLayerDetails = (layer) => {
+                        switch (layer) {
+                          case 'web_server_proxy': return { label: 'Web Server / Proxy', icon: <Globe className="w-4 h-4 text-blue-400 mr-2 inline" /> };
+                          case 'application_framework': return { label: 'Application Framework', icon: <Layers className="w-4 h-4 text-purple-400 mr-2 inline" /> };
+                          case 'cms': return { label: 'Content Management System', icon: <Box className="w-4 h-4 text-orange-400 mr-2 inline" /> };
+                          case 'language_runtime': return { label: 'Language / Runtime', icon: <Cpu className="w-4 h-4 text-green-400 mr-2 inline" /> };
+                          case 'javascript_framework': return { label: 'JavaScript Framework', icon: <Terminal className="w-4 h-4 text-yellow-400 mr-2 inline" /> };
+                          default: return { label: layer ? layer.replace(/_/g, ' ') : 'Unknown Layer', icon: <Box className="w-4 h-4 text-slate-400 mr-2 inline" /> };
+                        }
+                      };
+
+                      const getConfBadge = (conf) => {
+                        const confStr = (conf || '').toUpperCase();
+                        if (confStr === 'HIGH' || confStr.includes('100%')) return <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">High</span>;
+                        if (confStr === 'MEDIUM') return <span className="bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">Medium</span>;
+                        if (confStr === 'LOW') return <span className="bg-slate-500/10 text-slate-400 border border-slate-500/30 px-2 py-0.5 rounded text-xs font-bold uppercase">Low</span>;
+                        return <span className="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-xs font-bold uppercase">{confStr || 'UNKNOWN'}</span>;
+                      };
+
+                      const layerInfo = getLayerDetails(tech.layer);
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`bg-slate-900/50 border ${expandedTechRow === idx ? 'border-indigo-500/50' : 'border-slate-800'} rounded-xl overflow-hidden transition-all hover:border-slate-700`}
+                        >
+                          <div
+                            onClick={() => setExpandedTechRow(expandedTechRow === idx ? null : idx)}
+                            className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:px-6 cursor-pointer gap-4"
+                          >
+                            {/* Left: Product, Vendor, Version, Layer */}
+                            <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
+                              <div className="min-w-[160px]">
+                                <div className="font-bold text-slate-200 text-[15px]">{tech.product}</div>
+                                {tech.vendor && <div className="text-[11px] text-slate-500 font-bold tracking-wider uppercase mt-1">{tech.vendor}</div>}
+                              </div>
+
+                              <div className="flex items-center gap-8">
+                                <div>
+                                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Version</div>
+                                  {tech.version && tech.version_precision !== 'UNKNOWN' ? <div className="font-mono text-sky-300 text-sm">{tech.version}</div> : <div className="text-slate-600 font-mono text-sm">-</div>}
+                                </div>
+
+                                <div>
+                                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold mb-1">Layer</div>
+                                  <div className="text-sm text-slate-300 flex items-center whitespace-nowrap">
                                     {layerInfo.icon}
                                     <span className="capitalize">{layerInfo.label}</span>
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    {getConfBadge(tech.confidence)}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                      {tech.cpe ? (
-                                        <div className="overflow-x-auto max-w-[200px] sm:max-w-xs hide-scrollbar">
-                                          <code className="bg-slate-900 border border-slate-700 text-pink-400 px-2 py-1 rounded select-all whitespace-nowrap font-mono text-xs inline-block">
-                                            {tech.cpe}
-                                          </code>
-                                        </div>
-                                      ) : (
-                                        <span className="text-slate-600 font-mono text-xs">-</span>
-                                      )}
-                                    </td>
-                                  <td className="px-6 py-4 text-right align-top">
-                                    <div className="flex flex-col items-end gap-1">
-                                      <button aria-label={expandedTechRow === idx ? "Collapse Details" : "Expand Details"} className="text-slate-500 hover:text-slate-50 transition-colors">
-                                        {expandedTechRow === idx ? <ChevronUp className="w-5 h-5 inline" /> : <ChevronDown className="w-5 h-5 inline" />}
-                                      </button>
-                                      {tech.cves && tech.cves.length > 0 && (
-                                        <span className="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-1.5 py-0.5 rounded font-bold uppercase whitespace-nowrap">{tech.cves.length} CVEs</span>
-                                      )}
-                                    </div>
-                                  </td>
-                                </tr>
-                                
-                                {expandedTechRow === idx && (
-                                  <tr className="technical-finding-expanded print:hidden">
-                                    <td colSpan={6} className="p-0 border-b-2 border-slate-700/50">
-                                      <div className="bg-slate-950 p-6 transition-all duration-300">
-                                        <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Known Vulnerabilities</div>
-                                          {(() => {
-                                            const status = reportData?.cve_enrichment_status;
-                                            if (status === 'QUEUED' || status === 'RUNNING') {
-                                              return <div className="text-amber-400 text-sm">Vulnerability intelligence is being evaluated in the background.</div>;
-                                            }
-                                            if (status === 'FAILED') {
-                                              return <div className="text-rose-400 text-sm">Vulnerability intelligence evaluation failed. Status unavailable.</div>;
-                                            }
-                                            if (!tech.cves || tech.cves.length === 0) {
-                                              return <div className="text-slate-500 text-sm">No associated CVEs observed.</div>;
-                                            }
-                                            return (
-                                              <div className="space-y-3">
-                                                {tech.cves.map((cve, cveIdx) => (
-                                                  <div key={cveIdx} className="bg-slate-900 border border-slate-800 rounded-lg p-4">
-                                                    <div className="flex items-center gap-3 mb-2">
-                                                      <span className="font-mono font-bold text-rose-300 text-sm">{cve.id}</span>
-                                                      {getSeverityBadge(cve.severity.charAt(0).toUpperCase() + cve.severity.slice(1).toLowerCase())}
-                                                        <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 ml-2">
-                                                          Priority: {calculateCvePriority(tech, cve)}
-                                                        </span>
-                                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
 
-                                                    {(cve.kev || cve.ssvc) && (
-                                                      <div className="flex flex-col gap-1.5 mb-3">
-                                                        {cve.kev && (
-                                                          <div className="flex items-center gap-2 text-xs bg-red-950/30 border border-red-900/30 text-red-300/80 p-2 rounded">
-                                                            <ShieldAlert className="w-4 h-4 text-red-500" />
-                                                            <span>
-                                                              <strong className="text-red-400">CISA KEV</strong>
-                                                              {cve.kev.name && ` - ${cve.kev.name}`}
-                                                              {cve.kev.added && ` | Added: ${cve.kev.added}`}
-                                                              {cve.kev.action && ` | Action: ${cve.kev.action}`}
-                                                              {cve.kev.due && ` (Due: ${cve.kev.due})`}
-                                                            </span>
-                                                          </div>
-                                                        )}
-                                                        {cve.ssvc && (
-                                                          <div className="flex items-center gap-2 text-xs bg-indigo-950/20 border border-indigo-900/20 text-indigo-300/70 p-2 rounded">
-                                                            <Activity className="w-4 h-4 text-indigo-500/80" />
-                                                            <span>
-                                                              <strong className="text-indigo-400">{cve.ssvc.source || "CISA-ADP"} SSVC {cve.ssvc.version ? `v${cve.ssvc.version}` : ''}</strong>
-                                                              {cve.ssvc.timestamp && ` (${cve.ssvc.timestamp})`}
-                                                              {cve.ssvc.options && Object.entries(cve.ssvc.options).map(([k, v]) => (
-                                                                <span key={k} className="ml-2 pl-2 border-l border-indigo-800/40">
-                                                                  <span className="opacity-70">{k}:</span> <span className="font-mono text-[10px]">{v}</span>
-                                                                </span>
-                                                              ))}
-                                                            </span>
-                                                          </div>
-                                                        )}
-                                                      </div>
-                                                    )}
+                            {/* Right: Badges and Expander */}
+                            <div className="flex items-center gap-4 mt-2 sm:mt-0">
+                              {getConfBadge(tech.confidence)}
 
-                                                    <p className="text-slate-400 text-sm leading-relaxed">{cve.summary}</p>
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            );
-                                          })()}
-                                      </div>
-                                    </td>
-                                  </tr>
+                              {tech.cves && tech.cves.length > 0 && (
+                                <span className="text-[10px] bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-1 rounded font-bold uppercase whitespace-nowrap" aria-label={`${tech.cves.length} CVEs detected`}>
+                                  {tech.cves.length} CVEs
+                                </span>
+                              )}
+                              <button aria-label={expandedTechRow === idx ? "Collapse technology details" : "Expand technology details"} className="text-slate-500 hover:text-slate-50 transition-colors ml-1 p-1">
+                                {expandedTechRow === idx ? <ChevronUp className="w-5 h-5" aria-hidden="true" /> : <ChevronDown className="w-5 h-5" aria-hidden="true" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          {expandedTechRow === idx && (
+                            <div className="border-t border-slate-800/50 bg-slate-950 p-4 sm:p-6 transition-all duration-300 print:hidden">
+                              {/* Identity (CPE) Card */}
+                              <div className="mb-6 bg-slate-900 border border-slate-800 rounded-lg p-4">
+                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                  <Box className="w-3.5 h-3.5 text-slate-400" />
+                                  Component Identity (CPE)
+                                </div>
+                                {tech.cpe ? (
+                                  <code className="block bg-slate-950 border border-slate-800 text-pink-400/90 px-3 py-2 rounded text-xs font-mono break-all select-all">
+                                    {tech.cpe}
+                                  </code>
+                                ) : (
+                                  <span className="text-slate-500 text-xs italic">No structured CPE identity established.</span>
                                 )}
-                              </React.Fragment>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
+                              </div>
+
+                              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <ShieldAlert className="w-4 h-4 text-slate-400" />
+                                Known Vulnerabilities
+                              </div>
+                              {(() => {
+                                const status = reportData?.cve_enrichment_status;
+                                if (status === 'QUEUED' || status === 'RUNNING') {
+                                  return <div className="text-amber-400 text-sm">Vulnerability intelligence is being evaluated in the background.</div>;
+                                }
+                                if (status === 'FAILED') {
+                                  return <div className="text-rose-400 text-sm">Vulnerability intelligence evaluation failed. Status unavailable.</div>;
+                                }
+                                if (!tech.cves || tech.cves.length === 0) {
+                                  return <div className="text-slate-500 text-sm">No associated CVEs observed.</div>;
+                                }
+                                return (
+                                  <div className="space-y-3">
+                                    {tech.cves.map((cve, cveIdx) => (
+                                      <div key={cveIdx} className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+                                        <div className="flex items-center gap-3 mb-2">
+                                          <span className="font-mono font-bold text-rose-300 text-sm">{cve.id}</span>
+                                          {getSeverityBadge(cve.severity.charAt(0).toUpperCase() + cve.severity.slice(1).toLowerCase())}
+                                          <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 ml-2">
+                                            Priority: {calculateCvePriority(tech, cve)}
+                                          </span>
+                                        </div>
+
+                                        {(cve.kev || cve.ssvc) && (
+                                          <div className="flex flex-col gap-1.5 mb-3">
+                                            {cve.kev && (
+                                              <div className="flex items-center gap-2 text-xs bg-red-950/30 border border-red-900/30 text-red-300/80 p-2 rounded">
+                                                <ShieldAlert className="w-4 h-4 text-red-500" />
+                                                <span>
+                                                  <strong className="text-red-400">CISA KEV</strong>
+                                                  {cve.kev.name && ` - ${cve.kev.name}`}
+                                                  {cve.kev.added && ` | Added: ${cve.kev.added}`}
+                                                  {cve.kev.action && ` | Action: ${cve.kev.action}`}
+                                                  {cve.kev.due && ` (Due: ${cve.kev.due})`}
+                                                </span>
+                                              </div>
+                                            )}
+                                            {cve.ssvc && (
+                                              <div className="flex items-center gap-2 text-xs bg-indigo-950/20 border border-indigo-900/20 text-indigo-300/70 p-2 rounded">
+                                                <Activity className="w-4 h-4 text-indigo-500/80" />
+                                                <span>
+                                                  <strong className="text-indigo-400">{cve.ssvc.source || "CISA-ADP"} SSVC {cve.ssvc.version ? `v${cve.ssvc.version}` : ''}</strong>
+                                                  {cve.ssvc.timestamp && ` (${cve.ssvc.timestamp})`}
+                                                  {cve.ssvc.options && Object.entries(cve.ssvc.options).map(([k, v]) => (
+                                                    <span key={k} className="ml-2 pl-2 border-l border-indigo-800/40">
+                                                      <span className="opacity-70">{k}:</span> <span className="font-mono text-[10px]">{v}</span>
+                                                    </span>
+                                                  ))}
+                                                </span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+
+                                        <p className="text-slate-400 text-sm leading-relaxed">{cve.summary}</p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {activeView === 'vulnerabilities' && (
+        {activeView === 'vulnerabilities' && (
           <div className="w-full max-w-full overflow-hidden space-y-6">
-              <details className="group bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
-                  <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-3">
-                    <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-0">Understanding Priority (P1–P5)</h3>
-                    <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-500" /></span>
-                  </summary>
-                  <div className="mt-4">
-                <p className="text-slate-400 text-sm mb-4">
-                  Priority indicates <strong className="text-slate-300">remediation urgency</strong> and is not the same as Severity.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 className="text-slate-300 font-bold text-sm mb-2">Standard Findings</h4>
-                      <p className="text-slate-500 text-xs mb-2">Priority follows the finding's technical severity:</p>
-                      <ul className="text-slate-400 text-xs space-y-1 list-disc list-inside mb-3">
-                        <li>High &rarr; P2</li>
-                        <li>Medium &rarr; P3</li>
-                        <li>Low &rarr; P4</li>
-                        <li>Informational / Passed &rarr; P5</li>
-                      </ul>
-                      <p className="text-slate-500 text-[11px] leading-tight italic">
-                        The current scanner does not currently emit Critical-severity standard findings. If a Critical finding is introduced in the future, it will map to P1.
-                      </p>
-                  </div>
-                  <div>
-                    <h4 className="text-slate-300 font-bold text-sm mb-2">Known Vulnerabilities (CVEs)</h4>
-                    <p className="text-slate-500 text-xs mb-2">Priority is calculated from vulnerability-intelligence signals:</p>
-                    <ul className="text-slate-400 text-xs space-y-1 list-disc list-inside">
-                      <li><strong>P1:</strong> CVSS &ge; 9.0 OR EPSS &ge; 10%</li>
-                      <li><strong>P2:</strong> CVSS &ge; 7.0 OR EPSS &ge; 1%</li>
-                      <li><strong>P3:</strong> CVSS &ge; 4.0</li>
-                      <li><strong>P4:</strong> CVSS &gt; 0</li>
-                      <li><strong>P5:</strong> CVSS = 0, or CVSS unavailable with EPSS &lt; 1%</li>
-                    </ul>
-                  </div>
+            {/* Toolbar */}
+            <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm">
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2 text-sm text-slate-400">
+                  <Search className="w-4 h-4 shrink-0" />
+                  <span className="font-medium text-slate-300">Filter Findings</span>
                 </div>
-                <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-500 space-y-2">
-                  <p><strong>Important:</strong> Higher-priority conditions take precedence. For example, a CVE meeting a P1 condition remains P1 even if it also meets a lower-tier condition.</p>
-                  <p className="italic">CVSS indicates vulnerability severity; EPSS indicates exploitation likelihood. Priority uses these signals for remediation prioritization.</p>
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                  {/* Search Input */}
+                  <div className="relative flex-1 sm:flex-none sm:w-64">
+                    <label htmlFor="finding-search" className="sr-only">Search findings</label>
+                    <input
+                      id="finding-search"
+                      type="text"
+                      placeholder="Search by name, description, impact..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 pl-9 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 placeholder:text-slate-600"
+                    />
+                    <Search className="w-4 h-4 text-slate-500 absolute left-2.5 top-2.5" aria-hidden="true" />
+                  </div>
+                  {/* Severity Filter */}
+                  <label htmlFor="severity-filter" className="sr-only">Filter by severity</label>
+                  <select
+                    id="severity-filter"
+                    value={severityFilter}
+                    onChange={(e) => setSeverityFilter(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 cursor-pointer"
+                  >
+                    <option value="All">All Severities</option>
+                    <option value="Critical">Critical</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                    <option value="Informational">Informational</option>
+                    <option value="Passed">Passed</option>
+                  </select>
+                  {/* OWASP Filter */}
+                  <label htmlFor="owasp-filter" className="sr-only">Filter by OWASP category</label>
+                  <select
+                    id="owasp-filter"
+                    value={owaspFilter}
+                    onChange={(e) => setOwaspFilter(e.target.value)}
+                    className="bg-slate-950 border border-slate-700 text-slate-300 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 cursor-pointer"
+                  >
+                    <option value="All">All OWASP</option>
+                    {owaspValues.map(owasp => (
+                      <option key={owasp} value={owasp}>{owasp}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
-            </details>
+              <div className="text-xs text-slate-500 mt-2">
+                Showing {filteredFindings.length} of {sortedFindings.length} findings
+                {searchQuery && <span className="text-indigo-400 ml-1"> (search: "{searchQuery}")</span>}
+              </div>
+            </div>
+
+
 
             {domainGroups.map((group) => {
               const knownDomainKeys = new Set(domainGroups.map(g => g.key));
-              const groupFindings = sortedFindings.filter(f => {
+              const groupDomainKey = group.key;
+
+              // Filter findings by domain group first, then apply toolbar filters
+              const groupFindings = filteredFindings.filter(f => {
                 const effectiveDomain = (f.domain && knownDomainKeys.has(f.domain)) ? f.domain : 'browser_defense';
-                return effectiveDomain === group.key;
+                return effectiveDomain === groupDomainKey;
               });
+
               if (groupFindings.length === 0) return null;
 
               return (
@@ -571,6 +745,14 @@ const TechnicalReport = ({ reportData }) => {
 
                   <div className="w-full overflow-x-auto">
                     <table className="technical-findings-table w-full text-left border-collapse">
+                      <caption className="sr-only">Finding table with priority, severity, description, OWASP mapping, and action buttons</caption>
+                      <colgroup>
+                        <col style={{ width: '10%' }} />
+                        <col style={{ width: '15%' }} />
+                        <col style={{ width: '35%' }} />
+                        <col style={{ width: '25%' }} />
+                        <col style={{ width: '15%' }} />
+                      </colgroup>
                       <thead>
                         <tr className="bg-slate-900/50 border-b border-slate-800 text-xs font-bold text-slate-500 uppercase tracking-widest">
                           <th className="px-6 py-4" style={{ width: '10%' }}>Priority</th>
@@ -610,224 +792,253 @@ const TechnicalReport = ({ reportData }) => {
                                     <span className="technical-owasp-badge-none text-slate-600 text-xs">-</span>
                                   )}
                                 </td>
-                            <td className="px-6 py-4 text-right print:hidden align-top">
-                              <button aria-label={expandedRow === idx ? "Collapse Details" : "Expand Details"} className="text-slate-500 hover:text-slate-50 transition-colors">
-                                {expandedRow === idx ? <ChevronUp className="w-5 h-5 inline" /> : <ChevronDown className="w-5 h-5 inline" />}
-                              </button>
-                            </td>
-                          </tr>
-
-                          {/* Print-only row for full-width code snippet */}
-                          {finding.remediation_snippets?.nginx && (
-                            <tr className="hidden print:table-row">
-                              <td colSpan={5} className="px-6 pb-6 pt-0 w-full block">
-                                <div className="bg-slate-50 p-4 rounded border border-slate-200 w-full block">
-                                  <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">Remediation Snippet (Nginx/Server)</div>
-                                  <pre className="text-slate-800 font-mono text-[10px] whitespace-pre-wrap">{finding.remediation_snippets.nginx}</pre>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-
-                          {expandedRow === idx && (
-                              <tr className="technical-finding-expanded print:hidden">
-                                <td colSpan={5} className="p-0 border-b-2 border-indigo-500/50">
-                                  <div
-                                    className="bg-slate-950 overflow-hidden transition-all duration-300"
-                                  >
-                                    <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                                      <div className="lg:col-span-2 space-y-6">
-                                        <div>
-                                          <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Technical Description</div>
-                                          <p className="technical-description text-slate-300 leading-relaxed text-sm">{finding.description}</p>
-                                        </div>
-
-                                        {finding.impact && finding.impact !== "N/A" && (
-                                          <div>
-                                            <div className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                              <span>⚠️</span> Security Impact & Risk
-                                            </div>
-                                            <p className="technical-risk-text text-rose-200/80 leading-relaxed text-sm">{finding.impact}</p>
-                                          </div>
-                                        )}
-
-                                        <div className="flex flex-wrap gap-8 mb-4">
-                                          {finding.module && (
-                                            <div>
-                                              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Capability</div>
-                                              <div className="text-slate-300 font-mono text-sm">{getCapabilityLabel(finding.module)}</div>
-                                            </div>
-                                          )}
-                                          {finding.rule_id && (
-                                            <div>
-                                              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Rule ID</div>
-                                              <div className="text-slate-400 font-mono text-xs mt-0.5">{finding.rule_id}</div>
-                                            </div>
-                                          )}
-                                          {finding.confidence && finding.confidence !== "N/A" && (
-                                            (() => {
-                                              const lowerConf = finding.confidence.toString().toLowerCase();
-                                              let level = 'medium';
-                                              if (lowerConf.includes('high')) level = 'high';
-                                              else if (lowerConf.includes('low')) level = 'low';
-
-                                              let colorClass = 'text-amber-300';
-                                              if (level === 'high') colorClass = 'text-emerald-400';
-                                              else if (level === 'low') colorClass = 'text-slate-400';
-
-                                              return (
-                                                <div>
-                                                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Confidence Score</div>
-                                                  <div className={`technical-confidence ${colorClass} font-bold text-sm`}>{finding.confidence}</div>
-                                                </div>
-                                              );
-                                            })()
-                                          )}
-
-                                          {finding.state && (
-                                            <div>
-                                              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Verification State</div>
-                                              <div className={`technical-state font-bold text-sm ${finding.state.toLowerCase() === 'observed' ? 'text-blue-400' : 'text-purple-400'}`}>
-                                                {finding.state.toUpperCase()}
-                                              </div>
-                                            </div>
-                                          )}
-                                        </div>
-
-                                        {finding.evidence && finding.evidence !== "N/A" && (
-                                          <div>
-                                            <div className="flex items-center justify-between mb-2">
-                                              <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Evidence</div>
-                                              <button onClick={() => navigator.clipboard.writeText(typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence, null, 2))} className="text-slate-500 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors">
-                                                <Copy className="w-3 h-3" /> Copy
-                                              </button>
-                                            </div>
-                                            {typeof finding.evidence === 'object' && Object.keys(finding.evidence).length > 0 && !finding.evidence.raw && !finding.evidence.request_path ? (
-                                              <div className="technical-evidence bg-slate-950 border border-slate-700/50 rounded-lg p-4 font-mono text-sm space-y-2">
-                                                {Object.entries(finding.evidence).map(([key, value]) => (
-                                                  <div key={key} className="text-slate-300">
-                                                    <span className="text-slate-500 mr-2">{key}:</span>
-                                                    {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            ) : typeof finding.evidence === 'object' && finding.evidence.request_path ? (
-                                              <div className="technical-evidence bg-slate-950 border border-slate-700/50 rounded-lg p-4 font-mono text-sm">
-                                                <div className="text-cyan-400 mb-2">
-                                                  GET {finding.evidence.request_path} &bull; Status: {finding.evidence.status_code}
-                                                </div>
-                                                {finding.evidence.proof_snippet && (
-                                                  <div className="text-slate-300 border-t border-slate-700/50 pt-2 mt-2">
-                                                    Proof: {finding.evidence.proof_snippet}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            ) : (
-                                              <pre className="technical-evidence bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
-                                                {typeof finding.evidence === 'object' && finding.evidence.raw ? finding.evidence.raw : (typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence, null, 2))}
-                                              </pre>
-                                            )}
-                                          </div>
-                                        )}
-
-                                        <RemediationSnippetBox findingName={finding.name} ruleId={finding.rule_id} />
-                                      </div>
-
-                                      <div className="space-y-6">
-                                        <div className="technical-remediation-panel bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 h-full">
-                                          {finding.severity === 'Passed' ? (
-                                            <div className="flex flex-col items-center justify-center p-6 text-center rounded-lg bg-emerald-950/20 border border-emerald-800/30 my-auto">
-                                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 mb-2">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                                </svg>
-                                              </div>
-                                              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
-                                                Security Control Verified
-                                              </span>
-                                              <p className="mt-1 text-xs text-slate-400">
-                                                This configuration complies with security standards. No action required.
-                                              </p>
-                                            </div>
-                                          ) : finding.remediation && finding.remediation !== "N/A" ? (
-                                            <>
-                                              <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                                <Shield className="w-4 h-4" /> Remediation Directive
-                                              </div>
-                                              <p className="text-slate-300 text-sm leading-relaxed mb-4">
-                                                {finding.remediation}
-                                              </p>
-                                            </>
-                                          ) : null}
-
-                                          <div className="space-y-3 mt-auto pt-4 border-t border-slate-800/80">
-                                            <div className="flex justify-between items-center text-xs">
-                                              <span className="text-slate-500">Category</span>
-                                              <span className="font-mono text-slate-300 uppercase">{finding.category}</span>
-                                            </div>
-                                            <div className="flex justify-between items-center text-xs">
-                                              <span className="text-slate-500">Scanner Module</span>
-                                              <span className="font-mono text-slate-300">{finding.module}</span>
-                                            </div>
-
-                                            {/* CVSS Metadata Block */}
-                                            {finding.severity !== 'Passed' && finding.severity !== 'Informational' && (
-                                              <div className="pt-3 mt-3 border-t border-slate-700/30 flex flex-col space-y-2">
-                                                {finding.cvss ? (
-                                                  <>
-                                                    <div className="flex flex-col">
-                                                      <div className="flex justify-between items-center">
-                                                        <span className="text-xs font-bold text-slate-400">
-                                                          {finding.cvss.startsWith('CVSS:4.0') ? 'CVSS 4.0' : 'CVSS v3.1'}
-                                                        </span>
-                                                      </div>
-                                                      {finding.cvss.startsWith('CVSS:4.0') && (
-                                                        <span className="text-xs text-slate-500 font-medium">CVSS-B</span>
-                                                      )}
-                                                    </div>
-
-                                                    {(finding.cvss_score !== undefined && finding.cvss_score !== null) && (
-                                                      <div className="flex flex-col text-xs text-slate-300">
-                                                        <span>{finding.cvss.startsWith('CVSS:4.0') ? 'Score' : 'Base Score'}: {finding.cvss_score}</span>
-                                                        {finding.cvss_severity && (
-                                                          <span>CVSS Severity: {finding.cvss_severity}</span>
-                                                        )}
-                                                      </div>
-                                                    )}
-
-                                                    <div className="flex flex-col mt-2">
-                                                      <span className="text-xs text-slate-500 mb-1">Vector:</span>
-                                                      <div className="bg-slate-950 p-2 rounded border border-slate-800 min-w-0">
-                                                        <span className="text-xs font-mono text-slate-300 break-words whitespace-normal inline-block w-full text-left" style={{ overflowWrap: 'anywhere' }}>
-                                                          {finding.cvss}
-                                                        </span>
-                                                      </div>
-                                                    </div>
-                                                  </>
-                                                ) : (
-                                                  <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-slate-400">CVSS</span>
-                                                    <span className="text-xs text-slate-500 mt-1">Not Applicable</span>
-                                                  </div>
-                                                )}
-                                              </div>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-
-                                    </div>
-                                  </div>
+                                <td className="px-6 py-4 text-right print:hidden align-top">
+                                  <button aria-label={expandedRow === idx ? "Collapse details" : "Expand details"} className="text-slate-500 hover:text-slate-50 transition-colors">
+                                    {expandedRow === idx ? <ChevronUp className="w-5 h-5 inline" aria-hidden="true" /> : <ChevronDown className="w-5 h-5 inline" aria-hidden="true" />}
+                                  </button>
                                 </td>
                               </tr>
-                            )}
-                        </tbody>
-                      );
-                    });
 
-                    return elements;
-                  })()}
+                              {/* Print-only row for full-width code snippet */}
+                              {finding.remediation_snippets?.nginx && (
+                                <tr className="hidden print:table-row">
+                                  <td colSpan={5} className="px-6 pb-6 pt-0 w-full block">
+                                    <div className="bg-slate-50 p-4 rounded border border-slate-200 w-full block">
+                                      <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">Remediation Snippet (Nginx/Server)</div>
+                                      <pre className="text-slate-800 font-mono text-[10px] whitespace-pre-wrap">{finding.remediation_snippets.nginx}</pre>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+
+                              {expandedRow === idx && (
+                                <tr className="technical-finding-expanded print:hidden">
+                                  <td colSpan={5} className="p-0 border-b-2 border-indigo-500/50">
+                                    <div
+                                      className="bg-slate-950 overflow-hidden transition-all duration-300"
+                                    >
+                                      <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                                        <div className="lg:col-span-2 space-y-6">
+                                          <div>
+                                            <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Technical Description</div>
+                                            <p className="technical-description text-slate-300 leading-relaxed text-sm">{finding.description}</p>
+                                          </div>
+
+                                          {finding.impact && finding.impact !== "N/A" && (
+                                            <div>
+                                              <div className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                <span>⚠️</span> Security Impact & Risk
+                                              </div>
+                                              <p className="technical-risk-text text-rose-200/80 leading-relaxed text-sm">{finding.impact}</p>
+                                            </div>
+                                          )}
+
+                                          <div className="flex flex-wrap gap-8 mb-4">
+                                            {finding.module && (
+                                              <div>
+                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Capability</div>
+                                                <div className="text-slate-300 font-mono text-sm">{getCapabilityLabel(finding.module)}</div>
+                                              </div>
+                                            )}
+                                            {finding.rule_id && (
+                                              <div>
+                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Rule ID</div>
+                                                <div className="text-slate-400 font-mono text-xs mt-0.5">{finding.rule_id}</div>
+                                              </div>
+                                            )}
+                                            {finding.confidence && finding.confidence !== "N/A" && (
+                                              (() => {
+                                                const lowerConf = finding.confidence.toString().toLowerCase();
+                                                let level = 'medium';
+                                                if (lowerConf.includes('high')) level = 'high';
+                                                else if (lowerConf.includes('low')) level = 'low';
+
+                                                let colorClass = 'text-amber-300';
+                                                if (level === 'high') colorClass = 'text-emerald-400';
+                                                else if (level === 'low') colorClass = 'text-slate-400';
+
+                                                return (
+                                                  <div>
+                                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Confidence Score</div>
+                                                    <div className={`technical-confidence ${colorClass} font-bold text-sm`}>{finding.confidence}</div>
+                                                  </div>
+                                                );
+                                              })()
+                                            )}
+
+                                            {finding.state && (
+                                              <div>
+                                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Verification State</div>
+                                                <div className={`technical-state font-bold text-sm ${finding.state.toLowerCase() === 'observed' ? 'text-blue-400' : 'text-purple-400'}`}>
+                                                  {finding.state.toUpperCase()}
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          {finding.evidence && finding.evidence !== "N/A" && (
+                                            <div>
+                                              <div className="flex items-center justify-between mb-2">
+                                                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">Evidence</div>
+                                                <button onClick={() => navigator.clipboard.writeText(typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence, null, 2))} className="text-slate-500 hover:text-indigo-400 text-xs flex items-center gap-1 transition-colors" aria-label="Copy evidence to clipboard">
+                                                  <Copy className="w-3 h-3" aria-hidden="true" /> Copy
+                                                </button>
+                                              </div>
+                                              {typeof finding.evidence === 'object' && Object.keys(finding.evidence).length > 0 && !finding.evidence.raw && !finding.evidence.request_path ? (
+                                                <div className="technical-evidence bg-slate-950 border border-slate-700/50 rounded-lg p-4 font-mono text-sm space-y-2">
+                                                  {Object.entries(finding.evidence).map(([key, value]) => (
+                                                    <div key={key} className="text-slate-300">
+                                                      <span className="text-slate-500 mr-2">{key}:</span>
+                                                      {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              ) : typeof finding.evidence === 'object' && finding.evidence.request_path ? (
+                                                <div className="technical-evidence bg-slate-950 border border-slate-700/50 rounded-lg p-4 font-mono text-sm">
+                                                  <div className="text-cyan-400 mb-2">
+                                                    GET {finding.evidence.request_path} &bull; Status: {finding.evidence.status_code}
+                                                  </div>
+                                                  {finding.evidence.proof_snippet && (
+                                                    <div className="text-slate-300 border-t border-slate-700/50 pt-2 mt-2">
+                                                      Proof: {finding.evidence.proof_snippet}
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              ) : (
+                                                <pre className="technical-evidence bg-slate-950 border border-slate-800 rounded-lg p-3 font-mono text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                                                  {typeof finding.evidence === 'object' && finding.evidence.raw ? finding.evidence.raw : (typeof finding.evidence === 'string' ? finding.evidence : JSON.stringify(finding.evidence, null, 2))}
+                                                </pre>
+                                              )}
+                                            </div>
+                                          )}
+
+                                          <RemediationSnippetBox findingName={finding.name} ruleId={finding.rule_id} />
+                                        </div>
+
+                                        <div className="space-y-6">
+                                          <div className="technical-remediation-panel bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 h-full">
+                                            {finding.severity === 'Passed' ? (
+                                              <div className="flex flex-col items-center justify-center p-6 text-center rounded-lg bg-emerald-950/20 border border-emerald-800/30 my-auto">
+                                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 mb-2">
+                                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                                  </svg>
+                                                </div>
+                                                <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
+                                                  Security Control Verified
+                                                </span>
+                                                <p className="mt-1 text-xs text-slate-400">
+                                                  This configuration complies with security standards. No action required.
+                                                </p>
+                                              </div>
+                                            ) : finding.remediation && finding.remediation !== "N/A" ? (
+                                              <>
+                                                <div className="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                                  <Shield className="w-4 h-4" /> Remediation Directive
+                                                </div>
+                                                <p className="text-slate-300 text-sm leading-relaxed mb-4">
+                                                  {finding.remediation}
+                                                </p>
+                                              </>
+                                            ) : null}
+
+                                            <div className="space-y-3 mt-auto pt-4 border-t border-slate-800/80">
+                                              <div className="flex justify-between items-center text-xs">
+                                                <span className="text-slate-500">Category</span>
+                                                <span className="font-mono text-slate-300 uppercase">{finding.category}</span>
+                                              </div>
+                                              <div className="flex justify-between items-center text-xs">
+                                                <span className="text-slate-500">Scanner Module</span>
+                                                <span className="font-mono text-slate-300">{finding.module}</span>
+                                              </div>
+
+                                              {/* CVSS Metadata Block */}
+                                              {finding.severity !== 'Passed' && finding.severity !== 'Informational' && (
+                                                <div className="pt-3 mt-3 border-t border-slate-700/30 flex flex-col space-y-2">
+                                                  {finding.cvss ? (
+                                                    <>
+                                                      <div className="flex flex-col">
+                                                        <div className="flex justify-between items-center">
+                                                          <span className="text-xs font-bold text-slate-400">
+                                                            {finding.cvss.startsWith('CVSS:4.0') ? 'CVSS 4.0' : 'CVSS v3.1'}
+                                                          </span>
+                                                        </div>
+                                                        {finding.cvss.startsWith('CVSS:4.0') && (
+                                                          <span className="text-xs text-slate-500 font-medium">CVSS-B</span>
+                                                        )}
+                                                      </div>
+
+                                                      {(finding.cvss_score !== undefined && finding.cvss_score !== null) && (
+                                                        <div className="flex flex-col text-xs text-slate-300">
+                                                          <span>{finding.cvss.startsWith('CVSS:4.0') ? 'Score' : 'Base Score'}: {finding.cvss_score}</span>
+                                                          {finding.cvss_severity && (
+                                                            <span>CVSS Severity: {finding.cvss_severity}</span>
+                                                          )}
+                                                        </div>
+                                                      )}
+
+                                                      <div className="flex flex-col mt-2">
+                                                        <span className="text-xs text-slate-500 mb-1">Vector:</span>
+                                                        <div className="bg-slate-950 p-2 rounded border border-slate-800 min-w-0">
+                                                          <span className="text-xs font-mono text-slate-300 break-words whitespace-normal inline-block w-full text-left" style={{ overflowWrap: 'anywhere' }}>
+                                                            {finding.cvss}
+                                                          </span>
+                                                        </div>
+                                                      </div>
+                                                    </>
+                                                  ) : (
+                                                    <div className="flex flex-col">
+                                                      <span className="text-xs font-bold text-slate-400">CVSS</span>
+                                                      <span className="text-xs text-slate-500 mt-1">Not Applicable</span>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          );
+                        });
+
+                        return elements;
+                      })()}
+
+                      {/* Empty State */}
+                      {elements.length === 0 && (
+                        <div className="text-center py-12">
+                          <Search className="w-12 h-12 mx-auto mb-3 text-slate-600 opacity-50" aria-hidden="true" />
+                          <p className="text-slate-400 text-sm">
+                            No findings match your current filters.
+                          </p>
+                          {searchQuery && (
+                            <button
+                              onClick={() => setSearchQuery('')}
+                              className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 underline"
+                            >
+                              Clear search
+                            </button>
+                          )}
+                          {(severityFilter !== 'All' || owaspFilter !== 'All') && (
+                            <button
+                              onClick={() => {
+                                setSeverityFilter('All');
+                                setOwaspFilter('All');
+                              }}
+                              className="mt-2 text-xs text-indigo-400 hover:text-indigo-300 underline"
+                            >
+                              Clear filters
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </table>
                   </div>
                   {group.key === 'browser_defense' && <CSPAnalysisPanel findings={groupFindings} />}
@@ -840,102 +1051,102 @@ const TechnicalReport = ({ reportData }) => {
         {activeView === 'compliance' && reportData?.technical_compliance && (
           <div className="w-full max-w-full overflow-hidden">
             <div className="technical-section report-section grid grid-cols-1 gap-6">
-            <div className="technical-compliance-section bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-2xl">
-              <div className="flex items-center gap-3 mb-6">
-                <ShieldAlert className="w-5 h-5 text-indigo-400" />
-                <h2 className="font-bold text-slate-50 text-lg">Security Framework Mapping</h2>
+              <div className="technical-compliance-section bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-2xl">
+                <div className="flex items-center gap-3 mb-6">
+                  <ShieldAlert className="w-5 h-5 text-indigo-400" />
+                  <h2 className="font-bold text-slate-50 text-lg">Security Framework Mapping</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                  {/* PCI-DSS */}
+                  <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                    <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                      <h3 className="font-bold text-slate-200 text-sm">PCI-DSS 4.0</h3>
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                        {reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {reportData?.technical_compliance?.pci_dss_4_0?.failed_controls?.length > 0 && (
+                        <div>
+                          <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
+                          <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                            {(reportData?.technical_compliance?.pci_dss_4_0?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      <div>
+                        <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
+                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                          {(reportData?.technical_compliance?.pci_dss_4_0?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          {reportData?.technical_compliance?.pci_dss_4_0?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* NIST SP 800-53 */}
+                  <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                    <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                      <h3 className="font-bold text-slate-200 text-sm">NIST SP 800-53</h3>
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                        {reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {reportData?.technical_compliance?.nist_sp_800_53?.failed_controls?.length > 0 && (
+                        <div>
+                          <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
+                          <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                            {(reportData?.technical_compliance?.nist_sp_800_53?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      <div>
+                        <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
+                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                          {(reportData?.technical_compliance?.nist_sp_800_53?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          {reportData?.technical_compliance?.nist_sp_800_53?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ISO 27001 */}
+                  <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                    <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                      <h3 className="font-bold text-slate-200 text-sm">ISO 27001</h3>
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                        {reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {reportData?.technical_compliance?.iso_27001?.failed_controls?.length > 0 && (
+                        <div>
+                          <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
+                          <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                            {(reportData?.technical_compliance?.iso_27001?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      <div>
+                        <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
+                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                          {(reportData?.technical_compliance?.iso_27001?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          {reportData?.technical_compliance?.iso_27001?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 text-xs text-slate-500 leading-relaxed">
+                    Framework mappings show how externally observable findings may relate to selected security controls. They are not a formal compliance assessment, audit, or certification.
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                {/* PCI-DSS */}
-                <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                  <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                    <h3 className="font-bold text-slate-200 text-sm">PCI-DSS 4.0</h3>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
-                      {reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
-                    </span>
-                  </div>
-
-                  <div className="space-y-4">
-                    {reportData?.technical_compliance?.pci_dss_4_0?.failed_controls?.length > 0 && (
-                      <div>
-                        <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
-                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                          {(reportData?.technical_compliance?.pci_dss_4_0?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        </ul>
-                      </div>
-                    )}
-                    <div>
-                      <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
-                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData?.technical_compliance?.pci_dss_4_0?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.pci_dss_4_0?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                {/* NIST SP 800-53 */}
-                <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                  <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                    <h3 className="font-bold text-slate-200 text-sm">NIST SP 800-53</h3>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
-                      {reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
-                    </span>
-                  </div>
-
-                  <div className="space-y-4">
-                    {reportData?.technical_compliance?.nist_sp_800_53?.failed_controls?.length > 0 && (
-                      <div>
-                        <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
-                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                          {(reportData?.technical_compliance?.nist_sp_800_53?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        </ul>
-                      </div>
-                    )}
-                    <div>
-                      <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
-                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData?.technical_compliance?.nist_sp_800_53?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.nist_sp_800_53?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ISO 27001 */}
-                <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                  <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                    <h3 className="font-bold text-slate-200 text-sm">ISO 27001</h3>
-                    <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
-                      {reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
-                    </span>
-                  </div>
-
-                  <div className="space-y-4">
-                    {reportData?.technical_compliance?.iso_27001?.failed_controls?.length > 0 && (
-                      <div>
-                        <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
-                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                          {(reportData?.technical_compliance?.iso_27001?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        </ul>
-                      </div>
-                    )}
-                    <div>
-                      <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
-                      <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                        {(reportData?.technical_compliance?.iso_27001?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                        {reportData?.technical_compliance?.iso_27001?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-500">None</li>}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6 text-xs text-slate-500 leading-relaxed">
-                  Framework mappings show how externally observable findings may relate to selected security controls. They are not a formal compliance assessment, audit, or certification.
-                </div>
-              </div>
-            </div>
             </div>
           </div>
         )}
