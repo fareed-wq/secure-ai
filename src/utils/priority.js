@@ -1,7 +1,6 @@
 export function calculateFindingPriority(finding) {
     if (!finding) return 'UNSCORED';
     const severity = finding.severity;
-    if (severity === 'Critical') return 'P1';
     if (severity === 'High') return 'P2';
     if (severity === 'Medium') return 'P3';
     if (severity === 'Low') return 'P4';
@@ -16,17 +15,12 @@ export function calculateCvePriority(identity, cve) {
     if (state === 'NOT_EVALUATED' || state === 'UNAVAILABLE') return 'UNSCORED';
 
     if (!cve) return 'UNSCORED';
-    const cvss = cve.cvss_assessments;
-    const epss = cve.epss;
-
-    const hasCvss = Array.isArray(cvss) && cvss.length > 0;
-    const hasEpss = epss && typeof epss === 'object' && typeof epss.score === 'number';
-
-    if (!hasCvss && !hasEpss) return 'UNSCORED';
 
     let maxCvss = -1.0;
-    if (hasCvss) {
-        for (const c of cvss) {
+    if (typeof cve.cvss_score === 'number') {
+        maxCvss = cve.cvss_score;
+    } else if (Array.isArray(cve.cvss_assessments)) {
+        for (const c of cve.cvss_assessments) {
             if (typeof c.base_score === 'number') {
                 if (c.base_score > maxCvss) {
                     maxCvss = c.base_score;
@@ -36,8 +30,10 @@ export function calculateCvePriority(identity, cve) {
     }
 
     let epssScore = -1.0;
-    if (hasEpss) {
-        epssScore = epss.score;
+    if (cve.epss_info && cve.epss_info.status === 'AVAILABLE' && typeof cve.epss_info.epss === 'number') {
+        epssScore = cve.epss_info.epss;
+    } else if (cve.epss && typeof cve.epss === 'object' && typeof cve.epss.score === 'number') {
+        epssScore = cve.epss.score;
     }
 
     if (maxCvss < 0 && epssScore < 0) return 'UNSCORED';
