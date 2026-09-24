@@ -1051,3 +1051,127 @@ html.light-theme .whatsapp-bubble {
 html.light-theme .whatsapp-bubble p {
   color: #334155 !important;
 }
+
+/* ============================================
+   LIGHT THEME: PRIORITY BADGES
+   ============================================ */
+html.light-theme span[data-priority="P3"] {
+  color: #b45309 !important; /* text-amber-700 */
+  background-color: #fef9c3 !important; /* bg-yellow-100 */
+  border-color: #fde047 !important; /* border-yellow-300 */
+}
+html.light-theme span[data-priority="P5"] {
+  color: #6d28d9 !important; /* text-violet-700 */
+  background-color: #ede9fe !important; /* bg-violet-100 */
+  border-color: #c4b5fd !important; /* border-violet-300 */
+}
+
+/* ============================================
+   LIGHT THEME: PASSED CHECKS
+   ============================================ */
+html.light-theme .simple-passed-section {
+  background-color: #f0fdf4 !important; /* bg-emerald-50 */
+  border-color: #bbf7d0 !important; /* border-emerald-200 */
+}
+html.light-theme .simple-passed-section .text-emerald-400 {
+  color: #059669 !important; /* text-emerald-600 */
+}
+html.light-theme .simple-passed-section .text-slate-50 {
+  color: #064e3b !important; /* text-emerald-900 */
+}
+html.light-theme .simple-passed-section .bg-emerald-500\/20 {
+  background-color: #d1fae5 !important; /* bg-emerald-100 */
+}
+html.light-theme .simple-passed-item {
+  background-color: #ffffff !important;
+  border-color: #a7f3d0 !important; /* border-emerald-300 */
+}
+html.light-theme .simple-passed-item .text-slate-300 {
+  color: #064e3b !important; /* text-emerald-900 */
+}
+
+/* ============================================
+   LIGHT THEME: DONUT CHARTS (COVERAGE & DISTRIBUTION)
+   ============================================ */
+/* Coverage Container Specific Overrides */
+html.light-theme .assessment-coverage-container {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .assessment-coverage-container .text-cyan-400 {
+  color: #0369a1 !important; /* sky-700 */
+}
+html.light-theme .assessment-coverage-container .text-slate-500 {
+  color: #475569 !important; /* slate-600 */
+}
+html.light-theme .assessment-coverage-container .text-slate-400 {
+  color: #475569 !important; /* slate-600 */
+}
+html.light-theme .assessment-coverage-container .bg-slate-400 {
+  background-color: #475569 !important; /* slate-600 */
+}
+html.light-theme .assessment-coverage-container .text-slate-600 {
+  color: #334155 !important; /* slate-700 */
+}
+html.light-theme .assessment-coverage-container .bg-slate-600 {
+  background-color: #334155 !important; /* slate-700 */
+}
+/* Base circle for donuts */
+html.light-theme .assessment-coverage-container circle.text-slate-800 {
+  color: #e2e8f0 !important; /* slate-200 */
+}
+/* Donut text values */
+html.light-theme .assessment-coverage-container .absolute .text-slate-50 {
+  color: #0f172a !important; /* slate-900 */
+}
+/* Legend items */
+html.light-theme .assessment-coverage-container .text-slate-300.font-medium {
+  color: #334155 !important; /* slate-700 */
+}
+
+/* Distribution Container Specific Overrides */
+html.light-theme .finding-distribution-container {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .finding-distribution-container.border-t {
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .finding-distribution-container .text-cyan-400 {
+  color: #0369a1 !important; /* sky-700 */
+}
+html.light-theme .finding-distribution-container .text-slate-500 {
+  color: #475569 !important; /* slate-600 */
+}
+html.light-theme .finding-distribution-container .bg-slate-500 {
+  background-color: #475569 !important; /* slate-600 */
+}
+html.light-theme .finding-distribution-container .text-slate-400 {
+  color: #475569 !important; /* slate-600 */
+}
+/* Base circle for donuts */
+html.light-theme .finding-distribution-container circle.text-slate-800 {
+  color: #e2e8f0 !important; /* slate-200 */
+}
+/* Donut text values */
+html.light-theme .finding-distribution-container .absolute .text-slate-50 {
+  color: #0f172a !important; /* slate-900 */
+}
+/* Legend items */
+html.light-theme .finding-distribution-container .text-slate-300.font-medium {
+  color: #334155 !important; /* slate-700 */
+}
+
+/* Distribution Semantic Colors */
+html.light-theme .finding-distribution-container .text-fuchsia-400 { color: #a21caf !important; }
+html.light-theme .finding-distribution-container .bg-fuchsia-500 { background-color: #a21caf !important; }
+html.light-theme .finding-distribution-container .text-yellow-400 { color: #ca8a04 !important; }
+html.light-theme .finding-distribution-container .bg-yellow-500 { background-color: #ca8a04 !important; }
+html.light-theme .finding-distribution-container .text-red-500 { color: #dc2626 !important; }
+html.light-theme .finding-distribution-container .bg-red-500 { background-color: #dc2626 !important; }
+html.light-theme .finding-distribution-container .text-amber-500 { color: #d97706 !important; }
+html.light-theme .finding-distribution-container .bg-amber-500 { background-color: #d97706 !important; }
+html.light-theme .finding-distribution-container .text-emerald-500 { color: #059669 !important; }
+html.light-theme .finding-distribution-container .bg-emerald-500 { background-color: #059669 !important; }
+html.light-theme .finding-distribution-container .text-blue-500 { color: #2563eb !important; }
+html.light-theme .finding-distribution-container .bg-blue-500 { background-color: #2563eb !important; }

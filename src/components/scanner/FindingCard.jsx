@@ -53,7 +53,7 @@ const FindingCard = ({ issue, idx }) => {
             </h4>
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <SeverityBadge severity={issue.severity} />
-              <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border shrink-0 ${getPriorityBadgeClasses(calculateFindingPriority(issue))}`}>
+              <span data-priority={calculateFindingPriority(issue)} className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border shrink-0 ${getPriorityBadgeClasses(calculateFindingPriority(issue))}`}>
                 Priority: {calculateFindingPriority(issue)}
               </span>
               {effort && effort !== 'N/A' && (

@@ -470,7 +470,7 @@ const SimpleReport = ({ reportData }) => {
                           <span className={`w-1.5 h-1.5 rounded-full ${severityDot}`}></span>
                           {issue.severity}
                         </span>
-                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border shrink-0 ${getPriorityBadgeClasses(priority)}`}>
+                        <span data-priority={priority} className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border shrink-0 ${getPriorityBadgeClasses(priority)}`}>
                           {priority}
                         </span>
                       </div>

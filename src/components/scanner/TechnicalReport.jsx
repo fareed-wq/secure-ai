@@ -89,7 +89,7 @@ const TechnicalReport = ({ reportData }) => {
 
   const getPriorityBadge = (priority) => {
     const style = getPriorityBadgeClasses(priority);
-    return <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${style}`}>{priority}</span>;
+    return <span data-priority={priority} className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${style}`}>{priority}</span>;
   };
 
   const copyToClipboard = (text) => {
@@ -645,7 +645,7 @@ const TechnicalReport = ({ reportData }) => {
 
             {/* Finding Distribution Card */}
             {totalFindings > 0 && (
-              <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
+              <div className="finding-distribution-container report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
                 <div className="flex items-center gap-3 mb-4">
                   <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ FINDING_DISTRIBUTION</span>
                 </div>
