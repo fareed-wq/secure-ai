@@ -12,15 +12,29 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [captchaToken, setCaptchaToken] = useState(null);
-    const [isNarrowViewport, setIsNarrowViewport] = useState(
+  const [isNarrowViewport, setIsNarrowViewport] = useState(
     typeof window !== 'undefined' ? window.innerWidth < 360 : false
   );
+  
+  // Phase 1 Recovery State
+  const [verifyMode, setVerifyMode] = useState(false);
+  const [otpToken, setOtpToken] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
     const handleResize = () => setIsNarrowViewport(window.innerWidth < 360);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
   const turnstileRef = React.useRef();
   const navigate = useNavigate();
 
@@ -41,6 +55,18 @@ const Login = () => {
     if (error) {
       if (error.message === 'Email not confirmed') {
         setError('Please check your email to verify your account before signing in.');
+        // Trigger recovery OTP
+        const { error: otpError } = await supabase.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: false }
+        });
+        if (!otpError) {
+          setVerifyMode(true);
+          setResendCooldown(60);
+          setError(null);
+        } else {
+          setError(otpError.message || 'Failed to send recovery verification code.');
+        }
       } else if (error.message === 'Invalid login credentials') {
         setError('Incorrect email or password.');
       } else {
@@ -51,6 +77,117 @@ const Login = () => {
     }
     setLoading(false);
   };
+
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: otpToken,
+        type: 'email'
+      });
+
+      if (error) throw error;
+      if (data?.session) {
+        navigate('/dashboard');
+      } else {
+        throw new Error('Failed to establish session.');
+      }
+    } catch (err) {
+      setError(err.message || 'Invalid verification code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: false }
+      });
+      if (error) throw error;
+      setResendCooldown(60);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (verifyMode) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans relative overflow-hidden">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+          <div className="flex justify-center">
+            <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+              <Mail className="h-8 w-8 text-emerald-400" />
+            </div>
+          </div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-50 tracking-tight">
+            Verify your email
+          </h2>
+          <p className="mt-2 text-center text-sm text-slate-400">
+            We've sent a verification code to <span className="font-medium text-slate-300">{email}</span>.
+          </p>
+        </div>
+
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="bg-slate-900 py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-slate-800">
+            <form className="space-y-6" onSubmit={handleVerify}>
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg">
+                  {error}
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-slate-300">Verification Code</label>
+                <input
+                  type="text"
+                  required
+                  value={otpToken}
+                  onChange={(e) => setOtpToken(e.target.value)}
+                  className="mt-1 block w-full bg-slate-950 border border-slate-700 rounded-lg py-2.5 px-3 text-slate-50 sm:text-lg tracking-widest text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                  placeholder="000000"
+                  maxLength={6}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading || !otpToken}
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-slate-900 bg-emerald-500 hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify Account'}
+              </button>
+            </form>
+            <div className="mt-6 flex flex-col space-y-3">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendCooldown > 0 || loading}
+                className="w-full text-sm text-slate-400 hover:text-slate-300 disabled:opacity-50"
+              >
+                {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setVerifyMode(false); setOtpToken(''); setError(null); }}
+                className="w-full text-sm text-slate-500 hover:text-slate-400"
+              >
+                Back to sign in
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans text-slate-200">
@@ -65,8 +202,23 @@ const Login = () => {
         <div className="bg-slate-900 py-8 px-4 shadow-xl shadow-black/50 sm:rounded-2xl sm:px-10 border border-slate-800">
           <form className="space-y-6" onSubmit={handleLogin}>
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg">
-                {error}
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-sm p-3 rounded-lg flex justify-between items-center">
+                <span>{error}</span>
+                {error.includes('verify your account') && (
+                  <button 
+                    type="button" 
+                    onClick={async () => {
+                      setLoading(true);
+                      const { error: otpError } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+                      if (!otpError) { setVerifyMode(true); setResendCooldown(60); setError(null); }
+                      else setError(otpError.message);
+                      setLoading(false);
+                    }}
+                    className="ml-2 text-indigo-400 hover:text-indigo-300 underline"
+                  >
+                    Resend Code
+                  </button>
+                )}
               </div>
             )}
 

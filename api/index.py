@@ -267,12 +267,14 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
 from api.auth.entitlements import get_current_user, require_current_user, Entitlements, check_guest_quota, consume_guest_quota, check_free_quota, consume_free_quota
 from api.scanner.core import acquire_scan_lease, release_scan_lease, acquire_guest_lease, release_guest_lease
 from api.admin import admin_router
+from api.auth.register import register_router
 from api.scheduling.router import router as scheduling_router
 from api.scheduling.worker import worker_router
 from api.scheduling.email_worker import router as email_worker_router
 from api.scanner.enrich_worker import worker_router as enrich_worker_router
 
 app.include_router(admin_router)
+app.include_router(register_router, prefix="/api/auth", tags=["auth"])
 app.include_router(scheduling_router, prefix="/api/schedules", tags=["schedules"])
 app.include_router(worker_router, prefix="/api/internal", tags=["internal"])
 app.include_router(email_worker_router, prefix="/api/internal", tags=["internal"])
