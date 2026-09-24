@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { getTranslation, getBusinessRisk, getEffort } from '../../lib/utils/translations';
 import SeverityBadge from './SeverityBadge';
-import { calculateFindingPriority } from '../../utils/priority';
+import { calculateFindingPriority, getPriorityBadgeClasses } from '../../utils/priority';
 import { ChevronDown } from 'lucide-react';
 
 
@@ -53,7 +53,7 @@ const FindingCard = ({ issue, idx }) => {
             </h4>
             <div className="flex flex-wrap items-center gap-2 mt-2">
               <SeverityBadge severity={issue.severity} />
-              <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 shrink-0">
+              <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border shrink-0 ${getPriorityBadgeClasses(calculateFindingPriority(issue))}`}>
                 Priority: {calculateFindingPriority(issue)}
               </span>
               {effort && effort !== 'N/A' && (
