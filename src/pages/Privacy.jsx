@@ -17,19 +17,14 @@ const Privacy = () => {
         <h1 className="text-4xl md:text-5xl font-black text-slate-50 tracking-tight">
           Privacy Policy for URLScannerOnline
         </h1>
-        <p className="text-lg text-slate-400">
-          Effective Date: [INSERT DATE]
-        </p>
+
       </header>
 
       <div className="max-w-4xl space-y-10">
         <section className="space-y-4">
           <h2 className="text-2xl font-bold text-slate-50">1. Who We Are</h2>
           <p>
-            URLScannerOnline is operated by [LEGAL ENTITY NAME], located at [REGISTERED ADDRESS].
-          </p>
-          <p>
-            In this policy, &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo; refers to URLScannerOnline and the operating entity identified above.
+            In this policy, &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo; refers to URLScannerOnline.
           </p>
           <p>
             Where applicable under privacy laws, we act as the controller, Data Fiduciary, or equivalent responsible entity for personal data processed through our services.
@@ -338,18 +333,13 @@ const Privacy = () => {
           <p>
             We may update this Privacy Policy when our services, processing practices, service providers, or applicable legal requirements change.
           </p>
-          <p>
-            When we update the policy, we will update the Effective Date shown at the beginning of the document.
-          </p>
+
         </section>
 
         <section className="space-y-4">
           <h2 className="text-2xl font-bold text-slate-50">22. Contact Information</h2>
           <p><strong>Email:</strong> <code>contact@urlscanonline.com</code></p>
-          <p><strong>Mail:</strong><br/>
-            [LEGAL ENTITY NAME]<br/>
-            [REGISTERED ADDRESS]
-          </p>
+
         </section>
       </div>
     </div>

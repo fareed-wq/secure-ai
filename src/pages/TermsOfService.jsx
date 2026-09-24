@@ -54,7 +54,7 @@ const TermsOfService = () => {
               <p className="text-lg md:text-xl text-slate-400 leading-relaxed">
                 Please read these terms carefully before using URLScannerOnline.
               </p>
-              <p className="text-sm text-slate-500 mt-4">Effective Date: [INSERT DATE]</p>
+
             </div>
           </section>
 
@@ -73,7 +73,7 @@ const TermsOfService = () => {
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
               <h2 id="who-we-are" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">2. Who We Are</h2>
               <p className="text-slate-400 leading-relaxed">
-                URLScannerOnline is operated by [LEGAL ENTITY NAME], located at [REGISTERED ADDRESS].
+                In these terms, "we," "us," or "our" refers to URLScannerOnline.
               </p>
             </div>
           </section>
@@ -280,7 +280,7 @@ const TermsOfService = () => {
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
               <h2 id="governing-law" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">14. Governing Law and Jurisdiction</h2>
               <p className="text-slate-400 leading-relaxed">
-                These Terms will be governed by the laws applicable to [GOVERNING JURISDICTION], subject to any mandatory rights or protections that apply to you under the laws of your place of residence.
+                These Terms are subject to applicable law and any mandatory rights or protections that apply to you under the laws of your place of residence.
               </p>
             </div>
           </section>
@@ -290,7 +290,7 @@ const TermsOfService = () => {
             <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
               <h2 id="changes" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">15. Changes to Terms</h2>
               <p className="text-slate-400 leading-relaxed">
-                We may update these Terms of Service from time to time. Changes will be reflected by updating the "Effective Date" at the top of this page. Continued use of the service after changes are posted constitutes acceptance of the updated terms.
+                We may update these Terms of Service from time to time. Continued use of the service after changes are posted constitutes acceptance of the updated terms.
               </p>
             </div>
           </section>
