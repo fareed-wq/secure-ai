@@ -1203,6 +1203,10 @@ const TechnicalReport = ({ reportData }) => {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Critical</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-rose-400 bg-rose-950/30 border-rose-800">P1</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
                   <span className="text-xs font-bold text-slate-300">High</span>
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
                 </div>
