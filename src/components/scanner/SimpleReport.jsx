@@ -485,7 +485,7 @@ const SimpleReport = ({ reportData }) => {
                       )}
                       <div className="flex flex-wrap items-center gap-2 mt-3">
                         {issue.owasp && (
-                          <span className="text-[10px] font-mono text-slate-500 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                          <span className="text-[10px] font-mono bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-md">
                             {issue.owasp}
                           </span>
                         )}

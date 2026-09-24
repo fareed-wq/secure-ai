@@ -551,36 +551,107 @@ const TechnicalReport = ({ reportData }) => {
 
 
 
-      {/* 2. Assessment Coverage */}
+      {/* 2. Assessment Coverage + Finding Distribution */}
       {(() => {
         const cov = reportData?.assessment_coverage;
-        if (!cov) return null;
-        return (
-          <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ ASSESSMENT_COVERAGE</span>
-            </div>
-            {cov.available ? (() => {
-              const covData = [
-                { label: 'Completed', count: cov.completed_modules || 0, color: 'text-emerald-500', dot: 'bg-emerald-500' },
-                { label: 'Partial', count: cov.partial_modules || 0, color: 'text-amber-500', dot: 'bg-amber-500' },
-                { label: 'Failed', count: cov.failed_modules || 0, color: 'text-red-500', dot: 'bg-red-500' },
-                { label: 'Blocked', count: cov.blocked_modules || 0, color: 'text-slate-500', dot: 'bg-slate-500' },
-                { label: 'Incomplete', count: cov.execution_incomplete_modules || 0, color: 'text-slate-400', dot: 'bg-slate-400' },
-                { label: 'N/A', count: cov.not_applicable_modules || 0, color: 'text-slate-600', dot: 'bg-slate-600' }
-              ];
-              const activeCovData = covData.filter(d => d.count > 0);
-              const totalModules = activeCovData.reduce((acc, curr) => acc + curr.count, 0) || 1;
-              const DONUT_CIRCUMFERENCE = 2 * Math.PI * 52;
+        const totalFindings = findings.length;
+        const highRiskCount = findings.filter(f => f.severity === 'High' || f.severity === 'Critical').length;
+        const mediumRiskCount = findings.filter(f => f.severity === 'Medium').length;
+        const lowRiskCount = findings.filter(f => f.severity === 'Low').length;
+        const passedCount = findings.filter(f => f.severity === 'Passed').length;
+        const infoCount = findings.filter(f => f.severity === 'Informational').length;
+        const inconclusiveCount = findings.filter(f => f.severity === 'Inconclusive').length;
+        const distData = [
+          { label: 'High', count: highRiskCount, color: 'text-red-500', dot: 'bg-red-500' },
+          { label: 'Medium', count: mediumRiskCount, color: 'text-amber-500', dot: 'bg-amber-500' },
+          { label: 'Low', count: lowRiskCount, color: 'text-purple-500', dot: 'bg-purple-500' },
+          { label: 'Passed', count: passedCount, color: 'text-emerald-500', dot: 'bg-emerald-500' },
+          { label: 'Informational', count: infoCount, color: 'text-blue-500', dot: 'bg-blue-500' },
+          { label: 'Inconclusive', count: inconclusiveCount, color: 'text-slate-500', dot: 'bg-slate-500' },
+        ];
+        const activeDist = distData.filter(d => d.count > 0);
+        const DONUT_CIRC = 2 * Math.PI * 52;
 
-              return (
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                  <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0" role="img" aria-label={`Assessment Coverage: ${covData.map(d => `${d.label}: ${d.count}`).join(', ')}`}>
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Assessment Coverage Card */}
+            <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ ASSESSMENT_COVERAGE</span>
+              </div>
+              {cov && cov.available ? (() => {
+                const covData = [
+                  { label: 'Completed', count: cov.completed_modules || 0, color: 'text-emerald-500', dot: 'bg-emerald-500' },
+                  { label: 'Partial', count: cov.partial_modules || 0, color: 'text-amber-500', dot: 'bg-amber-500' },
+                  { label: 'Failed', count: cov.failed_modules || 0, color: 'text-red-500', dot: 'bg-red-500' },
+                  { label: 'Blocked', count: cov.blocked_modules || 0, color: 'text-slate-500', dot: 'bg-slate-500' },
+                  { label: 'Incomplete', count: cov.execution_incomplete_modules || 0, color: 'text-slate-400', dot: 'bg-slate-400' },
+                  { label: 'N/A', count: cov.not_applicable_modules || 0, color: 'text-slate-600', dot: 'bg-slate-600' }
+                ];
+                const activeCovData = covData.filter(d => d.count > 0);
+                const totalModules = activeCovData.reduce((acc, curr) => acc + curr.count, 0) || 1;
+                const DONUT_CIRCUMFERENCE = 2 * Math.PI * 52;
+
+                return (
+                  <div className="flex flex-col sm:flex-row items-center gap-6">
+                    <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0" role="img" aria-label={`Assessment Coverage: ${covData.map(d => `${d.label}: ${d.count}`).join(', ')}`}>
+                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 128 128">
+                        <circle cx="64" cy="64" r="52" stroke="currentColor" strokeWidth="14" fill="transparent" className="text-slate-800" aria-hidden="true" />
+                        {activeCovData.map((seg, i) => {
+                          const prevFraction = activeCovData.slice(0, i).reduce((s, p) => s + p.count, 0) / totalModules;
+                          const dashLen = DONUT_CIRCUMFERENCE * (seg.count / totalModules);
+                          return (
+                            <circle
+                              key={i}
+                              cx="64"
+                              cy="64"
+                              r="52"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="14"
+                              strokeDasharray={`${dashLen} ${DONUT_CIRCUMFERENCE - dashLen}`}
+                              strokeDashoffset={DONUT_CIRCUMFERENCE * (1 - prevFraction)}
+                              strokeLinecap="butt"
+                              className={seg.color}
+                            />
+                          );
+                        })}
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-2xl font-black text-slate-50 font-mono">{Math.round(cov.percentage)}%</span>
+                        <span className="text-[10px] text-slate-500 uppercase tracking-wider">Complete</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col justify-center gap-2 w-max">
+                      {covData.map((seg, i) => (
+                        <div key={i} className="inline-flex items-center gap-2 text-sm">
+                          <span className={`w-3 h-3 rounded-full ${seg.dot} flex-shrink-0`}></span>
+                          <span className="text-slate-300 font-medium">{seg.label}</span>
+                          <span className={`font-mono text-xs font-bold ${seg.color}`}>{seg.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })() : (
+                <div className="text-sm text-slate-400">Assessment Coverage: Not available</div>
+              )}
+            </div>
+
+            {/* Finding Distribution Card */}
+            {totalFindings > 0 && (
+              <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ FINDING_DISTRIBUTION</span>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0" role="img" aria-label={`Finding Distribution: ${distData.map(d => `${d.label}: ${d.count}`).join(', ')}`}>
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 128 128">
                       <circle cx="64" cy="64" r="52" stroke="currentColor" strokeWidth="14" fill="transparent" className="text-slate-800" aria-hidden="true" />
-                      {activeCovData.map((seg, i) => {
-                        const prevFraction = activeCovData.slice(0, i).reduce((s, p) => s + p.count, 0) / totalModules;
-                        const dashLen = DONUT_CIRCUMFERENCE * (seg.count / totalModules);
+                      {activeDist.map((seg, i) => {
+                        const prevFraction = activeDist.slice(0, i).reduce((s, p) => s + p.count, 0) / totalFindings;
+                        const dashLen = DONUT_CIRC * (seg.count / totalFindings);
                         return (
                           <circle
                             key={i}
@@ -590,8 +661,8 @@ const TechnicalReport = ({ reportData }) => {
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="14"
-                            strokeDasharray={`${dashLen} ${DONUT_CIRCUMFERENCE - dashLen}`}
-                            strokeDashoffset={DONUT_CIRCUMFERENCE * (1 - prevFraction)}
+                            strokeDasharray={`${dashLen} ${DONUT_CIRC - dashLen}`}
+                            strokeDashoffset={DONUT_CIRC * (1 - prevFraction)}
                             strokeLinecap="butt"
                             className={seg.color}
                           />
@@ -599,13 +670,13 @@ const TechnicalReport = ({ reportData }) => {
                       })}
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-2xl font-black text-slate-50 font-mono">{Math.round(cov.percentage)}%</span>
-                      <span className="text-[10px] text-slate-500 uppercase tracking-wider">Complete</span>
+                      <span className="text-2xl font-black text-slate-50">{totalFindings}</span>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-wider">Findings</span>
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-center gap-2 w-max ml-0 sm:ml-8 mt-4 sm:mt-0">
-                    {covData.map((seg, i) => (
+                  <div className="flex flex-col justify-center gap-2 w-max">
+                    {activeDist.map((seg, i) => (
                       <div key={i} className="inline-flex items-center gap-2 text-sm">
                         <span className={`w-3 h-3 rounded-full ${seg.dot} flex-shrink-0`}></span>
                         <span className="text-slate-300 font-medium">{seg.label}</span>
@@ -614,9 +685,7 @@ const TechnicalReport = ({ reportData }) => {
                     ))}
                   </div>
                 </div>
-              );
-            })() : (
-              <div className="text-sm text-slate-400">Assessment Coverage: Not available</div>
+              </div>
             )}
           </div>
         );
@@ -904,12 +973,17 @@ const TechnicalReport = ({ reportData }) => {
               const groupDomainKey = group.key;
 
               // Filter findings by domain group first, then apply toolbar filters
-              const groupFindings = filteredFindings.filter(f => {
+              const baseGroupFindings = filteredFindings.filter(f => {
                 const effectiveDomain = (f.domain && knownDomainKeys.has(f.domain)) ? f.domain : 'browser_defense';
                 return effectiveDomain === groupDomainKey;
               });
 
-              if (groupFindings.length === 0) return null;
+              const displayGroupFindings = filteredFindings.filter(f => {
+                const effectiveDomain = (f.domain && knownDomainKeys.has(f.domain)) ? f.domain : 'browser_defense';
+                return effectiveDomain === groupDomainKey || (groupDomainKey === 'browser_defense' && effectiveDomain === 'network_services');
+              });
+
+              if (displayGroupFindings.length === 0) return null;
 
               return (
                 <div key={group.key} className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
@@ -918,21 +992,8 @@ const TechnicalReport = ({ reportData }) => {
                     <h2 className="font-bold text-slate-50 text-lg">{group.label}</h2>
                   </div>
 
-                  {renderFindingsTable(groupFindings, sortedFindings)}
-                  {group.key === 'browser_defense' && <CSPAnalysisPanel findings={groupFindings} />}
-                    {group.key === 'browser_defense' && (() => {
-                        const nsFindings = filteredFindings.filter(f => f.domain === 'network_services');
-                        if (nsFindings.length === 0) return null;
-                        return (
-                          <div className="mt-8 border-t border-slate-800/50 pt-6 px-0 pb-2">
-                            <div className="flex items-center gap-3 mb-6">
-                              <Activity className="w-5 h-5 text-purple-400" />
-                              <h3 className="font-bold text-slate-50 text-lg">Network & Service Exposure</h3>
-                            </div>
-                            {renderFindingsTable(nsFindings, sortedFindings)}
-                          </div>
-                        );
-                    })()}
+                  {renderFindingsTable(displayGroupFindings, sortedFindings)}
+                  {group.key === 'browser_defense' && <CSPAnalysisPanel findings={baseGroupFindings} />}
                 </div>
               );
             })}
