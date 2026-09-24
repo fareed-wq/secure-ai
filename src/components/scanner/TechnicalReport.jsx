@@ -273,7 +273,7 @@ const TechnicalReport = ({ reportData }) => {
                                         <div className="space-y-6">
                                           <div className="technical-remediation-panel bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex flex-col gap-3 h-full">
                                             {finding.severity === 'Passed' ? (
-                                              <div className="flex flex-col items-center justify-center p-6 text-center rounded-lg bg-emerald-950/20 border border-emerald-800/30 my-auto">
+                                              <div className="simple-passed-section flex flex-col items-center justify-center p-6 text-center rounded-lg bg-emerald-950/20 border border-emerald-800/30 my-auto">
                                                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400 mb-2">
                                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
@@ -578,7 +578,7 @@ const TechnicalReport = ({ reportData }) => {
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Assessment Coverage Card */}
-            <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
+            <div className="assessment-coverage-container report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
               <div className="flex items-center gap-3 mb-4">
                 <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ ASSESSMENT_COVERAGE</span>
               </div>
@@ -1208,7 +1208,7 @@ const TechnicalReport = ({ reportData }) => {
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
                   <span className="text-xs font-bold text-slate-300">Medium</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800">P3</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800" data-priority="P3">P3</span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
                   <span className="text-xs font-bold text-slate-300">Low</span>
@@ -1216,7 +1216,7 @@ const TechnicalReport = ({ reportData }) => {
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
                   <span className="text-xs font-bold text-slate-300">Informational / Passed</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800" data-priority="P5">P5</span>
                 </div>
               </div>
               
@@ -1241,7 +1241,7 @@ const TechnicalReport = ({ reportData }) => {
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
                   <span className="text-xs font-medium text-slate-400">CVSS &ge; 4.0</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800">P3</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800" data-priority="P3">P3</span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
                   <span className="text-xs font-medium text-slate-400">CVSS &gt; 0</span>
@@ -1249,7 +1249,7 @@ const TechnicalReport = ({ reportData }) => {
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
                   <span className="text-xs font-medium text-slate-400">CVSS = 0 <strong className="text-slate-400 mx-1">OR</strong> (No CVSS + EPSS &lt; 1%)</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800" data-priority="P5">P5</span>
                 </div>
               </div>
             </div>

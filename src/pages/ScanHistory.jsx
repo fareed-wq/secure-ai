@@ -82,7 +82,7 @@ const ScanHistory = () => {
     try {
       const { data, error: err } = await supabase
         .from('scans')
-          .select('id, target_url, score, created_at, status, trigger_type, scan_mode:report_data->>scan_mode')
+          .select('id, target_url, score, created_at, trigger_type, scan_mode:report_data->>scan_mode')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 

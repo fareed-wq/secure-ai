@@ -85,7 +85,7 @@ const Dashboard = () => {
       try {
         const { data: metaData, error: metaError } = await supabase
           .from('scans')
-          .select('id, target_url, score, created_at, status, scan_mode:report_data->>scan_mode')
+          .select('id, target_url, score, created_at, scan_mode:report_data->>scan_mode')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
