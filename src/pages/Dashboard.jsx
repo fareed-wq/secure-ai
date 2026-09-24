@@ -495,23 +495,6 @@ const Dashboard = () => {
               <p className="text-slate-400 text-sm max-w-md mx-auto">You don't have any Medium, High, or Critical findings across your latest scans. Run a new scan to ensure you stay protected.</p>
             </div>
           )}
-          {/* Priority Guide */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 mt-4">
-            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-50 mb-3 flex items-center gap-2">
-              <Info size={16} className="text-slate-600 dark:text-slate-400" /> Understanding Priority (P1-P5)
-            </h2>
-            <div className="text-xs text-slate-600 dark:text-slate-400 space-y-2">
-              <p>Priority indicates <strong className="text-slate-700 dark:text-slate-300">remediation urgency</strong>, independent of scanner confidence. It is calculated from:</p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li><strong className="text-slate-700 dark:text-slate-300">P1:</strong> Qualifying CVE intelligence (CVSS &ge; 9.0 OR EPSS &ge; 10%) OR <strong className="text-slate-700 dark:text-slate-300">Critical</strong> fallback</li>
-                <li><strong className="text-slate-700 dark:text-slate-300">P2:</strong> High severity</li>
-                <li><strong className="text-slate-700 dark:text-slate-300">P3:</strong> Medium severity</li>
-                <li><strong className="text-slate-700 dark:text-slate-300">P4:</strong> Low severity</li>
-                <li><strong className="text-slate-700 dark:text-slate-300">P5:</strong> Informational / Passed</li>
-              </ul>
-              <p className="italic mt-2 pt-2 border-t border-slate-200/70 dark:border-slate-800/50">Note: Critical findings map to P1 under the current methodology.</p>
-            </div>
-          </div>
         </>
       )}
     </div>
