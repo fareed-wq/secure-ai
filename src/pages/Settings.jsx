@@ -429,7 +429,7 @@ const Settings = () => {
                       headers: { 'Authorization': `Bearer ${session.access_token}` }
                     });
                     if (!res.ok) throw new Error("Failed to delete account.");
-                    await supabase.auth.signOut();
+                    await supabase.auth.signOut({ scope: 'local' });
                     window.location.href = '/';
                   } catch (error) {
                     setError(error.message);

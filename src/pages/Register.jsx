@@ -33,6 +33,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [captchaToken, setCaptchaToken] = useState(null);
+  const captchaPromiseRef = React.useRef(null);
   const [isNarrowViewport, setIsNarrowViewport] = useState(
     typeof window !== 'undefined' ? window.innerWidth < 360 : false
   );
@@ -127,11 +128,28 @@ const Register = () => {
       }
 
       // Success, now trigger OTP send
+      // We must get a fresh CAPTCHA token because the backend consumed the current one
+      setCaptchaToken(null);
+      turnstileRef.current?.reset();
+
+      const freshToken = await new Promise((resolve) => {
+        captchaPromiseRef.current = resolve;
+        setTimeout(() => resolve(null), 10000);
+      });
+
+      if (!freshToken) {
+        throw new Error('Failed to generate security token for verification email. Please click Resend.');
+      }
+
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: formData.email,
-        options: { shouldCreateUser: false }
+        options: { shouldCreateUser: false, captchaToken: freshToken }
       });
       
+      // Clear again to prevent reuse
+      setCaptchaToken(null);
+      turnstileRef.current?.reset();
+
       setVerifyMode(true);
       setResendCooldown(60);
       if (otpError) {
@@ -179,10 +197,25 @@ const Register = () => {
     setLoading(true);
     setError(null);
     try {
+      setCaptchaToken(null);
+      turnstileRef.current?.reset();
+      const freshToken = await new Promise((resolve) => {
+        captchaPromiseRef.current = resolve;
+        setTimeout(() => resolve(null), 10000);
+      });
+
+      if (!freshToken) {
+        throw new Error('Security check failed. Please refresh and try again.');
+      }
+
       const { error } = await supabase.auth.signInWithOtp({
         email: formData.email,
-        options: { shouldCreateUser: false }
+        options: { shouldCreateUser: false, captchaToken: freshToken }
       });
+
+      setCaptchaToken(null);
+      turnstileRef.current?.reset();
+
       if (error) throw error;
       setResendCooldown(60);
     } catch (err) {
@@ -447,7 +480,13 @@ const Register = () => {
                   ref={turnstileRef}
                   siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
                   options={{ size: isNarrowViewport ? "compact" : "flexible" }}
-                  onSuccess={(token) => setCaptchaToken(token)}
+                  onSuccess={(token) => {
+                    setCaptchaToken(token);
+                    if (captchaPromiseRef.current) {
+                      captchaPromiseRef.current(token);
+                      captchaPromiseRef.current = null;
+                    }
+                  }}
                   onExpire={() => setCaptchaToken(null)}
                   onError={() => setCaptchaToken(null)}
                 />
