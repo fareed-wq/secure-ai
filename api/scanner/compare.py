@@ -98,8 +98,24 @@ def _resolve_moduleless(groups, other_groups):
             groups[target_key].extend(groups[k])
             del groups[k]
 
+
+from urllib.parse import urlparse, urlunparse
+
+def normalize_for_compare(url: str) -> str:
+    if not url: return url
+    try:
+        parsed = urlparse(url)
+        scheme = parsed.scheme.lower()
+        netloc = parsed.netloc.lower()
+        path = parsed.path
+        if path == '/':
+            path = ''
+        return urlunparse((scheme, netloc, path, parsed.params, parsed.query, ''))
+    except Exception:
+        return url
+
 def compare_reports(old_scan: Dict[str, Any], new_scan: Dict[str, Any]) -> Dict[str, Any]:
-    if old_scan.get("target_url") != new_scan.get("target_url"):
+    if normalize_for_compare(old_scan.get("target_url", "")) != normalize_for_compare(new_scan.get("target_url", "")):
         raise ValueError("Cannot compare scans with different target URLs.")
 
     old_data = old_scan.get("report_data", {})

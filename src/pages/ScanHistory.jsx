@@ -4,6 +4,18 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
+
+const normalizeForCompare = (url) => {
+  try {
+    const parsed = new URL(url);
+    let path = parsed.pathname;
+    if (path === '/') path = '';
+    return `${parsed.protocol}//${parsed.hostname}${parsed.port ? ':' + parsed.port : ''}${path}${parsed.search}`;
+  } catch (e) {
+    return url;
+  }
+};
+
 const ScanHistory = () => {
   const { user, canUseScanCompare } = useAuth();
   const [scans, setScans] = useState([]);
@@ -47,7 +59,7 @@ const ScanHistory = () => {
 
     if (scanType1 === 'Unknown' || scanType2 === 'Unknown') return false;
 
-    const sameTarget = selectedScans[0].target_url === selectedScans[1].target_url;
+    const sameTarget = normalizeForCompare(selectedScans[0].target_url) === normalizeForCompare(selectedScans[1].target_url);
     const sameType = scanType1 === scanType2;
 
     return sameTarget && sameType;

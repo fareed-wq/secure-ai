@@ -124,3 +124,23 @@ def test_deterministic_repeated_comparison():
     assert len(res1["cve_priority_changed"]) == 1
     assert res1["cve_priority_changed"][0]["old_priority"] == "P1"
     assert res1["cve_priority_changed"][0]["new_priority"] == "P2"
+
+
+def test_normalize_for_compare():
+    from api.scanner.compare import normalize_for_compare
+    # 1. root slash equivalence
+    assert normalize_for_compare("https://digitalgogle.com") == normalize_for_compare("https://digitalgogle.com/")
+    # 2. hostname/scheme case normalization
+    assert normalize_for_compare("HTTPS://DOMAIN.COM") == normalize_for_compare("https://domain.com/")
+    # 3. fragment ignored
+    assert normalize_for_compare("https://domain.com/#a") == normalize_for_compare("https://domain.com/#b")
+    assert normalize_for_compare("https://domain.com/") == normalize_for_compare("https://domain.com/#fragment")
+    # 4. path difference preserved
+    assert normalize_for_compare("https://domain.com") != normalize_for_compare("https://domain.com/path")
+    assert normalize_for_compare("https://domain.com/") != normalize_for_compare("https://domain.com/index.html")
+    # 5. path trailing slash difference preserved
+    assert normalize_for_compare("https://domain.com/path") != normalize_for_compare("https://domain.com/path/")
+    # 6. query difference preserved
+    assert normalize_for_compare("https://domain.com?a=1") != normalize_for_compare("https://domain.com?a=2")
+    # 7. HTTP vs HTTPS preserved
+    assert normalize_for_compare("http://domain.com") != normalize_for_compare("https://domain.com")
