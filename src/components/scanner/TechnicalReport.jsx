@@ -593,7 +593,7 @@ const TechnicalReport = ({ reportData }) => {
                 const DONUT_CIRCUMFERENCE = 2 * Math.PI * 52;
 
                 return (
-                  <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <div className="flex flex-col sm:flex-row items-start gap-6">
                     <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0" role="img" aria-label={`Assessment Coverage: ${covData.map(d => `${d.label}: ${d.count}`).join(', ')}`}>
                       <svg className="w-full h-full transform -rotate-90" viewBox="0 0 128 128">
                         <circle cx="64" cy="64" r="52" stroke="currentColor" strokeWidth="14" fill="transparent" className="text-slate-800" aria-hidden="true" />
@@ -645,7 +645,7 @@ const TechnicalReport = ({ reportData }) => {
                 <div className="flex items-center gap-3 mb-4">
                   <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ FINDING_DISTRIBUTION</span>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="flex flex-col sm:flex-row items-start gap-6">
                   <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0" role="img" aria-label={`Finding Distribution: ${distData.map(d => `${d.label}: ${d.count}`).join(', ')}`}>
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 128 128">
                       <circle cx="64" cy="64" r="52" stroke="currentColor" strokeWidth="14" fill="transparent" className="text-slate-800" aria-hidden="true" />
