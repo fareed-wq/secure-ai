@@ -5,7 +5,7 @@ import FindingCard from './FindingCard';
 import ScoreDisplay from './ScoreDisplay';
 import { getSimpleSummary } from '../../lib/assessmentReporting';
 import { getTranslation } from '../../lib/utils/translations';
-import { calculateFindingPriority } from '../../utils/priority';
+import { calculateFindingPriority, getPriorityBadgeClasses } from '../../utils/priority';
 
 const SimpleReport = ({ reportData }) => {
   const getCategoryIcon = (category) => {
@@ -127,20 +127,6 @@ const SimpleReport = ({ reportData }) => {
             This assessment is a passive, external scan of publicly observable behavior. It does not replace comprehensive penetration testing or guarantee that no other vulnerabilities exist.
           </p>
 
-          {uniqueProducts.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-slate-800">
-              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <Layers className="w-4 h-4" /> Detected Technology Profile
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {uniqueProducts.map((prod, i) => (
-                  <span key={i} className="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-full text-xs font-medium">
-                    {prod}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
 
           {highRiskCount > 0 && (
             <div className="rounded-xl border border-rose-500/30 border-l-4 border-l-rose-500 bg-rose-500/10 p-3.5 flex items-center gap-3 mt-6" role="alert">
@@ -187,15 +173,30 @@ const SimpleReport = ({ reportData }) => {
                     <span className="text-[10px] text-slate-500 uppercase tracking-wider">Findings</span>
                   </div>
                 </div>
-                <div className="flex flex-col justify-center gap-2 flex-1 w-full sm:w-48 ml-0 sm:ml-8 mt-4 sm:mt-0">
-                  {activeDistribution.map((seg, i) => (
-                    <div key={i} className="flex items-center text-sm">
-                      <span className={`w-3 h-3 rounded-full ${seg.dot} mr-3 flex-shrink-0`}></span>
-                      <span className="text-slate-300 font-medium flex-1">{seg.label}</span>
-                      <span className="text-slate-500 font-mono text-xs pl-4">{seg.count}</span>
-                    </div>
-                  ))}
-                </div>
+                <div className="flex flex-col justify-center gap-2 w-max ml-0 sm:ml-8 mt-4 sm:mt-0">
+                    {activeDistribution.map((seg, i) => (
+                      <div key={i} className="inline-flex items-center gap-2 text-sm">
+                        <span className={`w-3 h-3 rounded-full ${seg.dot} flex-shrink-0`}></span>
+                        <span className="text-slate-300 font-medium">{seg.label}</span>
+                        <span className={`font-mono text-xs font-bold ${seg.color}`}>{seg.count}</span>
+                      </div>
+                    ))}
+                  </div>
+              </div>
+            </div>
+          )}
+
+          {uniqueProducts.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-slate-800">
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <Layers className="w-4 h-4" /> Detected Technology Profile
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {uniqueProducts.map((prod, i) => (
+                  <span key={i} className="px-3 py-1 bg-slate-800 border border-slate-700 text-slate-300 rounded-full text-xs font-medium">
+                    {prod}
+                  </span>
+                ))}
               </div>
             </div>
           )}
@@ -210,138 +211,6 @@ const SimpleReport = ({ reportData }) => {
         />
 
       </div>
-
-      {/* 3. Important Findings — High-level summary of top actionable issues */}
-      {issues.length > 0 && (
-        <div className="simple-important-findings bg-slate-900 border border-slate-800 rounded-3xl shadow-md overflow-hidden">
-          <div className="bg-slate-950/80 border-b border-slate-800 p-6 md:p-8">
-            <div className="flex items-center gap-4">
-              <div className="bg-rose-500/20 p-2.5 md:p-3 rounded-xl text-rose-400 shrink-0" aria-hidden="true">
-                <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-black text-lg md:text-xl text-slate-50 uppercase tracking-wider">
-                  Important Findings
-                </h3>
-                <p className="text-slate-400 mt-1 text-sm md:text-base">
-                  {issues.length === 1 ? '1 actionable issue requires attention.' : `${issues.length} actionable issues identified — top ${Math.min(3, issues.length)} shown below.`}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6 md:p-8 space-y-4">
-            {topPriorities.map((issue, idx) => {
-              const trans = getTranslation(issue);
-              const priority = calculateFindingPriority(issue);
-              const severityColor = issue.severity === 'High' || issue.severity === 'Critical' ? 'text-rose-400 bg-rose-500/10 border-rose-500/30' :
-                issue.severity === 'Medium' ? 'text-amber-400 bg-amber-500/10 border-amber-500/30' :
-                  'text-purple-400 bg-purple-500/10 border-purple-500/30';
-              const severityDot = issue.severity === 'High' || issue.severity === 'Critical' ? 'bg-rose-400' :
-                issue.severity === 'Medium' ? 'bg-amber-400' :
-                  'bg-purple-400';
-
-              return (
-                <div key={`important-${idx}`} className="simple-important-finding bg-slate-950/50 border border-slate-800/50 rounded-2xl p-5 hover:border-slate-700/50 transition-colors">
-                  <div className="flex flex-col md:flex-row md:items-start gap-4">
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-slate-800/80 text-slate-50 font-bold text-xl flex items-center justify-center shrink-0">{idx + 1}</div>
-                      <div className="flex flex-col items-center gap-1">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${severityColor}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${severityDot}`}></span>
-                          {issue.severity}
-                        </span>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700 shrink-0">
-                          {priority}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-lg md:text-xl font-bold text-slate-50 tracking-tight truncate">
-                        {trans.name}
-                      </h4>
-                      <p className="text-slate-300 mt-2 text-sm md:text-base leading-relaxed line-clamp-2">
-                        {trans.problem}
-                      </p>
-                      {trans.action && (
-                        <p className="text-emerald-400 mt-2 text-sm font-medium">
-                          → {trans.action}
-                        </p>
-                      )}
-                      <div className="flex flex-wrap items-center gap-2 mt-3">
-                        {issue.owasp && (
-                          <span className="text-[10px] font-mono text-slate-500 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-                            {issue.owasp}
-                          </span>
-                        )}
-                        {issue.cvss_score && (
-                          <span className="text-[10px] font-mono text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30">
-                            CVSS {issue.cvss_score}
-                          </span>
-                        )}
-                        {issue.cve_ids && issue.cve_ids.length > 0 && (
-                          <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">
-                            {issue.cve_ids.slice(0, 2).join(', ')}{issue.cve_ids.length > 2 ? ` +${issue.cve_ids.length - 2}` : ''}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center md:justify-end flex-shrink-0">
-                      <span className="text-slate-500 text-sm font-medium hidden md:block pr-2">Details below</span>
-                      <span aria-hidden="true" className="text-slate-500 md:hidden p-1">
-                        <ChevronDown className="w-5 h-5" />
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="bg-slate-950/80 border-t border-slate-800 p-4 md:p-6">
-            <p className="text-slate-400 text-sm text-center">
-              Full details for all {issues.length} issue{issues.length !== 1 ? 's' : ''} are available in the <strong className="text-slate-300">Issues That Need Attention</strong> section below.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Empty state: no actionable issues */}
-      {issues.length === 0 && findings.length > 0 && (
-        <div className="simple-no-issues bg-emerald-950/20 border border-emerald-900/50 rounded-3xl p-6 md:p-8 text-center">
-          <div className="bg-emerald-500/20 p-3 rounded-xl text-emerald-400 shrink-0 w-fit mx-auto mb-4" aria-hidden="true">
-            <Check className="w-6 h-6" strokeWidth={2.5} />
-          </div>
-          <h3 className="font-black text-lg md:text-xl text-slate-50 uppercase tracking-wider text-emerald-400">
-            No Actionable Issues
-          </h3>
-          <p className="text-slate-400 mt-2 max-w-xl mx-auto">
-            This passive assessment did not identify any scored security issues. All checks passed or returned informational observations only.
-          </p>
-        </div>
-      )}
-
-      {/* 3.5 Issues That Need Attention */}
-      <div className="simple-findings-section space-y-6 mt-12">
-        <div className="flex flex-col">
-          <h3 className="font-black text-2xl text-slate-50 uppercase tracking-wider text-slate-200">Issues That Need Attention</h3>
-          <p className="text-slate-400 mt-1">A complete list of all identified security issues.</p>
-        </div>
-
-        {issues.length > 0 ? (
-          <div className="grid gap-6">
-            {issues.map((issue, idx) => (
-              <FindingCard key={`finding-${idx}`} issue={issue} idx={idx} />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl text-slate-400 text-center">
-            No scored issues were detected in this passive assessment.
-          </div>
-        )}
-      </div>
-
-      {/* --- Relocated Details --- */}
 
         {/* 2. Security Health Bars */}
       <div className="simple-health-section bg-slate-900 border border-slate-800 p-8 rounded-3xl">
@@ -555,6 +424,138 @@ const SimpleReport = ({ reportData }) => {
       })()}
 
       
+
+      {/* 3. Important Findings: High-level summary of top actionable issues */}
+      {issues.length > 0 && (
+        <div className="simple-important-findings bg-slate-900 border border-slate-800 rounded-3xl shadow-md overflow-hidden">
+          <div className="bg-slate-950/80 border-b border-slate-800 p-6 md:p-8">
+            <div className="flex items-center gap-4">
+              <div className="bg-rose-500/20 p-2.5 md:p-3 rounded-xl text-rose-400 shrink-0" aria-hidden="true">
+                <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" strokeWidth={3} />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-black text-lg md:text-xl text-slate-50 uppercase tracking-wider">
+                  Important Findings
+                </h3>
+                <p className="text-slate-400 mt-1 text-sm md:text-base">
+                  {issues.length === 1 ? '1 actionable issue requires attention.' : `${issues.length} actionable issues identified (top ${Math.min(3, issues.length)} shown below).`}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 md:p-8 space-y-4">
+            {topPriorities.map((issue, idx) => {
+              const trans = getTranslation(issue);
+              const priority = calculateFindingPriority(issue);
+              const severityColor = issue.severity === 'High' || issue.severity === 'Critical' ? 'text-rose-400 bg-rose-500/10 border-rose-500/30' :
+                issue.severity === 'Medium' ? 'text-amber-400 bg-amber-500/10 border-amber-500/30' :
+                  'text-purple-400 bg-purple-500/10 border-purple-500/30';
+              const severityDot = issue.severity === 'High' || issue.severity === 'Critical' ? 'bg-rose-400' :
+                issue.severity === 'Medium' ? 'bg-amber-400' :
+                  'bg-purple-400';
+
+              return (
+                <div key={`important-${idx}`} className="simple-important-finding bg-slate-950/50 border border-slate-800/50 rounded-2xl p-5 hover:border-slate-700/50 transition-colors">
+                  <div className="flex flex-col md:flex-row md:items-start gap-4">
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-slate-800/80 text-slate-50 font-bold text-xl flex items-center justify-center shrink-0">{idx + 1}</div>
+                      <div className="flex flex-col items-center gap-1">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${severityColor}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${severityDot}`}></span>
+                          {issue.severity}
+                        </span>
+                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border shrink-0 ${getPriorityBadgeClasses(priority)}`}>
+                          {priority}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-lg md:text-xl font-bold text-slate-50 tracking-tight truncate">
+                        {trans.name}
+                      </h4>
+                      <p className="text-slate-300 mt-2 text-sm md:text-base leading-relaxed line-clamp-2">
+                        {trans.problem}
+                      </p>
+                      {trans.action && (
+                        <p className="text-emerald-400 mt-2 text-sm font-medium">
+                          → {trans.action}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-2 mt-3">
+                        {issue.owasp && (
+                          <span className="text-[10px] font-mono text-slate-500 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                            {issue.owasp}
+                          </span>
+                        )}
+                        {issue.cvss_score && (
+                          <span className="text-[10px] font-mono text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30">
+                            CVSS {issue.cvss_score}
+                          </span>
+                        )}
+                        {issue.cve_ids && issue.cve_ids.length > 0 && (
+                          <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">
+                            {issue.cve_ids.slice(0, 2).join(', ')}{issue.cve_ids.length > 2 ? ` +${issue.cve_ids.length - 2}` : ''}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center md:justify-end flex-shrink-0">
+                      <span className="text-slate-500 text-sm font-medium hidden md:block pr-2">Details below</span>
+                      <span aria-hidden="true" className="text-slate-500 md:hidden p-1">
+                        <ChevronDown className="w-5 h-5" />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="bg-slate-950/80 border-t border-slate-800 p-4 md:p-6">
+            <p className="text-slate-400 text-sm text-center">
+              Full details for all {issues.length} issue{issues.length !== 1 ? 's' : ''} are available in the <strong className="text-slate-300">Issues That Need Attention</strong> section below.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Empty state: no actionable issues */}
+      {issues.length === 0 && findings.length > 0 && (
+        <div className="simple-no-issues bg-emerald-950/20 border border-emerald-900/50 rounded-3xl p-6 md:p-8 text-center">
+          <div className="bg-emerald-500/20 p-3 rounded-xl text-emerald-400 shrink-0 w-fit mx-auto mb-4" aria-hidden="true">
+            <Check className="w-6 h-6" strokeWidth={2.5} />
+          </div>
+          <h3 className="font-black text-lg md:text-xl text-slate-50 uppercase tracking-wider text-emerald-400">
+            No Actionable Issues
+          </h3>
+          <p className="text-slate-400 mt-2 max-w-xl mx-auto">
+            This passive assessment did not identify any scored security issues. All checks passed or returned informational observations only.
+          </p>
+        </div>
+      )}
+
+      {/* 3.5 Issues That Need Attention */}
+      <div className="simple-findings-section space-y-6 mt-12">
+        <div className="flex flex-col">
+          <h3 className="font-black text-2xl text-slate-50 uppercase tracking-wider text-slate-200">Issues That Need Attention</h3>
+          <p className="text-slate-400 mt-1">A complete list of all identified security issues.</p>
+        </div>
+
+        {issues.length > 0 ? (
+          <div className="grid gap-6">
+            {issues.map((issue, idx) => (
+              <FindingCard key={`finding-${idx}`} issue={issue} idx={idx} />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-slate-900/40 border border-slate-800 p-6 rounded-2xl text-slate-400 text-center">
+            No scored issues were detected in this passive assessment.
+          </div>
+        )}
+      </div>
+
+      {/* --- Relocated Details --- */}
 
         {/* 3.75 Additional Observations */}
       {informational.length > 0 && (

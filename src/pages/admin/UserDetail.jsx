@@ -123,7 +123,7 @@ export default function UserDetail() {
         </div>
       </div>
 
-      {/* Quota Panel — loads independently, errors are isolated */}
+      {/* Quota Panel: loads independently, errors are isolated */}
       <div className="bg-slate-900 border border-slate-800 rounded-lg p-6 max-w-2xl">
         <h2 className="text-lg font-semibold mb-4">QUOTA</h2>
         {quotaLoading && <div className="flex items-center gap-2 text-slate-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading quota...</div>}

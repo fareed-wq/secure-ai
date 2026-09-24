@@ -61,3 +61,16 @@ export function calculateCvePriority(identity, cve) {
     if (maxCvss > 0.0) return 'P4';
     return 'P5';
 }
+
+
+export function getPriorityBadgeClasses(priority) {
+    const styles = {
+        'P1': 'text-rose-400 bg-rose-950/30 border-rose-800',
+        'P2': 'text-amber-400 bg-amber-950/30 border-amber-800',
+        'P3': 'text-yellow-400 bg-yellow-950/30 border-yellow-800',
+        'P4': 'text-cyan-400 bg-cyan-950/30 border-cyan-800',
+        'P5': 'text-violet-400 bg-violet-950/30 border-violet-800',
+        'UNSCORED': 'text-slate-400 bg-slate-800 border-slate-700'
+    };
+    return styles[priority] || styles['UNSCORED'];
+}

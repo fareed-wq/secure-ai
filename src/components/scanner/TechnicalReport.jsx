@@ -1,4 +1,4 @@
-import { calculateFindingPriority, calculateCvePriority } from '../../utils/priority';
+import { calculateFindingPriority, calculateCvePriority, getPriorityBadgeClasses } from '../../utils/priority';
 import React, { useState, useMemo } from 'react';
 import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck, Search, Filter } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
@@ -88,15 +88,7 @@ const TechnicalReport = ({ reportData }) => {
   };
 
   const getPriorityBadge = (priority) => {
-    const styles = {
-      'P1': 'text-rose-400 bg-rose-950/30 border-rose-800',
-      'P2': 'text-amber-400 bg-amber-950/30 border-amber-800',
-      'P3': 'text-yellow-400 bg-yellow-950/30 border-yellow-800',
-      'P4': 'text-cyan-400 bg-cyan-950/30 border-cyan-800',
-      'P5': 'text-violet-400 bg-violet-950/30 border-violet-800',
-      'UNSCORED': 'text-slate-400 bg-slate-800 border-slate-700'
-    };
-    const style = styles[priority] || styles['UNSCORED'];
+    const style = getPriorityBadgeClasses(priority);
     return <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${style}`}>{priority}</span>;
   };
 
@@ -311,12 +303,12 @@ const TechnicalReport = ({ reportData }) => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col justify-center gap-2 flex-1 w-full sm:w-48 ml-0 sm:ml-8 mt-4 sm:mt-0">
+                  <div className="flex flex-col justify-center gap-2 w-max ml-0 sm:ml-8 mt-4 sm:mt-0">
                     {covData.map((seg, i) => (
-                      <div key={i} className="flex items-center text-sm">
-                        <span className={`w-3 h-3 rounded-full ${seg.dot} mr-3 flex-shrink-0`}></span>
-                        <span className="text-slate-300 font-medium flex-1">{seg.label}</span>
-                        <span className="text-slate-500 font-mono text-xs pl-4">{seg.count}</span>
+                      <div key={i} className="inline-flex items-center gap-2 text-sm">
+                        <span className={`w-3 h-3 rounded-full ${seg.dot} flex-shrink-0`}></span>
+                        <span className="text-slate-300 font-medium">{seg.label}</span>
+                        <span className={`font-mono text-xs font-bold ${seg.color}`}>{seg.count}</span>
                       </div>
                     ))}
                   </div>
@@ -330,162 +322,6 @@ const TechnicalReport = ({ reportData }) => {
       })()}
 
 
-
-      <WhatWasTested moduleExecution={reportData?.module_execution} />
-
-      {/* 2.5. Exposure */}
-      {(() => {
-        const exp = reportData?.exposure;
-        if (!exp) return null;
-
-        let levelColor = "text-slate-400";
-        let bgColor = "bg-slate-900 border-slate-800";
-        if (exp.level === "HIGH") { levelColor = "text-red-400"; bgColor = "bg-red-500/10 border-red-500/30"; }
-        else if (exp.level === "MODERATE") { levelColor = "text-amber-400"; bgColor = "bg-amber-500/10 border-amber-500/30"; }
-        else if (exp.level === "LOW") { levelColor = "text-emerald-400"; bgColor = "bg-emerald-500/10 border-emerald-500/30"; }
-
-        return (
-          <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg mt-6">
-            <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
-              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ EXPOSURE</span>
-              <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-400" /></span>
-            </summary>
-            <div className="mt-4">
-
-              <div className="flex items-center gap-4 mb-6 pb-5 border-b border-slate-800/50">
-                <div className={`px-5 py-2.5 rounded-xl border ${bgColor} flex flex-col items-center justify-center shadow-inner`}>
-                  <span className={`text-2xl font-black font-mono ${levelColor}`}>{exp.level}</span>
-                </div>
-                <div>
-                  <div className="text-sm font-bold text-slate-50 uppercase tracking-wide">Exposure Level</div>
-                  <div className="text-[11px] text-slate-400 font-mono uppercase tracking-wider mt-0.5">Based on observed reachability</div>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {exp.signals && exp.signals.length > 0 && (
-                  <div>
-                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <Activity className="w-4 h-4 text-slate-400" />
-                      Observed Signals
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {exp.signals.map((sig, i) => (
-                        <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm bg-slate-900 border border-slate-700/50 text-slate-200 shadow-sm hover:bg-slate-800 transition-colors">
-                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-                          {sig}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {exp.limitations && exp.limitations.length > 0 && (
-                  <div className={`pt-1 ${exp.signals && exp.signals.length > 0 ? 'border-t border-slate-800/50 mt-5 pt-5' : ''}`}>
-                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <ShieldAlert className="w-4 h-4 text-slate-400" />
-                      Limitations / Context
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {exp.limitations.map((lim, i) => (
-                        <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs bg-slate-950 border border-slate-800 text-slate-400 shadow-sm hover:bg-slate-900 transition-colors">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
-                          {lim}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-            </div>
-          </details>
-        );
-      })()}
-
-
-
-      {/* 2.6. Priority Guide */}
-      <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg mt-6 print:hidden">
-        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
-          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ UNDERSTANDING_PRIORITY (P1–P5)</span>
-          <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-400" /></span>
-        </summary>
-        <div className="mt-4">
-          <p className="text-slate-400 text-sm mb-6">
-            Priority indicates <strong className="text-slate-200">remediation urgency</strong> and is distinct from technical severity.
-          </p>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Standard Findings */}
-            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800/50 pb-3">
-                <Shield className="w-4 h-4 text-indigo-400" />
-                Standard Findings
-              </div>
-              <p className="text-slate-400 text-xs mb-4">Priority directly follows the finding's technical severity:</p>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-bold text-slate-300">High</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-bold text-slate-300">Medium</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800">P3</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-bold text-slate-300">Low</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800">P4</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-bold text-slate-300">Informational / Passed</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
-                </div>
-              </div>
-              <div className="mt-4 pt-3 border-t border-slate-800/50 text-xs text-slate-400 leading-tight italic">
-                * The scanner does not currently emit Critical-severity standard findings. If introduced, they will map to P1.
-              </div>
-            </div>
-
-            {/* Known Vulnerabilities (CVEs) */}
-            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800/50 pb-3">
-                <Activity className="w-4 h-4 text-rose-400" />
-                Known Vulnerabilities (CVEs)
-              </div>
-              <p className="text-slate-400 text-xs mb-4">Priority is calculated from vulnerability-intelligence signals:</p>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 9.0 <strong className="text-slate-400 mx-1">OR</strong> EPSS &ge; 10%</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-rose-400 bg-rose-950/30 border-rose-800">P1</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 7.0 <strong className="text-slate-400 mx-1">OR</strong> EPSS &ge; 1%</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 4.0</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800">P3</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS &gt; 0</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800">P4</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS = 0 <strong className="text-slate-400 mx-1">OR</strong> (No CVSS + EPSS &lt; 1%)</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-2">
-            <p><strong>Important:</strong> Higher-priority conditions take precedence. For example, a CVE meeting a P1 condition remains P1 even if it also meets a lower-tier condition.</p>
-            <p className="italic">CVSS indicates vulnerability severity; EPSS indicates exploitation likelihood. Priority uses these signals for remediation prioritization.</p>
-          </div>
-        </div>
-      </details>
 
       {/* 3. Tab Switcher: Vulnerabilities vs Compliance */}
       <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-md print:hidden" role="tablist">
@@ -762,7 +598,8 @@ const TechnicalReport = ({ reportData }) => {
 
 
             {domainGroups.map((group) => {
-              const knownDomainKeys = new Set(domainGroups.map(g => g.key));
+              if (group.key === 'network_services') return null;
+                const knownDomainKeys = new Set(domainGroups.map(g => g.key));
               const groupDomainKey = group.key;
 
               // Filter findings by domain group first, then apply toolbar filters
@@ -780,8 +617,304 @@ const TechnicalReport = ({ reportData }) => {
                     <h2 className="font-bold text-slate-50 text-lg">{group.label}</h2>
                   </div>
 
-                  <div className="w-full overflow-x-auto">
-                    <table className="technical-findings-table w-full text-left border-collapse">
+                  {renderFindingsTable(groupFindings)}
+                  {group.key === 'browser_defense' && <CSPAnalysisPanel findings={groupFindings} />}
+                    {group.key === 'browser_defense' && (() => {
+                        const nsFindings = filteredFindings.filter(f => f.domain === 'network_services');
+                        if (nsFindings.length === 0) return null;
+                        return (
+                          <div className="mt-8 border-t border-slate-800/50 pt-6 px-0 pb-2">
+                            <div className="flex items-center gap-3 mb-6">
+                              <Activity className="w-5 h-5 text-purple-400" />
+                              <h3 className="font-bold text-slate-50 text-lg">Network & Service Exposure</h3>
+                            </div>
+                            {renderFindingsTable(nsFindings)}
+                          </div>
+                        );
+                    })()}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {activeView === 'compliance' && reportData?.technical_compliance && (
+          <div className="w-full max-w-full overflow-hidden">
+            <div className="technical-section report-section grid grid-cols-1 gap-6">
+              <div className="technical-compliance-section bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-lg">
+                <div className="flex items-center gap-3 mb-6">
+                  <ShieldAlert className="w-5 h-5 text-indigo-400" />
+                  <h2 className="font-bold text-slate-50 text-lg">Security Framework Mapping</h2>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                  {/* PCI-DSS */}
+                  <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                    <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                      <h3 className="font-bold text-slate-200 text-sm">PCI-DSS 4.0</h3>
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                        {reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {reportData?.technical_compliance?.pci_dss_4_0?.failed_controls?.length > 0 && (
+                        <div>
+                          <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
+                          <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                            {(reportData?.technical_compliance?.pci_dss_4_0?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      <div>
+                        <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
+                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                          {(reportData?.technical_compliance?.pci_dss_4_0?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          {reportData?.technical_compliance?.pci_dss_4_0?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-400">None</li>}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* NIST SP 800-53 */}
+                  <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                    <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                      <h3 className="font-bold text-slate-200 text-sm">NIST SP 800-53</h3>
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                        {reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {reportData?.technical_compliance?.nist_sp_800_53?.failed_controls?.length > 0 && (
+                        <div>
+                          <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
+                          <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                            {(reportData?.technical_compliance?.nist_sp_800_53?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      <div>
+                        <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
+                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                          {(reportData?.technical_compliance?.nist_sp_800_53?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          {reportData?.technical_compliance?.nist_sp_800_53?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-400">None</li>}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ISO 27001 */}
+                  <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
+                    <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
+                      <h3 className="font-bold text-slate-200 text-sm">ISO 27001</h3>
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
+                        {reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      {reportData?.technical_compliance?.iso_27001?.failed_controls?.length > 0 && (
+                        <div>
+                          <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
+                          <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                            {(reportData?.technical_compliance?.iso_27001?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      <div>
+                        <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
+                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
+                          {(reportData?.technical_compliance?.iso_27001?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
+                          {reportData?.technical_compliance?.iso_27001?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-400">None</li>}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 text-xs text-slate-400 leading-relaxed">
+                    Framework mappings show how externally observable findings may relate to selected security controls. They are not a formal compliance assessment, audit, or certification.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <WhatWasTested moduleExecution={reportData?.module_execution} />
+
+      {/* 2.5. Exposure */}
+      {(() => {
+        const exp = reportData?.exposure;
+        if (!exp) return null;
+
+        let levelColor = "text-slate-400";
+        let bgColor = "bg-slate-900 border-slate-800";
+        if (exp.level === "HIGH") { levelColor = "text-red-400"; bgColor = "bg-red-500/10 border-red-500/30"; }
+        else if (exp.level === "MODERATE") { levelColor = "text-amber-400"; bgColor = "bg-amber-500/10 border-amber-500/30"; }
+        else if (exp.level === "LOW") { levelColor = "text-emerald-400"; bgColor = "bg-emerald-500/10 border-emerald-500/30"; }
+
+        return (
+          <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg mt-6">
+            <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
+              <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ EXPOSURE</span>
+              <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-400" /></span>
+            </summary>
+            <div className="mt-4">
+
+              <div className="flex items-center gap-4 mb-6 pb-5 border-b border-slate-800/50">
+                <div className={`px-5 py-2.5 rounded-xl border ${bgColor} flex flex-col items-center justify-center shadow-inner`}>
+                  <span className={`text-2xl font-black font-mono ${levelColor}`}>{exp.level}</span>
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-50 uppercase tracking-wide">Exposure Level</div>
+                  <div className="text-[11px] text-slate-400 font-mono uppercase tracking-wider mt-0.5">Based on observed reachability</div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {exp.signals && exp.signals.length > 0 && (
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-slate-400" />
+                      Observed Signals
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {exp.signals.map((sig, i) => (
+                        <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm bg-slate-900 border border-slate-700/50 text-slate-200 shadow-sm hover:bg-slate-800 transition-colors">
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                          {sig}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {exp.limitations && exp.limitations.length > 0 && (
+                  <div className={`pt-1 ${exp.signals && exp.signals.length > 0 ? 'border-t border-slate-800/50 mt-5 pt-5' : ''}`}>
+                    <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <ShieldAlert className="w-4 h-4 text-slate-400" />
+                      Limitations / Context
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {exp.limitations.map((lim, i) => (
+                        <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs bg-slate-950 border border-slate-800 text-slate-400 shadow-sm hover:bg-slate-900 transition-colors">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+                          {lim}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </details>
+        );
+      })()}
+
+
+
+      {/* 2.6. Priority Guide */}
+      <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg mt-6 print:hidden">
+        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
+          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ UNDERSTANDING_PRIORITY (P1–P5)</span>
+          <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-400" /></span>
+        </summary>
+        <div className="mt-4">
+          <p className="text-slate-400 text-sm mb-6">
+            Priority indicates <strong className="text-slate-200">remediation urgency</strong> and is distinct from technical severity.
+          </p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Standard Findings */}
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800/50 pb-3">
+                <Shield className="w-4 h-4 text-indigo-400" />
+                Standard Findings
+              </div>
+              <p className="text-slate-400 text-xs mb-4">Priority directly follows the finding's technical severity:</p>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">High</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Medium</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800">P3</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Low</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800">P4</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Informational / Passed</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-800/50 text-xs text-slate-400 leading-tight italic">
+                * The scanner does not currently emit Critical-severity standard findings. If introduced, they will map to P1.
+              </div>
+            </div>
+
+            {/* Known Vulnerabilities (CVEs) */}
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800/50 pb-3">
+                <Activity className="w-4 h-4 text-rose-400" />
+                Known Vulnerabilities (CVEs)
+              </div>
+              <p className="text-slate-400 text-xs mb-4">Priority is calculated from vulnerability-intelligence signals:</p>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 9.0 <strong className="text-slate-400 mx-1">OR</strong> EPSS &ge; 10%</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-rose-400 bg-rose-950/30 border-rose-800">P1</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 7.0 <strong className="text-slate-400 mx-1">OR</strong> EPSS &ge; 1%</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 4.0</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800">P3</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &gt; 0</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800">P4</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS = 0 <strong className="text-slate-400 mx-1">OR</strong> (No CVSS + EPSS &lt; 1%)</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-2">
+            <p><strong>Important:</strong> Higher-priority conditions take precedence. For example, a CVE meeting a P1 condition remains P1 even if it also meets a lower-tier condition.</p>
+            <p className="italic">CVSS indicates vulnerability severity; EPSS indicates exploitation likelihood. Priority uses these signals for remediation prioritization.</p>
+          </div>
+        </div>
+      </details>
+
+
+      {/* 5. Final Recommendation */}
+      <div className="text-center mt-12 py-12 border-t border-slate-800">
+        <h2 className="text-2xl font-black text-slate-50 mb-4">Ready to improve your score?</h2>
+        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+          Interested in advanced testing? Let's chat on WhatsApp!
+        </p>
+      </div>
+
+    </div>
+  );
+};
+
+export default TechnicalReport;
+  const renderFindingsTable = (groupFindings) => (
+    <div className="w-full overflow-x-auto">
+      <table className="technical-findings-table w-full text-left border-collapse">
                       <caption className="sr-only">Finding table with priority, severity, description, OWASP mapping, and action buttons</caption>
                       <colgroup>
                         <col style={{ width: '10%' }} />
@@ -1077,128 +1210,5 @@ const TechnicalReport = ({ reportData }) => {
                         </div>
                       )}
                     </table>
-                  </div>
-                  {group.key === 'browser_defense' && <CSPAnalysisPanel findings={groupFindings} />}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {activeView === 'compliance' && reportData?.technical_compliance && (
-          <div className="w-full max-w-full overflow-hidden">
-            <div className="technical-section report-section grid grid-cols-1 gap-6">
-              <div className="technical-compliance-section bg-slate-950 border border-slate-800 rounded-xl p-6 shadow-lg">
-                <div className="flex items-center gap-3 mb-6">
-                  <ShieldAlert className="w-5 h-5 text-indigo-400" />
-                  <h2 className="font-bold text-slate-50 text-lg">Security Framework Mapping</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                  {/* PCI-DSS */}
-                  <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                    <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                      <h3 className="font-bold text-slate-200 text-sm">PCI-DSS 4.0</h3>
-                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
-                        {reportData?.technical_compliance?.pci_dss_4_0?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
-                      </span>
-                    </div>
-
-                    <div className="space-y-4">
-                      {reportData?.technical_compliance?.pci_dss_4_0?.failed_controls?.length > 0 && (
-                        <div>
-                          <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
-                          <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                            {(reportData?.technical_compliance?.pci_dss_4_0?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                          </ul>
-                        </div>
-                      )}
-                      <div>
-                        <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
-                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                          {(reportData?.technical_compliance?.pci_dss_4_0?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                          {reportData?.technical_compliance?.pci_dss_4_0?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-400">None</li>}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* NIST SP 800-53 */}
-                  <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                    <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                      <h3 className="font-bold text-slate-200 text-sm">NIST SP 800-53</h3>
-                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
-                        {reportData?.technical_compliance?.nist_sp_800_53?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
-                      </span>
-                    </div>
-
-                    <div className="space-y-4">
-                      {reportData?.technical_compliance?.nist_sp_800_53?.failed_controls?.length > 0 && (
-                        <div>
-                          <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
-                          <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                            {(reportData?.technical_compliance?.nist_sp_800_53?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                          </ul>
-                        </div>
-                      )}
-                      <div>
-                        <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
-                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                          {(reportData?.technical_compliance?.nist_sp_800_53?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                          {reportData?.technical_compliance?.nist_sp_800_53?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-400">None</li>}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ISO 27001 */}
-                  <div className="technical-compliance-card bg-slate-900/50 border border-slate-800 rounded-xl p-5">
-                    <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                      <h3 className="font-bold text-slate-200 text-sm">ISO 27001</h3>
-                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md border ${reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'technical-compliance-compliant bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'technical-compliance-action bg-red-500/20 text-red-400 border-red-500/20'}`}>
-                        {reportData?.technical_compliance?.iso_27001?.status === 'Compliant' ? 'NO MAPPED ISSUES' : 'REVIEW RECOMMENDED'}
-                      </span>
-                    </div>
-
-                    <div className="space-y-4">
-                      {reportData?.technical_compliance?.iso_27001?.failed_controls?.length > 0 && (
-                        <div>
-                          <div className="technical-compliance-failed-heading text-xs font-bold text-red-400 mb-2 flex items-center gap-1"><XCircle className="w-3 h-3" /> Relevant Findings</div>
-                          <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                            {(reportData?.technical_compliance?.iso_27001?.failed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                          </ul>
-                        </div>
-                      )}
-                      <div>
-                        <div className="technical-compliance-passed-heading text-xs font-bold text-emerald-400 mb-2 flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Observed Positive Signals</div>
-                        <ul className="technical-compliance-list text-xs text-slate-300 space-y-1 ml-4 list-disc marker:text-slate-600">
-                          {(reportData?.technical_compliance?.iso_27001?.passed_controls || []).map((c, i) => <li key={i}>{c}</li>)}
-                          {reportData?.technical_compliance?.iso_27001?.passed_controls?.length === 0 && <li className="technical-compliance-list-item-none text-slate-400">None</li>}
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 text-xs text-slate-400 leading-relaxed">
-                    Framework mappings show how externally observable findings may relate to selected security controls. They are not a formal compliance assessment, audit, or certification.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 5. Final Recommendation */}
-      <div className="text-center mt-12 py-12 border-t border-slate-800">
-        <h2 className="text-2xl font-black text-slate-50 mb-4">Ready to improve your score?</h2>
-        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-          Interested in advanced testing? Let's chat on WhatsApp!
-        </p>
-      </div>
-
     </div>
   );
-};
-
-export default TechnicalReport;

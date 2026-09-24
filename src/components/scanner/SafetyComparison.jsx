@@ -37,7 +37,7 @@ const SafetyComparison = () => {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto text-left">
-        {/* Left Card — Our Approach */}
+        {/* Left Card : Our Approach */}
         <div className="safety-card-left bg-slate-900 border border-emerald-500/30 rounded-2xl p-6 md:p-8 shadow-[0_0_30px_rgba(16,185,129,0.05)] relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-[0.03]">
             <ShieldCheck size={160} />
@@ -103,7 +103,7 @@ const SafetyComparison = () => {
           </ul>
         </div>
 
-        {/* Right Card — What We Avoid */}
+        {/* Right Card : What We Avoid */}
         <div className="safety-card-right bg-slate-900/60 border border-rose-500/30 rounded-2xl p-6 md:p-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-[0.03]">
             <AlertOctagon size={160} />
