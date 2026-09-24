@@ -421,23 +421,23 @@ const Dashboard = () => {
               <h2 className="text-lg font-semibold text-slate-50 mb-6">Findings Overview</h2>
               <div className="space-y-4 flex-1 justify-center flex flex-col">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-rose-500 flex items-center gap-2"><AlertCircle size={16}/> Critical</span>
+                  <span className="text-sm font-medium text-fuchsia-400 flex items-center gap-2"><AlertCircle size={16}/> Critical</span>
                   <span className="text-lg font-bold text-slate-300">{totalCritical}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-rose-400 flex items-center gap-2"><AlertTriangle size={16}/> High</span>
+                  <span className="text-sm font-medium text-red-500 flex items-center gap-2"><AlertTriangle size={16}/> High</span>
                   <span className="text-lg font-bold text-slate-300">{totalHigh}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-amber-400 flex items-center gap-2"><AlertTriangle size={16}/> Medium</span>
+                  <span className="text-sm font-medium text-amber-500 flex items-center gap-2"><AlertTriangle size={16}/> Medium</span>
                   <span className="text-lg font-bold text-slate-300">{totalMedium}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-blue-400 flex items-center gap-2"><Info size={16}/> Low</span>
+                  <span className="text-sm font-medium text-yellow-400 flex items-center gap-2"><Info size={16}/> Low</span>
                   <span className="text-lg font-bold text-slate-300">{totalLow}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-slate-400 flex items-center gap-2"><CheckCircle2 size={16}/> Info</span>
+                  <span className="text-sm font-medium text-blue-500 flex items-center gap-2"><CheckCircle2 size={16}/> Info</span>
                   <span className="text-lg font-bold text-slate-300">{totalInfo}</span>
                 </div>
               </div>
