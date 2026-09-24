@@ -54,6 +54,7 @@ const Privacy = () => {
           <ul className="list-disc pl-6 space-y-2">
             <li>email address</li>
             <li>authentication information handled through Supabase</li>
+            <li>phone number (mandatory for registration, stored in Supabase Auth, international formats supported and normalized)</li>
             <li>account/user identifier</li>
           </ul>
 
@@ -106,6 +107,8 @@ const Privacy = () => {
           <p>We use information as necessary to:</p>
           <ul className="list-disc pl-6 space-y-2">
             <li>create and maintain user accounts</li>
+            <li>deliver a one-time verification code by email during registration to verify your email address</li>
+            <li>allow authorized administrators to access account information (including email and phone number) to operate the service</li>
             <li>authenticate users</li>
             <li>perform website security scans</li>
             <li>generate technical reports</li>
@@ -185,7 +188,7 @@ const Privacy = () => {
 
           <h3 className="text-xl font-semibold text-slate-200 mt-4">Resend</h3>
           <ul className="list-disc pl-6 space-y-2">
-            <li>transactional email</li>
+            <li>transactional email (including one-time verification codes)</li>
             <li>scheduled scan report delivery</li>
           </ul>
 
@@ -213,7 +216,7 @@ const Privacy = () => {
         <section className="space-y-4">
           <h2 className="text-2xl font-bold text-slate-50">13. Data Retention</h2>
           <p>
-            For authenticated accounts, scan results are retained while the account remains active because Scan History and Compare are ongoing features of the service.
+            For authenticated accounts, scan results are retained while the account remains active because Scan History and Compare are ongoing features of the service. Your phone number is stored in Supabase Auth and remains associated with your active account until account deletion or another legitimate deletion process applies.
           </p>
           <p>
             Users may delete individual scans, selected scans, or all scan history through the available account controls.
@@ -237,7 +240,7 @@ const Privacy = () => {
             <li>permanently delete their account</li>
           </ul>
           <p>
-            Account deletion removes the user's remaining application-owned account data through the application's account-deletion and database cleanup mechanisms.
+            Account deletion removes the associated authentication account (including your phone number) and the user's remaining application-owned account data through the application's account-deletion and database cascade cleanup mechanisms.
           </p>
           <p>
             Third-party provider records, backups, security logs, or transactional records may remain subject to those providers' applicable retention policies and legal obligations.
@@ -297,7 +300,7 @@ const Privacy = () => {
             We provide information about our processing activities through this Privacy Policy and support applicable data-subject rights in accordance with the law.
           </p>
           <p>
-            Personal data may be processed outside Saudi Arabia through our service providers. International transfers are handled subject to applicable Saudi requirements and safeguards.
+            Personal data (including collected phone numbers and emails) may be processed outside Saudi Arabia through our service providers. International transfers are handled subject to applicable Saudi requirements and safeguards.
           </p>
         </section>
 
