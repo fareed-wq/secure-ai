@@ -904,12 +904,17 @@ const TechnicalReport = ({ reportData }) => {
               const groupDomainKey = group.key;
 
               // Filter findings by domain group first, then apply toolbar filters
-              const groupFindings = filteredFindings.filter(f => {
+              const baseGroupFindings = filteredFindings.filter(f => {
                 const effectiveDomain = (f.domain && knownDomainKeys.has(f.domain)) ? f.domain : 'browser_defense';
                 return effectiveDomain === groupDomainKey;
               });
 
-              if (groupFindings.length === 0) return null;
+              const displayGroupFindings = filteredFindings.filter(f => {
+                const effectiveDomain = (f.domain && knownDomainKeys.has(f.domain)) ? f.domain : 'browser_defense';
+                return effectiveDomain === groupDomainKey || (groupDomainKey === 'browser_defense' && effectiveDomain === 'network_services');
+              });
+
+              if (displayGroupFindings.length === 0) return null;
 
               return (
                 <div key={group.key} className="technical-section report-section bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
@@ -918,21 +923,8 @@ const TechnicalReport = ({ reportData }) => {
                     <h2 className="font-bold text-slate-50 text-lg">{group.label}</h2>
                   </div>
 
-                  {renderFindingsTable(groupFindings, sortedFindings)}
-                  {group.key === 'browser_defense' && <CSPAnalysisPanel findings={groupFindings} />}
-                    {group.key === 'browser_defense' && (() => {
-                        const nsFindings = filteredFindings.filter(f => f.domain === 'network_services');
-                        if (nsFindings.length === 0) return null;
-                        return (
-                          <div className="mt-8 border-t border-slate-800/50 pt-6 px-0 pb-2">
-                            <div className="flex items-center gap-3 mb-6">
-                              <Activity className="w-5 h-5 text-purple-400" />
-                              <h3 className="font-bold text-slate-50 text-lg">Network & Service Exposure</h3>
-                            </div>
-                            {renderFindingsTable(nsFindings, sortedFindings)}
-                          </div>
-                        );
-                    })()}
+                  {renderFindingsTable(displayGroupFindings, sortedFindings)}
+                  {group.key === 'browser_defense' && <CSPAnalysisPanel findings={baseGroupFindings} />}
                 </div>
               );
             })}
