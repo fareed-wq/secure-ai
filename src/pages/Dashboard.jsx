@@ -420,15 +420,9 @@ const Dashboard = () => {
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col">
               <h2 className="text-lg font-semibold text-slate-50 mb-6">Findings Overview</h2>
               <div className="space-y-4 flex-1 justify-center flex flex-col">
-                {totalCritical > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-rose-500 flex items-center gap-2"><AlertCircle size={16}/> Critical</span>
-                    <span className="text-lg font-bold text-slate-300">{totalCritical}</span>
-                  </div>
-                )}
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-rose-400 flex items-center gap-2"><AlertTriangle size={16}/> High</span>
-                  <span className="text-lg font-bold text-slate-300">{totalHigh}</span>
+                  <span className="text-sm font-medium text-rose-500 flex items-center gap-2"><AlertCircle size={16}/> Critical</span>
+                  <span className="text-lg font-bold text-slate-300">{totalCritical}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-amber-400 flex items-center gap-2"><AlertTriangle size={16}/> Medium</span>
