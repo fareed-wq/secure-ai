@@ -12,6 +12,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [captchaToken, setCaptchaToken] = useState(null);
+  const captchaPromiseRef = React.useRef(null);
   const [isNarrowViewport, setIsNarrowViewport] = useState(
     typeof window !== 'undefined' ? window.innerWidth < 360 : false
   );
@@ -55,11 +56,30 @@ const Login = () => {
     if (error) {
       if (error.message === 'Email not confirmed') {
         setError('Please check your email to verify your account before signing in.');
+
+        // Wait for a fresh token
+        const freshToken = await new Promise((resolve) => {
+          captchaPromiseRef.current = resolve;
+          setTimeout(() => resolve(null), 10000);
+        });
+
+        if (!freshToken) {
+          setError('Please check your email to verify your account. (Auto-send failed - please use Resend).');
+          setVerifyMode(true);
+          setResendCooldown(0);
+          setLoading(false);
+          return;
+        }
+
         // Trigger recovery OTP
         const { error: otpError } = await supabase.auth.signInWithOtp({
           email,
-          options: { shouldCreateUser: false }
+          options: { shouldCreateUser: false, captchaToken: freshToken }
         });
+
+        turnstileRef.current?.reset();
+        setCaptchaToken(null);
+
         if (!otpError) {
           setVerifyMode(true);
           setResendCooldown(60);
@@ -108,10 +128,25 @@ const Login = () => {
     setLoading(true);
     setError(null);
     try {
+      setCaptchaToken(null);
+      turnstileRef.current?.reset();
+      const freshToken = await new Promise((resolve) => {
+        captchaPromiseRef.current = resolve;
+        setTimeout(() => resolve(null), 10000);
+      });
+
+      if (!freshToken) {
+        throw new Error('Security check failed. Please refresh and try again.');
+      }
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
-        options: { shouldCreateUser: false }
+        options: { shouldCreateUser: false, captchaToken: freshToken }
       });
+
+      setCaptchaToken(null);
+      turnstileRef.current?.reset();
+
       if (error) throw error;
       setResendCooldown(60);
     } catch (err) {
@@ -209,7 +244,20 @@ const Login = () => {
                     type="button" 
                     onClick={async () => {
                       setLoading(true);
-                      const { error: otpError } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
+                      setCaptchaToken(null);
+                      turnstileRef.current?.reset();
+                      const freshToken = await new Promise((resolve) => {
+                        captchaPromiseRef.current = resolve;
+                        setTimeout(() => resolve(null), 10000);
+                      });
+                      if (!freshToken) {
+                        setError('Security check failed. Please refresh and try again.');
+                        setLoading(false);
+                        return;
+                      }
+                      const { error: otpError } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false, captchaToken: freshToken } });
+                      setCaptchaToken(null);
+                      turnstileRef.current?.reset();
                       if (!otpError) { setVerifyMode(true); setResendCooldown(60); setError(null); }
                       else setError(otpError.message);
                       setLoading(false);
@@ -296,7 +344,13 @@ const Login = () => {
                   ref={turnstileRef}
                   siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
                   options={{ size: isNarrowViewport ? "compact" : "flexible" }}
-                  onSuccess={(token) => setCaptchaToken(token)}
+                  onSuccess={(token) => {
+                    setCaptchaToken(token);
+                    if (captchaPromiseRef.current) {
+                      captchaPromiseRef.current(token);
+                      captchaPromiseRef.current = null;
+                    }
+                  }}
                   onExpire={() => setCaptchaToken(null)}
                   onError={() => setCaptchaToken(null)}
                 />
