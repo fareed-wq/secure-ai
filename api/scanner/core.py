@@ -20,7 +20,7 @@ class Config:
     THREAD_POOL_SIZE = 15
     COMMON_SUBDOMAINS = ["trcadmin", "console", "s3", "s3b", "beta", "api", "dev"]
     SEVERITY_WEIGHTS = {
-        "Critical": -15,
+        "Critical": -30,
         "High": -10,
         "Medium": -5,
         "Low": -2,

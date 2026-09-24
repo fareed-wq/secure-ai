@@ -556,7 +556,6 @@ const TechnicalReport = ({ reportData }) => {
         const cov = reportData?.assessment_coverage;
         const totalFindings = findings.length;
         const criticalRiskCount = findings.filter(f => f.severity === 'Critical').length;
-        const highRiskCount = findings.filter(f => f.severity === 'High' || f.severity === 'Critical').length;
         const highFindingCount = findings.filter(f => f.severity === 'High').length;
         const mediumRiskCount = findings.filter(f => f.severity === 'Medium').length;
         const lowRiskCount = findings.filter(f => f.severity === 'Low').length;
@@ -1220,9 +1219,7 @@ const TechnicalReport = ({ reportData }) => {
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-800/50 text-xs text-slate-400 leading-tight italic">
-                * The scanner does not currently emit Critical-severity standard findings. If introduced, they will map to P1.
-              </div>
+              
             </div>
 
             {/* Known Vulnerabilities (CVEs) */}

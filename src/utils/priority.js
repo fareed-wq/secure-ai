@@ -18,6 +18,7 @@ export function calculateFindingPriority(finding) {
 
     // 2. Fall back to standard severity mapping for P2-P5
     const severity = finding.severity;
+    if (severity === 'Critical') return 'P1';
     if (severity === 'High') return 'P2';
     if (severity === 'Medium') return 'P3';
     if (severity === 'Low') return 'P4';

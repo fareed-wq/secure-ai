@@ -301,7 +301,7 @@ const Dashboard = () => {
                   {totalCritical > 0 ? totalHighCritical : totalHigh}
                 </p>
                 <p className="text-xs text-slate-400 mt-2 font-medium">
-                  {totalCritical > 0 ? `${totalCritical} Critical · ${totalHigh} High` : 'Across latest posture scans'}
+                  {totalCritical > 0 ? `${totalCritical} Critical • ${totalHigh} High` : 'Across latest posture scans'}
                 </p>
               </div>
               <div className={`p-3 rounded-lg border ${

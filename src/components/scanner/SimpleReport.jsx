@@ -26,7 +26,7 @@ const SimpleReport = ({ reportData }) => {
 
   const topPriorities = issues.slice(0, 3); // Max 3 items
   const criticalRiskCount = issues.filter(i => i.severity === 'Critical').length;
-  const highRiskCount = issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length;
+  const highCriticalCount = issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length;
   const highFindingCount = issues.filter(i => i.severity === 'High').length;
   const mediumRiskCount = issues.filter(i => i.severity === 'Medium').length;
   const lowRiskCount = issues.filter(i => i.severity === 'Low').length;
@@ -196,11 +196,11 @@ const SimpleReport = ({ reportData }) => {
             </div>
           )}
 
-          {highRiskCount > 0 && (
+          {highCriticalCount > 0 && (
             <div className="rounded-xl border border-rose-500/30 border-l-4 border-l-rose-500 bg-rose-500/10 p-3.5 flex items-center gap-3 mt-6" role="alert">
               <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse flex-shrink-0" aria-hidden="true" />
               <p className="text-xs text-rose-200">
-                <strong>Priority Focus:</strong> Resolve {highRiskCount} High-risk finding(s) to optimize overall security posture.
+                <strong>Priority Focus:</strong> Resolve {highCriticalCount} High/Critical-risk finding(s) to optimize overall security posture.
               </p>
             </div>
           )}
