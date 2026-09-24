@@ -304,24 +304,24 @@ const Dashboard = () => {
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">
-                  {totalCritical > 0 ? 'High / Critical' : 'High Findings'}
+                  Critical Findings
                 </p>
-                <p className={`text-3xl font-bold mt-2 ${totalHighCritical === 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {totalCritical > 0 ? totalHighCritical : totalHigh}
+                <p className={`text-3xl font-bold mt-2 ${totalCritical === 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
+                  {totalCritical}
                 </p>
                 <p className="text-xs text-slate-400 mt-2 font-medium">
-                  {totalCritical > 0 ? `${totalCritical} Critical • ${totalHigh} High` : 'Across latest posture scans'}
+                  Across latest posture scans
                 </p>
               </div>
               <div className={`p-3 rounded-lg border ${
-                totalHighCritical === 0
+                totalCritical === 0
                 ? 'bg-emerald-500/10 border-emerald-500/20'
                 : 'bg-rose-500/10 border-rose-500/20'
               }`}>
-                {totalHighCritical === 0 ? (
+                {totalCritical === 0 ? (
                   <CheckCircle2 className="w-6 h-6 text-emerald-400" />
                 ) : (
-                  <AlertTriangle className="w-6 h-6 text-rose-400" />
+                  <AlertCircle className="w-6 h-6 text-rose-500" />
                 )}
               </div>
             </div>
@@ -423,6 +423,10 @@ const Dashboard = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-rose-500 flex items-center gap-2"><AlertCircle size={16}/> Critical</span>
                   <span className="text-lg font-bold text-slate-300">{totalCritical}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-rose-400 flex items-center gap-2"><AlertTriangle size={16}/> High</span>
+                  <span className="text-lg font-bold text-slate-300">{totalHigh}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-amber-400 flex items-center gap-2"><AlertTriangle size={16}/> Medium</span>
