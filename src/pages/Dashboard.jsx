@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from '../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
+import { calculateFindingPriority, getPriorityBadgeClasses } from '../utils/priority';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -192,9 +193,17 @@ const Dashboard = () => {
     });
   });
 
-  // Sort needsAttention: Critical > High > Medium
-  const severityValue = { 'Critical': 3, 'High': 2, 'Medium': 1 };
-  needsAttention.sort((a, b) => (severityValue[b.severity] || 0) - (severityValue[a.severity] || 0));
+  // Sort needsAttention by calculated Priority, then by Severity as a fallback tie-breaker
+  const priorityValue = { 'P1': 5, 'P2': 4, 'P3': 3, 'P4': 2, 'P5': 1, 'UNSCORED': 0 };
+  const severityValue = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1, 'Informational': 0, 'Passed': 0 };
+  needsAttention.sort((a, b) => {
+    const pA = calculateFindingPriority(a);
+    const pB = calculateFindingPriority(b);
+    const vA = priorityValue[pA] || 0;
+    const vB = priorityValue[pB] || 0;
+    if (vA !== vB) return vB - vA;
+    return (severityValue[b.severity] || 0) - (severityValue[a.severity] || 0);
+  });
   const topAttention = needsAttention.slice(0, 5);
 
   const totalHighCritical = totalCritical + totalHigh;
@@ -452,6 +461,9 @@ const Dashboard = () => {
                     </div>
                     <div className="flex flex-wrap sm:flex-nowrap items-center gap-4">
                       <div className="flex items-center gap-3">
+                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getPriorityBadgeClasses(calculateFindingPriority(finding))}`}>
+                          {calculateFindingPriority(finding)}
+                        </span>
                         <span className={`text-xs font-bold uppercase ${getSeverityColor(finding.severity)}`}>
                           {finding.severity}
                         </span>
@@ -483,6 +495,23 @@ const Dashboard = () => {
               <p className="text-slate-400 text-sm max-w-md mx-auto">You don't have any Medium, High, or Critical findings across your latest scans. Run a new scan to ensure you stay protected.</p>
             </div>
           )}
+          {/* Priority Guide */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 mt-4">
+            <h2 className="text-sm font-bold text-slate-900 dark:text-slate-50 mb-3 flex items-center gap-2">
+              <Info size={16} className="text-slate-600 dark:text-slate-400" /> Understanding Priority (P1-P5)
+            </h2>
+            <div className="text-xs text-slate-600 dark:text-slate-400 space-y-2">
+              <p>Priority indicates <strong className="text-slate-700 dark:text-slate-300">remediation urgency</strong>, independent of scanner confidence. It is calculated from:</p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li><strong className="text-slate-700 dark:text-slate-300">P1:</strong> Qualifying CVE intelligence (CVSS &ge; 9.0 OR EPSS &ge; 10%) OR <strong className="text-slate-700 dark:text-slate-300">Critical</strong> fallback</li>
+                <li><strong className="text-slate-700 dark:text-slate-300">P2:</strong> High severity</li>
+                <li><strong className="text-slate-700 dark:text-slate-300">P3:</strong> Medium severity</li>
+                <li><strong className="text-slate-700 dark:text-slate-300">P4:</strong> Low severity</li>
+                <li><strong className="text-slate-700 dark:text-slate-300">P5:</strong> Informational / Passed</li>
+              </ul>
+              <p className="italic mt-2 pt-2 border-t border-slate-200/70 dark:border-slate-800/50">Note: Critical findings map to P1 under the current methodology.</p>
+            </div>
+          </div>
         </>
       )}
     </div>
