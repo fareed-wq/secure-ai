@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { adminApi } from '../../lib/api/admin';
+import { supabase } from '../../lib/supabase';
 import { Loader2, Search, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -7,6 +8,68 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
     const [searchInput, setSearchInput] = useState('');
+
+  const [exporting, setExporting] = useState(null);
+
+  const handleExport = async (format) => {
+    try {
+      setExporting(format);
+      setError(null);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No active session');
+      }
+
+      let url = `/api/admin/users/export?format=${format}`;
+      if (searchTerm) {
+        url += `&search=${encodeURIComponent(searchTerm)}`;
+      }
+      if (roleFilter !== 'all') {
+        url += `&role=${encodeURIComponent(roleFilter)}`;
+      }
+      if (planFilter !== 'all') {
+        url += `&plan=${encodeURIComponent(planFilter)}`;
+      }
+      if (statusFilter !== 'all') {
+        url += `&status=${encodeURIComponent(statusFilter)}`;
+      }
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = downloadUrl;
+
+      // Get filename from Content-Disposition if possible
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = `urlscanonline-users.${format}`;
+      if (contentDisposition && contentDisposition.includes('filename=')) {
+        filename = contentDisposition.split('filename=')[1].replace(/["']/g, '');
+      }
+
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(downloadUrl);
+      a.remove();
+    } catch (err) {
+      setError(err.message || 'Export failed');
+    } finally {
+      setExporting(null);
+    }
+  };
+
     useEffect(() => {
       const handler = setTimeout(() => {
         setSearchTerm(searchInput);
@@ -57,7 +120,19 @@ export default function Users() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Users</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl font-bold">Users</h1>
+        <div className="flex gap-2">
+           <button onClick={() => handleExport('csv')} disabled={exporting !== null} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+             {exporting === 'csv' ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+             Export CSV
+           </button>
+           <button onClick={() => handleExport('xlsx')} disabled={exporting !== null} className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+             {exporting === 'xlsx' ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+             Export Excel
+           </button>
+        </div>
+      </div>
         <div className="flex gap-4 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />

@@ -3,6 +3,8 @@ from typing import Optional, List, Dict
 import requests
 import os
 import json
+import logging
+logger = logging.getLogger(__name__)
 from pydantic import BaseModel, Field
 
 class AdminMutationRequest(BaseModel):
@@ -116,28 +118,185 @@ def get_overview(user: dict = Depends(require_admin)):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@admin_router.get("/users")
-def get_users(limit: int = Query(50), offset: int = Query(0), search: Optional[str] = Query(None), user: dict = Depends(require_admin)):
-    if not os.environ.get('SUPABASE_URL') or not os.environ.get('SUPABASE_SECRET_KEY'):
-        raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
-
-    url = f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/auth/v1/admin/users"
+def _fetch_users_page(url_override: str = None) -> dict:
+    url = url_override or f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/auth/v1/admin/users"
     headers = {
         "apikey": os.environ.get("SUPABASE_SECRET_KEY", ""),
         "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}",
         "Content-Type": "application/json"
     }
+    return requests.get(url, headers=headers, timeout=5.0)
+
+def _get_mapped_users(users_data: list, plans_map: dict, roles_map: dict, search: str = None) -> list:
+    safe_users = []
+    for u in users_data:
+        uid = u.get("id")
+        if search:
+            s = search.lower()
+            email = u.get("email", "").lower()
+            if s not in email and s not in uid.lower():
+                continue
+
+        plan_info = plans_map.get(uid, {})
+        safe_users.append({
+            "user_id": uid,
+            "email": u.get("email"),
+            "name": u.get("user_metadata", {}).get("full_name", ""),
+            "phone": u.get("phone"),
+            "phone_confirmed_at": u.get("phone_confirmed_at"),
+            "role": roles_map.get(uid, "user"),
+            "plan": plan_info.get("plan", "free"),
+            "status": plan_info.get("status", "active"),
+            "created_at": u.get("created_at")
+        })
+    return safe_users
+
+def _fetch_roles_and_plans():
+    headers = {
+        "apikey": os.environ.get("SUPABASE_SECRET_KEY", ""),
+        "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}",
+        "Content-Type": "application/json"
+    }
+    def fetch_plans():
+        return requests.get(f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/user_plans?select=user_id,plan,status", headers=headers, timeout=5.0)
+    def fetch_roles():
+        return requests.get(f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/user_roles?select=user_id,role", headers=headers, timeout=5.0)
+
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        fut_plans = executor.submit(fetch_plans)
+        fut_roles = executor.submit(fetch_roles)
+        plans_resp = fut_plans.result()
+        roles_resp = fut_roles.result()
+
+    plans_map = {}
+    if plans_resp.status_code == 200:
+        for row in plans_resp.json():
+            plans_map[row.get("user_id")] = row
+
+    roles_map = {}
+    if roles_resp.status_code == 200:
+        for row in roles_resp.json():
+            roles_map[row.get("user_id")] = row.get("role")
+
+    return plans_map, roles_map
+
+
+def _fetch_all_roles_and_plans():
+    headers = {
+        "apikey": os.environ.get("SUPABASE_SECRET_KEY", ""),
+        "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}",
+        "Content-Type": "application/json"
+    }
+    base_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
+
+    def fetch_paginated(endpoint, select_fields):
+        all_records = []
+        limit = 1000
+        offset = 0
+        max_requests = 50
+        requests_made = 0
+
+        while requests_made <= max_requests:
+            url = f"{base_url}/rest/v1/{endpoint}?select={select_fields}&limit={limit}&offset={offset}"
+            resp = requests.get(url, headers=headers, timeout=5.0)
+            if resp.status_code != 200:
+                logger.error(f"Error fetching {endpoint} offset {offset}: {resp.status_code}")
+                raise HTTPException(status_code=500, detail="Error fetching users")
+
+            data = resp.json()
+            if not data:
+                break
+
+            all_records.extend(data)
+            if len(data) < limit:
+                break
+
+            offset += limit
+            requests_made += 1
+
+        if requests_made > max_requests:
+            logger.error(f"Export exceeded max size for {endpoint}")
+            raise HTTPException(status_code=500, detail="Export exceeds maximum supported size")
+
+        return all_records
+
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        fut_plans = executor.submit(fetch_paginated, "user_plans", "user_id,plan,status")
+        fut_roles = executor.submit(fetch_paginated, "user_roles", "user_id,role")
+        plans_data = fut_plans.result()
+        roles_data = fut_roles.result()
+
+    plans_map = {row.get("user_id"): row for row in plans_data if isinstance(row, dict)}
+    roles_map = {row.get("user_id"): row.get("role") for row in roles_data if isinstance(row, dict)}
+
+    return plans_map, roles_map
+
+def _fetch_all_users(search: Optional[str] = None) -> list:
+    if not os.environ.get('SUPABASE_URL') or not os.environ.get('SUPABASE_SECRET_KEY'):
+        raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
+
+    try:
+        plans_map, roles_map = _fetch_all_roles_and_plans()
+        all_users = []
+        page = 1
+        per_page = 1000
+        max_pages = 50
+
+        while page <= max_pages:
+            url = f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/auth/v1/admin/users?page={page}&per_page={per_page}"
+            resp = _fetch_users_page(url)
+            if resp.status_code != 200:
+                logger.error(f"Error fetching users page {page}: {resp.status_code}")
+                raise HTTPException(status_code=500, detail="Error fetching users")
+
+            users_page = resp.json().get("users", [])
+            if not users_page:
+                break
+
+            all_users.extend(users_page)
+            if len(users_page) < per_page:
+                break
+
+            page += 1
+
+        if page > max_pages:
+            logger.error("Export exceeded maximum supported size.")
+            raise HTTPException(status_code=500, detail="Export exceeds maximum supported size")
+
+        return _get_mapped_users(all_users, plans_map, roles_map, search)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching all users: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching users")
+
+@admin_router.get("/users")
+def get_users(limit: int = Query(50), offset: int = Query(0), search: Optional[str] = Query(None), user: dict = Depends(require_admin)):
+    if not os.environ.get('SUPABASE_URL') or not os.environ.get('SUPABASE_SECRET_KEY'):
+        raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
 
     try:
         from concurrent.futures import ThreadPoolExecutor
-
         def fetch_auth_users():
-            return requests.get(url, headers=headers, timeout=5.0)
+            # Original bounded retrieval (defaults to Supabase page 1 limits, 50 users)
+            return _fetch_users_page()
 
         def fetch_plans():
+            headers = {
+                "apikey": os.environ.get("SUPABASE_SECRET_KEY", ""),
+                "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}",
+                "Content-Type": "application/json"
+            }
             return requests.get(f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/user_plans?select=user_id,plan,status", headers=headers, timeout=5.0)
 
         def fetch_roles():
+            headers = {
+                "apikey": os.environ.get("SUPABASE_SECRET_KEY", ""),
+                "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}",
+                "Content-Type": "application/json"
+            }
             return requests.get(f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/user_roles?select=user_id,role", headers=headers, timeout=5.0)
 
         with ThreadPoolExecutor(max_workers=3) as executor:
@@ -162,33 +321,112 @@ def get_users(limit: int = Query(50), offset: int = Query(0), search: Optional[s
                 for row in roles_resp.json():
                     roles_map[row.get("user_id")] = row.get("role")
 
-            safe_users = []
-            for u in users_data:
-                uid = u.get("id")
-
-                # Apply search filter
-                if search:
-                    s = search.lower()
-                    email = u.get("email", "").lower()
-                    if s not in email and s not in uid.lower():
-                        continue
-
-                plan_info = plans_map.get(uid, {})
-                safe_users.append({
-                    "user_id": uid,
-                    "email": u.get("email"),
-                    "name": u.get("user_metadata", {}).get("full_name", ""),
-                    "phone": u.get("phone"),
-                    "phone_confirmed_at": u.get("phone_confirmed_at"),
-                    "role": roles_map.get(uid, "user"),
-                    "plan": plan_info.get("plan", "free"),
-                    "status": plan_info.get("status", "active"),
-                    "created_at": u.get("created_at")
-                })
+            safe_users = _get_mapped_users(users_data, plans_map, roles_map, search)
             return safe_users[offset:offset+limit]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error fetching users: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching users")
     return []
+
+from fastapi.responses import Response
+import csv
+import io
+import datetime
+
+def safe_export_val(val) -> str:
+    if val is None:
+        return ""
+    v = str(val).strip()
+    if v.startswith(("=", "+", "-", "@", "\t", "\r")):
+        return f"'{v}"
+    return v
+
+@admin_router.get("/users/export")
+def export_users(format: str = Query("csv"), search: Optional[str] = Query(None), role: str = Query("all"), plan: str = Query("all"), status: str = Query("all"), user: dict = Depends(require_admin)):
+    all_users = _fetch_all_users(search)
+
+    filtered_users = []
+    for u in all_users:
+        if role != "all" and u.get("role", "user") != role:
+            continue
+        if plan != "all" and u.get("plan", "free") != plan:
+            continue
+        if status != "all" and u.get("status", "active") != status:
+            continue
+        filtered_users.append(u)
+
+    headers = [
+        "User ID", "Name", "Email", "Phone", "Phone Verification Status",
+        "Role", "Plan", "Status", "Created At"
+    ]
+
+    rows = []
+    for u in filtered_users:
+        phone = u.get("phone")
+        phone_confirmed_at = u.get("phone_confirmed_at")
+
+        verification = "Not provided"
+        if phone:
+            if phone_confirmed_at:
+                verification = "Verified"
+            else:
+                verification = "Unverified"
+
+        rows.append([
+            safe_export_val(u.get("user_id")),
+            safe_export_val(u.get("name")),
+            safe_export_val(u.get("email")),
+            safe_export_val(phone if phone else "Not provided"),
+            safe_export_val(verification),
+            safe_export_val(u.get("role", "user")),
+            safe_export_val(u.get("plan", "free").capitalize() if u.get("plan") else "Free"),
+            safe_export_val(u.get("status", "active")),
+            safe_export_val(u.get("created_at"))
+        ])
+
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    if format == "csv":
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(headers)
+        writer.writerows(rows)
+
+        return Response(
+            content=output.getvalue(),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=urlscanonline-users-{timestamp}.csv"}
+        )
+    elif format == "xlsx":
+        try:
+            import openpyxl
+            from openpyxl.utils import get_column_letter
+        except ImportError:
+            raise HTTPException(status_code=500, detail="XLSX export not supported")
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Users"
+
+        ws.append(headers)
+        for row in rows:
+            ws.append(row)
+
+        for i, col in enumerate(ws.columns, 1):
+            col_letter = get_column_letter(i)
+            ws.column_dimensions[col_letter].width = 20
+            ws[f"{col_letter}1"].font = openpyxl.styles.Font(bold=True)
+
+        output = io.BytesIO()
+        wb.save(output)
+
+        return Response(
+            content=output.getvalue(),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename=urlscanonline-users-{timestamp}.xlsx"}
+        )
+    else:
+        raise HTTPException(status_code=400, detail="Invalid format")
 
 @admin_router.get("/users/{user_id}")
 def get_user_detail(user_id: str, user: dict = Depends(require_admin)):
