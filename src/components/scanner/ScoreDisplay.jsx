@@ -5,14 +5,16 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
   const [showMethodology, setShowMethodology] = useState(false);
   
   // Calculate deductions based on actual backend penalties to match the final score
-  const highDeduction = (penalties?.Critical || 0) + (penalties?.High || 0);
+  const criticalDeduction = penalties?.Critical || 0;
+  const highDeduction = penalties?.High || 0;
   const medDeduction = penalties?.Medium || 0;
   const lowDeduction = penalties?.Low || 0;
-  const highCount = (severityCounts?.Critical || 0) + (severityCounts?.High || 0);
+  const criticalCount = severityCounts?.Critical || 0;
+  const highCount = severityCounts?.High || 0;
   const medCount = severityCounts?.Medium || 0;
   const lowCount = severityCounts?.Low || 0;
   
-  const hasDeductions = highDeduction > 0 || medDeduction > 0 || lowDeduction > 0;
+  const hasDeductions = criticalDeduction > 0 || highDeduction > 0 || medDeduction > 0 || lowDeduction > 0;
 
   return (
     <div className="simple-score-card bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-xl flex flex-col items-center justify-between text-center w-full h-full">
@@ -78,7 +80,13 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
                 <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
                   <div className="text-slate-300 font-bold mb-3">Why?</div>
                   <div className="space-y-2 text-sm">
-                    {highCount > 0 && (
+                                      {criticalCount > 0 && (
+                    <div className="flex justify-between text-fuchsia-400">
+                      <span>{criticalCount} Critical-risk {criticalCount === 1 ? 'issue' : 'issues'}</span>
+                      <span>-{criticalDeduction}</span>
+                    </div>
+                  )}
+                  {highCount > 0 && (
                       <div className="flex justify-between text-rose-400">
                         <span>{highCount} High-risk {highCount === 1 ? 'issue' : 'issues'}</span>
                         <span>-{highDeduction}</span>
@@ -98,7 +106,7 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
                     )}
                     <div className="border-t border-slate-800 my-2 pt-2 flex justify-between font-semibold text-slate-300">
                       <span>Total deductions</span>
-                      <span>-{highDeduction + medDeduction + lowDeduction}</span>
+                      <span>-{criticalDeduction + highDeduction + medDeduction + lowDeduction}</span>
                     </div>
                     <div className="mt-3 pt-3 flex justify-between items-center font-black text-slate-50 text-base">
                       <span>Final Score</span>
@@ -110,7 +118,7 @@ const ScoreDisplay = ({ score, isWafBlocked, penalties, severityCounts }) => {
               
               <div className="text-xs text-slate-500 bg-slate-800/30 p-3 rounded-lg border border-slate-800/50 leading-relaxed">
                 <div className="font-bold text-slate-400 mb-1">Score Methodology</div>
-                The score starts at 100. Points are deducted based on finding severity: High-risk issues deduct up to 15 points each, Medium-risk up to 10 points, and Low-risk up to 5 points. Deductions are capped per category to prevent a single issue type from disproportionately tanking the score.
+                The score starts at 100. Points are deducted based on finding severity: Critical-risk issues deduct up to 30 points each, High-risk up to 10 points, Medium-risk up to 5 points, and Low-risk up to 2 points. Deductions are capped per category to prevent a single issue type from disproportionately tanking the score.
                   <br /><br />
                   The URLScanOnline score reflects externally observable security posture based on the checks performed. It is not a probability of compromise and does not certify that a website is secure, insecure, compliant, or non-compliant.
               </div>

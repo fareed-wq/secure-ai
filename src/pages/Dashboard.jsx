@@ -45,6 +45,29 @@ const formatDateCompact = (d) => {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ', ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 };
 
+
+const computeLatestScansByTarget = (scansList) => {
+  const map = new Map();
+  scansList.forEach(scan => {
+    if (scan.status === 'failed' || scan.status === 'error' || !scan.report_data) return; // only completed scans
+
+    const domain = getDomain(scan.target_url);
+    const currentMode = scan.report_data?.scan_mode === 'active' ? 'active' : 'passive';
+
+    if (!map.has(domain)) {
+      map.set(domain, scan);
+    } else {
+      const existingScan = map.get(domain);
+      const existingMode = existingScan.report_data?.scan_mode === 'active' ? 'active' : 'passive';
+      // Prefer latest completed Advanced scan over a newer Basic scan
+      if (existingMode === 'passive' && currentMode === 'active') {
+        map.set(domain, scan);
+      }
+    }
+  });
+  return map;
+};
+
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -59,18 +82,62 @@ const Dashboard = () => {
         setLoading(false);
         return;
       }
-      const { data, error } = await supabase
-        .from('scans')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      try {
+        const { data: metaData, error: metaError } = await supabase
+          .from('scans')
+          .select('id, target_url, score, created_at, status, scan_mode:report_data->>scan_mode')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
-      if (error) {
+        if (metaError) {
+          throw metaError;
+        }
+
+        let mappedData = (metaData || []).map(row => {
+          const hasReport = row.scan_mode !== null && row.scan_mode !== undefined;
+          return {
+            ...row,
+            report_data: hasReport ? { scan_mode: row.scan_mode } : null
+          };
+        });
+
+        // Find latest scans to fetch findings
+        const latestMap = computeLatestScansByTarget(mappedData);
+        const latestIds = Array.from(latestMap.values()).map(s => s.id);
+
+        if (latestIds.length > 0) {
+          const { data: findingsData, error: findingsError } = await supabase
+            .from('scans')
+            .select('id, findings:report_data->findings')
+            .eq('user_id', user.id)
+            .in('id', latestIds);
+
+          if (findingsError) {
+            throw findingsError;
+          }
+
+          const findingsMap = new Map((findingsData || []).map(r => [r.id, r.findings]));
+
+          mappedData = mappedData.map(scan => {
+            if (findingsMap.has(scan.id)) {
+              return {
+                ...scan,
+                report_data: {
+                  ...scan.report_data,
+                  findings: findingsMap.get(scan.id) || []
+                }
+              };
+            }
+            return scan;
+          });
+        }
+
+        setScans(mappedData);
+      } catch (error) {
         console.error("Error fetching scans", error);
-      } else {
-        setScans(data || []);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchScans();
@@ -81,25 +148,7 @@ const Dashboard = () => {
 
   // Latest scan per unique target preferring Advanced mode
   const latestScansByTarget = useMemo(() => {
-    const map = new Map();
-    scans.forEach(scan => {
-      if (scan.status === 'failed' || scan.status === 'error' || !scan.report_data) return; // only completed scans
-
-      const domain = getDomain(scan.target_url);
-      const currentMode = scan.report_data?.scan_mode === 'active' ? 'active' : 'passive';
-
-      if (!map.has(domain)) {
-        map.set(domain, scan);
-      } else {
-        const existingScan = map.get(domain);
-        const existingMode = existingScan.report_data?.scan_mode === 'active' ? 'active' : 'passive';
-        // Prefer latest completed Advanced scan over a newer Basic scan
-        if (existingMode === 'passive' && currentMode === 'active') {
-          map.set(domain, scan);
-        }
-      }
-    });
-    return map;
+    return computeLatestScansByTarget(scans);
   }, [scans]);
 
   const uniqueTargets = latestScansByTarget.size;
@@ -252,7 +301,7 @@ const Dashboard = () => {
                   {totalCritical > 0 ? totalHighCritical : totalHigh}
                 </p>
                 <p className="text-xs text-slate-400 mt-2 font-medium">
-                  {totalCritical > 0 ? `${totalCritical} Critical · ${totalHigh} High` : 'Across latest posture scans'}
+                  {totalCritical > 0 ? `${totalCritical} Critical • ${totalHigh} High` : 'Across latest posture scans'}
                 </p>
               </div>
               <div className={`p-3 rounded-lg border ${

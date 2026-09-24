@@ -61,7 +61,7 @@ class AuthenticationSessionSecurityModule(ScannerModule):
                 if "basic" in www_auth.lower() and url.startswith("http://"):
                     findings.append(self.make_finding(
                         "Basic Authentication Advertised Over HTTP",
-                        "High",
+                        "Critical",
                         description="Your website asks for user logins over an insecure, unencrypted connection.",
                         evidence=www_auth,
                         remediation="Enforce HTTPS for all authentication portals.",

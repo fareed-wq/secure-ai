@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
-import { User, Building, Mail, Save, Loader2, Lock, LogOut, Eye, EyeOff, BadgeCheck } from 'lucide-react';
+import { User, Building, Mail, Save, Loader2, Lock, LogOut, Eye, EyeOff, BadgeCheck, Phone, AlertCircle } from 'lucide-react';
 import { validatePassword } from '../lib/utils/passwordPolicy';
 import { PasswordChecklist } from '../components/auth/PasswordChecklist';
 
@@ -11,6 +11,7 @@ const Settings = () => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
 
   const [error, setError] = useState(null);
@@ -20,6 +21,7 @@ const Settings = () => {
     fullName: user?.user_metadata?.full_name || '',
     company: user?.user_metadata?.company || '',
     email: user?.email || '',
+    phone: user?.phone || '',
   });
 
   const [savedProfile, setSavedProfile] = useState({
@@ -29,6 +31,7 @@ const Settings = () => {
 
   const isProfileDirty = formData.fullName !== savedProfile.fullName || formData.company !== savedProfile.company;
   const isEmailVerified = user?.email_confirmed_at != null;
+  const isPhoneVerified = user?.phone_confirmed_at != null;
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -182,7 +185,7 @@ const Settings = () => {
                 </div>
               </div>
 
-              <div className="md:col-span-2">
+              <div>
                 <label htmlFor="email" className="block text-sm font-medium text-slate-300">Email Address (Read-only)</label>
                 <div className="mt-1 relative rounded-md shadow-sm opacity-60">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -206,12 +209,45 @@ const Settings = () => {
                   )}
                 </div>
               </div>
+
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-slate-300">Phone Number (Read-only)</label>
+                <div className="mt-1 relative rounded-md shadow-sm opacity-60">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Phone className="h-5 w-5 text-slate-500" />
+                  </div>
+                  <input
+                    id="phone"
+                    type="tel"
+                    disabled
+                    readOnly
+                    value={formData.phone || 'No phone number provided'}
+                    className={`block w-full pl-10 pr-28 bg-slate-950 border border-slate-700 rounded-lg py-2.5 cursor-not-allowed sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${!formData.phone ? 'text-slate-500 italic' : 'text-slate-400'}`}
+                  />
+                  {formData.phone && isPhoneVerified && (
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
+                        <BadgeCheck className="w-3.5 h-3.5" />
+                        Verified
+                      </span>
+                    </div>
+                  )}
+                  {formData.phone && !isPhoneVerified && (
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Unverified
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <div className="pt-2 flex justify-end">
               <button
                 type="submit"
-                disabled={loading || !isProfileDirty}
+                disabled={loading || !isProfileDirty || isDeleting}
                 className="flex items-center gap-2 px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -330,7 +366,8 @@ const Settings = () => {
                   !passwordData.newPassword ||
                   passwordData.currentPassword === passwordData.newPassword ||
                   !validatePassword(passwordData.newPassword).isValid ||
-                  passwordData.newPassword !== passwordData.confirmPassword
+                  passwordData.newPassword !== passwordData.confirmPassword ||
+                  isDeleting
                 }
                 className="flex items-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
               >
@@ -355,7 +392,8 @@ const Settings = () => {
             </div>
             <button
               onClick={handleSignOut}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              disabled={isDeleting}
+                className="flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             >
               <LogOut className="w-4 h-4" />
               Sign Out
@@ -363,6 +401,51 @@ const Settings = () => {
           </div>
         </div>
       </div>
+
+      {/* Danger Zone Section */}
+      <div className="bg-slate-900 border border-red-900/50 rounded-2xl overflow-hidden mt-6">
+        <div className="p-6 border-b border-red-900/50 bg-red-950/20">
+          <h2 className="text-lg font-bold text-red-400">Danger Zone</h2>
+          <p className="text-sm text-red-400/80 mt-1">Irreversible and destructive actions.</p>
+        </div>
+        <div className="p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <p className="text-sm text-slate-300 font-medium">Delete Account</p>
+              <p className="text-sm text-slate-500 mt-1">Permanently delete your account and all associated application data (scans, schedules). This action cannot be undone.</p>
+            </div>
+            <button
+              onClick={async () => {
+                if (window.confirm("Are you sure you want to permanently delete your account and all associated data? This action cannot be undone.")) {
+                  setIsDeleting(true);
+                  try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session) {
+                      setIsDeleting(false);
+                      return;
+                    }
+                    const res = await fetch('/api/account', {
+                      method: 'DELETE',
+                      headers: { 'Authorization': `Bearer ${session.access_token}` }
+                    });
+                    if (!res.ok) throw new Error("Failed to delete account.");
+                    await supabase.auth.signOut();
+                    window.location.href = '/';
+                  } catch (error) {
+                    setError(error.message);
+                    setIsDeleting(false);
+                  }
+                }
+              }}
+              disabled={isDeleting}
+              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-800 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 disabled:opacity-50"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Account'}
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };

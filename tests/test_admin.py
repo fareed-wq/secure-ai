@@ -121,6 +121,74 @@ def test_admin_users_search(mock_get_current_user_admin, mock_get_user_role_admi
     assert len(resp2.json()) == 1
     assert resp2.json()[0]["user_id"] == "user-1"
 
+def test_admin_users_phone_mapping(mock_get_current_user_admin, mock_get_user_role_admin, monkeypatch):
+    monkeypatch.setenv('SUPABASE_URL', 'https://example.com')
+    monkeypatch.setenv('SUPABASE_SECRET_KEY', 'mock')
+    from api.admin import require_admin
+    app.dependency_overrides[require_admin] = lambda: {"sub": "admin-123"}
+
+    class MockResponse:
+        def __init__(self, json_data, status_code=200):
+            self.json_data = json_data
+            self.status_code = status_code
+        def json(self):
+            return self.json_data
+
+    def mock_requests_get(url, *args, **kwargs):
+        if "auth/v1/admin/users" in url:
+            return MockResponse({"users": [
+                {
+                    "id": "user-verified",
+                    "email": "verified@example.com",
+                    "phone": "+966501234567",
+                    "phone_confirmed_at": "2026-09-24T10:00:00Z",
+                    "user_metadata": {"full_name": "Verified User"}
+                },
+                {
+                    "id": "user-unverified",
+                    "email": "unverified@example.com",
+                    "phone": "+1234567890",
+                    "phone_confirmed_at": None,
+                    "user_metadata": {"full_name": "Unverified User"}
+                },
+                {
+                    "id": "user-legacy",
+                    "email": "legacy@example.com",
+                    "user_metadata": {"full_name": "Legacy User"}
+                    # No phone or phone_confirmed_at
+                }
+            ]})
+        if "user_plans" in url:
+            return MockResponse([])
+        if "user_roles" in url:
+            return MockResponse([])
+        return MockResponse({})
+
+    monkeypatch.setattr("requests.get", mock_requests_get)
+
+    resp = client.get("/api/admin/users")
+    assert resp.status_code == 200, resp.json()
+    users = resp.json()
+    assert len(users) == 3
+
+    # Verified mapping
+    verified = next(u for u in users if u["user_id"] == "user-verified")
+    assert verified["phone"] == "+966501234567"
+    assert verified["phone_confirmed_at"] == "2026-09-24T10:00:00Z"
+    assert verified["name"] == "Verified User"
+
+    # Unverified mapping
+    unverified = next(u for u in users if u["user_id"] == "user-unverified")
+    assert unverified["phone"] == "+1234567890"
+    assert unverified["phone_confirmed_at"] is None
+    assert unverified["name"] == "Unverified User"
+
+    # Legacy mapping
+    legacy = next(u for u in users if u["user_id"] == "user-legacy")
+    assert legacy.get("phone") is None
+    assert legacy.get("phone_confirmed_at") is None
+    assert legacy["name"] == "Legacy User"
+
 
 
 def test_admin_audit_logs_search(mock_get_current_user_admin, mock_get_user_role_admin, monkeypatch):

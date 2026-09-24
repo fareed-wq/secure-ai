@@ -267,12 +267,14 @@ def scan_url(url: str, probe_subdomains: bool = False, scan_mode: str = "passive
 from api.auth.entitlements import get_current_user, require_current_user, Entitlements, check_guest_quota, consume_guest_quota, check_free_quota, consume_free_quota
 from api.scanner.core import acquire_scan_lease, release_scan_lease, acquire_guest_lease, release_guest_lease
 from api.admin import admin_router
+from api.auth.register import register_router
 from api.scheduling.router import router as scheduling_router
 from api.scheduling.worker import worker_router
 from api.scheduling.email_worker import router as email_worker_router
 from api.scanner.enrich_worker import worker_router as enrich_worker_router
 
 app.include_router(admin_router)
+app.include_router(register_router, prefix="/api/auth", tags=["auth"])
 app.include_router(scheduling_router, prefix="/api/schedules", tags=["schedules"])
 app.include_router(worker_router, prefix="/api/internal", tags=["internal"])
 app.include_router(email_worker_router, prefix="/api/internal", tags=["internal"])
@@ -571,3 +573,36 @@ def compare_user_scans(scan_id_1: str, scan_id_2: str, user: dict = Depends(requ
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.delete("/api/account")
+def delete_account(user: dict = Depends(require_current_user)):
+    import os
+    import requests
+    from fastapi import HTTPException
+
+    user_id = user.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user session.")
+
+    supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
+    supabase_key = os.environ.get('SUPABASE_SECRET_KEY', '')
+    if not supabase_url or not supabase_key:
+        raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
+
+    headers = {
+        "apikey": supabase_key,
+        "Authorization": f"Bearer {supabase_key}",
+        "Content-Type": "application/json"
+    }
+
+    # Delete user via Supabase Admin API
+    # Since ON DELETE CASCADE is configured, this will automatically wipe scans and schedules
+    resp = requests.delete(f"{supabase_url}/auth/v1/admin/users/{user_id}", headers=headers, timeout=10)
+
+    if resp.status_code not in (200, 204):
+        # Allow 404 if the user is already gone
+        if resp.status_code != 404:
+            raise HTTPException(status_code=500, detail="Failed to delete account.")
+
+    return {"status": "success", "message": "Account and associated data deleted"}

@@ -64,7 +64,7 @@ const PrivacyPolicy = () => {
           <ul className="space-y-3 text-slate-400">
             <li className="flex items-start gap-3">
               <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
-              <span><strong className="text-slate-300">Account Information:</strong> If you create an account, we collect basic account information such as your email address.</span>
+              <span><strong className="text-slate-300">Account Information:</strong> Account registration requires an email address and a valid phone number (international country codes are supported and normalized). This information is collected to provision your account, and your phone number is securely stored directly with your authentication account (Supabase Auth).</span>
             </li>
             <li className="flex items-start gap-3">
               <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
@@ -125,6 +125,14 @@ const PrivacyPolicy = () => {
             </li>
             <li className="flex items-start gap-3">
               <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
+              <span>Delivering a one-time verification code by email through our configured email delivery service to verify access to your registered email address.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
+              <span>Allowing authorized administrators to access account information (including your email address and phone number) as needed to operate the service.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <div className="w-1.5 h-1.5 rounded-full bg-slate-600 mt-2.5 shrink-0" />
               <span>Providing authenticated account features, such as displaying your personal scan history and saved reports.</span>
             </li>
             <li className="flex items-start gap-3">
@@ -161,7 +169,7 @@ const PrivacyPolicy = () => {
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8">
           <h2 id="retention" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">7. Retention & Deletion</h2>
           <p className="text-slate-400 leading-relaxed">
-            Authenticated scan records are maintained to provide persistent Scan History and Saved Reports. Retention depends on the account feature and current service functionality; there is currently no fixed automated deletion period. Users who wish to have their account or associated scan records deleted can submit a request to contact@urlscanonline.com.
+            Authenticated scan records are maintained to provide persistent Scan History and Saved Reports. Retention depends on the account feature and current service functionality; there is currently no fixed automated deletion period. Because your phone number is stored in Supabase Auth, it remains associated with your active account until account deletion or another legitimate deletion process applies. Deleting an account removes the associated authentication account and its associated data according to the application's deletion behavior. Users who wish to have their account or associated scan records deleted can submit a request to contact@urlscanonline.com.
           </p>
         </section>
 
@@ -169,7 +177,7 @@ const PrivacyPolicy = () => {
         <section className="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 md:p-8">
           <h2 id="third-party" className="text-2xl font-bold text-slate-50 mb-4 scroll-mt-24">8. Third-Party Service Providers</h2>
           <p className="text-slate-400 leading-relaxed">
-            URLScanOnline relies on service providers needed to operate functions such as hosting, authentication, and email delivery. Those providers may process information on our behalf as necessary to provide their services. Information is not made available to other URLScanOnline users through these services.
+            URLScanOnline relies on service providers needed to operate functions such as hosting, authentication (e.g., Supabase), and email delivery (Resend). Those providers may process information on our behalf as necessary to provide their services. Information is not made available to other URLScanOnline users through these services.
           </p>
         </section>
 

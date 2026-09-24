@@ -25,7 +25,9 @@ const SimpleReport = ({ reportData }) => {
   });
 
   const topPriorities = issues.slice(0, 3); // Max 3 items
-  const highRiskCount = issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length;
+  const criticalRiskCount = issues.filter(i => i.severity === 'Critical').length;
+  const highCriticalCount = issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length;
+  const highFindingCount = issues.filter(i => i.severity === 'High').length;
   const mediumRiskCount = issues.filter(i => i.severity === 'Medium').length;
   const lowRiskCount = issues.filter(i => i.severity === 'Low').length;
   const score = reportData?.score;
@@ -34,14 +36,16 @@ const SimpleReport = ({ reportData }) => {
   // Finding distribution derived only from real report data (no fabricated values)
   const totalFindings = findings.length;
   const findingDistribution = [
-    { label: 'High', count: highRiskCount, color: 'text-red-500', dot: 'bg-red-500' },
+    { label: 'Critical', count: criticalRiskCount, color: 'text-fuchsia-400', dot: 'bg-fuchsia-500' },
+    { label: 'High', count: highFindingCount, color: 'text-red-500', dot: 'bg-red-500' },
     { label: 'Medium', count: mediumRiskCount, color: 'text-amber-500', dot: 'bg-amber-500' },
-    { label: 'Low', count: lowRiskCount, color: 'text-purple-500', dot: 'bg-purple-500' },
+    { label: 'Low', count: lowRiskCount, color: 'text-yellow-400', dot: 'bg-yellow-500' },
     { label: 'Passed', count: passed.length, color: 'text-emerald-500', dot: 'bg-emerald-500' },
     { label: 'Informational', count: informational.length, color: 'text-blue-500', dot: 'bg-blue-500' },
     { label: 'Inconclusive', count: inconclusive.length, color: 'text-slate-500', dot: 'bg-slate-500' },
   ];
-  const activeDistribution = findingDistribution.filter(d => d.count > 0);
+  const mandatoryLabels = new Set(['Critical', 'High', 'Medium', 'Low']);
+  const activeDistribution = findingDistribution.filter(d => d.count > 0 || mandatoryLabels.has(d.label));
   const DONUT_CIRCUMFERENCE = 2 * Math.PI * 52;
 
   // Risk-level status badge derived only from the real overall score
@@ -192,11 +196,11 @@ const SimpleReport = ({ reportData }) => {
             </div>
           )}
 
-          {highRiskCount > 0 && (
+          {highCriticalCount > 0 && (
             <div className="rounded-xl border border-rose-500/30 border-l-4 border-l-rose-500 bg-rose-500/10 p-3.5 flex items-center gap-3 mt-6" role="alert">
               <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse flex-shrink-0" aria-hidden="true" />
               <p className="text-xs text-rose-200">
-                <strong>Priority Focus:</strong> Resolve {highRiskCount} High-risk finding(s) to optimize overall security posture.
+                <strong>Priority Focus:</strong> Resolve {highCriticalCount} High/Critical-risk finding(s) to optimize overall security posture.
               </p>
             </div>
           )}
@@ -466,7 +470,7 @@ const SimpleReport = ({ reportData }) => {
                           <span className={`w-1.5 h-1.5 rounded-full ${severityDot}`}></span>
                           {issue.severity}
                         </span>
-                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border shrink-0 ${getPriorityBadgeClasses(priority)}`}>
+                        <span data-priority={priority} className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border shrink-0 ${getPriorityBadgeClasses(priority)}`}>
                           {priority}
                         </span>
                       </div>
@@ -609,7 +613,7 @@ const SimpleReport = ({ reportData }) => {
       <div className="text-center mt-12 py-12 border-t border-slate-800">
         <h3 className="text-2xl font-black text-slate-50 mb-4">Ready to improve your score?</h3>
         <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-          Interested in advanced testing? Let's chat on WhatsApp!
+          Interested in advanced testing? Contact us on contact@urlscanonline.com
         </p>
       </div>
 

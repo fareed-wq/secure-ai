@@ -89,7 +89,7 @@ const TechnicalReport = ({ reportData }) => {
 
   const getPriorityBadge = (priority) => {
     const style = getPriorityBadgeClasses(priority);
-    return <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${style}`}>{priority}</span>;
+    return <span data-priority={priority} className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${style}`}>{priority}</span>;
   };
 
   const copyToClipboard = (text) => {
@@ -555,21 +555,24 @@ const TechnicalReport = ({ reportData }) => {
       {(() => {
         const cov = reportData?.assessment_coverage;
         const totalFindings = findings.length;
-        const highRiskCount = findings.filter(f => f.severity === 'High' || f.severity === 'Critical').length;
+        const criticalRiskCount = findings.filter(f => f.severity === 'Critical').length;
+        const highFindingCount = findings.filter(f => f.severity === 'High').length;
         const mediumRiskCount = findings.filter(f => f.severity === 'Medium').length;
         const lowRiskCount = findings.filter(f => f.severity === 'Low').length;
         const passedCount = findings.filter(f => f.severity === 'Passed').length;
         const infoCount = findings.filter(f => f.severity === 'Informational').length;
         const inconclusiveCount = findings.filter(f => f.severity === 'Inconclusive').length;
         const distData = [
-          { label: 'High', count: highRiskCount, color: 'text-red-500', dot: 'bg-red-500' },
+          { label: 'Critical', count: criticalRiskCount, color: 'text-fuchsia-400', dot: 'bg-fuchsia-500' },
+          { label: 'High', count: highFindingCount, color: 'text-red-500', dot: 'bg-red-500' },
           { label: 'Medium', count: mediumRiskCount, color: 'text-amber-500', dot: 'bg-amber-500' },
-          { label: 'Low', count: lowRiskCount, color: 'text-purple-500', dot: 'bg-purple-500' },
+          { label: 'Low', count: lowRiskCount, color: 'text-yellow-400', dot: 'bg-yellow-500' },
           { label: 'Passed', count: passedCount, color: 'text-emerald-500', dot: 'bg-emerald-500' },
           { label: 'Informational', count: infoCount, color: 'text-blue-500', dot: 'bg-blue-500' },
           { label: 'Inconclusive', count: inconclusiveCount, color: 'text-slate-500', dot: 'bg-slate-500' },
         ];
-        const activeDist = distData.filter(d => d.count > 0);
+        const mandatoryLabels = new Set(['Critical', 'High', 'Medium', 'Low']);
+        const activeDist = distData.filter(d => d.count > 0 || mandatoryLabels.has(d.label));
         const DONUT_CIRC = 2 * Math.PI * 52;
 
         return (
@@ -641,7 +644,7 @@ const TechnicalReport = ({ reportData }) => {
 
             {/* Finding Distribution Card */}
             {totalFindings > 0 && (
-              <div className="report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
+              <div className="finding-distribution-container report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
                 <div className="flex items-center gap-3 mb-4">
                   <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ FINDING_DISTRIBUTION</span>
                 </div>
@@ -1216,9 +1219,7 @@ const TechnicalReport = ({ reportData }) => {
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800">P5</span>
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-slate-800/50 text-xs text-slate-400 leading-tight italic">
-                * The scanner does not currently emit Critical-severity standard findings. If introduced, they will map to P1.
-              </div>
+              
             </div>
 
             {/* Known Vulnerabilities (CVEs) */}
@@ -1265,7 +1266,7 @@ const TechnicalReport = ({ reportData }) => {
       <div className="text-center mt-12 py-12 border-t border-slate-800">
         <h2 className="text-2xl font-black text-slate-50 mb-4">Ready to improve your score?</h2>
         <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-          Interested in advanced testing? Let's chat on WhatsApp!
+          Interested in advanced testing? Contact us on contact@urlscanonline.com
         </p>
       </div>
 

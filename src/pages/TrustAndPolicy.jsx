@@ -34,7 +34,7 @@ const TrustAndPolicy = () => {
         </Link>
 
         <Link
-          to="/privacy-policy"
+          to="/privacy"
           className="group flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:bg-slate-800/80 hover:border-slate-700 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
         >
           <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400 mb-6 group-hover:scale-110 transition-transform">
