@@ -29,6 +29,7 @@ const TermsOfService = React.lazy(() => import('./pages/TermsOfService'));
 const ResponsibleDisclosure = React.lazy(() => import('./pages/ResponsibleDisclosure'));
 const TrustAndPolicy = React.lazy(() => import('./pages/TrustAndPolicy'));
 const PrivacyPolicy = React.lazy(() => import('./pages/PrivacyPolicy'));
+const Privacy = React.lazy(() => import('./pages/Privacy'));
 const ApiDocs = React.lazy(() => import('./pages/ApiDocs'));
 const Pricing = React.lazy(() => import('./pages/Pricing'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
@@ -81,7 +82,8 @@ const App = () => {
                 <Route path="/blog/:slug" element={<ArticlePage />} />
                 <Route path="/pricing" element={<Pricing />} />
                 <Route path="/trust-policy" element={<TrustAndPolicy />} />
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
+                <Route path="/privacy" element={<Privacy />} />
                 <Route path="/security-trust" element={<SecurityTrust />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/responsible-disclosure" element={<ResponsibleDisclosure />} />

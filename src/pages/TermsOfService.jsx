@@ -67,7 +67,7 @@ const TermsOfService = () => {
             URLScanOnline provides automated website security scanning and assessment services. The service provides Basic passive scanning, Advanced bounded low-impact checks, and manual security testing only under explicit authorization and separate scope.
             </p>
             <p className="text-slate-400 leading-relaxed mt-4">
-              Use of personal and scan-related data is also governed by our <Link to="/privacy-policy" className="text-indigo-400 hover:text-indigo-300">Privacy Policy</Link>.
+              Use of personal and scan-related data is also governed by our <Link to="/privacy" className="text-indigo-400 hover:text-indigo-300">Privacy Policy</Link>.
           </p>
         </div>
       </section>

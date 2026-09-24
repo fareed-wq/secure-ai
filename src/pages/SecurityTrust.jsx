@@ -117,7 +117,7 @@ const SecurityTrust = () => {
 
 Administrative dashboards use aggregate platform statistics where appropriate and do not provide a general interface for browsing individual users' scan histories.
 
-<div className="pt-2"><Link to="/privacy-policy" className="text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1">Read our Privacy Policy &rarr;</Link></div>
+<div className="pt-2"><Link to="/privacy" className="text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1">Read our Privacy Policy &rarr;</Link></div>
             </p>
           </div>
         </div>
