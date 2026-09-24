@@ -79,12 +79,18 @@ const ScanHistory = () => {
     try {
       const { data, error: err } = await supabase
         .from('scans')
-          .select('*')
+          .select('id, target_url, score, created_at, status, trigger_type, scan_mode:report_data->>scan_mode')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
       if (err) throw err;
-      setScans(data || []);
+
+      const mappedData = (data || []).map(row => ({
+        ...row,
+        report_data: { scan_mode: row.scan_mode }
+      }));
+
+      setScans(mappedData);
     } catch (err) {
       console.error('Error fetching history:', err);
       setError('Failed to load scan history.');
