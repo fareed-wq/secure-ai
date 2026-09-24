@@ -120,7 +120,7 @@
 }
 
 /* ==========================================
-   CONTACT PAGE — LIGHT THEME ONLY
+   CONTACT PAGE: LIGHT THEME ONLY
    Scoped under html.light-theme so dark
    mode remains completely unchanged.
    ========================================== */
@@ -244,7 +244,7 @@ html.light-theme .contact-page .mt-8 .text-slate-500:hover {
 }
 
 /* ============================================
-   HOME / SCANNER — LIGHT THEME ONLY
+   HOME / SCANNER: LIGHT THEME ONLY
    ============================================ */
 
 /* 1. Scanner page */
@@ -423,7 +423,7 @@ html.light-theme .faq-answer {
 }
 
 /* ============================================
-   SIMPLE REPORT — LIGHT THEME ONLY
+   SIMPLE REPORT: LIGHT THEME ONLY
    ============================================ */
 
 /* 1. Main Simple Report */
@@ -640,7 +640,7 @@ html.light-theme .simple-report .text-center p {
 }
 
 /* ============================================
-   SIMPLE REPORT — LIGHT THEME FINAL POLISH
+   SIMPLE REPORT: LIGHT THEME FINAL POLISH
    ============================================ */
 
 /* 1. Minimal Business Risk Boxes */
@@ -710,7 +710,7 @@ html.light-theme .simple-business-risk-description {
 }
 
 /* ============================================
-   TECHNICAL REPORT — LIGHT THEME ONLY
+   TECHNICAL REPORT: LIGHT THEME ONLY
    ============================================ */
 
 /* 1. MAIN TECHNICAL REPORT */
@@ -864,7 +864,7 @@ html.light-theme .technical-report .text-slate-50 {
 }
 
 /* ============================================
-   TECHNICAL REPORT — FINAL VISUAL POLISH
+   TECHNICAL REPORT: FINAL VISUAL POLISH
    ============================================ */
 
 /* 1. COMPLIANCE STATUS BADGES */
@@ -911,7 +911,7 @@ html.light-theme .technical-metadata {
 }
 
 /* ============================================
-   TECHNICAL REPORT — COMPLIANCE READINESS
+   TECHNICAL REPORT: COMPLIANCE READINESS
    ============================================ */
 
 /* 1. COMPLIANCE SECTION CONTAINER */
