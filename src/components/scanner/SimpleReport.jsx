@@ -25,7 +25,9 @@ const SimpleReport = ({ reportData }) => {
   });
 
   const topPriorities = issues.slice(0, 3); // Max 3 items
+  const criticalRiskCount = issues.filter(i => i.severity === 'Critical').length;
   const highRiskCount = issues.filter(i => i.severity === 'High' || i.severity === 'Critical').length;
+  const highFindingCount = issues.filter(i => i.severity === 'High').length;
   const mediumRiskCount = issues.filter(i => i.severity === 'Medium').length;
   const lowRiskCount = issues.filter(i => i.severity === 'Low').length;
   const score = reportData?.score;
@@ -34,14 +36,16 @@ const SimpleReport = ({ reportData }) => {
   // Finding distribution derived only from real report data (no fabricated values)
   const totalFindings = findings.length;
   const findingDistribution = [
-    { label: 'High', count: highRiskCount, color: 'text-red-500', dot: 'bg-red-500' },
+    { label: 'Critical', count: criticalRiskCount, color: 'text-fuchsia-400', dot: 'bg-fuchsia-500' },
+    { label: 'High', count: highFindingCount, color: 'text-red-500', dot: 'bg-red-500' },
     { label: 'Medium', count: mediumRiskCount, color: 'text-amber-500', dot: 'bg-amber-500' },
-    { label: 'Low', count: lowRiskCount, color: 'text-purple-500', dot: 'bg-purple-500' },
+    { label: 'Low', count: lowRiskCount, color: 'text-yellow-400', dot: 'bg-yellow-500' },
     { label: 'Passed', count: passed.length, color: 'text-emerald-500', dot: 'bg-emerald-500' },
     { label: 'Informational', count: informational.length, color: 'text-blue-500', dot: 'bg-blue-500' },
     { label: 'Inconclusive', count: inconclusive.length, color: 'text-slate-500', dot: 'bg-slate-500' },
   ];
-  const activeDistribution = findingDistribution.filter(d => d.count > 0);
+  const mandatoryLabels = new Set(['Critical', 'High', 'Medium', 'Low']);
+  const activeDistribution = findingDistribution.filter(d => d.count > 0 || mandatoryLabels.has(d.label));
   const DONUT_CIRCUMFERENCE = 2 * Math.PI * 52;
 
   // Risk-level status badge derived only from the real overall score

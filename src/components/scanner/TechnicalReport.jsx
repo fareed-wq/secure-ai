@@ -555,21 +555,25 @@ const TechnicalReport = ({ reportData }) => {
       {(() => {
         const cov = reportData?.assessment_coverage;
         const totalFindings = findings.length;
+        const criticalRiskCount = findings.filter(f => f.severity === 'Critical').length;
         const highRiskCount = findings.filter(f => f.severity === 'High' || f.severity === 'Critical').length;
+        const highFindingCount = findings.filter(f => f.severity === 'High').length;
         const mediumRiskCount = findings.filter(f => f.severity === 'Medium').length;
         const lowRiskCount = findings.filter(f => f.severity === 'Low').length;
         const passedCount = findings.filter(f => f.severity === 'Passed').length;
         const infoCount = findings.filter(f => f.severity === 'Informational').length;
         const inconclusiveCount = findings.filter(f => f.severity === 'Inconclusive').length;
         const distData = [
-          { label: 'High', count: highRiskCount, color: 'text-red-500', dot: 'bg-red-500' },
+          { label: 'Critical', count: criticalRiskCount, color: 'text-fuchsia-400', dot: 'bg-fuchsia-500' },
+          { label: 'High', count: highFindingCount, color: 'text-red-500', dot: 'bg-red-500' },
           { label: 'Medium', count: mediumRiskCount, color: 'text-amber-500', dot: 'bg-amber-500' },
-          { label: 'Low', count: lowRiskCount, color: 'text-purple-500', dot: 'bg-purple-500' },
+          { label: 'Low', count: lowRiskCount, color: 'text-yellow-400', dot: 'bg-yellow-500' },
           { label: 'Passed', count: passedCount, color: 'text-emerald-500', dot: 'bg-emerald-500' },
           { label: 'Informational', count: infoCount, color: 'text-blue-500', dot: 'bg-blue-500' },
           { label: 'Inconclusive', count: inconclusiveCount, color: 'text-slate-500', dot: 'bg-slate-500' },
         ];
-        const activeDist = distData.filter(d => d.count > 0);
+        const mandatoryLabels = new Set(['Critical', 'High', 'Medium', 'Low']);
+        const activeDist = distData.filter(d => d.count > 0 || mandatoryLabels.has(d.label));
         const DONUT_CIRC = 2 * Math.PI * 52;
 
         return (
