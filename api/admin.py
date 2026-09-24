@@ -177,6 +177,9 @@ def get_users(limit: int = Query(50), offset: int = Query(0), search: Optional[s
                 safe_users.append({
                     "user_id": uid,
                     "email": u.get("email"),
+                    "name": u.get("user_metadata", {}).get("full_name", ""),
+                    "phone": u.get("phone"),
+                    "phone_confirmed_at": u.get("phone_confirmed_at"),
                     "role": roles_map.get(uid, "user"),
                     "plan": plan_info.get("plan", "free"),
                     "status": plan_info.get("status", "active"),

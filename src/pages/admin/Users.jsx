@@ -132,7 +132,7 @@ export default function Users() {
             </table>
           </div>
 
-          <div className="flex justify-between items-center pt-4">
+          <div className="flex justify-between items-center pt-4 mb-8">
              <button
                disabled={page === 0 || loading}
                onClick={() => setPage(p => p - 1)}
@@ -148,6 +148,55 @@ export default function Users() {
              >
                Next
              </button>
+          </div>
+
+          <div className="pt-8 border-t border-slate-800">
+            <h2 className="text-xl font-bold mb-4">Phone Directory</h2>
+            <div className="overflow-x-auto rounded border border-slate-800 relative">
+               {loading && <div className="absolute inset-0 bg-slate-950/50 flex items-center justify-center z-10"><Loader2 className="w-8 h-8 text-indigo-500 animate-spin" /></div>}
+               <table className="w-full text-left text-sm whitespace-nowrap">
+                 <thead className="bg-slate-900 border-b border-slate-800 text-slate-400">
+                   <tr>
+                     <th className="px-4 py-3 font-medium">NAME</th>
+                     <th className="px-4 py-3 font-medium">EMAIL</th>
+                     <th className="px-4 py-3 font-medium">PHONE</th>
+                     <th className="px-4 py-3 font-medium">VERIFICATION</th>
+                     <th className="px-4 py-3 font-medium">PLAN</th>
+                     <th className="px-4 py-3 font-medium">STATUS</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-slate-800">
+                   {filteredUsers.map(u => {
+                      const hasPhone = !!u.phone;
+                      const isVerified = u.phone_confirmed_at != null;
+                      return (
+                        <tr key={u.user_id + '_phone'} className="hover:bg-slate-800/50">
+                          <td className="px-4 py-3">{u.name || 'Unknown'}</td>
+                          <td className="px-4 py-3">{u.email || 'Unknown'}</td>
+                          <td className={`px-4 py-3 ${hasPhone ? 'text-slate-200' : 'text-slate-500 italic'}`}>
+                            {hasPhone ? u.phone : 'Not provided'}
+                          </td>
+                          <td className="px-4 py-3">
+                            {!hasPhone ? (
+                              <span className="px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-400">Not provided</span>
+                            ) : isVerified ? (
+                              <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-300">Verified</span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded text-xs bg-amber-500/20 text-amber-300">Unverified</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 capitalize">{u.plan || 'free'}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2 py-0.5 rounded text-xs ${u.status === 'suspended' ? 'bg-red-500/20 text-red-300' : 'bg-green-500/20 text-green-300'}`}>
+                              {u.status || 'active'}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                   })}
+                 </tbody>
+               </table>
+            </div>
           </div>
         </>
       )}
