@@ -308,7 +308,7 @@ const TechnicalReport = ({ reportData }) => {
                       <div key={i} className="inline-flex items-center gap-2 text-sm">
                         <span className={`w-3 h-3 rounded-full ${seg.dot} flex-shrink-0`}></span>
                         <span className="text-slate-300 font-medium">{seg.label}</span>
-                        <span className="text-slate-500 font-mono text-xs font-bold">{seg.count}</span>
+                        <span className={`font-mono text-xs font-bold ${seg.color}`}>{seg.count}</span>
                       </div>
                     ))}
                   </div>
