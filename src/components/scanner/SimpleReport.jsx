@@ -128,15 +128,6 @@ const SimpleReport = ({ reportData }) => {
           </p>
 
 
-          {highRiskCount > 0 && (
-            <div className="rounded-xl border border-rose-500/30 border-l-4 border-l-rose-500 bg-rose-500/10 p-3.5 flex items-center gap-3 mt-6" role="alert">
-              <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse flex-shrink-0" aria-hidden="true" />
-              <p className="text-xs text-rose-200">
-                <strong>Priority Focus:</strong> Resolve {highRiskCount} High-risk finding(s) to optimize overall security posture.
-              </p>
-            </div>
-          )}
-
           {/* Finding Distribution - real report data only */}
           {totalFindings > 0 && (
             <div className="mt-6 pt-6 border-t border-slate-800">
@@ -200,6 +191,16 @@ const SimpleReport = ({ reportData }) => {
               </div>
             </div>
           )}
+
+          {highRiskCount > 0 && (
+            <div className="rounded-xl border border-rose-500/30 border-l-4 border-l-rose-500 bg-rose-500/10 p-3.5 flex items-center gap-3 mt-6" role="alert">
+              <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse flex-shrink-0" aria-hidden="true" />
+              <p className="text-xs text-rose-200">
+                <strong>Priority Focus:</strong> Resolve {highRiskCount} High-risk finding(s) to optimize overall security posture.
+              </p>
+            </div>
+          )}
+
 
         </div>
 
