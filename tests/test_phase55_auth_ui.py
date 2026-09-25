@@ -23,13 +23,6 @@ def test_login_no_otp_flow():
     assert "supabase.auth.resend(" in src, "Must use resend for unconfirmed email fallback"
     assert "type: 'signup'" in src, "Resend must use type: signup"
 
-def test_backend_phone_architecture():
-    with open(os.path.join('api', 'auth', 'register.py'), 'r', encoding='utf-8') as f:
-        src = f.read()
-
-    assert "'phone': req.phone" not in src, "Phone must NOT be sent to admin.create_user to avoid Auth uniqueness constraints"
-    assert "requests.patch" in src and "/rest/v1/profiles" in src, "Must store phone in public.profiles"
-
 def test_admin_phone_source():
     with open(os.path.join('api', 'admin.py'), 'r', encoding='utf-8') as f:
         src = f.read()

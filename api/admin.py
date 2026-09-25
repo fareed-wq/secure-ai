@@ -318,14 +318,24 @@ def get_users(limit: int = Query(50), offset: int = Query(0), search: Optional[s
             }
             return requests.get(f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/user_roles?select=user_id,role", headers=headers, timeout=5.0)
 
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        def fetch_profiles():
+            headers = {
+                "apikey": os.environ.get("SUPABASE_SECRET_KEY", ""),
+                "Authorization": f"Bearer {os.environ.get('SUPABASE_SECRET_KEY', '')}",
+                "Content-Type": "application/json"
+            }
+            return requests.get(f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/profiles?select=id,phone", headers=headers, timeout=5.0)
+
+        with ThreadPoolExecutor(max_workers=4) as executor:
             fut_users = executor.submit(fetch_auth_users)
             fut_plans = executor.submit(fetch_plans)
             fut_roles = executor.submit(fetch_roles)
+            fut_profiles = executor.submit(fetch_profiles)
 
             resp = fut_users.result()
             plans_resp = fut_plans.result()
             roles_resp = fut_roles.result()
+            profiles_resp = fut_profiles.result()
 
         if resp.status_code == 200:
             users_data = resp.json().get("users", [])
@@ -340,7 +350,12 @@ def get_users(limit: int = Query(50), offset: int = Query(0), search: Optional[s
                 for row in roles_resp.json():
                     roles_map[row.get("user_id")] = row.get("role")
 
-            safe_users = _get_mapped_users(users_data, plans_map, roles_map, search)
+            profiles_map = {}
+            if profiles_resp.status_code == 200:
+                for row in profiles_resp.json():
+                    profiles_map[row.get("id")] = row.get("phone")
+
+            safe_users = _get_mapped_users(users_data, plans_map, roles_map, profiles_map, search)
             return safe_users[offset:offset+limit]
     except Exception as e:
         logger.error(f"Error fetching users: {e}")
