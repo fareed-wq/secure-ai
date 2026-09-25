@@ -1291,6 +1291,7 @@ html.light-theme div[data-dashboard-card="P1"] svg { color: #be123c !important; 
 html.light-theme div[data-dashboard-card="P2"] svg { color: #c2410c !important; } /* text-orange-700 */
 html.light-theme div[data-dashboard-card="P3"] svg { color: #b45309 !important; } /* text-amber-700 */
 html.light-theme div[data-dashboard-card="P4"] svg { color: #0e7490 !important; } /* text-cyan-700 */
+html.light-theme div[data-dashboard-card="P5"] svg { color: #6d28d9 !important; } /* text-violet-700 */
 
 /* Badge structural styles for Light Theme ONLY (inherits color from existing data-priority rules) */
 html.light-theme div[data-dashboard-card] > span[data-priority] {
