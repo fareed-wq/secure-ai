@@ -21,8 +21,18 @@ const Settings = () => {
     fullName: user?.user_metadata?.full_name || '',
     company: user?.user_metadata?.company || '',
     email: user?.email || '',
-    phone: user?.phone || '',
+    phone: '',
   });
+
+  React.useEffect(() => {
+    if (user?.id) {
+      supabase.from('profiles').select('phone').eq('id', user.id).single().then(({ data }) => {
+        if (data?.phone) {
+          setFormData(prev => ({ ...prev, phone: data.phone }));
+        }
+      });
+    }
+  }, [user?.id]);
 
   const [savedProfile, setSavedProfile] = useState({
     fullName: user?.user_metadata?.full_name || '',
@@ -31,7 +41,6 @@ const Settings = () => {
 
   const isProfileDirty = formData.fullName !== savedProfile.fullName || formData.company !== savedProfile.company;
   const isEmailVerified = user?.email_confirmed_at != null;
-  const isPhoneVerified = user?.phone_confirmed_at != null;
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -224,19 +233,10 @@ const Settings = () => {
                     value={formData.phone || 'No phone number provided'}
                     className={`block w-full pl-10 pr-28 bg-slate-950 border border-slate-700 rounded-lg py-2.5 cursor-not-allowed sm:text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${!formData.phone ? 'text-slate-500 italic' : 'text-slate-400'}`}
                   />
-                  {formData.phone && isPhoneVerified && (
+                  {formData.phone && (
                     <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20">
-                        <BadgeCheck className="w-3.5 h-3.5" />
-                        Verified
-                      </span>
-                    </div>
-                  )}
-                  {formData.phone && !isPhoneVerified && (
-                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        Unverified
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                        Provided
                       </span>
                     </div>
                   )}

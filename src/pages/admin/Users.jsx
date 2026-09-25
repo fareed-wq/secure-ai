@@ -243,7 +243,6 @@ export default function Users() {
                  <tbody className="divide-y divide-slate-800">
                    {filteredUsers.map(u => {
                       const hasPhone = !!u.phone;
-                      const isVerified = u.phone_confirmed_at != null;
                       return (
                         <tr key={u.user_id + '_phone'} className="hover:bg-slate-800/50">
                           <td className="px-4 py-3">{u.name || 'Unknown'}</td>
@@ -254,10 +253,8 @@ export default function Users() {
                           <td className="px-4 py-3">
                             {!hasPhone ? (
                               <span className="px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-400">Not provided</span>
-                            ) : isVerified ? (
-                              <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-300">Verified</span>
                             ) : (
-                              <span className="px-2 py-0.5 rounded text-xs bg-amber-500/20 text-amber-300">Unverified</span>
+                              <span className="px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300">Provided</span>
                             )}
                           </td>
                           <td className="px-4 py-3 capitalize">{u.plan || 'free'}</td>

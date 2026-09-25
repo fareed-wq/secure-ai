@@ -96,9 +96,7 @@ def register_user(req: RegistrationRequest, request: Request):
     payload = {
         'email': req.email,
         'password': req.password,
-        'phone': req.phone,
         'email_confirm': False,
-        'phone_confirm': False,
         'user_metadata': {
             'full_name': req.fullName,
             'company': req.company
@@ -127,4 +125,12 @@ def register_user(req: RegistrationRequest, request: Request):
         raise HTTPException(status_code=400, detail=msg)
 
     data = resp.json()
-    return {"status": "success", "user_id": data.get("id"), "email": data.get("email")}
+    user_id = data.get("id")
+
+    if user_id and req.phone:
+        try:
+            requests.patch(f"{supabase_url}/rest/v1/profiles?id=eq.{user_id}", json={"phone": req.phone}, headers=headers, timeout=5.0)
+        except Exception as e:
+            logger.error(f"Failed to update profile phone: {e}")
+
+    return {"status": "success", "user_id": user_id, "email": data.get("email")}
