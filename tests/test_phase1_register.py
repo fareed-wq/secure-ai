@@ -63,9 +63,8 @@ def test_valid_registration(mock_turnstile, mock_post):
     # Verify Admin createUser payload
     call_args = mock_post.call_args[1]
     assert call_args["json"]["email"] == "test@example.com"
-    assert call_args["json"]["phone"] == "+966555123456"
+    assert call_args["json"].get("phone") is None
     assert call_args["json"]["email_confirm"] is False
-    assert call_args["json"]["phone_confirm"] is False
     assert call_args["json"]["user_metadata"]["full_name"] == "Test User"
 
 @patch('api.auth.register.verify_turnstile')

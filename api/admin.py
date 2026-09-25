@@ -127,7 +127,7 @@ def _fetch_users_page(url_override: str = None) -> dict:
     }
     return requests.get(url, headers=headers, timeout=5.0)
 
-def _get_mapped_users(users_data: list, plans_map: dict, roles_map: dict, search: str = None) -> list:
+def _get_mapped_users(users_data: list, plans_map: dict, roles_map: dict, profiles_map: dict, search: str = None) -> list:
     safe_users = []
     for u in users_data:
         uid = u.get("id")
@@ -142,8 +142,7 @@ def _get_mapped_users(users_data: list, plans_map: dict, roles_map: dict, search
             "user_id": uid,
             "email": u.get("email"),
             "name": u.get("user_metadata", {}).get("full_name", ""),
-            "phone": u.get("phone"),
-            "phone_confirmed_at": u.get("phone_confirmed_at"),
+            "phone": profiles_map.get(uid),
             "role": roles_map.get(uid, "user"),
             "plan": plan_info.get("plan", "free"),
             "status": plan_info.get("status", "active"),
@@ -179,7 +178,16 @@ def _fetch_roles_and_plans():
         for row in roles_resp.json():
             roles_map[row.get("user_id")] = row.get("role")
 
-    return plans_map, roles_map
+    try:
+        profiles_resp = requests.get(f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/profiles?select=id,phone", headers=headers, timeout=5.0)
+        profiles_map = {row.get("id"): row.get("phone") for row in profiles_resp.json()} if profiles_resp.status_code == 200 else {}
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to fetch profiles: {e}")
+        profiles_map = {}
+
+    return plans_map, roles_map, profiles_map
 
 
 def _fetch_all_roles_and_plans():
@@ -224,21 +232,32 @@ def _fetch_all_roles_and_plans():
     from concurrent.futures import ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=2) as executor:
         fut_plans = executor.submit(fetch_paginated, "user_plans", "user_id,plan,status")
+        fut_profiles = executor.submit(fetch_paginated, "profiles", "id,phone")
         fut_roles = executor.submit(fetch_paginated, "user_roles", "user_id,role")
         plans_data = fut_plans.result()
         roles_data = fut_roles.result()
+        profiles_data = fut_profiles.result()
 
     plans_map = {row.get("user_id"): row for row in plans_data if isinstance(row, dict)}
     roles_map = {row.get("user_id"): row.get("role") for row in roles_data if isinstance(row, dict)}
 
-    return plans_map, roles_map
+    try:
+        profiles_resp = requests.get(f"{os.environ.get('SUPABASE_URL', '').rstrip('/')}/rest/v1/profiles?select=id,phone", headers=headers, timeout=5.0)
+        profiles_map = {row.get("id"): row.get("phone") for row in profiles_resp.json()} if profiles_resp.status_code == 200 else {}
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to fetch profiles: {e}")
+        profiles_map = {}
+
+    return plans_map, roles_map, profiles_map
 
 def _fetch_all_users(search: Optional[str] = None) -> list:
     if not os.environ.get('SUPABASE_URL') or not os.environ.get('SUPABASE_SECRET_KEY'):
         raise HTTPException(status_code=500, detail="Supabase credentials not configured.")
 
     try:
-        plans_map, roles_map = _fetch_all_roles_and_plans()
+        plans_map, roles_map, profiles_map = _fetch_all_roles_and_plans()
         all_users = []
         page = 1
         per_page = 1000
@@ -265,7 +284,7 @@ def _fetch_all_users(search: Optional[str] = None) -> list:
             logger.error("Export exceeded maximum supported size.")
             raise HTTPException(status_code=500, detail="Export exceeds maximum supported size")
 
-        return _get_mapped_users(all_users, plans_map, roles_map, search)
+        return _get_mapped_users(all_users, plans_map, roles_map, profiles_map, search)
     except HTTPException:
         raise
     except Exception as e:
@@ -363,14 +382,10 @@ def export_users(format: str = Query("csv"), search: Optional[str] = Query(None)
     rows = []
     for u in filtered_users:
         phone = u.get("phone")
-        phone_confirmed_at = u.get("phone_confirmed_at")
 
         verification = "Not provided"
         if phone:
-            if phone_confirmed_at:
-                verification = "Verified"
-            else:
-                verification = "Unverified"
+            verification = "Provided"
 
         rows.append([
             safe_export_val(u.get("user_id")),
