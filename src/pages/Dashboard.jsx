@@ -459,7 +459,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex flex-wrap sm:flex-nowrap items-center gap-4">
                       <div className="flex items-center gap-3">
-                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getPriorityBadgeClasses(calculateFindingPriority(finding))}`}>
+                        <span data-priority={calculateFindingPriority(finding)} className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getPriorityBadgeClasses(calculateFindingPriority(finding))}`}>
                           {calculateFindingPriority(finding)}
                         </span>
                         <span className={`text-xs font-bold uppercase ${getSeverityColor(finding.severity)}`}>
