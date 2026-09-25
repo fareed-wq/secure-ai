@@ -696,6 +696,91 @@ const TechnicalReport = ({ reportData }) => {
 
 
 
+      {/* 2.6. Priority Guide */}
+      <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg mt-6 print:hidden">
+        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
+          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ UNDERSTANDING_PRIORITY (P1–P5)</span>
+          <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-400" /></span>
+        </summary>
+        <div className="mt-4">
+          <p className="text-slate-400 text-sm mb-6">
+            Priority indicates <strong className="text-slate-200">remediation urgency</strong> and is distinct from technical severity.
+          </p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Standard Findings */}
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800/50 pb-3">
+                <Shield className="w-4 h-4 text-indigo-400" />
+                Standard Findings
+              </div>
+              <p className="text-slate-400 text-xs mb-4">Priority directly follows the finding's technical severity:</p>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Critical</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-rose-400 bg-rose-950/30 border-rose-800">P1</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">High</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Medium</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800" data-priority="P3">P3</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Low</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800">P4</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-bold text-slate-300">Informational / Passed</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800" data-priority="P5">P5</span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Known Vulnerabilities (CVEs) */}
+            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800/50 pb-3">
+                <Activity className="w-4 h-4 text-rose-400" />
+                Known Vulnerabilities (CVEs)
+              </div>
+              <p className="text-slate-400 text-xs mb-4">Priority is calculated from vulnerability-intelligence signals:</p>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 9.0 <strong className="text-slate-400 mx-1">OR</strong> EPSS &ge; 10%</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-rose-400 bg-rose-950/30 border-rose-800">P1</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 7.0 <strong className="text-slate-400 mx-1">OR</strong> EPSS &ge; 1%</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 4.0</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800" data-priority="P3">P3</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS &gt; 0</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800">P4</span>
+                </div>
+                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <span className="text-xs font-medium text-slate-400">CVSS = 0 <strong className="text-slate-400 mx-1">OR</strong> (No CVSS + EPSS &lt; 1%)</span>
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800" data-priority="P5">P5</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-2">
+            <p><strong>Important:</strong> Higher-priority conditions take precedence. For example, a CVE meeting a P1 condition remains P1 even if it also meets a lower-tier condition.</p>
+            <p className="italic">CVSS indicates vulnerability severity; EPSS indicates exploitation likelihood. Priority uses these signals for remediation prioritization.</p>
+          </div>
+        </div>
+      </details>
+
+
       {/* 3. Tab Switcher: Vulnerabilities vs Compliance */}
       <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl w-full max-w-md mx-auto shadow-md print:hidden" role="tablist">
         <button
@@ -1179,91 +1264,6 @@ const TechnicalReport = ({ reportData }) => {
         );
       })()}
 
-
-
-      {/* 2.6. Priority Guide */}
-      <details className="group report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg mt-6 print:hidden">
-        <summary className="flex items-center justify-between cursor-pointer list-none [&::-webkit-details-marker]:hidden mb-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:bg-slate-800/30">
-          <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ UNDERSTANDING_PRIORITY (P1–P5)</span>
-          <span className="group-open:rotate-180 transition-transform"><ChevronDown size={16} className="text-slate-400" /></span>
-        </summary>
-        <div className="mt-4">
-          <p className="text-slate-400 text-sm mb-6">
-            Priority indicates <strong className="text-slate-200">remediation urgency</strong> and is distinct from technical severity.
-          </p>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Standard Findings */}
-            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800/50 pb-3">
-                <Shield className="w-4 h-4 text-indigo-400" />
-                Standard Findings
-              </div>
-              <p className="text-slate-400 text-xs mb-4">Priority directly follows the finding's technical severity:</p>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-bold text-slate-300">Critical</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-rose-400 bg-rose-950/30 border-rose-800">P1</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-bold text-slate-300">High</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-bold text-slate-300">Medium</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800" data-priority="P3">P3</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-bold text-slate-300">Low</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800">P4</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-bold text-slate-300">Informational / Passed</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800" data-priority="P5">P5</span>
-                </div>
-              </div>
-              
-            </div>
-
-            {/* Known Vulnerabilities (CVEs) */}
-            <div className="bg-slate-900/50 border border-slate-800/50 rounded-xl p-5">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800/50 pb-3">
-                <Activity className="w-4 h-4 text-rose-400" />
-                Known Vulnerabilities (CVEs)
-              </div>
-              <p className="text-slate-400 text-xs mb-4">Priority is calculated from vulnerability-intelligence signals:</p>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 9.0 <strong className="text-slate-400 mx-1">OR</strong> EPSS &ge; 10%</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-rose-400 bg-rose-950/30 border-rose-800">P1</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 7.0 <strong className="text-slate-400 mx-1">OR</strong> EPSS &ge; 1%</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-amber-400 bg-amber-950/30 border-amber-800">P2</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS &ge; 4.0</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/30 border-yellow-800" data-priority="P3">P3</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS &gt; 0</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800">P4</span>
-                </div>
-                <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS = 0 <strong className="text-slate-400 mx-1">OR</strong> (No CVSS + EPSS &lt; 1%)</span>
-                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800" data-priority="P5">P5</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-2">
-            <p><strong>Important:</strong> Higher-priority conditions take precedence. For example, a CVE meeting a P1 condition remains P1 even if it also meets a lower-tier condition.</p>
-            <p className="italic">CVSS indicates vulnerability severity; EPSS indicates exploitation likelihood. Priority uses these signals for remediation prioritization.</p>
-          </div>
-        </div>
-      </details>
 
 
       {/* 5. Final Recommendation */}
