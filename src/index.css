@@ -1086,6 +1086,7 @@ html.light-theme span[data-priority="P5"] {
    ============================================ */
 html.light-theme span.bg-emerald-500.text-black {
   color: #ffffff !important;
+  background-color: #059669 !important;
 }
 html.light-theme .simple-passed-section {
   background-color: #f0fdf4 !important; /* bg-emerald-50 */
@@ -1193,3 +1194,27 @@ html.light-theme .finding-distribution-container .text-emerald-500 { color: #059
 html.light-theme .finding-distribution-container .bg-emerald-500 { background-color: #059669 !important; }
 html.light-theme .finding-distribution-container .text-blue-500 { color: #2563eb !important; }
 html.light-theme .finding-distribution-container .bg-blue-500 { background-color: #2563eb !important; }
+
+
+/* 13. TECHNICAL DESCRIPTION & RISK PANELS */
+html.light-theme .technical-description-panel {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+html.light-theme .technical-description-panel .text-slate-400 {
+  color: #475569 !important;
+}
+html.light-theme .technical-description-panel .technical-description {
+  color: #334155 !important;
+}
+
+html.light-theme .technical-risk-panel {
+  background-color: #fff7ed !important;
+  border-color: #fed7aa !important;
+}
+html.light-theme .technical-risk-panel .text-rose-500 {
+  color: #e11d48 !important;
+}
+html.light-theme .technical-risk-panel .technical-risk-text {
+  color: #9f1239 !important;
+}
