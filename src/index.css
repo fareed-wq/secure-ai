@@ -1086,6 +1086,7 @@ html.light-theme span[data-priority="P5"] {
    ============================================ */
 html.light-theme span.bg-emerald-500.text-black {
   color: #ffffff !important;
+  background-color: #059669 !important;
 }
 html.light-theme .simple-passed-section {
   background-color: #f0fdf4 !important; /* bg-emerald-50 */
