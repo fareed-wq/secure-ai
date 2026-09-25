@@ -174,13 +174,13 @@ const TechnicalReport = ({ reportData }) => {
                                       <div className="p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                                         <div className="lg:col-span-2 space-y-6">
-                                          <div>
-                                            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Technical Description</div>
+                                            <div className="technical-description-panel bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+                                              <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Technical Description</div>
                                             <p className="technical-description text-slate-300 leading-relaxed text-sm">{finding.description}</p>
                                           </div>
 
                                           {finding.impact && finding.impact !== "N/A" && (
-                                            <div>
+                                            <div className="technical-risk-panel bg-slate-900/60 border border-slate-800 rounded-xl p-4">
                                               <div className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-2">
                                                 <span>⚠️</span> Security Impact & Risk
                                               </div>
