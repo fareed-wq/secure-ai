@@ -420,21 +420,21 @@ const Dashboard = () => {
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col">
               <h2 className="text-lg font-semibold text-slate-50 mb-6">Findings Overview</h2>
               <div className="space-y-4 flex-1 justify-center flex flex-col">
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center" data-dashboard-card="P1">
                   <span className="text-sm font-medium text-fuchsia-400 flex items-center gap-2"><AlertCircle size={16}/> Critical</span>
-                  <span className="text-lg font-bold text-slate-300">{totalCritical}</span>
+                  <span className="text-lg font-bold text-slate-300" data-priority="P1">{totalCritical}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center" data-dashboard-card="P2">
                   <span className="text-sm font-medium text-red-500 flex items-center gap-2"><AlertTriangle size={16}/> High</span>
-                  <span className="text-lg font-bold text-slate-300">{totalHigh}</span>
+                  <span className="text-lg font-bold text-slate-300" data-priority="P2">{totalHigh}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center" data-dashboard-card="P3">
                   <span className="text-sm font-medium text-amber-500 flex items-center gap-2"><AlertTriangle size={16}/> Medium</span>
-                  <span className="text-lg font-bold text-slate-300">{totalMedium}</span>
+                  <span className="text-lg font-bold text-slate-300" data-priority="P3">{totalMedium}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center" data-dashboard-card="P4">
                   <span className="text-sm font-medium text-yellow-400 flex items-center gap-2"><Info size={16}/> Low</span>
-                  <span className="text-lg font-bold text-slate-300">{totalLow}</span>
+                  <span className="text-lg font-bold text-slate-300" data-priority="P4">{totalLow}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium text-blue-500 flex items-center gap-2"><CheckCircle2 size={16}/> Info</span>
@@ -459,7 +459,7 @@ const Dashboard = () => {
                     </div>
                     <div className="flex flex-wrap sm:flex-nowrap items-center gap-4">
                       <div className="flex items-center gap-3">
-                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getPriorityBadgeClasses(calculateFindingPriority(finding))}`}>
+                        <span data-priority={calculateFindingPriority(finding)} className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${getPriorityBadgeClasses(calculateFindingPriority(finding))}`}>
                           {calculateFindingPriority(finding)}
                         </span>
                         <span className={`text-xs font-bold uppercase ${getSeverityColor(finding.severity)}`}>

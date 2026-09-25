@@ -1274,3 +1274,32 @@ html.light-theme .simple-health-section .bg-amber-500 { background-color: #f59e0
 html.light-theme .simple-health-section .bg-red-500 { background-color: #ef4444 !important; }
 html.light-theme .simple-health-section .bg-slate-800 { background-color: #e2e8f0 !important; }
 html.light-theme .simple-health-section .bg-slate-600\/40 { background-color: #cbd5e1 !important; }
+
+/* 15c. DASHBOARD PRIORITY CARDS (LIGHT THEME ONLY) */
+html.light-theme div[data-dashboard-card] {
+  padding: 0.5rem !important; /* p-2 */
+  border-radius: 0.5rem !important; /* rounded-lg */
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important; /* border-slate-200 */
+}
+
+html.light-theme div[data-dashboard-card] > span:first-child {
+  color: #334155 !important; /* text-slate-700 equivalent */
+}
+
+html.light-theme div[data-dashboard-card="P1"] svg { color: #be123c !important; } /* text-rose-700 */
+html.light-theme div[data-dashboard-card="P2"] svg { color: #c2410c !important; } /* text-orange-700 */
+html.light-theme div[data-dashboard-card="P3"] svg { color: #b45309 !important; } /* text-amber-700 */
+html.light-theme div[data-dashboard-card="P4"] svg { color: #0e7490 !important; } /* text-cyan-700 */
+
+/* Badge structural styles for Light Theme ONLY (inherits color from existing data-priority rules) */
+html.light-theme div[data-dashboard-card] > span[data-priority] {
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  padding: 0.125rem 0.5rem !important; /* px-2 py-0.5 */
+  border-radius: 0.25rem !important; /* rounded */
+  border-width: 1px !important; /* border */
+  border-style: solid !important;
+  line-height: 1 !important;
+}
