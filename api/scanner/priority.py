@@ -15,8 +15,9 @@ def calculate_finding_priority(finding: dict) -> str:
     if max_cvss >= 9.0 or epss_score >= 0.1:
         return 'P1'
 
-    # 2. Fall back to standard severity mapping for P2-P5
+    # 2. Fall back to standard severity mapping for P1-P5
     severity = finding.get('severity')
+    if severity == 'Critical': return 'P1'
     if severity == 'High': return 'P2'
     if severity == 'Medium': return 'P3'
     if severity == 'Low': return 'P4'
