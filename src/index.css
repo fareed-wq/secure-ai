@@ -1055,10 +1055,25 @@ html.light-theme .whatsapp-bubble p {
 /* ============================================
    LIGHT THEME: PRIORITY BADGES
    ============================================ */
+html.light-theme span[data-priority="P1"] {
+  color: #be123c !important;
+  background-color: #ffe4e6 !important;
+  border-color: #fda4af !important;
+}
+html.light-theme span[data-priority="P2"] {
+  color: #c2410c !important;
+  background-color: #ffedd5 !important;
+  border-color: #fdba74 !important;
+}
 html.light-theme span[data-priority="P3"] {
   color: #b45309 !important; /* text-amber-700 */
   background-color: #fef9c3 !important; /* bg-yellow-100 */
   border-color: #fde047 !important; /* border-yellow-300 */
+}
+html.light-theme span[data-priority="P4"] {
+  color: #0e7490 !important;
+  background-color: #cffafe !important;
+  border-color: #67e8f9 !important;
 }
 html.light-theme span[data-priority="P5"] {
   color: #6d28d9 !important; /* text-violet-700 */
@@ -1069,6 +1084,9 @@ html.light-theme span[data-priority="P5"] {
 /* ============================================
    LIGHT THEME: PASSED CHECKS
    ============================================ */
+html.light-theme span.bg-emerald-500.text-black {
+  color: #ffffff !important;
+}
 html.light-theme .simple-passed-section {
   background-color: #f0fdf4 !important; /* bg-emerald-50 */
   border-color: #bbf7d0 !important; /* border-emerald-200 */
