@@ -436,9 +436,9 @@ const Dashboard = () => {
                   <span className="text-sm font-medium text-yellow-400 flex items-center gap-2"><Info size={16}/> Low</span>
                   <span className="text-lg font-bold text-slate-300" data-priority="P4">{totalLow}</span>
                 </div>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center" data-dashboard-card="P5">
                   <span className="text-sm font-medium text-blue-500 flex items-center gap-2"><CheckCircle2 size={16}/> Info</span>
-                  <span className="text-lg font-bold text-slate-300">{totalInfo}</span>
+                  <span className="text-lg font-bold text-slate-300" data-priority="P5">{totalInfo}</span>
                 </div>
               </div>
             </div>
