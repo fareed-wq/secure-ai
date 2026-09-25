@@ -134,7 +134,7 @@ const SimpleReport = ({ reportData }) => {
 
           {/* Finding Distribution - real report data only */}
           {totalFindings > 0 && (
-            <div className="mt-6 pt-6 border-t border-slate-800">
+            <div className="finding-distribution-container mt-6 pt-6 border-t border-slate-800">
               <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                 <Activity className="w-4 h-4" aria-hidden="true" /> Finding Distribution
               </h3>
