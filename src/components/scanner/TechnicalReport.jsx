@@ -578,7 +578,7 @@ const TechnicalReport = ({ reportData }) => {
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Assessment Coverage Card */}
-            <div className="assessment-coverage-container report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
+            <div className="assessment-coverage-container finding-distribution-container report-section bg-slate-950/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-xl shadow-lg">
               <div className="flex items-center gap-3 mb-4">
                 <span className="font-mono text-xs font-bold text-cyan-400 tracking-wider">&gt;_ ASSESSMENT_COVERAGE</span>
               </div>
