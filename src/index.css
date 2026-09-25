@@ -1267,3 +1267,10 @@ html.light-theme .simple-important-finding .border-amber-500\/30 {
 html.light-theme .simple-important-finding .bg-amber-400 {
   background-color: #f59e0b !important;
 }
+
+/* 15b. SIMPLE HEALTH SECTION PROGRESS BARS */
+html.light-theme .simple-health-section .bg-emerald-500 { background-color: #10b981 !important; }
+html.light-theme .simple-health-section .bg-amber-500 { background-color: #f59e0b !important; }
+html.light-theme .simple-health-section .bg-red-500 { background-color: #ef4444 !important; }
+html.light-theme .simple-health-section .bg-slate-800 { background-color: #e2e8f0 !important; }
+html.light-theme .simple-health-section .bg-slate-600\/40 { background-color: #cbd5e1 !important; }
