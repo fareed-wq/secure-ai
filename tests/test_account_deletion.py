@@ -44,3 +44,63 @@ class TestAccountDeletion(unittest.TestCase):
         # Without override, it should fail
         response = self.client.delete("/api/account")
         self.assertEqual(response.status_code, 401)
+
+    @patch("api.index.requests.delete")
+    @patch("api.index.os.environ.get")
+    def test_delete_account_upstream_400(self, mock_env, mock_delete):
+        def mock_env_get(key, default=""):
+            if key == "SUPABASE_URL": return "https://mock.supabase.co"
+            if key == "SUPABASE_SECRET_KEY": return "mock-secret"
+            return default
+        mock_env.side_effect = mock_env_get
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 400
+        mock_resp.text = '{"error": "foreign key violation"}'
+        mock_delete.return_value = mock_resp
+
+        app.dependency_overrides[require_current_user] = lambda: {"sub": "user123"}
+
+        response = self.client.delete("/api/account")
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json()["detail"], "Failed to delete account.")
+        app.dependency_overrides.clear()
+
+    @patch("api.index.requests.delete")
+    @patch("api.index.os.environ.get")
+    def test_delete_account_upstream_500(self, mock_env, mock_delete):
+        def mock_env_get(key, default=""):
+            if key == "SUPABASE_URL": return "https://mock.supabase.co"
+            if key == "SUPABASE_SECRET_KEY": return "mock-secret"
+            return default
+        mock_env.side_effect = mock_env_get
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 500
+        mock_resp.text = "Internal Server Error"
+        mock_delete.return_value = mock_resp
+
+        app.dependency_overrides[require_current_user] = lambda: {"sub": "user123"}
+
+        response = self.client.delete("/api/account")
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json()["detail"], "Failed to delete account.")
+        app.dependency_overrides.clear()
+
+    @patch("api.index.requests.delete")
+    @patch("api.index.os.environ.get")
+    def test_delete_account_request_exception(self, mock_env, mock_delete):
+        def mock_env_get(key, default=""):
+            if key == "SUPABASE_URL": return "https://mock.supabase.co"
+            if key == "SUPABASE_SECRET_KEY": return "mock-secret"
+            return default
+        mock_env.side_effect = mock_env_get
+
+        mock_delete.side_effect = requests.RequestException("Timeout")
+
+        app.dependency_overrides[require_current_user] = lambda: {"sub": "user123"}
+
+        response = self.client.delete("/api/account")
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json()["detail"], "Failed to delete account.")
+        app.dependency_overrides.clear()
