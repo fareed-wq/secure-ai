@@ -598,11 +598,16 @@ def delete_account(user: dict = Depends(require_current_user)):
 
     # Delete user via Supabase Admin API
     # Since ON DELETE CASCADE is configured, this will automatically wipe scans and schedules
-    resp = requests.delete(f"{supabase_url}/auth/v1/admin/users/{user_id}", headers=headers, timeout=10)
+    try:
+        resp = requests.delete(f"{supabase_url}/auth/v1/admin/users/{user_id}", headers=headers, timeout=10)
+    except requests.RequestException as e:
+        logger.error(f"Network error deleting user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete account.")
 
     if resp.status_code not in (200, 204):
         # Allow 404 if the user is already gone
         if resp.status_code != 404:
+            logger.error(f"Supabase Admin API deletion failed for user {user_id}: HTTP {resp.status_code} - {resp.text}")
             raise HTTPException(status_code=500, detail="Failed to delete account.")
 
     return {"status": "success", "message": "Account and associated data deleted"}
