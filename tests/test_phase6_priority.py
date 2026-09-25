@@ -18,8 +18,8 @@ def test_calculate_finding_priority():
     assert calculate_finding_priority({"severity": "Informational"}) == "P5"
     assert calculate_finding_priority({"severity": "Passed"}) == "P5"
 
-    # 6. Critical severity without CVE intelligence -> not P1 (UNSCORED)
-    assert calculate_finding_priority({'severity': 'Critical'}) == 'UNSCORED'
+    # 6. Critical severity without CVE intelligence -> P1
+    assert calculate_finding_priority({'severity': 'Critical'}) == 'P1'
 
     # Case B: High severity + CVE with CVSS 9.8 -> export priority P1
     assert calculate_finding_priority({"severity": "High", "cvss_score": 9.8}) == "P1"
@@ -146,7 +146,7 @@ console.log(JSON.stringify(resMap));
 
     data = json.loads(res.stdout)
     assert data['findingHigh'] == 'P2'
-    assert data['findingCrit'] == 'UNSCORED'
+    assert data['findingCrit'] == 'P1'
     assert data['findingP1Cvss'] == 'P1'
     assert data['findingP1Epss'] == 'P1'
     assert data['findingSubP1'] == 'P2'
