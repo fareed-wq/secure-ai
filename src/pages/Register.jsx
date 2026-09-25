@@ -105,24 +105,26 @@ const Register = () => {
     setError(null);
 
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          phone: e164Phone,
-          fullName: formData.fullName,
-          company: formData.company,
-          turnstileToken: captchaToken
-        })
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          captchaToken,
+          data: {
+            full_name: formData.fullName,
+            company: formData.company,
+            phone: e164Phone
+          }
+        }
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.detail || 'Registration failed');
+      if (error) {
+        throw error;
       }
+
+      // Auto-triggering resend is NOT necessary here if Supabase natively sends the email upon signUp.
+      // Supabase natively handles the first confirmation email, so we just show the confirmation screen.
+
 
       // Success, now show confirmation screen
       // We must get a fresh CAPTCHA token because the backend consumed the current one
