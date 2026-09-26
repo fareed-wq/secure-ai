@@ -3,7 +3,7 @@
  * Client-side export functions for JSON and CSV formats
  */
 
-import { calculateFindingPriority } from '../utils/priority';
+import { calculateFindingPriority, calculateCvePriority } from '../utils/priority';
 
 /**
  * Sanitize filename by removing unsafe characters
@@ -29,6 +29,91 @@ const escapeCSV = (value) => {
         return `"${escaped}"`;
     }
     return escaped;
+};
+
+/**
+ * Generate CSV content for Vulnerability Intelligence
+ */
+const generateVulnerabilitiesCSV = (technologyIdentities) => {
+    // Header row
+    const headers = [
+        'Technology Name',
+        'Technology Version',
+        'Category',
+        'CPE',
+        'CPE Authority',
+        'Vulnerability State',
+        'CVE ID',
+        'CVE Severity',
+        'CVSS Score',
+        'CVSS Severity',
+        'CVSS Vector',
+        'CWE',
+        'EPSS Probability',
+        'EPSS Percentile',
+        'KEV Details',
+        'SSVC Decision',
+        'CVE Priority',
+        'Match Confidence'
+    ];
+
+    const rows = [];
+    
+    technologyIdentities.forEach(tech => {
+        if (!tech) return;
+        const cves = tech.cves && tech.cves.length > 0 ? tech.cves : [null];
+        
+        cves.forEach(cve => {
+            let epssProb = '';
+            let epssPerc = '';
+            
+            if (cve) {
+                if (cve.epss_info) {
+                    if (cve.epss_info.status === 'AVAILABLE' && typeof cve.epss_info.epss === 'number') {
+                        epssProb = (cve.epss_info.epss * 100).toFixed(2) + '%';
+                        if (typeof cve.epss_info.percentile === 'number') {
+                            epssPerc = (cve.epss_info.percentile * 100).toFixed(0) + 'th';
+                        }
+                    } else if (cve.epss_info.status === 'NOT_FOUND') {
+                        epssProb = 'Not Found';
+                    } else if (cve.epss_info.status === 'UNAVAILABLE') {
+                        epssProb = 'Unavailable';
+                    }
+                } else if (cve.epss && typeof cve.epss.score === 'number') {
+                    epssProb = (cve.epss.score * 100).toFixed(2) + '%';
+                }
+            }
+
+            const cweStr = cve && Array.isArray(cve.cwes) ? cve.cwes.join(' | ') : '';
+            
+            rows.push([
+                escapeCSV(tech.name || ''),
+                escapeCSV(tech.version || ''),
+                escapeCSV(tech.category || ''),
+                escapeCSV(tech.cpe_candidate || tech.cpe || ''),
+                escapeCSV(tech.cpe_authority || ''),
+                escapeCSV(tech.vulnerability_state || ''),
+                escapeCSV(cve ? cve.id || '' : ''),
+                escapeCSV(cve ? cve.severity || '' : ''),
+                escapeCSV(cve ? (typeof cve.cvss_score === 'number' ? cve.cvss_score.toString() : (cve.cvss_score || '')) : ''),
+                escapeCSV(cve ? cve.cvss_severity || '' : ''),
+                escapeCSV(cve ? cve.cvss_vector || '' : ''),
+                escapeCSV(cweStr),
+                escapeCSV(epssProb),
+                escapeCSV(epssPerc),
+                escapeCSV(cve && cve.kev ? [cve.kev.name, cve.kev.added ? `Added: ${cve.kev.added}` : null, cve.kev.action ? `Action: ${cve.kev.action}` : null, cve.kev.due ? `Due: ${cve.kev.due}` : null].filter(Boolean).join(' | ') : ''),
+                escapeCSV(cve && cve.ssvc && cve.ssvc.options ? [
+                    cve.ssvc.options.exploitation ? `exploitation: ${cve.ssvc.options.exploitation}` : null,
+                    cve.ssvc.options.automatable ? `automatable: ${cve.ssvc.options.automatable}` : null,
+                    cve.ssvc.options.technicalImpact ? `technicalImpact: ${cve.ssvc.options.technicalImpact}` : null
+                ].filter(Boolean).join(' | ') : ''),
+                escapeCSV(cve ? calculateCvePriority(tech, cve) : ''),
+                escapeCSV(cve ? cve.match_confidence || '' : '')
+            ].join(','));
+        });
+    });
+    
+    return [headers.join(',')].concat(rows).join('\n');
 };
 
 /**
@@ -141,7 +226,8 @@ const generateJSON = (findings, reportData) => {
             cvss_severity: f.cvss_severity,
             domain: f.domain,
             instance_key: f.instance_key
-        }))
+        })),
+        technology_identities: reportData?.technology_identities || []
     }, null, 2);
 };
 
@@ -189,3 +275,19 @@ export const exportCSV = (reportData) => {
 
     downloadFile(content, 'text/csv;charset=utf-8', filename);
 };
+
+/**
+ * Export vulnerabilities as CSV
+ */
+export const exportVulnerabilitiesCSV = (reportData) => {
+    const techIdentities = reportData?.technology_identities || [];
+    const url = reportData?.url || 'scan';
+    const timestamp = reportData?.timestamp || new Date().toISOString();
+    const dateStr = new Date(timestamp).toISOString().split('T')[0];
+
+    const filename = `security_vulnerabilities_${sanitizeFilename(url)}_${dateStr}.csv`;
+    const content = generateVulnerabilitiesCSV(techIdentities);
+
+    downloadFile(content, 'text/csv;charset=utf-8', filename);
+};
+

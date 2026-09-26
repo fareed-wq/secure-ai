@@ -165,7 +165,7 @@ def generate_pdf_report(data: dict) -> str:
                     <li><strong>P2:</strong> CVSS &ge; 7.0 OR EPSS &ge; 1%</li>
                     <li><strong>P3:</strong> CVSS &ge; 4.0</li>
                     <li><strong>P4:</strong> CVSS &gt; 0</li>
-                    <li><strong>P5:</strong> CVSS = 0, or CVSS unavailable with EPSS &lt; 1%</li>
+                    <li><strong>P5:</strong> CVSS = 0</li>
                 </ul>
             </div>
         </div>

@@ -1,6 +1,6 @@
 import { calculateFindingPriority, calculateCvePriority, getPriorityBadgeClasses } from '../../utils/priority';
 import React, { useState, useMemo } from 'react';
-import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck, Search, Filter } from 'lucide-react';
+import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck, Search, Filter, Tag } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
 import { WhatWasTested } from './WhatWasTested';
 import { getCapabilityLabel } from '../../lib/assessmentReporting';
@@ -767,7 +767,7 @@ const TechnicalReport = ({ reportData }) => {
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800" data-priority="P4">P4</span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS = 0 <strong className="text-slate-400 mx-1">OR</strong> (No CVSS + EPSS &lt; 1%)</span>
+                  <span className="text-xs font-medium text-slate-400">CVSS = 0</span>
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800" data-priority="P5">P5</span>
                 </div>
               </div>
@@ -944,8 +944,17 @@ const TechnicalReport = ({ reportData }) => {
                                           </span>
                                         </div>
 
-                                        {(cve.kev || cve.ssvc) && (
+                                        {(cve.kev || cve.ssvc || cve.epss_info || cve.epss || (cve.cwes && cve.cwes.length > 0)) && (
                                           <div className="flex flex-col gap-1.5 mb-3">
+                                            {cve.cwes && cve.cwes.length > 0 && (
+                                              <div className="flex items-center gap-2 text-xs bg-cyan-950/20 border border-cyan-900/20 text-cyan-300/80 p-2 rounded">
+                                                <Tag className="w-4 h-4 text-cyan-500/80" />
+                                                <span>
+                                                  <strong className="text-cyan-400">CWE</strong>
+                                                  {` - ${cve.cwes.join(', ')}`}
+                                                </span>
+                                              </div>
+                                            )}
                                             {cve.kev && (
                                               <div className="flex items-center gap-2 text-xs bg-red-950/30 border border-red-900/30 text-red-300/80 p-2 rounded">
                                                 <ShieldAlert className="w-4 h-4 text-red-500" />
@@ -972,6 +981,30 @@ const TechnicalReport = ({ reportData }) => {
                                                 </span>
                                               </div>
                                             )}
+                                            {cve.epss_info ? (
+                                              <div className="flex items-center gap-2 text-xs bg-amber-950/20 border border-amber-900/20 text-amber-300/80 p-2 rounded">
+                                                <Activity className="w-4 h-4 text-amber-500/80" />
+                                                <span>
+                                                  <strong className="text-amber-400">FIRST EPSS</strong>
+                                                  {cve.epss_info.status === 'AVAILABLE' && typeof cve.epss_info.epss === 'number' && (
+                                                    <>
+                                                      {` - Probability: ${(cve.epss_info.epss * 100).toFixed(2)}%`}
+                                                      {cve.epss_info.percentile && ` (Percentile: ${(cve.epss_info.percentile * 100).toFixed(0)}th)`}
+                                                    </>
+                                                  )}
+                                                  {cve.epss_info.status === 'NOT_FOUND' && ` - Not Found`}
+                                                  {cve.epss_info.status === 'UNAVAILABLE' && ` - Unavailable`}
+                                                </span>
+                                              </div>
+                                            ) : (cve.epss && typeof cve.epss.score === 'number') ? (
+                                              <div className="flex items-center gap-2 text-xs bg-amber-950/20 border border-amber-900/20 text-amber-300/80 p-2 rounded">
+                                                <Activity className="w-4 h-4 text-amber-500/80" />
+                                                <span>
+                                                  <strong className="text-amber-400">FIRST EPSS</strong>
+                                                  {` - Probability: ${(cve.epss.score * 100).toFixed(2)}%`}
+                                                </span>
+                                              </div>
+                                            ) : null}
                                           </div>
                                         )}
 

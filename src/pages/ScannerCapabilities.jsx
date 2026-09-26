@@ -13,8 +13,8 @@ const ScannerCapabilities = () => {
     });
   }, []);
   useSEO({
-    title: 'Website Security Scanner Capabilities | URLScanOnline',
-    description: 'Compare URLScanOnline Basic and Advanced website security scans, including security checks, scan history, comparison tools and upcoming scheduled scans.',
+    title: 'Website Security Scanner Capabilities | URLScannerOnline',
+    description: 'Compare URLScannerOnline Basic and Advanced website security scans, including security checks, scan history, comparison tools and automated scheduled scans.',
     path: '/services/scanner-capabilities'
   });
 
@@ -41,7 +41,7 @@ const ScannerCapabilities = () => {
               may be appropriate.
             </p>
             <p className="mt-4 text-slate-400 max-w-3xl leading-relaxed">
-              URLScanOnline is designed as a passive-first, low-impact security scanner.
+              URLScannerOnline is designed as a passive-first, low-impact security scanner.
               Basic scans focus on passive observations, while Advanced scans perform
               additional bounded, non-destructive checks. The scanner does not exploit
               vulnerabilities, brute-force credentials, or perform destructive testing.
@@ -182,21 +182,24 @@ const ScannerCapabilities = () => {
             </div>
 
             {/* Scheduled Scans & Email Reports */}
-            <div className="bg-slate-950/30 border border-slate-800/50 border-dashed rounded-xl p-6 relative flex flex-col">
-              <div className="absolute -top-3 -right-3 bg-purple-500 text-white text-[10px] font-bold uppercase tracking-wider py-1 px-3 rounded-full shadow-lg">
-                Coming Soon
-              </div>
-              <div className="flex items-center gap-3 mb-4 opacity-70">
-                <div className="p-2 bg-slate-800 rounded-lg text-slate-400">
+            <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-6 hover:border-indigo-500/50 transition-colors flex flex-col">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
                   <CalendarClock size={20} />
                 </div>
                 <h3 className="text-lg font-bold text-slate-50">Scheduled Scans & Email Reports</h3>
               </div>
-              <p className="text-slate-500 text-sm leading-relaxed flex-1 opacity-80">
-                Automated scheduled security checks are coming soon. Schedule recurring scans
-                and receive security reports by email, making it easier to keep track of
-                configuration changes without manually starting every scan.
+              <p className="text-slate-400 text-sm leading-relaxed flex-1">
+                Schedule automated recurring security scans for your authorized assets.
+                Receive comprehensive security reports directly by email, making it easy to
+                monitor configuration drift and stay informed about your security posture.
               </p>
+              <div className="mt-6 pt-4 border-t border-slate-800 flex items-center text-xs font-mono text-slate-500 uppercase">
+                Find it in:
+                <span className="ml-2 text-indigo-400 flex items-center">
+                  Dashboard <ChevronRight size={12} className="mx-1" /> Schedules
+                </span>
+              </div>
             </div>
           </div>
 
@@ -204,7 +207,7 @@ const ScannerCapabilities = () => {
           <div className="mt-8 pt-8 border-t border-slate-800/80">
             <h2 className="text-2xl font-bold text-slate-50 mb-4">Need Deeper Security Testing?</h2>
             <p className="text-slate-400 mb-4">
-              URLScanOnline is designed for passive-first and low-impact security
+              URLScannerOnline is designed for passive-first and low-impact security
               assessment. Automated scanning is useful for identifying exposed security
               signals, configuration weaknesses, and areas that deserve further
               investigation, but it does not replace a complete manual security assessment.

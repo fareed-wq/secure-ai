@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Globe, Download, FileJson, FileSpreadsheet, ChevronDown } from 'lucide-react';
-import { exportJSON, exportCSV } from '../../lib/exportUtils';
+import { exportJSON, exportCSV, exportVulnerabilitiesCSV } from '../../lib/exportUtils';
 
 const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExportPdf, reportData }) => {
   const findings = reportData?.findings || [];
@@ -95,7 +95,15 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
                 className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-50 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset"
               >
                 <FileSpreadsheet className="w-4 h-4" />
-                Export CSV
+                Findings CSV
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); exportVulnerabilitiesCSV(reportData); setShowExportMenu(false); }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-50 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                Vulnerabilities CSV
               </button>
             </div>
           )}
