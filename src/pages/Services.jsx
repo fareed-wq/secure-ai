@@ -78,7 +78,7 @@ const Services = () => {
                 <Link
                   to={cap.link}
                   className="focus:outline-none after:absolute after:inset-0"
-                  aria-label={Explore }
+                  aria-label={`Explore ${cap.title}`}
                 >
                   Explore <ArrowRight className="inline-block ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
