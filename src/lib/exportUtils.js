@@ -60,6 +60,7 @@ const generateVulnerabilitiesCSV = (technologyIdentities) => {
     const rows = [];
     
     technologyIdentities.forEach(tech => {
+        if (!tech) return;
         const cves = tech.cves && tech.cves.length > 0 ? tech.cves : [null];
         
         cves.forEach(cve => {
@@ -70,7 +71,7 @@ const generateVulnerabilitiesCSV = (technologyIdentities) => {
                 if (cve.epss_info) {
                     if (cve.epss_info.status === 'AVAILABLE' && typeof cve.epss_info.epss === 'number') {
                         epssProb = (cve.epss_info.epss * 100).toFixed(2) + '%';
-                        if (cve.epss_info.percentile) {
+                        if (typeof cve.epss_info.percentile === 'number') {
                             epssPerc = (cve.epss_info.percentile * 100).toFixed(0) + 'th';
                         }
                     } else if (cve.epss_info.status === 'NOT_FOUND') {
