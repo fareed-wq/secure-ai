@@ -141,7 +141,8 @@ const generateJSON = (findings, reportData) => {
             cvss_severity: f.cvss_severity,
             domain: f.domain,
             instance_key: f.instance_key
-        }))
+        })),
+        technology_identities: reportData?.technology_identities || []
     }, null, 2);
 };
 
