@@ -67,6 +67,9 @@ def calculate_cve_priority(identity: dict, cve: dict) -> str:
 
     if max_cvss >= 9.0 or epss_score >= 0.1: return 'P1'
     if max_cvss >= 7.0 or epss_score >= 0.01: return 'P2'
+
+    if max_cvss < 0: return 'UNSCORED'
+
     if max_cvss >= 4.0: return 'P3'
     if max_cvss > 0.0: return 'P4'
     return 'P5'

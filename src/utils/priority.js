@@ -58,6 +58,9 @@ export function calculateCvePriority(identity, cve) {
 
     if (maxCvss >= 9.0 || epssScore >= 0.1) return 'P1';
     if (maxCvss >= 7.0 || epssScore >= 0.01) return 'P2';
+
+    if (maxCvss < 0) return 'UNSCORED';
+
     if (maxCvss >= 4.0) return 'P3';
     if (maxCvss > 0.0) return 'P4';
     return 'P5';

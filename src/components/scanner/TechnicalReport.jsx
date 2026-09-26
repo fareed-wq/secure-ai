@@ -767,7 +767,7 @@ const TechnicalReport = ({ reportData }) => {
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-cyan-400 bg-cyan-950/30 border-cyan-800" data-priority="P4">P4</span>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
-                  <span className="text-xs font-medium text-slate-400">CVSS = 0 <strong className="text-slate-400 mx-1">OR</strong> (No CVSS + EPSS &lt; 1%)</span>
+                  <span className="text-xs font-medium text-slate-400">CVSS = 0</span>
                   <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded border text-violet-400 bg-violet-950/30 border-violet-800" data-priority="P5">P5</span>
                 </div>
               </div>

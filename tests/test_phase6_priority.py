@@ -43,10 +43,40 @@ def test_calculate_cve_priority_p1():
     assert calculate_cve_priority(ident, {"epss_info": {"status": "AVAILABLE", "epss": 0.1}}) == "P1"
 
 def test_calculate_cve_priority_missing_cvss():
-    # 9. missing CVSS -> deterministic priority (no fabricated priority input)
     ident = {"vulnerability_state": "MATCHED"}
+
+    # a. MATCHED + CVSS unavailable + EPSS unavailable -> UNSCORED
     assert calculate_cve_priority(ident, {"cvss_score": None}) == "UNSCORED"
     assert calculate_cve_priority(ident, {}) == "UNSCORED"
+
+    # b. MATCHED + CVSS unavailable + EPSS 0.005 -> UNSCORED
+    assert calculate_cve_priority(ident, {"epss_info": {"status": "AVAILABLE", "epss": 0.005}}) == "UNSCORED"
+
+    # c. MATCHED + CVSS unavailable + EPSS just below P2 threshold -> UNSCORED
+    assert calculate_cve_priority(ident, {"epss_info": {"status": "AVAILABLE", "epss": 0.009}}) == "UNSCORED"
+
+    # d. MATCHED + CVSS unavailable + EPSS exactly at P2 threshold -> P2
+    assert calculate_cve_priority(ident, {"epss_info": {"status": "AVAILABLE", "epss": 0.01}}) == "P2"
+
+    # e. MATCHED + CVSS unavailable + EPSS at P1 threshold -> P1
+    assert calculate_cve_priority(ident, {"epss_info": {"status": "AVAILABLE", "epss": 0.1}}) == "P1"
+
+    # f. MATCHED + CVSS 0 -> existing P5 behavior
+    assert calculate_cve_priority(ident, {"cvss_score": 0.0}) == "P5"
+    assert calculate_cve_priority(ident, {"cvss_score": 0.0, "epss_info": {"status": "AVAILABLE", "epss": 0.005}}) == "P5"
+
+    # g. MATCHED + CVSS > 0 and below P3 threshold -> existing P4 behavior
+    assert calculate_cve_priority(ident, {"cvss_score": 3.9}) == "P4"
+
+def test_calculate_cve_priority_states():
+    # h. NO_MATCH
+    assert calculate_cve_priority({"vulnerability_state": "NO_MATCH"}, {}) == "N/A"
+
+    # i. UNAVAILABLE
+    assert calculate_cve_priority({"vulnerability_state": "UNAVAILABLE"}, {}) == "UNSCORED"
+
+    # j. NOT_EVALUATED
+    assert calculate_cve_priority({"vulnerability_state": "NOT_EVALUATED"}, {}) == "UNSCORED"
 
 def test_calculate_cve_priority_cvss_no_epss():
     # 8. missing EPSS -> deterministic priority
