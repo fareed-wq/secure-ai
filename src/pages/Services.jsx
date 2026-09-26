@@ -1,49 +1,25 @@
 import React from 'react';
-import { Shield, Activity, ArrowRight, Target, History, CalendarClock, FileText } from 'lucide-react';
+import { Shield, Activity, ArrowRight } from 'lucide-react';
 import { useSEO } from '../hooks/useSEO';
 import { Link } from 'react-router-dom';
 
 const Services = () => {
   useSEO({
     title: 'Security Services | URLScannerOnline',
-    description: 'Explore URLScannerOnline automated scanning, vulnerability intelligence, monitoring, and advanced security audit services.',
+    description: 'Explore URLScannerOnline scanner capabilities and security audit and assessment services.',
     path: '/services'
   });
 
   const capabilities = [
     {
-      title: "Automated Security Scanning",
-      description: "Passive, low-impact website reconnaissance covering HTTP headers, CSP, cookies, and surface exposure.",
+      title: "Scanner Capabilities",
+      description: "Explore URLScannerOnline's Basic and Advanced security scans, compare their coverage, review scan history and comparison tools, and manage scheduled scans.",
       icon: Activity,
       link: "/services/scanner-capabilities"
     },
     {
-      title: "Vulnerability Intelligence",
-      description: "Deep CVE enrichment utilizing CVSS scores, EPSS probabilities, CISA KEV, and SSVC decision data.",
-      icon: Target,
-      link: "/services/scanner-capabilities"
-    },
-    {
-      title: "Scan History & Comparison",
-      description: "Maintain historical records of your security posture and compare scans side-by-side to track regressions.",
-      icon: History,
-      link: "/services/scanner-capabilities"
-    },
-    {
-      title: "Scheduled Monitoring",
-      description: "Automated recurring scans with executive summaries delivered directly to your email inbox.",
-      icon: CalendarClock,
-      link: "/services/scanner-capabilities"
-    },
-    {
-      title: "Reporting & Exports",
-      description: "Generate detailed PDF technical reports and export raw finding data via JSON and CSV formats.",
-      icon: FileText,
-      link: "/services/scanner-capabilities"
-    },
-    {
-      title: "Advanced Security Auditing",
-      description: "Manual, deeper penetration testing and security assessments for explicitly authorized targets.",
+      title: "Security Audits & Assessments",
+      description: "Explore our broader security assessment areas, including web, application, network, encryption, cookie, email, domain and configuration security.",
       icon: Shield,
       link: "/services/security-audits"
     }
@@ -56,11 +32,11 @@ const Services = () => {
           Security Services
         </h1>
         <p className="services-subtitle text-lg text-slate-400 max-w-3xl">
-          Explore URLScannerOnline's automated website security scanning, vulnerability tracking, and advanced manual assessment capabilities.
+          Choose between automated website security scanning and deeper security assessment services.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {capabilities.map((cap, i) => {
           const Icon = cap.icon;
           return (
@@ -78,7 +54,7 @@ const Services = () => {
                 <Link
                   to={cap.link}
                   className="focus:outline-none after:absolute after:inset-0"
-                  aria-label={`Explore ${cap.title}`}
+                  aria-label={ "Explore " + cap.title }
                 >
                   Explore <ArrowRight className="inline-block ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
