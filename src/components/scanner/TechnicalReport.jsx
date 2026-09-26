@@ -1,6 +1,6 @@
 import { calculateFindingPriority, calculateCvePriority, getPriorityBadgeClasses } from '../../utils/priority';
 import React, { useState, useMemo } from 'react';
-import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck, Search, Filter } from 'lucide-react';
+import { Terminal, Server, Cpu, Layers, Box, CheckCircle, Copy, Shield, ShieldAlert, ChevronDown, ChevronUp, XCircle, Globe, Activity, Lock, ShieldCheck, Search, Filter, Tag } from 'lucide-react';
 import { RemediationSnippetBox } from './RemediationSnippetBox';
 import { WhatWasTested } from './WhatWasTested';
 import { getCapabilityLabel } from '../../lib/assessmentReporting';
@@ -944,8 +944,17 @@ const TechnicalReport = ({ reportData }) => {
                                           </span>
                                         </div>
 
-                                        {(cve.kev || cve.ssvc || cve.epss_info || cve.epss) && (
+                                        {(cve.kev || cve.ssvc || cve.epss_info || cve.epss || (cve.cwes && cve.cwes.length > 0)) && (
                                           <div className="flex flex-col gap-1.5 mb-3">
+                                            {cve.cwes && cve.cwes.length > 0 && (
+                                              <div className="flex items-center gap-2 text-xs bg-cyan-950/20 border border-cyan-900/20 text-cyan-300/80 p-2 rounded">
+                                                <Tag className="w-4 h-4 text-cyan-500/80" />
+                                                <span>
+                                                  <strong className="text-cyan-400">CWE</strong>
+                                                  {` - ${cve.cwes.join(', ')}`}
+                                                </span>
+                                              </div>
+                                            )}
                                             {cve.kev && (
                                               <div className="flex items-center gap-2 text-xs bg-red-950/30 border border-red-900/30 text-red-300/80 p-2 rounded">
                                                 <ShieldAlert className="w-4 h-4 text-red-500" />
