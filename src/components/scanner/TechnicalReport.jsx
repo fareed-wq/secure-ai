@@ -944,7 +944,7 @@ const TechnicalReport = ({ reportData }) => {
                                           </span>
                                         </div>
 
-                                        {(cve.kev || cve.ssvc) && (
+                                        {(cve.kev || cve.ssvc || cve.epss_info || cve.epss) && (
                                           <div className="flex flex-col gap-1.5 mb-3">
                                             {cve.kev && (
                                               <div className="flex items-center gap-2 text-xs bg-red-950/30 border border-red-900/30 text-red-300/80 p-2 rounded">
@@ -972,6 +972,30 @@ const TechnicalReport = ({ reportData }) => {
                                                 </span>
                                               </div>
                                             )}
+                                            {cve.epss_info ? (
+                                              <div className="flex items-center gap-2 text-xs bg-amber-950/20 border border-amber-900/20 text-amber-300/80 p-2 rounded">
+                                                <Activity className="w-4 h-4 text-amber-500/80" />
+                                                <span>
+                                                  <strong className="text-amber-400">FIRST EPSS</strong>
+                                                  {cve.epss_info.status === 'AVAILABLE' && typeof cve.epss_info.epss === 'number' && (
+                                                    <>
+                                                      {` - Probability: ${(cve.epss_info.epss * 100).toFixed(2)}%`}
+                                                      {cve.epss_info.percentile && ` (Percentile: ${(cve.epss_info.percentile * 100).toFixed(0)}th)`}
+                                                    </>
+                                                  )}
+                                                  {cve.epss_info.status === 'NOT_FOUND' && ` - Not Found`}
+                                                  {cve.epss_info.status === 'UNAVAILABLE' && ` - Unavailable`}
+                                                </span>
+                                              </div>
+                                            ) : (cve.epss && typeof cve.epss.score === 'number') ? (
+                                              <div className="flex items-center gap-2 text-xs bg-amber-950/20 border border-amber-900/20 text-amber-300/80 p-2 rounded">
+                                                <Activity className="w-4 h-4 text-amber-500/80" />
+                                                <span>
+                                                  <strong className="text-amber-400">FIRST EPSS</strong>
+                                                  {` - Probability: ${(cve.epss.score * 100).toFixed(2)}%`}
+                                                </span>
+                                              </div>
+                                            ) : null}
                                           </div>
                                         )}
 
