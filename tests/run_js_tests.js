@@ -135,3 +135,17 @@ assertEq(csvK.includes('C4,,0,,,,,,,,P5,'), true, 'JS_VULN_PRIO_P5');
 const techCsv = [{ name: 'T', cves: [{ id: 'C1', severity: 'A,B"C' }] }];
 const csvStr = generateVulnerabilitiesCSV(techCsv);
 assertEq(csvStr.includes('"A,B""C"'), true, 'JS_VULN_CSV_ESCAPE');
+
+
+// I2. KEV / SSVC Escaping and Filtering
+const techKevEscape = [{ name: 'T', cves: [
+  {
+    id: 'C1',
+    kev: { name: 'Vuln, with comma', action: 'Action with "quotes"', due: 'Due\nnewline' },
+    ssvc: { options: { exploitation: 'active, yes', automatable: 'no"quote"', technicalImpact: 'total\nimpact', ignoredOption: 'ignored' } }
+  }
+]}];
+const csvI2 = generateVulnerabilitiesCSV(techKevEscape);
+assertEq(csvI2.includes('"Vuln, with comma | Action: Action with ""quotes"" | Due: Due\nnewline"'), true, 'JS_VULN_KEV_ESCAPE');
+assertEq(csvI2.includes('"exploitation: active, yes | automatable: no""quote"" | technicalImpact: total\nimpact"'), true, 'JS_VULN_SSVC_ESCAPE');
+assertEq(csvI2.includes('ignoredOption'), false, 'JS_VULN_SSVC_IGNORES_UNSUPPORTED');

@@ -102,7 +102,11 @@ const generateVulnerabilitiesCSV = (technologyIdentities) => {
                 escapeCSV(epssProb),
                 escapeCSV(epssPerc),
                 escapeCSV(cve && cve.kev ? [cve.kev.name, cve.kev.added ? `Added: ${cve.kev.added}` : null, cve.kev.action ? `Action: ${cve.kev.action}` : null, cve.kev.due ? `Due: ${cve.kev.due}` : null].filter(Boolean).join(' | ') : ''),
-                escapeCSV(cve && cve.ssvc && cve.ssvc.options ? Object.entries(cve.ssvc.options).map(([k, v]) => `${k}: ${v}`).join(' | ') : ''),
+                escapeCSV(cve && cve.ssvc && cve.ssvc.options ? [
+                    cve.ssvc.options.exploitation ? `exploitation: ${cve.ssvc.options.exploitation}` : null,
+                    cve.ssvc.options.automatable ? `automatable: ${cve.ssvc.options.automatable}` : null,
+                    cve.ssvc.options.technicalImpact ? `technicalImpact: ${cve.ssvc.options.technicalImpact}` : null
+                ].filter(Boolean).join(' | ') : ''),
                 escapeCSV(cve ? calculateCvePriority(tech, cve) : ''),
                 escapeCSV(cve ? cve.match_confidence || '' : '')
             ].join(','));
