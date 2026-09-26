@@ -3,7 +3,7 @@
  * Client-side export functions for JSON and CSV formats
  */
 
-import { calculateFindingPriority } from '../utils/priority';
+import { calculateFindingPriority, calculateCvePriority } from '../utils/priority';
 
 /**
  * Sanitize filename by removing unsafe characters
@@ -29,6 +29,86 @@ const escapeCSV = (value) => {
         return `"${escaped}"`;
     }
     return escaped;
+};
+
+/**
+ * Generate CSV content for Vulnerability Intelligence
+ */
+const generateVulnerabilitiesCSV = (technologyIdentities) => {
+    // Header row
+    const headers = [
+        'Technology Name',
+        'Technology Version',
+        'Category',
+        'CPE',
+        'CPE Authority',
+        'Vulnerability State',
+        'CVE ID',
+        'CVE Severity',
+        'CVSS Score',
+        'CVSS Severity',
+        'CVSS Vector',
+        'CWE',
+        'EPSS Probability',
+        'EPSS Percentile',
+        'KEV Status',
+        'SSVC Status',
+        'CVE Priority',
+        'Match Confidence'
+    ];
+
+    const rows = [];
+    
+    technologyIdentities.forEach(tech => {
+        const cves = tech.cves && tech.cves.length > 0 ? tech.cves : [null];
+        
+        cves.forEach(cve => {
+            let epssProb = '';
+            let epssPerc = '';
+            
+            if (cve) {
+                if (cve.epss_info) {
+                    if (cve.epss_info.status === 'AVAILABLE' && typeof cve.epss_info.epss === 'number') {
+                        epssProb = (cve.epss_info.epss * 100).toFixed(2) + '%';
+                        if (cve.epss_info.percentile) {
+                            epssPerc = (cve.epss_info.percentile * 100).toFixed(0) + 'th';
+                        }
+                    } else if (cve.epss_info.status === 'NOT_FOUND') {
+                        epssProb = 'Not Found';
+                    } else if (cve.epss_info.status === 'UNAVAILABLE') {
+                        epssProb = 'Unavailable';
+                    }
+                } else if (cve.epss && typeof cve.epss.score === 'number') {
+                    epssProb = (cve.epss.score * 100).toFixed(2) + '%';
+                }
+            }
+
+            const cweStr = cve && Array.isArray(cve.cwes) ? cve.cwes.join(' | ') : '';
+            
+            rows.push([
+                escapeCSV(tech.name || ''),
+                escapeCSV(tech.version || ''),
+                escapeCSV(tech.category || ''),
+                escapeCSV(tech.cpe_candidate || tech.cpe || ''),
+                escapeCSV(tech.cpe_authority || ''),
+                escapeCSV(tech.vulnerability_state || ''),
+                escapeCSV(cve ? cve.id || '' : ''),
+                escapeCSV(cve ? cve.severity || '' : ''),
+                escapeCSV(cve ? (typeof cve.cvss_score === 'number' ? cve.cvss_score.toString() : (cve.cvss_score || '')) : ''),
+                escapeCSV(cve ? cve.cvss_severity || '' : ''),
+                escapeCSV(cve ? cve.cvss_vector || '' : ''),
+                escapeCSV(cweStr),
+                escapeCSV(epssProb),
+                escapeCSV(epssPerc),
+                escapeCSV(cve && cve.kev_info ? cve.kev_info.status || '' : ''),
+                escapeCSV(cve && cve.ssvc_info ? cve.ssvc_info.status || '' : ''),
+                escapeCSV(cve ? calculateCvePriority(tech, cve) : ''),
+                escapeCSV(cve ? cve.match_confidence || '' : '')
+            ].join(','));
+        });
+    });
+    
+    return [headers.join(',')].concat(rows).join('\n');
 };
 
 /**
@@ -190,3 +270,19 @@ export const exportCSV = (reportData) => {
 
     downloadFile(content, 'text/csv;charset=utf-8', filename);
 };
+
+/**
+ * Export vulnerabilities as CSV
+ */
+export const exportVulnerabilitiesCSV = (reportData) => {
+    const techIdentities = reportData?.technology_identities || [];
+    const url = reportData?.url || 'scan';
+    const timestamp = reportData?.timestamp || new Date().toISOString();
+    const dateStr = new Date(timestamp).toISOString().split('T')[0];
+
+    const filename = `security_vulnerabilities_${sanitizeFilename(url)}_${dateStr}.csv`;
+    const content = generateVulnerabilitiesCSV(techIdentities);
+
+    downloadFile(content, 'text/csv;charset=utf-8', filename);
+};
+
