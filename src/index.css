@@ -1445,3 +1445,30 @@ html.light-theme .technical-section .bg-slate-950.p-2.rounded.border.border-slat
     background-color: #f1f5f9 !important;
     border-color: #e2e8f0 !important;
 }
+
+  /* ============================================
+     SERVICES PAGE (LIGHT THEME)
+     ============================================ */
+  html.light-theme .services-card {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+  }
+  html.light-theme .services-card:hover {
+      background-color: #f8fafc !important;
+      border-color: #cbd5e1 !important;
+  }
+  html.light-theme .services-card h2 {
+      color: #0f172a !important;
+  }
+  html.light-theme .services-card p {
+      color: #475569 !important;
+  }
+  html.light-theme .services-title {
+      color: #0f172a !important;
+  }
+  html.light-theme .services-subtitle {
+      color: #475569 !important;
+  }
+  html.light-theme .services-card:focus-within {
+      --tw-ring-offset-color: #ffffff !important;
+  }

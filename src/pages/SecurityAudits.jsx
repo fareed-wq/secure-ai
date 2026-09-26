@@ -28,7 +28,7 @@ const getImpactStyles = (impact) => {
 
 const SecurityAudits = () => {
   useSEO({
-    title: 'Security Audits & Assessments | URLScanOnline',
+    title: 'Security Audits & Assessments | URLScannerOnline',
     description: 'Explore security audit and assessment areas covering websites, applications, networks, encryption, cookies, email, domains and security configurations.',
     path: '/services/security-audits'
   });
