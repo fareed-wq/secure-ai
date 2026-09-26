@@ -101,8 +101,8 @@ const generateVulnerabilitiesCSV = (technologyIdentities) => {
                 escapeCSV(cweStr),
                 escapeCSV(epssProb),
                 escapeCSV(epssPerc),
-                escapeCSV(cve && cve.kev_info ? cve.kev_info.status || '' : ''),
-                escapeCSV(cve && cve.ssvc_info ? cve.ssvc_info.status || '' : ''),
+                escapeCSV(cve && cve.kev ? 'IN_KEV' : ''),
+                escapeCSV(cve && cve.ssvc ? 'AVAILABLE' : ''),
                 escapeCSV(cve ? calculateCvePriority(tech, cve) : ''),
                 escapeCSV(cve ? cve.match_confidence || '' : '')
             ].join(','));

@@ -1386,16 +1386,16 @@ html.light-theme .technical-section .text-red-500 {
     color: #ef4444 !important;
 }
 
-html.light-theme .technical-section .bg-orange-950\/30.border-orange-900\/30 {
-    background-color: #fff7ed !important;
-    border-color: #ffedd5 !important;
+html.light-theme .technical-section .bg-indigo-950\/20.border-indigo-900\/20 {
+    background-color: #eef2ff !important;
+    border-color: #e0e7ff !important;
 }
-html.light-theme .technical-section .text-orange-300\/80,
-html.light-theme .technical-section .text-orange-400 {
-    color: #ea580c !important;
+html.light-theme .technical-section .text-indigo-300\/70,
+html.light-theme .technical-section .text-indigo-400 {
+    color: #4f46e5 !important;
 }
-html.light-theme .technical-section .text-orange-500 {
-    color: #f97316 !important;
+html.light-theme .technical-section .text-indigo-500\/80 {
+    color: #6366f1 !important;
 }
 
 html.light-theme .technical-section .bg-amber-950\/20.border-amber-900\/20 {
