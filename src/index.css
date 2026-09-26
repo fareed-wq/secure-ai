@@ -1304,3 +1304,144 @@ html.light-theme div[data-dashboard-card] > span[data-priority] {
   border-style: solid !important;
   line-height: 1 !important;
 }
+/* ============================================
+   TECHNICAL REPORT: VULNERABILITY INTELLIGENCE & CONTAINERS (LIGHT THEME)
+   ============================================ */
+
+/* 1. Toolbars & Structural Containers */
+html.light-theme .bg-slate-950.border-slate-800.p-1.rounded-xl[role="tablist"] {
+    background-color: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
+}
+html.light-theme .technical-section > .bg-slate-900 {
+    background-color: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+html.light-theme .technical-section .bg-slate-950.border-slate-700 {
+    background-color: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #334155 !important;
+}
+html.light-theme .technical-section .bg-slate-900.border-slate-800.rounded-xl.p-4.shadow-sm {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* 2. Technology Rows */
+html.light-theme .technical-section .bg-slate-900\/50 {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+html.light-theme .technical-section .bg-slate-900\/50:hover {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+html.light-theme .technical-section .border-t.border-slate-800\/50.bg-slate-950 {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* 3. CPE Identity */
+html.light-theme .technical-section .mb-6.bg-slate-900.border-slate-800 {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+html.light-theme .technical-section code.bg-slate-950.text-pink-400\/90 {
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    color: #db2777 !important;
+}
+
+/* 4. CVE Cards */
+html.light-theme .technical-section .bg-slate-900.border-slate-800.rounded-lg.p-4 {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+html.light-theme .technical-section .text-rose-300 {
+    color: #e11d48 !important;
+}
+
+/* 5. Vulnerability Intelligence Badges */
+html.light-theme .technical-section .bg-cyan-950\/20.border-cyan-900\/20 {
+    background-color: #ecfeff !important;
+    border-color: #cffafe !important;
+}
+html.light-theme .technical-section .text-cyan-300\/80,
+html.light-theme .technical-section .text-cyan-400 {
+    color: #0891b2 !important;
+}
+html.light-theme .technical-section .text-cyan-500\/80 {
+    color: #06b6d4 !important;
+}
+
+html.light-theme .technical-section .bg-red-950\/30.border-red-900\/30 {
+    background-color: #fef2f2 !important;
+    border-color: #fee2e2 !important;
+}
+html.light-theme .technical-section .text-red-300\/80,
+html.light-theme .technical-section .text-red-400 {
+    color: #dc2626 !important;
+}
+html.light-theme .technical-section .text-red-500 {
+    color: #ef4444 !important;
+}
+
+html.light-theme .technical-section .bg-orange-950\/30.border-orange-900\/30 {
+    background-color: #fff7ed !important;
+    border-color: #ffedd5 !important;
+}
+html.light-theme .technical-section .text-orange-300\/80,
+html.light-theme .technical-section .text-orange-400 {
+    color: #ea580c !important;
+}
+html.light-theme .technical-section .text-orange-500 {
+    color: #f97316 !important;
+}
+
+html.light-theme .technical-section .bg-amber-950\/20.border-amber-900\/20 {
+    background-color: #fffbeb !important;
+    border-color: #fef3c7 !important;
+}
+html.light-theme .technical-section .text-amber-300\/80,
+html.light-theme .technical-section .text-amber-400 {
+    color: #d97706 !important;
+}
+html.light-theme .technical-section .text-amber-500 {
+    color: #f59e0b !important;
+}
+
+html.light-theme .technical-section .bg-slate-800.border-slate-700 {
+    background-color: #e2e8f0 !important;
+    border-color: #cbd5e1 !important;
+    color: #334155 !important;
+}
+
+/* 6. Tooltip items inside info panels */
+html.light-theme .technical-section .flex.items-center.justify-between.p-2.rounded-lg.bg-slate-900 {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* 7. EXPOSURE Details */
+html.light-theme details.report-section.bg-slate-950\/80 {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+html.light-theme details.report-section .bg-slate-900.border-slate-700\/50 {
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+}
+html.light-theme details.report-section .bg-slate-950.border-slate-800 {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+
+/* 8. Additional Overrides for Expanded Findings */
+html.light-theme .technical-section .bg-slate-950.overflow-hidden.transition-all {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+html.light-theme .technical-section .bg-slate-950.p-2.rounded.border.border-slate-800 {
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+}
