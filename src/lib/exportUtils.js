@@ -51,8 +51,8 @@ const generateVulnerabilitiesCSV = (technologyIdentities) => {
         'CWE',
         'EPSS Probability',
         'EPSS Percentile',
-        'KEV Status',
-        'SSVC Status',
+        'KEV Details',
+        'SSVC Decision',
         'CVE Priority',
         'Match Confidence'
     ];
@@ -101,8 +101,8 @@ const generateVulnerabilitiesCSV = (technologyIdentities) => {
                 escapeCSV(cweStr),
                 escapeCSV(epssProb),
                 escapeCSV(epssPerc),
-                escapeCSV(cve && cve.kev ? 'IN_KEV' : ''),
-                escapeCSV(cve && cve.ssvc ? 'AVAILABLE' : ''),
+                escapeCSV(cve && cve.kev ? [cve.kev.name, cve.kev.added ? `Added: ${cve.kev.added}` : null, cve.kev.action ? `Action: ${cve.kev.action}` : null, cve.kev.due ? `Due: ${cve.kev.due}` : null].filter(Boolean).join(' | ') : ''),
+                escapeCSV(cve && cve.ssvc && cve.ssvc.options ? Object.entries(cve.ssvc.options).map(([k, v]) => `${k}: ${v}`).join(' | ') : ''),
                 escapeCSV(cve ? calculateCvePriority(tech, cve) : ''),
                 escapeCSV(cve ? cve.match_confidence || '' : '')
             ].join(','));

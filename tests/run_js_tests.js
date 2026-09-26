@@ -95,9 +95,28 @@ const csvH = generateVulnerabilitiesCSV(techCwe);
 assertEq(csvH.includes('CWE-1 | CWE-2'), true, 'JS_VULN_CWE_MULTI');
 
 // I. KEV / SSVC
-const techKev = [{ name: 'T', cves: [{ id: 'C1', kev_info: {status: 'NOT_IN_KEV'}, ssvc_info: {status: 'NOT_FOUND'} }] }];
+const techKev = [{ name: 'T', cves: [
+  {
+    id: 'C1',
+    kev: { name: 'Test Vuln', added: '2021-11-03', action: 'Apply updates.', due: '2021-11-17' },
+    ssvc: { source: 'CISA', options: { exploitation: 'active', automatable: 'no' } }
+  },
+  {
+    id: 'C2',
+    kev: { name: 'Test 2' },
+    ssvc: { source: 'CISA' }
+  },
+  {
+    id: 'C3'
+  }
+]}];
 const csvI = generateVulnerabilitiesCSV(techKev);
-assertEq(csvI.includes('NOT_IN_KEV,NOT_FOUND'), true, 'JS_VULN_KEV_SSVC');
+assertEq(csvI.includes('Test Vuln | Added: 2021-11-03 | Action: Apply updates. | Due: 2021-11-17'), true, 'JS_VULN_KEV_FULL');
+assertEq(csvI.includes('exploitation: active | automatable: no'), true, 'JS_VULN_SSVC_FULL');
+assertEq(csvI.includes('Test 2,'), true, 'JS_VULN_KEV_PARTIAL');
+assertEq(csvI.includes(',C3,'), true, 'JS_VULN_KEV_SSVC_ABSENT');
+assertEq(csvI.includes('IN_KEV'), false, 'JS_VULN_NO_IN_KEV');
+assertEq(csvI.includes('AVAILABLE'), false, 'JS_VULN_NO_AVAILABLE');
 
 // K. CVE Priority mapping
 const techPrio = [{ vulnerability_state: 'MATCHED', cves: [
