@@ -203,7 +203,7 @@ const ScanHistory = () => {
           {scans.length > 0 && (
             <button
               onClick={() => setDeleteConfirmState({ action: 'all', payload: scans.length })}
-              className="px-4 py-2 bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-500/30 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+              className="px-4 py-2 text-rose-400 border border-transparent hover:bg-rose-500/10 hover:border-rose-500/30 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
             >
               Delete All History
             </button>
@@ -318,7 +318,7 @@ const ScanHistory = () => {
                           <button
                             type="button"
                             onClick={() => setDeleteConfirmState({ action: 'single', payload: scan.id })}
-                            className="inline-flex items-center gap-1 text-rose-500 hover:text-rose-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                            className="inline-flex items-center gap-1 text-slate-400 hover:text-rose-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                             aria-label="Delete scan"
                           >
                             <Trash2 className="w-4 h-4" /> Delete
