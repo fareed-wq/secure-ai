@@ -170,7 +170,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
               >
-                <div className={isActive ? "text-indigo-400" : "text-slate-500"}>
+                <div className={`w-5 flex justify-center shrink-0 ${isActive ? "text-indigo-400" : "text-slate-500"}`}>
                   {item.icon}
                 </div>
                 {!isCollapsed && <span className="truncate">{item.label}</span>}
