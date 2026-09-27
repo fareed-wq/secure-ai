@@ -156,7 +156,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }) => {
           </button>
 
           {navItems.map((item) => {
-            const isActive = location.pathname === item.href;
+            const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
             return (
               <Link
                 key={item.href}
