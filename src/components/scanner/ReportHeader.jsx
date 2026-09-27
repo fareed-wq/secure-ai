@@ -11,11 +11,11 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
   return (
     <div className="relative z-40 bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl shadow-md flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
       <div className="flex-1">
-        <h2 className="text-2xl font-bold mb-1 text-slate-50">Security Posture Report</h2>
+        <h1 className="text-2xl font-bold mb-1 text-slate-50">Security Posture Report</h1>
         <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
           <span className="flex items-center gap-1 truncate max-w-[200px]">
             <Globe className="w-4 h-4 text-indigo-400 shrink-0" />
-            <span className="truncate">{url}</span>
+            <span className="truncate" title={url}>{url}</span>
           </span>
           <span className="opacity-50 shrink-0">•</span>
           <span className="shrink-0">
@@ -40,6 +40,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
           <button
             type="button"
             onClick={() => onToggleMode('simple')}
+              aria-pressed={activeMode === 'simple'}
             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset ${activeMode === 'simple'
               ? 'bg-emerald-500/20 text-emerald-400 shadow'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
@@ -50,6 +51,7 @@ const ReportHeader = ({ url, score, timestamp, activeMode, onToggleMode, onExpor
           <button
             type="button"
             onClick={() => onToggleMode('technical')}
+              aria-pressed={activeMode === 'technical'}
             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset ${activeMode === 'technical'
               ? 'bg-blue-500/20 text-blue-400 shadow'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'

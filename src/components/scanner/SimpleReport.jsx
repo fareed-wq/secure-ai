@@ -168,7 +168,7 @@ const SimpleReport = ({ reportData }) => {
                     <span className="text-[10px] text-slate-500 uppercase tracking-wider">Findings</span>
                   </div>
                 </div>
-                <div className="flex flex-col justify-center gap-2 w-max ml-0 sm:ml-8 mt-4 sm:mt-0">
+                <div className="flex flex-col justify-center gap-2 w-max mt-4 sm:mt-0">
                     {activeDistribution.map((seg, i) => (
                       <div key={i} className="inline-flex items-center gap-2 text-sm">
                         <span className={`w-3 h-3 rounded-full ${seg.dot} flex-shrink-0`}></span>
@@ -489,17 +489,17 @@ const SimpleReport = ({ reportData }) => {
                       )}
                       <div className="flex flex-wrap items-center gap-2 mt-3">
                         {issue.owasp && (
-                          <span className="text-[10px] font-mono bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-md">
+                          <span className="text-xs font-mono bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 px-2 py-0.5 rounded-md">
                             {issue.owasp}
                           </span>
                         )}
                         {issue.cvss_score && (
-                          <span className="text-[10px] font-mono text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30">
+                          <span className="text-xs font-mono text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/30">
                             CVSS {issue.cvss_score}
                           </span>
                         )}
                         {issue.cve_ids && issue.cve_ids.length > 0 && (
-                          <span className="text-[10px] font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">
+                          <span className="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/30">
                             {issue.cve_ids.slice(0, 2).join(', ')}{issue.cve_ids.length > 2 ? ` +${issue.cve_ids.length - 2}` : ''}
                           </span>
                         )}
@@ -543,7 +543,7 @@ const SimpleReport = ({ reportData }) => {
       {/* 3.5 Issues That Need Attention */}
       <div className="simple-findings-section space-y-6 mt-12">
         <div className="flex flex-col">
-          <h3 className="font-black text-2xl text-slate-50 uppercase tracking-wider text-slate-200">Issues That Need Attention</h3>
+          <h3 className="font-black text-2xl text-slate-50 text-slate-200">Issues That Need Attention</h3>
           <p className="text-slate-400 mt-1">A complete list of all identified security issues.</p>
         </div>
 
@@ -566,7 +566,7 @@ const SimpleReport = ({ reportData }) => {
       {informational.length > 0 && (
         <div className="simple-informational-section bg-slate-800/30 border border-slate-700/50 p-6 rounded-2xl mt-12">
           <div className="flex flex-col">
-            <h3 className="font-black text-lg text-slate-200 uppercase tracking-wider">Additional Technical Observations</h3>
+            <h3 className="font-black text-lg text-slate-200 ">Additional Technical Observations</h3>
             <p className="text-slate-400 mt-2">
               {informational.length} additional technical {informational.length === 1 ? 'observation was' : 'observations were'} collected. These do not affect your score. View the Technical report for detailed diagnostic information.
             </p>
