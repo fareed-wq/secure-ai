@@ -146,7 +146,7 @@ const ScannerCapabilities = () => {
                 <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
                   <History size={20} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-50">Scan History</h3>
+                <h2 className="text-lg font-bold text-slate-50">Scan History</h2>
               </div>
               <p className="text-slate-400 text-sm leading-relaxed flex-1">
                 Keep track of previous security scans. Review earlier results, revisit
@@ -166,7 +166,7 @@ const ScannerCapabilities = () => {
                 <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
                   <ArrowRightLeft size={20} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-50">Compare Scans</h3>
+                <h2 className="text-lg font-bold text-slate-50">Compare Scans</h2>
               </div>
               <p className="text-slate-400 text-sm leading-relaxed flex-1">
                 Compare two scan results side by side. Quickly identify what improved, what
@@ -187,7 +187,7 @@ const ScannerCapabilities = () => {
                 <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-400">
                   <CalendarClock size={20} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-50">Scheduled Scans & Email Reports</h3>
+                <h2 className="text-lg font-bold text-slate-50">Scheduled Scans & Email Reports</h2>
               </div>
               <p className="text-slate-400 text-sm leading-relaxed flex-1">
                 Schedule automated recurring security scans for your authorized assets.
