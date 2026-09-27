@@ -96,9 +96,9 @@ const SecurityAudits = () => {
             ⚡ {totalAuditCount} Potential Findings across {categoryCount} Security Domains
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-black text-slate-50 mb-6 tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-black text-slate-50 mb-6 tracking-tight">
             Security Audits & Assessments
-          </h2>
+          </h1>
           <p className="text-lg text-slate-400 mb-10 max-w-2xl">
             Explore the security checks, configurations, and assessment areas covered by
             our security services. Below is a comprehensive catalog of security areas and
@@ -206,11 +206,11 @@ const SecurityAudits = () => {
                     {services.map((service, i) => (
                       <div
                         key={i}
-                        className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 transition-all duration-200 hover:-translate-y-1 hover:border-indigo-500/40 hover:bg-slate-900/90 hover:shadow-xl hover:shadow-indigo-500/5 flex flex-col justify-between group"
+                        className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 flex flex-col justify-between"
                       >
                         <div>
                           <div className="flex items-start justify-between mb-3">
-                            <h3 className="text-base font-semibold text-slate-50 tracking-tight group-hover:text-indigo-200 transition-colors">
+                            <h3 className="text-base font-semibold text-slate-50 tracking-tight">
                               {service.name}
                             </h3>
                             <span className={`shrink-0 ml-3 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${getImpactStyles(service.impact)}`}>
@@ -226,7 +226,7 @@ const SecurityAudits = () => {
                           <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider block mb-1">
                             Observation:
                           </span>
-                          <p className="text-[11px] text-slate-300 font-mono">
+                          <p className="text-xs text-slate-300 font-mono">
                             {service.problem}
                           </p>
                         </div>
