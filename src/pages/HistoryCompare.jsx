@@ -19,7 +19,13 @@ const safeRender = (val) => {
 
   if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') return String(val);
 
-  if (Array.isArray(val)) return val.map(v => safeRender(v)).join(', ');
+  if (Array.isArray(val)) {
+    return (
+      <ul className="list-disc pl-4 space-y-1 my-1">
+        {val.map((v, i) => <li key={i}>{safeRender(v)}</li>)}
+      </ul>
+    );
+  }
 
   if (typeof val === 'object') {
 
@@ -73,7 +79,7 @@ const FindingCard = ({ item, type }) => {
 
       <div className="flex justify-between items-start mb-2">
 
-        <h4 className="font-medium">{f.name}</h4>
+        <h3 className="font-medium">{f.name}</h3>
 
         {(isImproved || isRegressed) && (
 
@@ -232,7 +238,7 @@ export default function HistoryCompare() {
 
               <div>
 
-                <h3 className="text-sm font-medium text-slate-400 mb-1">Target</h3>
+                <h2 className="text-sm font-medium text-slate-400 mb-1">Target</h2>
 
                 <p className="font-mono break-all">{data.target_url}</p>
 
@@ -240,7 +246,7 @@ export default function HistoryCompare() {
 
               <div>
 
-                <h3 className="text-sm font-medium text-slate-400 mb-1">Scan Type</h3>
+                <h2 className="text-sm font-medium text-slate-400 mb-1">Scan Type</h2>
 
                 <p>{data.scan_mode}</p>
 
@@ -250,7 +256,7 @@ export default function HistoryCompare() {
 
                 <div>
 
-                  <h3 className="text-sm font-medium text-slate-400 mb-1">Older Scan</h3>
+                  <h2 className="text-sm font-medium text-slate-400 mb-1">Older Scan</h2>
 
                   <p className="text-sm">{data.old_date ? new Date(data.old_date).toLocaleString() : 'Unknown'}</p>
 
@@ -258,7 +264,7 @@ export default function HistoryCompare() {
 
                 <div>
 
-                  <h3 className="text-sm font-medium text-slate-400 mb-1">Newer Scan</h3>
+                  <h2 className="text-sm font-medium text-slate-400 mb-1">Newer Scan</h2>
 
                   <p className="text-sm">{data.new_date ? new Date(data.new_date).toLocaleString() : 'Unknown'}</p>
 
@@ -272,13 +278,13 @@ export default function HistoryCompare() {
 
               <div className="text-center space-y-2">
 
-                <h3 className="text-sm font-medium text-slate-400">Score Change</h3>
+                <h2 className="text-sm font-medium text-slate-400">Score Change</h2>
 
                 <div className="flex items-baseline justify-center gap-4">
 
-                  <span className="text-2xl text-slate-500 line-through">{data.old_score}</span>
+                  <span className="text-2xl text-slate-500 line-through"><span className="sr-only">Previous score: </span>{data.old_score}</span>
 
-                  <span className="text-4xl font-bold">{data.new_score}</span>
+                  <span className="text-4xl font-bold"><span className="sr-only">New score: </span>{data.new_score}</span>
 
                 </div>
 
