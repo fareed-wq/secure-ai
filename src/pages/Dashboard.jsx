@@ -269,7 +269,7 @@ const Dashboard = () => {
         </div>
         <button
           onClick={handleNewScan}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg flex items-center transition-colors gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+          className="px-4 py-2 text-white bg-indigo-600/90 border border-indigo-500/50 hover:bg-indigo-500 font-medium rounded-lg flex items-center transition-colors gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
         >
           <Plus size={18} /> New Scan
         </button>
@@ -285,25 +285,25 @@ const Dashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Portfolio Score</p>
+                <p className="text-sm font-medium text-slate-400">Portfolio Score</p>
                 <p className="text-3xl font-bold text-emerald-400 mt-2">{portfolioScore}{portfolioScore !== '--' ? '/100' : ''}</p>
-                <p className="text-xs text-slate-500 mt-2">Average score across your targets</p>
+                <p className="text-xs text-slate-400 mt-2">Average score across your targets</p>
               </div>
               <div className="p-3 bg-emerald-500/10 rounded-lg"><ShieldCheck className="w-6 h-6 text-emerald-500" /></div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Unique Targets</p>
+                <p className="text-sm font-medium text-slate-400">Unique Targets</p>
                 <p className="text-3xl font-bold text-blue-400 mt-2">{uniqueTargets}</p>
-                <p className="text-xs text-slate-500 mt-2">From completed scans</p>
+                <p className="text-xs text-slate-400 mt-2">From completed scans</p>
               </div>
               <div className="p-3 bg-blue-500/10 rounded-lg"><Target className="w-6 h-6 text-blue-500" /></div>
             </div>
 
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">
+                <p className="text-sm font-medium text-slate-400">
                   Critical Findings
                 </p>
                 <p className={`text-3xl font-bold mt-2 ${totalCritical === 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
@@ -328,9 +328,9 @@ const Dashboard = () => {
 
             <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Scans</p>
+                <p className="text-sm font-medium text-slate-400">Total Scans</p>
                 <p className="text-3xl font-bold text-indigo-400 mt-2">{totalScans}</p>
-                <p className="text-xs text-slate-500 mt-2">Historical count</p>
+                <p className="text-xs text-slate-400 mt-2">Historical count</p>
               </div>
               <div className="p-3 bg-indigo-500/10 rounded-lg"><Activity className="w-6 h-6 text-indigo-500" /></div>
             </div>
@@ -406,10 +406,10 @@ const Dashboard = () => {
                   <div className="h-full flex flex-col items-center justify-center text-slate-400">
                     <p className="text-4xl font-bold text-indigo-400 mb-2">{trendData[0].score}/100</p>
                     <p className="text-sm">Single scan recorded for this target & depth.</p>
-                    <p className="text-xs text-slate-500">Run another scan to generate a trend.</p>
+                    <p className="text-xs text-slate-400">Run another scan to generate a trend.</p>
                   </div>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-500">
+                  <div className="h-full flex flex-col items-center justify-center text-slate-400">
                     <p>No historical scans found for this target & depth.</p>
                   </div>
                 )}
@@ -421,24 +421,24 @@ const Dashboard = () => {
               <h2 className="text-lg font-semibold text-slate-50 mb-6">Findings Overview</h2>
               <div className="space-y-4 flex-1 justify-center flex flex-col">
                 <div className="flex justify-between items-center" data-dashboard-card="P1">
-                  <span className="text-sm font-medium text-fuchsia-400 flex items-center gap-2"><AlertCircle size={16}/> Critical</span>
-                  <span className="text-lg font-bold text-slate-300" data-priority="P1">{totalCritical}</span>
+                  <span className={`text-sm font-medium flex items-center gap-2 ${getSeverityColor('critical')}`}><AlertCircle size={16}/> Critical</span>
+                  <span className="text-lg font-bold text-slate-50" data-priority="P1">{totalCritical}</span>
                 </div>
                 <div className="flex justify-between items-center" data-dashboard-card="P2">
-                  <span className="text-sm font-medium text-red-500 flex items-center gap-2"><AlertTriangle size={16}/> High</span>
-                  <span className="text-lg font-bold text-slate-300" data-priority="P2">{totalHigh}</span>
+                  <span className={`text-sm font-medium flex items-center gap-2 ${getSeverityColor('high')}`}><AlertTriangle size={16}/> High</span>
+                  <span className="text-lg font-bold text-slate-50" data-priority="P2">{totalHigh}</span>
                 </div>
                 <div className="flex justify-between items-center" data-dashboard-card="P3">
-                  <span className="text-sm font-medium text-amber-500 flex items-center gap-2"><AlertTriangle size={16}/> Medium</span>
-                  <span className="text-lg font-bold text-slate-300" data-priority="P3">{totalMedium}</span>
+                  <span className={`text-sm font-medium flex items-center gap-2 ${getSeverityColor('medium')}`}><AlertTriangle size={16}/> Medium</span>
+                  <span className="text-lg font-bold text-slate-50" data-priority="P3">{totalMedium}</span>
                 </div>
                 <div className="flex justify-between items-center" data-dashboard-card="P4">
-                  <span className="text-sm font-medium text-yellow-400 flex items-center gap-2"><Info size={16}/> Low</span>
-                  <span className="text-lg font-bold text-slate-300" data-priority="P4">{totalLow}</span>
+                  <span className={`text-sm font-medium flex items-center gap-2 ${getSeverityColor('low')}`}><Info size={16}/> Low</span>
+                  <span className="text-lg font-bold text-slate-50" data-priority="P4">{totalLow}</span>
                 </div>
                 <div className="flex justify-between items-center" data-dashboard-card="P5">
-                  <span className="text-sm font-medium text-blue-500 flex items-center gap-2"><CheckCircle2 size={16}/> Info</span>
-                  <span className="text-lg font-bold text-slate-300" data-priority="P5">{totalInfo}</span>
+                  <span className={`text-sm font-medium flex items-center gap-2 ${getSeverityColor('info')}`}><CheckCircle2 size={16}/> Info</span>
+                  <span className="text-lg font-bold text-slate-50" data-priority="P5">{totalInfo}</span>
                 </div>
               </div>
             </div>
@@ -452,7 +452,7 @@ const Dashboard = () => {
               </div>
               <div className="divide-y divide-slate-800">
                 {topAttention.map((finding, idx) => (
-                  <div key={idx} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-900/50 transition-colors">
+                  <div key={idx} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-900/50 transition-colors relative group">
                     <div>
                       <p className="text-sm text-slate-400 font-medium mb-1">{finding.target}</p>
                       <p className="text-slate-50 font-medium">{finding.name}</p>
@@ -470,12 +470,12 @@ const Dashboard = () => {
                             {finding.cvss?.startsWith('CVSS:4') ? 'CVSS 4.0' : (finding.cvss?.startsWith('CVSS:3') ? 'CVSS 3.1' : 'CVSS')} · {finding.cvss_score}
                           </span>
                         ) : (
-                          <span className="text-xs text-slate-500 font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded">CVSS N/A</span>
+                          <span className="text-xs text-slate-400 font-mono bg-slate-950 border border-slate-800 px-2 py-1 rounded">CVSS N/A</span>
                         )}
                       </div>
                       <Link
                         to={`/history/${finding.scanId}`}
-                        className="text-sm font-medium text-indigo-400 hover:text-indigo-300 flex items-center gap-1 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                        className="text-sm font-medium text-indigo-400 hover:text-indigo-300 flex items-center gap-1 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 after:absolute after:inset-0"
                       >
                         View Report <ChevronRight size={16} />
                       </Link>
@@ -489,7 +489,7 @@ const Dashboard = () => {
               <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-4 text-emerald-400 mx-auto">
                 <ShieldCheck size={32} />
               </div>
-              <h2 className="text-lg font-bold text-slate-200 mb-2">No Active Threats</h2>
+              <h2 className="text-lg font-bold text-slate-50 mb-2">No Active Threats</h2>
               <p className="text-slate-400 text-sm max-w-md mx-auto">You don't have any Medium, High, or Critical findings across your latest scans. Run a new scan to ensure you stay protected.</p>
             </div>
           )}
