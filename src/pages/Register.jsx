@@ -179,9 +179,15 @@ const Register = () => {
             <span className="font-medium text-slate-300">{formData.email}</span>
           </p>
           <p className="mt-4 text-center text-sm text-slate-400">
-            Please open the email and click the confirmation link to verify your account. Once confirmed, you can sign in.
-          </p>
-        </div>
+              Please open the email and click the confirmation link to verify your account. Once confirmed, you can sign in.
+            </p>
+            <div className="mt-6 mx-4 sm:mx-0 p-4 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-center">
+              <p className="font-medium text-slate-200 mb-1">Didn't receive the email?</p>
+              <p className="text-slate-400">
+                Check your <strong className="font-semibold text-slate-300">Spam or Junk</strong> folder. If you find the confirmation email there, mark it as <strong className="font-semibold text-slate-300">Not spam</strong>, then open the email and click the confirmation link.
+              </p>
+            </div>
+          </div>
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-slate-900 py-8 px-4 shadow-xl sm:rounded-2xl sm:px-10 border border-slate-800">
             {error && (
