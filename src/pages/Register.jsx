@@ -109,6 +109,7 @@ const Register = () => {
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/email-confirmed`,
           captchaToken,
           data: {
             full_name: formData.fullName,
